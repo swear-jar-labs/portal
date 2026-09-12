@@ -1,13 +1,13 @@
-# artisan-dos
+# swearjar-dos
 
-The DOS-style UI kit for Artisan Softworks — **ARTISAN.DOS**.
+The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 
 ## Boundary
 
 - Self-contained: **no imports from the app** (`src/app`, `src/db`, `src/lib`).
 - Public API only through `index.ts`.
 - Styling: CSS Modules + `tokens.css`. No visual CSS frameworks.
-- Import from the app as `@artisan/dos`.
+- Import from the app as `@swearjar/dos`.
 
 ## Layout
 
@@ -17,4 +17,4 @@ The DOS-style UI kit for Artisan Softworks — **ARTISAN.DOS**.
 
 ## Extraction
 
-Designed to be lifted into its own repository/package (`ARTISAN.DOS`) once there is a second consumer. Until then it lives here.
+Designed to be lifted into its own repository/package (`SWEARJAR.DOS`) once there is a second consumer. Until then it lives here.

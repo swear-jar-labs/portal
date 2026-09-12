@@ -1,6 +1,6 @@
-# Artisan Softworks
+# Swear Jar Labs
 
-The platform of the Artisan Softworks cooperative: public discussion, code reading, and project work. Open source (MIT), built with Next.js and PostgreSQL.
+The platform of the Swear Jar Labs cooperative: public discussion, code reading, and project work. Open source (MIT), built with Next.js and PostgreSQL.
 
 Most of us learned to program the same way: wrote code, broke it, fixed what we broke. That feedback loop is fading. As AI writes more of the code, the work moves toward reading and judging it. But reading is earned by writing, and juniors get fewer chances to cut their teeth. We're building this space to make that practice deliberate: through real projects, public review, and owning our mistakes.
 
@@ -11,7 +11,7 @@ Early, in active development: this repository currently holds the platform skele
 - **Next.js** (App Router, React Server Components) + TypeScript strict
 - **PostgreSQL** + **Drizzle ORM**
 - **Better Auth** (Google, GitHub, and handle + password)
-- **ARTISAN.DOS** — our DOS-style UI kit (in progress)
+- **SWEARJAR.DOS** — our DOS-style UI kit (in progress)
 - **CSS Modules** for CRT/DOS styling
 - **Vitest** + **Playwright**
 - **Docker Compose**: `web` + `db` + `caddy`
@@ -23,10 +23,10 @@ Requirements: Node 22 (npm included) and PostgreSQL 17.
 Start a local database:
 
 ```bash
-docker run --name artisan-db \
-  -e POSTGRES_USER=artisan \
-  -e POSTGRES_PASSWORD=artisan \
-  -e POSTGRES_DB=artisan \
+docker run --name swearjar-db \
+  -e POSTGRES_USER=swearjar \
+  -e POSTGRES_PASSWORD=swearjar \
+  -e POSTGRES_DB=swearjar \
   -p 5432:5432 -d postgres:17-alpine
 ```
 

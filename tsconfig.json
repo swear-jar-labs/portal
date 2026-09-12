@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@artisan/dos": ["./src/packages/artisan-dos"],
-      "@artisan/dos/*": ["./src/packages/artisan-dos/*"]
+      "@swearjar/dos": ["./src/packages/swearjar-dos"],
+      "@swearjar/dos/*": ["./src/packages/swearjar-dos/*"]
     }
   },
   "include": [

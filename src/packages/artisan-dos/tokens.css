@@ -1,0 +1,28 @@
+:root {
+  --dos-black: #000000;
+  --dos-blue: #0000aa;
+  --dos-green: #00aa00;
+  --dos-cyan: #00aaaa;
+  --dos-red: #aa0000;
+  --dos-magenta: #aa00aa;
+  --dos-brown: #aa5500;
+  --dos-light-gray: #aaaaaa;
+  --dos-dark-gray: #555555;
+  --dos-light-blue: #5555ff;
+  --dos-light-green: #55ff55;
+  --dos-light-cyan: #55ffff;
+  --dos-light-red: #ff5555;
+  --dos-light-magenta: #ff55ff;
+  --dos-yellow: #ffff55;
+  --dos-white: #ffffff;
+
+  --dos-font: "VT323", "IBM Plex Mono", "Courier New", monospace;
+  --dos-font-size: 20px;
+  --dos-line-height: 1.4;
+
+  --dos-border-width: 2px;
+  --dos-border-raised: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
+  --dos-border-sunken: var(--dos-black) var(--dos-white) var(--dos-white) var(--dos-black);
+
+  --dos-blink: 1s steps(1) infinite;
+}

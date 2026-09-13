@@ -1,6 +1,6 @@
 # Swear Jar Labs
 
-The platform of the Swear Jar Labs cooperative: public discussion, code reading, and project work. Open source (MIT), built with Next.js and PostgreSQL.
+The platform of the Swear Jar Labs community: public discussion, code reading, and project work. Open source (MIT), built with Next.js and PostgreSQL.
 
 Most of us learned to program the same way: wrote code, broke it, fixed what we broke. That feedback loop is fading. As AI writes more of the code, the work moves toward reading and judging it. But reading is earned by writing, and juniors get fewer chances to cut their teeth. We're building this space to make that practice deliberate: through real projects, public review, and owning our mistakes.
 

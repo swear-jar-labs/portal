@@ -1,0 +1,136 @@
+.stage {
+  width: 100%;
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+.bootScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: var(--dos-black);
+  padding: 2rem 1.5rem;
+  line-height: 1.7;
+  cursor: pointer;
+  transition: opacity 0.45s steps(9);
+}
+
+.bootDone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bootTitle {
+  color: var(--dos-yellow);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.bootLine {
+  visibility: hidden;
+  white-space: pre-wrap;
+}
+
+.bootLineShown {
+  visibility: visible;
+}
+
+.bootSkip {
+  visibility: hidden;
+  margin-top: 2rem;
+  color: var(--dos-dark-gray);
+  white-space: pre-wrap;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--dos-shell-max-width);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--dos-black);
+  border: 2px solid var(--dos-dark-gray);
+}
+
+.panels {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 2px;
+  background: var(--dos-black);
+}
+
+.panel {
+  min-height: 0;
+}
+
+.panelLeft {
+  flex: 0 0 33%;
+  background: var(--dos-blue);
+}
+
+.panelRight {
+  flex: 1 1 auto;
+  background: var(--dos-black);
+}
+
+.fileTable {
+  height: 100%;
+}
+
+.navButton {
+  padding: 0 6px !important;
+}
+
+.jar.flash {
+  animation: flash 0.3s steps(2) 2;
+}
+
+@keyframes flash {
+  50% {
+    background: var(--dos-yellow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jar.flash {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .bootScreen,
+  .shell {
+    width: 100%;
+    height: 100%;
+  }
+
+  .panels {
+    flex-direction: column !important;
+  }
+
+  .panelLeft {
+    flex: 0 0 auto !important;
+  }
+
+  .fileTable :global(td) {
+    line-height: 1.8;
+  }
+
+  .panelPeek {
+    flex: 0 0 auto !important;
+    height: calc(2 * 1.8em + 3 * 1.4em + 25px);
+  }
+
+  .panelCompact {
+    flex: 0 0 auto !important;
+    height: calc(5 * 1.8em + 3 * 1.4em + 25px);
+  }
+
+  .panelExpanded {
+    flex: 0 0 auto !important;
+    height: auto;
+    max-height: 70%;
+  }
+}

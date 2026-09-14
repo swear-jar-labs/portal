@@ -16,6 +16,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-menubar": "^1.1.24",
     "better-auth": "^1.7.4",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.5",
@@ -28,6 +30,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@better-auth/cli": "^1.4.22",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22",

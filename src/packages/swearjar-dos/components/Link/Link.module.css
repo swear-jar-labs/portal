@@ -1,0 +1,19 @@
+.link {
+  color: var(--dos-light-cyan);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.link:hover {
+  background: var(--dos-light-blue);
+  color: var(--dos-white);
+}
+
+.link:focus-visible {
+  background: var(--dos-light-cyan);
+  color: var(--dos-black);
+}
+
+.underline {
+  text-decoration: underline;
+}

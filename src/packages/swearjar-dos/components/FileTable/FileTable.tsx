@@ -1,0 +1,151 @@
+import { type ReactNode } from "react";
+import { cx } from "../tone";
+import styles from "./FileTable.module.css";
+
+export type FileTableColumn = {
+  id: string;
+  label: string;
+  width?: string;
+  align?: "left" | "right";
+};
+
+export type FileTableItem = {
+  id: string;
+  name: string;
+  type: string;
+  size?: string;
+  kind?: "file" | "dir" | "exe";
+  expanded?: boolean;
+  selected?: boolean;
+  current?: boolean;
+  href?: string;
+  onActivate?: () => void;
+};
+
+export type FileTableProps = {
+  columns: FileTableColumn[];
+  items: FileTableItem[];
+  label?: string;
+  footer?: ReactNode;
+  onFooterActivate?: () => void;
+  footerActionLabel?: string;
+  className?: string;
+};
+
+function Control({ item }: { item: FileTableItem }) {
+  const content =
+    item.kind === "dir" ? (
+      <>
+        <span className={styles.mark} aria-hidden="true">
+          {item.expanded ? "[-]" : "[+]"}
+        </span>
+        <span className={styles.name}>{item.name}</span>
+      </>
+    ) : (
+      <span className={styles.name}>{item.name}</span>
+    );
+
+  if (item.href) {
+    return (
+      <a
+        id={item.id}
+        className={styles.control}
+        href={item.href}
+        aria-current={item.current ? "true" : undefined}
+        onClick={item.onActivate}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      id={item.id}
+      type="button"
+      className={styles.control}
+      aria-expanded={item.kind === "dir" ? item.expanded : undefined}
+      aria-current={item.current ? "true" : undefined}
+      onClick={item.onActivate}
+    >
+      {content}
+    </button>
+  );
+}
+
+export function FileTable({
+  columns,
+  items,
+  label,
+  footer,
+  onFooterActivate,
+  footerActionLabel,
+  className,
+}: FileTableProps) {
+  return (
+    <div className={cx(styles.wrap, className)}>
+      <div className={styles.scroll}>
+        <table className={styles.table} aria-label={label}>
+          <colgroup>
+            {columns.map((column) => (
+              <col
+                key={column.id}
+                style={column.width ? { width: column.width } : undefined}
+              />
+            ))}
+          </colgroup>
+          <thead>
+            <tr>
+              {columns.map((column) => (
+                <th
+                  key={column.id}
+                  scope="col"
+                  className={cx(
+                    styles.cell,
+                    styles.head,
+                    column.align === "right" && styles.right,
+                  )}
+                >
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr
+                key={item.id}
+                className={cx(
+                  styles.row,
+                  item.kind === "dir" && styles.dir,
+                  item.kind === "exe" && styles.exe,
+                  item.selected && styles.selected,
+                )}
+              >
+                <td className={styles.cell}>
+                  <Control item={item} />
+                </td>
+                <td className={cx(styles.cell, styles.type)}>{item.type}</td>
+                <td className={cx(styles.cell, styles.size)}>{item.size}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {footer ? (
+        onFooterActivate ? (
+          <button
+            type="button"
+            className={cx(styles.footer, styles.footerButton)}
+            aria-label={footerActionLabel}
+            onClick={onFooterActivate}
+          >
+            {footer}
+          </button>
+        ) : (
+          <div className={styles.footer}>{footer}</div>
+        )
+      ) : null}
+    </div>
+  );
+}

@@ -1,0 +1,35 @@
+.list {
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  padding-left: 1.4ch;
+}
+
+.item::before {
+  content: "> ";
+  position: absolute;
+  left: 0;
+  color: var(--dos-light-green);
+}
+
+.ordered {
+  counter-reset: dos-list;
+}
+
+.ordered .item {
+  counter-increment: dos-list;
+}
+
+.ordered .item::before {
+  content: counter(dos-list) ". ";
+}
+
+.noMarker .item {
+  padding-left: 0;
+}
+
+.noMarker .item::before {
+  content: none;
+}

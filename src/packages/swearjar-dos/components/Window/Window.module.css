@@ -1,0 +1,70 @@
+.window {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 94%);
+  max-height: 86%;
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.65);
+}
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  background: var(--dos-blue);
+  color: var(--dos-white);
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.error .titleBar {
+  background: var(--dos-red);
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close {
+  cursor: pointer;
+  padding: 0 4px;
+  font: inherit;
+  font-weight: inherit;
+  text-transform: uppercase;
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+
+.close:hover {
+  background: var(--dos-light-red);
+  color: var(--dos-black);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
+  padding: 14px 16px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 6px;
+  background: var(--dos-light-gray);
+}

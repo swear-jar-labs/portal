@@ -1,0 +1,70 @@
+.cmdLine {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  font-weight: 700;
+  padding: 1px 8px;
+  min-height: 1.5em;
+}
+
+.prompt {
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.mirror {
+  position: absolute;
+  visibility: hidden;
+  display: inline-block;
+  white-space: pre;
+  font: inherit;
+  font-weight: inherit;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.input {
+  flex: 0 1 auto;
+  width: 0;
+  min-width: 1px;
+  max-width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-weight: inherit;
+  text-transform: uppercase;
+  color: var(--dos-black);
+  caret-color: transparent;
+}
+
+.input::placeholder {
+  color: var(--dos-dark-gray);
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.cursor {
+  width: 1ch;
+  height: 1em;
+  background: var(--dos-black);
+  animation: blink var(--dos-blink);
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
+  }
+}

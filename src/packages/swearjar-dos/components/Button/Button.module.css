@@ -1,0 +1,45 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5ch;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 1px 16px;
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
+}
+
+.button:active:not(:disabled) {
+  border-color: var(--dos-black) var(--dos-white) var(--dos-white) var(--dos-black);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--dos-light-cyan);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  color: var(--dos-dark-gray);
+  cursor: default;
+}
+
+.primary {
+  background: var(--dos-light-cyan);
+}
+
+.danger {
+  background: var(--dos-light-red);
+}
+
+.ghost {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-weight: inherit;
+}

@@ -1,0 +1,15 @@
+.text {
+  line-height: 1.4;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}

@@ -1,0 +1,27 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  color: var(--dos-yellow);
+  font-weight: 700;
+}
+
+.input {
+  background: var(--dos-black);
+  color: var(--dos-light-cyan);
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-black) var(--dos-white) var(--dos-white) var(--dos-black);
+  padding: 1px 8px;
+}
+
+.input::placeholder {
+  color: var(--dos-dark-gray);
+}
+
+.error {
+  color: var(--dos-light-red);
+  font-weight: 700;
+}

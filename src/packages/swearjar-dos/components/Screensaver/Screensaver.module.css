@@ -1,0 +1,32 @@
+.screensaver {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dos-z-screensaver);
+  background: var(--dos-black);
+  overflow: hidden;
+  cursor: none;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.title {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(16px + env(safe-area-inset-left));
+  color: var(--dos-dark-gray);
+}
+
+.hint {
+  position: absolute;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--dos-dark-gray);
+  white-space: nowrap;
+}

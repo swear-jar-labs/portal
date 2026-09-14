@@ -1,0 +1,26 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dos-z-window);
+  background: var(--dos-overlay);
+}
+
+.content {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dos-z-window);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.content > * {
+  pointer-events: auto;
+}
+
+.content:focus,
+.content:focus-visible {
+  outline: none;
+}

@@ -1,0 +1,10 @@
+.sprite {
+  display: inline-grid;
+  line-height: 0;
+  vertical-align: middle;
+  image-rendering: pixelated;
+}
+
+.pixel {
+  display: block;
+}

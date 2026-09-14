@@ -1,0 +1,64 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
+  font-family: var(--dos-font);
+  font-size: var(--dos-font-size);
+  line-height: var(--dos-line-height);
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--dos-light-cyan);
+  color: var(--dos-black);
+}
+
+:focus-visible {
+  outline: 2px solid var(--dos-light-cyan);
+  outline-offset: 2px;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+@media (max-width: 720px) {
+  body {
+    font-size: var(--dos-font-size-narrow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

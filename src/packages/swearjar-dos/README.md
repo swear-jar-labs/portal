@@ -11,9 +11,19 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 
 ## Layout
 
-- `tokens.css` — palette, typography, borders, motion
-- `components/` — primitives and layout (added as we build)
+- `tokens.css` — palette, typography, borders, motion, z-index
+- `base.css` — reset and base element styles
+- `components/<Name>/{Name.tsx, Name.module.css}` — primitives and surfaces
+- `commands/` — command types + registry helpers (completion, HELP)
+- `sprites.ts` — pixel sprite data (the swear jar)
 - `index.ts` — public entrypoint
+
+## Components
+
+- Layout/type: `Stack`, `Heading`, `Text`, `List`, `Link`
+- Controls: `Button`, `Field`, `CmdLine`, `KeyBar`
+- Surfaces: `Panel`, `Window`, `Dialog` (Radix), `MenuBar` (Radix), `StatusBar`, `FileTable`
+- Effects: `Crt`, `Sprite`, `Screensaver`
 
 ## Extraction
 

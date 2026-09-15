@@ -13,7 +13,7 @@
   background: var(--dos-black);
   color: var(--dos-light-cyan);
   border: var(--dos-border-width) solid;
-  border-color: var(--dos-black) var(--dos-white) var(--dos-white) var(--dos-black);
+  border-color: var(--dos-border-sunken);
   padding: 1px 8px;
 }
 

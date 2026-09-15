@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@swearjar/dos": fileURLToPath(new URL("./src/packages/swearjar-dos", import.meta.url)),
     },
   },
   test: {

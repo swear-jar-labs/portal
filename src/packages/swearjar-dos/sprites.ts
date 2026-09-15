@@ -1,9 +1,9 @@
 export type SpriteData = {
-  palette: Record<string, string>;
-  map: string[];
+  palette: Readonly<Record<string, string>>;
+  map: readonly string[];
 };
 
-export const sprites: Record<string, SpriteData> = {
+export const sprites = {
   jar: {
     palette: {
       K: "#000000",
@@ -31,4 +31,4 @@ export const sprites: Record<string, SpriteData> = {
       "................",
     ],
   },
-};
+} as const satisfies Record<string, SpriteData>;

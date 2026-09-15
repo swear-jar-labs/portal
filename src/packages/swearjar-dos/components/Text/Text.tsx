@@ -11,14 +11,7 @@ export type TextProps = {
   className?: string;
 };
 
-export function Text({
-  children,
-  as = "p",
-  tone,
-  weight,
-  align,
-  className,
-}: TextProps) {
+export function Text({ children, as = "p", tone, weight, align, className }: TextProps) {
   return createElement(
     as,
     {

@@ -7,6 +7,7 @@ export type FileTableColumn = {
   label: string;
   width?: string;
   align?: "left" | "right";
+  render?: (item: FileTableItem) => ReactNode;
 };
 
 export type FileTableItem = {
@@ -73,6 +74,17 @@ function Control({ item }: { item: FileTableItem }) {
   );
 }
 
+const cellContent: Record<string, ((item: FileTableItem) => ReactNode) | undefined> = {
+  name: (item) => <Control item={item} />,
+  type: (item) => item.type,
+  size: (item) => item.size,
+};
+
+const cellClass: Record<string, string | undefined> = {
+  type: styles.type,
+  size: styles.size,
+};
+
 export function FileTable({
   columns,
   items,
@@ -88,10 +100,7 @@ export function FileTable({
         <table className={styles.table} aria-label={label}>
           <colgroup>
             {columns.map((column) => (
-              <col
-                key={column.id}
-                style={column.width ? { width: column.width } : undefined}
-              />
+              <col key={column.id} style={column.width ? { width: column.width } : undefined} />
             ))}
           </colgroup>
           <thead>
@@ -100,11 +109,7 @@ export function FileTable({
                 <th
                   key={column.id}
                   scope="col"
-                  className={cx(
-                    styles.cell,
-                    styles.head,
-                    column.align === "right" && styles.right,
-                  )}
+                  className={cx(styles.cell, styles.head, column.align === "right" && styles.right)}
                 >
                   {column.label}
                 </th>
@@ -122,11 +127,18 @@ export function FileTable({
                   item.selected && styles.selected,
                 )}
               >
-                <td className={styles.cell}>
-                  <Control item={item} />
-                </td>
-                <td className={cx(styles.cell, styles.type)}>{item.type}</td>
-                <td className={cx(styles.cell, styles.size)}>{item.size}</td>
+                {columns.map((column) => (
+                  <td
+                    key={column.id}
+                    className={cx(
+                      styles.cell,
+                      column.align === "right" && styles.right,
+                      cellClass[column.id],
+                    )}
+                  >
+                    {column.render ? column.render(item) : cellContent[column.id]?.(item)}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

@@ -14,8 +14,24 @@ const eslintConfig = defineConfig([
         "error",
         {
           selector: "JSXOpeningElement[name.name=/^[a-z]/]",
-          message:
-            "No intrinsic HTML in src/app. Use a @swearjar/dos component instead.",
+          message: "No intrinsic HTML in src/app. Use a @swearjar/dos component instead.",
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/packages/swearjar-dos/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/*", "**/app/**", "**/db/**", "**/lib/**"],
+              message:
+                "The kit must stay standalone: it never imports app code (src/app, src/db, src/lib).",
+            },
+          ],
         },
       ],
     },

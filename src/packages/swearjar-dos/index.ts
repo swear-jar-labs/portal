@@ -56,17 +56,13 @@ export type { MenuBarEntry, MenuBarMenu, MenuBarProps } from "./components/MenuB
 export { CmdLine } from "./components/CmdLine/CmdLine";
 export type { CmdLineProps } from "./components/CmdLine/CmdLine";
 
-export {
-  buildHelp,
-  findCommands,
-  nextCompletion,
-  resolveCommand,
-  visibleCommands,
-} from "./commands/registry";
+export { buildHelp, nextCompletion, resolveCommand } from "./commands/registry";
 export type { Command } from "./commands/types";
 
 export { sprites } from "./sprites";
 export type { SpriteData } from "./sprites";
+
+export { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
 
 export { toneColor, toneStyle, cx } from "./components/tone";
 export type { Tone } from "./components/tone";

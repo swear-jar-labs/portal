@@ -26,17 +26,12 @@ export function MenuBar({ menus, brand, className }: MenuBarProps) {
     <RadixMenubar.Root className={cx(styles.root, className)}>
       {menus.map((menu) => (
         <RadixMenubar.Menu key={menu.id}>
-          <RadixMenubar.Trigger className={styles.trigger}>
-            {menu.label}
-          </RadixMenubar.Trigger>
+          <RadixMenubar.Trigger className={styles.trigger}>{menu.label}</RadixMenubar.Trigger>
           <RadixMenubar.Portal>
             <RadixMenubar.Content className={styles.content} sideOffset={0}>
               {menu.entries.map((entry, index) =>
                 entry.kind === "separator" ? (
-                  <RadixMenubar.Separator
-                    key={`separator-${index}`}
-                    className={styles.separator}
-                  />
+                  <RadixMenubar.Separator key={`separator-${index}`} className={styles.separator} />
                 ) : (
                   <RadixMenubar.Item
                     key={entry.id}

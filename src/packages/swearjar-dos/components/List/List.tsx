@@ -17,8 +17,6 @@ export function List({ items, ordered = false, marker = true, tone, className }:
       className: cx(styles.list, ordered && styles.ordered, !marker && styles.noMarker, className),
       style: toneStyle(tone),
     },
-    items.map((item, index) =>
-      createElement("li", { key: index, className: styles.item }, item),
-    ),
+    items.map((item, index) => createElement("li", { key: index, className: styles.item }, item)),
   );
 }

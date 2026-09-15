@@ -1,6 +1,6 @@
 "use client";
 
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { cx } from "../tone";
 import styles from "./Button.module.css";
 
@@ -12,6 +12,7 @@ export type ButtonProps = {
   disabled?: boolean;
   ariaLabel?: string;
   className?: string;
+  style?: CSSProperties;
 };
 
 export function Button({
@@ -22,6 +23,7 @@ export function Button({
   disabled = false,
   ariaLabel,
   className,
+  style,
 }: ButtonProps) {
   return (
     <button
@@ -30,6 +32,7 @@ export function Button({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cx(styles.button, styles[variant], className)}
+      style={style}
     >
       {children}
     </button>

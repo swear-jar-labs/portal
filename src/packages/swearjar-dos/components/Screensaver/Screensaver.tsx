@@ -20,13 +20,21 @@ type Star = {
   py: number;
 };
 
-const FPS_INTERVAL = 42;
+const FRAME_INTERVAL_MS = 42;
+const DEFAULT_STAR_COUNT = 90;
+const CANVAS_SCALE = 4;
+const STAR_STEP_BASE = 0.02;
+const STAR_STEP_DEPTH = 0.045;
+const STAR_RESPAWN_Z = 0.25;
+const STAR_MIN_Z = 0.05;
+const STAR_MIN_BRIGHTNESS = 70;
+const STAR_BRIGHTNESS_RANGE = 185;
 
 export function Screensaver({
-  active = true,
+  active = false,
   title = "STARFIELD.SCR",
   hint = "PRESS ANY KEY TO WAKE UP",
-  starCount = 90,
+  starCount = DEFAULT_STAR_COUNT,
   className,
 }: ScreensaverProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,9 +46,8 @@ export function Screensaver({
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const background = getComputedStyle(canvas).getPropertyValue("--dos-black").trim() || "#000000";
     const stars: Star[] = [];
     let width = 0;
     let height = 0;
@@ -50,22 +57,22 @@ export function Screensaver({
     const reset = (star: Star, anywhere: boolean) => {
       star.x = Math.random() * 2 - 1;
       star.y = Math.random() * 2 - 1;
-      star.z = anywhere ? 0.25 + Math.random() * 0.75 : 1;
+      star.z = anywhere ? STAR_RESPAWN_Z + Math.random() * (1 - STAR_RESPAWN_Z) : 1;
       star.px = Number.NaN;
       star.py = Number.NaN;
     };
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      width = Math.max(80, Math.round(rect.width / 4));
-      height = Math.max(60, Math.round(rect.height / 4));
+      width = Math.max(80, Math.round(rect.width / CANVAS_SCALE));
+      height = Math.max(60, Math.round(rect.height / CANVAS_SCALE));
       canvas.width = width;
       canvas.height = height;
       for (const star of stars) reset(star, true);
     };
 
     const draw = () => {
-      context.fillStyle = "#000000";
+      context.fillStyle = background;
       context.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
@@ -74,14 +81,14 @@ export function Screensaver({
       const focalY = height * 0.5;
 
       for (const star of stars) {
-        star.z -= 0.02 + (1 - star.z) * 0.045;
-        if (star.z <= 0.05) reset(star, false);
+        star.z -= STAR_STEP_BASE + (1 - star.z) * STAR_STEP_DEPTH;
+        if (star.z <= STAR_MIN_Z) reset(star, false);
 
         const sx = centerX + (star.x / star.z) * focalX;
         const sy = centerY + (star.y / star.z) * focalY;
 
         const depth = 1 - star.z;
-        const value = Math.round(70 + depth * 185);
+        const value = Math.round(STAR_MIN_BRIGHTNESS + depth * STAR_BRIGHTNESS_RANGE);
         context.strokeStyle = `rgb(${value}, ${value}, ${value})`;
         context.lineWidth = 1;
 
@@ -101,7 +108,7 @@ export function Screensaver({
     };
 
     const loop = (time: number) => {
-      if (time - last >= FPS_INTERVAL) {
+      if (time - last >= FRAME_INTERVAL_MS) {
         draw();
         last = time;
       }

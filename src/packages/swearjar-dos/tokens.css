@@ -17,7 +17,6 @@
   --dos-white: #ffffff;
 
   --dos-font: var(--font-vt323), var(--font-plex-mono), "Courier New", monospace;
-  --dos-font-mono: var(--font-plex-mono), "Courier New", monospace;
   --dos-font-size: 20px;
   --dos-font-size-narrow: 18px;
   --dos-line-height: 1.4;
@@ -30,12 +29,12 @@
   --dos-overlay: rgba(0, 0, 0, 0.55);
 
   --dos-blink: 1s steps(1) infinite;
+  --dos-boot-fade: 450ms;
 
   --dos-shell-max-width: 1600px;
 
   --dos-filetable-bg: var(--dos-blue);
 
-  --dos-z-panels: 1;
   --dos-z-menu: 70;
   --dos-z-window: 1500;
   --dos-z-scanlines: 3000;

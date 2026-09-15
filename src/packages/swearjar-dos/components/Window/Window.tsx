@@ -28,22 +28,15 @@ export function Window({
       <div className={styles.titleBar}>
         <span className={styles.title}>{title}</span>
         {onClose ? (
-          <button
-            type="button"
-            className={styles.close}
-            onClick={onClose}
-            aria-label={closeLabel}
-          >
+          <button type="button" className={styles.close} onClick={onClose} aria-label={closeLabel}>
             [X]
           </button>
         ) : null}
       </div>
-      <div className={styles.body}>{children}</div>
-      {footer ? (
-        <div className={styles.footer}>
-          {footer}
-        </div>
-      ) : null}
+      <div className={styles.body} tabIndex={0}>
+        {children}
+      </div>
+      {footer ? <div className={styles.footer}>{footer}</div> : null}
     </div>
   );
 }

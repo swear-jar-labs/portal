@@ -19,9 +19,7 @@ export function Link({
   underline = false,
   className,
 }: LinkProps) {
-  const externalProps = external
-    ? { target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  const externalProps = external ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
   return (
     <a

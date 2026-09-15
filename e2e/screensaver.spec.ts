@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { defaultScreensaver } from "../src/content/settings";
 
 test("the starfield screensaver wakes on any key", async ({ page }) => {
   await page.clock.install();
@@ -13,7 +14,7 @@ test("the starfield screensaver wakes on any key", async ({ page }) => {
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(dialog).toBeHidden();
 
-  await page.clock.runFor(5 * 60_000 + 1_000);
+  await page.clock.runFor(defaultScreensaver.delayMs + 1_000);
 
   const canvas = page.getByRole("img", { name: "Starfield screensaver" });
   await expect(canvas).toBeVisible();

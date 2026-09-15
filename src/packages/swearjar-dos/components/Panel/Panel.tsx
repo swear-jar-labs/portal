@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "../../attributes";
 import { cx } from "../tone";
 import styles from "./Panel.module.css";
 
@@ -11,6 +12,7 @@ export type PanelProps = {
   titleActionLabel?: string;
   scroll?: boolean;
   padded?: boolean;
+  zone?: string;
   className?: string;
 };
 
@@ -23,10 +25,13 @@ export function Panel({
   titleActionLabel,
   scroll = true,
   padded = true,
+  zone,
   className,
 }: PanelProps) {
+  const zoneAttrs = zone ? { [DOS_ZONE_ATTR]: zone } : undefined;
+
   return (
-    <section className={cx(styles.panel, className)} aria-label={title}>
+    <section className={cx(styles.panel, className)} aria-label={title} {...zoneAttrs}>
       <div className={styles.titleBar}>
         {leading ? <div className={styles.leading}>{leading}</div> : null}
         {onTitleActivate ? (
@@ -43,7 +48,11 @@ export function Panel({
         )}
         {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>
-      <div className={cx(styles.body, !padded && styles.unpadded, scroll && styles.scroll)}>
+      <div
+        className={cx(styles.body, !padded && styles.unpadded, scroll && styles.scroll)}
+        tabIndex={scroll ? 0 : undefined}
+        {...(scroll ? { [DOS_SCROLL_ATTR]: "" } : undefined)}
+      >
         {children}
       </div>
     </section>

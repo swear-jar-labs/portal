@@ -1,16 +1,7 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 
 export type Tone =
-  | "default"
-  | "dim"
-  | "white"
-  | "black"
-  | "blue"
-  | "cyan"
-  | "green"
-  | "yellow"
-  | "red"
-  | "magenta";
+  "default" | "dim" | "white" | "black" | "blue" | "cyan" | "green" | "yellow" | "red" | "magenta";
 
 export const toneColor: Record<Tone, string> = {
   default: "var(--dos-light-gray)",
@@ -33,5 +24,3 @@ export function toneStyle(tone: Tone | undefined): CSSProperties | undefined {
 export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
-
-export type { ReactNode };

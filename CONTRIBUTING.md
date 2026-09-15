@@ -7,7 +7,19 @@ Contributions are welcome. Keep changes small and readable; expect review.
 - TypeScript strict. Small, explicit modules. Avoid premature abstraction.
 - Prefer readable code over clever code.
 - Comments explain _why_, not _what_; most code needs none.
-- Run `npm run lint` and Prettier before opening a PR.
+- Keep files focused. A component around 200 lines or a hook around 80 is a prompt to ask
+  "which two responsibilities got mixed here?", not a hard limit; split by responsibility,
+  not by line count.
+- Lists that reference each other by id (commands, files, menus, keys) share a union type;
+  a unit test keeps them consistent.
+- No DOM programming: activation goes through callbacks, not `.click()`; shared contracts
+  are exported constants (`data-*`), not strings typed in place.
+- Name meaningful numbers and strings (timings, sizes, paths, attributes). If JS and CSS
+  need the same value, declare it once (token + constant).
+- Pure logic gets Vitest tests; e2e covers behavior, and keyboard-facing scenarios get an
+  axe check. No `waitForTimeout` in tests.
+- Before a PR: `npm run typecheck && npm run lint && npm run format:check && npm test`
+  (add `npm run test:e2e` for UI changes).
 
 ## Workflow
 

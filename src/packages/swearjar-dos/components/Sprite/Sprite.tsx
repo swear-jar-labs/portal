@@ -1,11 +1,11 @@
 import { cx } from "../tone";
-import { sprites } from "../../sprites";
+import { sprites, type SpriteData } from "../../sprites";
 import styles from "./Sprite.module.css";
 
 export type SpriteProps = {
   name?: keyof typeof sprites;
-  map?: string[];
-  palette?: Record<string, string>;
+  map?: readonly string[];
+  palette?: Readonly<Record<string, string>>;
   cell?: number;
   label?: string;
   decorative?: boolean;
@@ -21,7 +21,7 @@ export function Sprite({
   decorative = false,
   className,
 }: SpriteProps) {
-  const data = map && palette ? { map, palette } : sprites[name];
+  const data: SpriteData = map && palette ? { map, palette } : sprites[name];
   const columns = data.map[0]?.length ?? 0;
 
   return (
@@ -36,13 +36,15 @@ export function Sprite({
       aria-hidden={decorative ? true : undefined}
     >
       {data.map.flatMap((row, rowIndex) =>
-        row.split("").map((pixel, columnIndex) => (
-          <i
-            key={`${rowIndex}-${columnIndex}`}
-            className={styles.pixel}
-            style={{ background: data.palette[pixel] }}
-          />
-        )),
+        row
+          .split("")
+          .map((pixel, columnIndex) => (
+            <i
+              key={`${rowIndex}-${columnIndex}`}
+              className={styles.pixel}
+              style={{ background: data.palette[pixel] }}
+            />
+          )),
       )}
     </span>
   );

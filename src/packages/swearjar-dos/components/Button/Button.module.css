@@ -12,11 +12,11 @@
   background: var(--dos-light-gray);
   color: var(--dos-black);
   border: var(--dos-border-width) solid;
-  border-color: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
+  border-color: var(--dos-border-raised);
 }
 
 .button:active:not(:disabled) {
-  border-color: var(--dos-black) var(--dos-white) var(--dos-white) var(--dos-black);
+  border-color: var(--dos-border-sunken);
 }
 
 .button:focus-visible {

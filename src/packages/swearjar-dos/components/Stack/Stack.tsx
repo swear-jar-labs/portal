@@ -2,15 +2,7 @@ import { createElement, type CSSProperties, type ReactNode } from "react";
 import { cx } from "../tone";
 
 type StackElement =
-  | "div"
-  | "section"
-  | "nav"
-  | "header"
-  | "footer"
-  | "main"
-  | "aside"
-  | "article"
-  | "ul";
+  "div" | "section" | "nav" | "header" | "footer" | "main" | "aside" | "article" | "ul";
 
 export type StackProps = {
   children: ReactNode;

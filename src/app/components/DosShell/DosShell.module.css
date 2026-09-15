@@ -1,4 +1,6 @@
 .stage {
+  --file-row-height: 1.8em;
+  --file-table-chrome: calc(3 * 1.4em + 25px);
   width: 100%;
   height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
@@ -13,7 +15,7 @@
   padding: 2rem 1.5rem;
   line-height: 1.7;
   cursor: pointer;
-  transition: opacity 0.45s steps(9);
+  transition: opacity var(--dos-boot-fade) steps(9);
 }
 
 .bootDone {
@@ -79,10 +81,6 @@
   height: 100%;
 }
 
-.navButton {
-  padding: 0 6px !important;
-}
-
 .jar.flash {
   animation: flash 0.3s steps(2) 2;
 }
@@ -106,30 +104,26 @@
     height: 100%;
   }
 
-  .panels {
-    flex-direction: column !important;
-  }
-
   .panelLeft {
-    flex: 0 0 auto !important;
+    flex: 0 0 auto;
   }
 
-  .fileTable :global(td) {
-    line-height: 1.8;
+  .fileTable {
+    --dos-table-row-line-height: 1.8;
   }
 
   .panelPeek {
-    flex: 0 0 auto !important;
-    height: calc(2 * 1.8em + 3 * 1.4em + 25px);
+    flex: 0 0 auto;
+    height: calc(2 * var(--file-row-height) + var(--file-table-chrome));
   }
 
   .panelCompact {
-    flex: 0 0 auto !important;
-    height: calc(5 * 1.8em + 3 * 1.4em + 25px);
+    flex: 0 0 auto;
+    height: calc(5 * var(--file-row-height) + var(--file-table-chrome));
   }
 
   .panelExpanded {
-    flex: 0 0 auto !important;
+    flex: 0 0 auto;
     height: auto;
     max-height: 70%;
   }

@@ -7,9 +7,7 @@ export async function enterShell(page: Page) {
 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(
-    dialog.getByRole("heading", { name: "WELCOME TO SWEARJAR.DOS" }),
-  ).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "WELCOME TO SWEARJAR.DOS" })).toBeVisible();
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(dialog).toBeHidden();
 }

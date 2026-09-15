@@ -1,4 +1,5 @@
 .doc {
+  position: relative;
   color: var(--dos-light-gray);
 }
 

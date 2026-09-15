@@ -8,19 +8,25 @@ export type Inline = {
 
 export type Block =
   | { type: "hero"; title: string; tagline: string }
-  | { type: "heading"; text: string; tone?: Tone; align?: "left" | "center" }
+  | { type: "heading"; text: string; tone?: Tone }
   | {
       type: "paragraph";
-      content: Inline[];
+      content: readonly Inline[];
       tone?: Tone;
       align?: "left" | "right";
     }
-  | { type: "list"; items: Inline[][] };
+  | { type: "list"; items: readonly (readonly Inline[])[] };
 
-export type Doc = {
+type DocShape = {
   id: string;
   title: string;
-  blocks: Block[];
+  blocks: readonly Block[];
+};
+
+export type Doc = {
+  id: DocId;
+  title: string;
+  blocks: readonly Block[];
 };
 
 export type BootLine = {
@@ -62,7 +68,7 @@ export const bootLines: BootLine[] = [
 
 export const bootSkip = "[ CLICK OR PRESS ANY KEY TO SKIP ]";
 
-export const docs: Doc[] = [
+const docDefs = [
   {
     id: "ABOUT",
     title: "ABOUT.TXT",
@@ -129,13 +135,13 @@ export const docs: Doc[] = [
     id: "MANIFESTO",
     title: "MANIFESTO.TXT",
     blocks: [
-      { type: "heading", text: "THE MANIFESTO", tone: "yellow", align: "center" },
+      { type: "heading", text: "THE MANIFESTO", tone: "yellow" },
       {
         type: "paragraph",
         content: [
           { text: "1. What we believe.", tone: "yellow", bold: true },
           {
-              text: " Judgment is grown by writing and by mistakes. Code is now read more than it is written — and reading is earned by writing, so we practice reading through writing.",
+            text: " Judgment is grown by writing and by mistakes. Code is now read more than it is written — and reading is earned by writing, so we practice reading through writing.",
           },
         ],
       },
@@ -160,7 +166,7 @@ export const docs: Doc[] = [
         content: [
           { text: "4. Value flows.", tone: "yellow", bold: true },
           {
-              text: " Members get real products, like-minded peers, and a pace without the grind. Sharpening the craft is the point.",
+            text: " Members get real products, like-minded peers, and a pace without the grind. Sharpening the craft is the point.",
           },
         ],
       },
@@ -202,7 +208,9 @@ export const docs: Doc[] = [
         type: "paragraph",
         content: [
           { text: "Readroom", tone: "cyan", bold: true },
-          { text: " — we read code together — human or machine — on a deadline, then publish a report." },
+          {
+            text: " — we read code together — human or machine — on a deadline, then publish a report.",
+          },
         ],
       },
       {
@@ -242,9 +250,7 @@ export const docs: Doc[] = [
       {
         type: "paragraph",
         tone: "dim",
-        content: [
-          { text: "Break a rule and the jar clinks. Type an unknown command to hear it." },
-        ],
+        content: [{ text: "Break a rule and the jar clinks. Type an unknown command to hear it." }],
       },
     ],
   },
@@ -271,16 +277,22 @@ export const docs: Doc[] = [
       },
     ],
   },
-];
+] as const satisfies readonly DocShape[];
 
-export const docsById: Record<string, Doc> = Object.fromEntries(
-  docs.map((doc) => [doc.id, doc]),
-);
+export type DocId = (typeof docDefs)[number]["id"];
+
+export const docs: readonly Doc[] = docDefs;
+
+export const docsById = docs.reduce<Partial<Record<DocId, Doc>>>((byId, doc) => {
+  byId[doc.id] = doc;
+  return byId;
+}, {});
 
 export const welcome = {
   title: "WELCOME.TXT",
   heading: "WELCOME TO SWEARJAR.DOS",
-  intro: "The public terminal of Swear Jar Labs — a community keeping the craft of software engineering alive.",
+  intro:
+    "The public terminal of Swear Jar Labs — a community keeping the craft of software engineering alive.",
   lines: [
     "Pick a file on the left to read.",
     "Type HELP for commands. Tab completes.",

@@ -27,9 +27,7 @@ describe("visibleCommands", () => {
 
 describe("findCommands", () => {
   it("matches by prefix, case-insensitively", () => {
-    expect(findCommands(commands, "app").map((command) => command.id)).toEqual([
-      "APPLY",
-    ]);
+    expect(findCommands(commands, "app").map((command) => command.id)).toEqual(["APPLY"]);
   });
 
   it("returns every visible command for an empty query", () => {

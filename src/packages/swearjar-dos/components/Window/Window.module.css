@@ -6,7 +6,7 @@
   background: var(--dos-light-gray);
   color: var(--dos-black);
   border: var(--dos-border-width) solid;
-  border-color: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
+  border-color: var(--dos-border-raised);
   box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.65);
 }
 
@@ -58,6 +58,11 @@
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.body:focus-visible {
+  outline: 2px solid var(--dos-light-cyan);
+  outline-offset: -2px;
 }
 
 .footer {

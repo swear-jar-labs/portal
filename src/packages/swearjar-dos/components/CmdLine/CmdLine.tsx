@@ -1,18 +1,13 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { Command } from "../../commands/types";
 import { nextCompletion } from "../../commands/registry";
 import { cx } from "../tone";
 import styles from "./CmdLine.module.css";
 
 export type CmdLineProps = {
-  commands: Command[];
+  commands: readonly Command[];
   onSubmit: (input: string) => void;
   onSubmitEmpty?: () => void;
   onNavigate?: (direction: "up" | "down") => void;
@@ -60,9 +55,7 @@ export function CmdLine({
       if (event.key.length !== 1 || event.key === " ") return;
       const target = event.target as HTMLElement | null;
       if (
-        target?.closest(
-          "input, textarea, select, [role='menubar'], [role='menu'], [role='dialog']",
-        )
+        target?.closest("input, textarea, select, [role='menubar'], [role='menu'], [role='dialog']")
       ) {
         return;
       }
@@ -76,6 +69,8 @@ export function CmdLine({
   }, [captureDisabled]);
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.nativeEvent.isComposing) return;
+
     if (event.key === "Enter") {
       event.preventDefault();
       const input = value.trim();
@@ -89,9 +84,11 @@ export function CmdLine({
     }
 
     if (event.key === "Tab") {
-      event.preventDefault();
+      if (event.shiftKey || !value.trim()) return;
       const completion = nextCompletion(commands, value);
-      if (completion) setValue(completion);
+      if (!completion) return;
+      event.preventDefault();
+      setValue(completion);
       return;
     }
 
@@ -102,7 +99,11 @@ export function CmdLine({
     }
 
     if (event.key === "Escape") {
-      setValue("");
+      if (value) {
+        setValue("");
+      } else {
+        inputRef.current?.blur();
+      }
     }
   }
 

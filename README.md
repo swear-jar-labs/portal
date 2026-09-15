@@ -43,17 +43,20 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Command               | What it does                            |
-| --------------------- | --------------------------------------- |
-| `npm run dev`         | Start the dev server                    |
-| `npm run build`       | Production build                        |
-| `npm run lint`        | ESLint                                  |
-| `npm run db:generate` | Generate SQL migrations from the schema |
-| `npm run db:migrate`  | Apply migrations                        |
-| `npm run db:push`     | Push the schema directly (local dev)    |
-| `npm run db:studio`   | Open Drizzle Studio                     |
-| `npm test`            | Unit tests (Vitest)                     |
-| `npm run test:e2e`    | End-to-end tests (Playwright)           |
+| Command                | What it does                            |
+| ---------------------- | --------------------------------------- |
+| `npm run dev`          | Start the dev server                    |
+| `npm run build`        | Production build                        |
+| `npm run typecheck`    | TypeScript, no emit                     |
+| `npm run lint`         | ESLint                                  |
+| `npm run format`       | Format with Prettier                    |
+| `npm run format:check` | Check formatting                        |
+| `npm run db:generate`  | Generate SQL migrations from the schema |
+| `npm run db:migrate`   | Apply migrations                        |
+| `npm run db:push`      | Push the schema directly (local dev)    |
+| `npm run db:studio`    | Open Drizzle Studio                     |
+| `npm test`             | Unit tests (Vitest)                     |
+| `npm run test:e2e`     | End-to-end tests (Playwright)           |
 
 ## Contributing
 

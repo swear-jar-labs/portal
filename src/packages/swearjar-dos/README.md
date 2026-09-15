@@ -4,7 +4,7 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 
 ## Boundary
 
-- Self-contained: **no imports from the app** (`src/app`, `src/db`, `src/lib`).
+- Self-contained: **no imports from the app** (`src/app`, `src/db`, `src/lib`); enforced by ESLint.
 - Public API only through `index.ts`.
 - Styling: CSS Modules + `tokens.css`. No visual CSS frameworks.
 - Import from the app as `@swearjar/dos`.
@@ -16,6 +16,8 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - `components/<Name>/{Name.tsx, Name.module.css}` — primitives and surfaces
 - `commands/` — command types + registry helpers (completion, HELP)
 - `sprites.ts` — pixel sprite data (the swear jar)
+- `attributes.ts` — shared `data-*` contracts (`DOS_SCROLL_ATTR`, `DOS_ZONE_ATTR`) for
+  keyboard-navigation code in consumers
 - `index.ts` — public entrypoint
 
 ## Components

@@ -5,7 +5,7 @@
   min-height: 0;
   margin: 0 1px;
   border: var(--dos-border-width) solid;
-  border-color: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
+  border-color: var(--dos-border-raised);
 }
 
 .titleBar {
@@ -58,6 +58,11 @@
   flex: 1 1 auto;
   min-height: 0;
   padding: 6px 8px;
+}
+
+.body:focus-visible {
+  outline: 2px solid var(--dos-light-cyan);
+  outline-offset: -2px;
 }
 
 .unpadded {

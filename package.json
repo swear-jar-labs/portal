@@ -34,7 +34,6 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
-    "@better-auth/cli": "^1.4.22",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22",
     "@types/react": "^19",

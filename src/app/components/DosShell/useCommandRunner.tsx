@@ -3,6 +3,7 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import { resolveCommand } from "@swearjar/dos";
 import { commands, type CommandId } from "@/content/commands";
+import { messages } from "@/content/messages";
 import { CoffeeBody } from "./CoffeeBody";
 import { DirBody, DoomBody, ErrorBody, ExitBody, HelpBody } from "./dialogs";
 
@@ -29,12 +30,13 @@ export function useCommandRunner({
 }: CommandRunnerOptions) {
   const handlers = useMemo<Partial<Record<CommandId, () => void>>>(
     () => ({
-      HELP: () => openDialog({ title: "HELP", body: <HelpBody /> }),
-      DIR: () => openDialog({ title: "DIR", body: <DirBody /> }),
+      HELP: () => openDialog({ title: messages.shell.dialogs.help.title, body: <HelpBody /> }),
+      DIR: () => openDialog({ title: messages.shell.dialogs.dir.title, body: <DirBody /> }),
       CLS: clearDocument,
-      COFFEE: () => openDialog({ title: "COFFEE.EXE", body: <CoffeeBody /> }),
-      DOOM: () => openDialog({ title: "DOOM.EXE", body: <DoomBody /> }),
-      EXIT: () => openDialog({ title: "EXIT", body: <ExitBody /> }),
+      COFFEE: () =>
+        openDialog({ title: messages.shell.dialogs.coffee.title, body: <CoffeeBody /> }),
+      DOOM: () => openDialog({ title: messages.shell.dialogs.doom.title, body: <DoomBody /> }),
+      EXIT: () => openDialog({ title: messages.shell.dialogs.exit.title, body: <ExitBody /> }),
     }),
     [clearDocument, openDialog],
   );
@@ -44,7 +46,11 @@ export function useCommandRunner({
       const command = resolveCommand(commands, raw);
       if (!command) {
         addCoin();
-        openDialog({ title: "ERROR", tone: "error", body: <ErrorBody /> });
+        openDialog({
+          title: messages.shell.dialogs.error.title,
+          tone: "error",
+          body: <ErrorBody />,
+        });
         return;
       }
       const handler = handlers[command.id];

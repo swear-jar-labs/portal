@@ -3,6 +3,8 @@ import { VT323, IBM_Plex_Mono } from "next/font/google";
 import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
+import { DosShell } from "./components/DosShell/DosShell";
+import { messages } from "@/content/messages";
 
 const vt323 = VT323({
   weight: "400",
@@ -19,9 +21,8 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Swear Jar Labs",
-  description:
-    "The public terminal of Swear Jar Labs — a community keeping the craft of software engineering alive.",
+  title: messages.metadata.title,
+  description: messages.metadata.description,
 };
 
 export const viewport: Viewport = {
@@ -31,7 +32,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${vt323.variable} ${plexMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <DosShell>{children}</DosShell>
+      </body>
     </html>
   );
 }

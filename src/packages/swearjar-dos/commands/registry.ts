@@ -28,13 +28,20 @@ export function resolveCommand<T extends Command>(
   return commands.find((command) => command.id === query);
 }
 
-export function buildHelp(commands: readonly Command[]): string {
-  const lines = ["Available commands:"];
+const HELP_DOTS = 15;
+
+export type HelpTexts = {
+  intro: string;
+  outro: string;
+};
+
+export function buildHelp(commands: readonly Command[], texts: HelpTexts): string {
+  const lines = [texts.intro];
   for (const command of visibleCommands(commands)) {
-    const dots = ".".repeat(Math.max(1, 15 - command.id.length));
+    const dots = ".".repeat(Math.max(1, HELP_DOTS - command.id.length));
     lines.push(`  ${command.id} ${dots} ${command.description}`);
   }
   lines.push("");
-  lines.push("Tab completes. Try an unknown command — the jar clinks.");
+  lines.push(texts.outro);
   return lines.join("\n");
 }

@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   CmdLine,
   Crt,
   Dialog,
-  Heading,
   KeyBar,
   MenuBar,
-  Panel,
   Screensaver,
   Sprite,
   Stack,
@@ -18,10 +16,12 @@ import {
   cx,
 } from "@swearjar/dos";
 import { commands, keyDefs, menuDefs } from "@/content/commands";
-import { bootLines, docsById, welcome } from "@/content/landing";
-import { defaultScreensaver, screensaverText } from "@/content/settings";
-import { DocView } from "../DocView/DocView";
+import { bootLines, welcome } from "@/content/landing";
+import { messages, pluralForms } from "@/content/messages";
+import { defaultScreensaver } from "@/content/settings";
+import { formatCount } from "@/lib/format";
 import { BootScreen } from "./BootScreen";
+import { FileManagerProvider } from "./FileManagerContext";
 import { FileManagerPanel } from "./FileManagerPanel";
 import { WelcomeBody } from "./dialogs";
 import { useBootState } from "./hooks/useBootState";
@@ -33,25 +33,36 @@ import { useIsMobile } from "./hooks/useIsMobile";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./useCommandRunner";
 import { useFileManager } from "./useFileManager";
-import { DOC_ZONE } from "./zones";
 import styles from "./DosShell.module.css";
 
 const CLOCK_INTERVAL_MS = 10_000;
+const HOME_PATH = "/";
 
-export function DosShell() {
+export type DosShellProps = {
+  children: ReactNode;
+};
+
+export function DosShell({ children }: DosShellProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isHome = pathname === HOME_PATH;
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [coins, setCoins] = useState(0);
 
   const isMobile = useIsMobile();
-  const { phase, revealed } = useBootState(bootLines.length);
+  // The boot screen and the welcome dialog belong to the home route only.
+  const { phase, revealed } = useBootState(isHome, bootLines.length);
   const booted = phase === "ready";
   const screensaverOn = useIdleScreensaver(defaultScreensaver.delayMs, defaultScreensaver.enabled);
-  const fileManager = useFileManager(isMobile);
 
   const openDialog = useCallback((next: DialogState) => setDialog(next), []);
   const addCoin = useCallback(() => setCoins((value) => value + 1), []);
   const push = useCallback((href: string) => router.push(href), [router]);
+  const goHome = useCallback(() => {
+    if (!isHome) router.push(HOME_PATH);
+  }, [isHome, router]);
+
+  const fileManager = useFileManager(isMobile, goHome);
 
   const run = useCommandRunner({
     openDialog,
@@ -75,7 +86,7 @@ export function DosShell() {
   const openWelcome = useCallback(() => {
     openDialog({ title: welcome.title, body: <WelcomeBody /> });
   }, [openDialog]);
-  useWelcomeDialog(booted, openWelcome);
+  useWelcomeDialog(isHome && booted, openWelcome);
 
   const time = useClock(CLOCK_INTERVAL_MS);
 
@@ -112,8 +123,6 @@ export function DosShell() {
     return <BootScreen revealed={revealed} closing={phase === "closing"} />;
   }
 
-  const selectedDoc = fileManager.selectedDocId ? docsById[fileManager.selectedDocId] : undefined;
-
   return (
     <Stack as="main" align="center" justify="center" className={styles.stage}>
       <Crt boot className={styles.shell}>
@@ -123,43 +132,29 @@ export function DosShell() {
             <>
               <Sprite name="jar" cell={2} decorative />
               <Text as="span">
-                SWEARJAR.DOS{" "}
+                {messages.shell.brand.name}{" "}
                 <Text as="span" tone="red">
-                  v0.1
+                  {messages.shell.brand.version}
                 </Text>
               </Text>
             </>
           }
         />
 
-        <Stack direction={isMobile ? "column" : "row"} gap={0} className={styles.panels}>
-          <FileManagerPanel
-            isMobile={isMobile}
-            listSize={fileManager.listSize}
-            onCycleSize={fileManager.cycleSize}
-            columns={fileManager.columns}
-            rows={fileManager.rows}
-            dirCount={fileManager.dirCount}
-            fileCount={fileManager.fileCount}
-          />
-
-          <Panel
-            title={selectedDoc ? selectedDoc.title : "C:\\"}
-            zone={DOC_ZONE}
-            className={cx(styles.panel, styles.panelRight)}
-          >
-            {selectedDoc ? (
-              <DocView doc={selectedDoc} />
-            ) : (
-              <Stack gap={8}>
-                <Heading level={1} className="sr-only">
-                  SWEAR JAR LABS
-                </Heading>
-                <Text tone="dim">Screen cleared. Pick a file to read.</Text>
-              </Stack>
-            )}
-          </Panel>
-        </Stack>
+        <FileManagerProvider value={fileManager}>
+          <Stack direction={isMobile ? "column" : "row"} gap={0} className={styles.panels}>
+            <FileManagerPanel
+              isMobile={isMobile}
+              listSize={fileManager.listSize}
+              onCycleSize={fileManager.cycleSize}
+              columns={fileManager.columns}
+              rows={fileManager.rows}
+              dirCount={fileManager.dirCount}
+              fileCount={fileManager.fileCount}
+            />
+            {children}
+          </Stack>
+        </FileManagerProvider>
 
         <CmdLine
           commands={commands}
@@ -167,18 +162,19 @@ export function DosShell() {
           onSubmitEmpty={fileManager.activateSelection}
           onNavigate={fileManager.moveCursor}
           captureDisabled={dialog !== null || screensaverOn}
+          ariaLabel={messages.shell.cmdLine.ariaLabel}
         />
-        <KeyBar items={keyItems} />
+        <KeyBar items={keyItems} ariaLabel={messages.shell.keyBar.ariaLabel} />
         <StatusBar
           left={
             <Text key={coins} as="span" className={cx(styles.jar, coins > 0 && styles.flash)}>
-              {`JAR: ${coins} ${coins === 1 ? "COIN" : "COINS"}`}
+              {`${messages.shell.statusBar.jar}: ${formatCount(coins, pluralForms.coin)}`}
             </Text>
           }
           right={
             <>
-              <Text as="span">GUEST</Text>
-              <Text as="span">{time ?? "--:--"}</Text>
+              <Text as="span">{messages.shell.statusBar.guest}</Text>
+              <Text as="span">{time ?? messages.shell.statusBar.clockFallback}</Text>
             </>
           }
         />
@@ -191,14 +187,15 @@ export function DosShell() {
         }}
         title={dialog?.title ?? ""}
         tone={dialog?.tone}
+        closeLabel={messages.shell.window.closeLabel}
       >
         {dialog?.body}
       </Dialog>
 
       <Screensaver
         active={screensaverOn}
-        title={screensaverText.title}
-        hint={screensaverText.hint}
+        title={messages.shell.screensaver.title}
+        hint={messages.shell.screensaver.hint}
       />
     </Stack>
   );

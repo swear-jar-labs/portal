@@ -6,8 +6,8 @@ import { useBootAnimation } from "./useBootAnimation";
 
 export type BootPhase = "booting" | "closing" | "ready";
 
-export function useBootState(lineCount: number) {
-  const [phase, setPhase] = useState<BootPhase>("booting");
+export function useBootState(enabled: boolean, lineCount: number) {
+  const [phase, setPhase] = useState<BootPhase>(enabled ? "booting" : "ready");
   const finished = useRef(false);
   const fadeTimer = useRef(0);
 
@@ -20,7 +20,7 @@ export function useBootState(lineCount: number) {
 
   useEffect(() => () => window.clearTimeout(fadeTimer.current), []);
 
-  const revealed = useBootAnimation(lineCount, phase === "booting", finish);
+  const revealed = useBootAnimation(lineCount, enabled && phase === "booting", finish);
 
-  return { phase, revealed, finish };
+  return { phase, revealed };
 }

@@ -10,10 +10,5 @@ export const defaultScreensaver: ScreensaverSettings = {
   delayMs: 5 * MINUTE_MS,
 };
 
-export const screensaverText = {
-  title: "STARFIELD.SCR",
-  hint: "PRESS ANY KEY TO WAKE UP",
-};
-
 // Mirrors --dos-boot-fade in tokens.css; update both together.
 export const bootFadeMs = 450;

@@ -1,5 +1,5 @@
-import { DosShell } from "./components/DosShell/DosShell";
+import { HomeBoard } from "./components/HomeBoard/HomeBoard";
 
 export default function Home() {
-  return <DosShell />;
+  return <HomeBoard />;
 }

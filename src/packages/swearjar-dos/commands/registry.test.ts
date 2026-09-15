@@ -60,12 +60,14 @@ describe("resolveCommand", () => {
 });
 
 describe("buildHelp", () => {
+  const texts = { intro: "Commands:", outro: "Tab completes." };
+
   it("lists visible commands and the completion hint", () => {
-    const help = buildHelp(commands);
-    expect(help).toContain("Available commands:");
+    const help = buildHelp(commands, texts);
+    expect(help.startsWith("Commands:")).toBe(true);
     expect(help).toContain("ABOUT");
     expect(help).toContain("APPLY");
     expect(help).not.toContain("SECRET");
-    expect(help).toContain("Tab completes.");
+    expect(help.endsWith("Tab completes.")).toBe(true);
   });
 });

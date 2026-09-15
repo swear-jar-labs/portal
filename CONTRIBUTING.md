@@ -16,6 +16,9 @@ Contributions are welcome. Keep changes small and readable; expect review.
   are exported constants (`data-*`), not strings typed in place.
 - Name meaningful numbers and strings (timings, sizes, paths, attributes). If JS and CSS
   need the same value, declare it once (token + constant).
+- UI strings and plural forms live in `src/content/messages.ts` (selected via
+  `src/lib/plural.ts`); components keep no strings of their own. Ids, paths and canon stay
+  in code.
 - Pure logic gets Vitest tests; e2e covers behavior, and keyboard-facing scenarios get an
   axe check. No `waitForTimeout` in tests.
 - Before a PR: `npm run typecheck && npm run lint && npm run format:check && npm test`

@@ -12,6 +12,7 @@ export type DialogProps = {
   children: ReactNode;
   footer?: ReactNode;
   tone?: "default" | "error";
+  closeLabel?: string;
 };
 
 export function Dialog({
@@ -21,6 +22,7 @@ export function Dialog({
   children,
   footer,
   tone = "default",
+  closeLabel,
 }: DialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +56,7 @@ export function Dialog({
             }
             tone={tone}
             onClose={() => onOpenChange(false)}
+            closeLabel={closeLabel}
             footer={footer}
           >
             {children}

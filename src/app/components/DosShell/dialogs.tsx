@@ -1,24 +1,25 @@
 import { buildHelp, Heading, Sprite, Stack, Text } from "@swearjar/dos";
 import { commands, fileGroups } from "@/content/commands";
 import { welcome } from "@/content/landing";
+import { messages } from "@/content/messages";
 
 const fileList = fileGroups.flatMap((group) => group.items);
 
 export function HelpBody() {
-  return <Text as="div">{buildHelp(commands)}</Text>;
+  return <Text as="div">{buildHelp(commands, messages.shell.dialogs.help)}</Text>;
 }
 
 export function ErrorBody() {
   return (
     <Stack gap={4}>
       <Text as="div" tone="red" weight="bold">
-        Bad command or file name.
+        {messages.shell.dialogs.error.headline}
       </Text>
       <Text as="div" tone="yellow">
-        The jar clinks. +1 coin.
+        {messages.shell.dialogs.error.jar}
       </Text>
       <Text as="div" tone="dim">
-        Try HELP.
+        {messages.shell.dialogs.error.hint}
       </Text>
     </Stack>
   );
@@ -39,9 +40,9 @@ export function DirBody() {
 export function DoomBody() {
   return (
     <Stack gap={4}>
-      <Text as="div">This is the only OS DOOM has not been ported to yet.</Text>
+      <Text as="div">{messages.shell.dialogs.doom.text}</Text>
       <Text as="div" tone="yellow">
-        But if you wish, you can take this on — APPLY.
+        {messages.shell.dialogs.doom.hint}
       </Text>
     </Stack>
   );
@@ -51,10 +52,10 @@ export function ExitBody() {
   return (
     <Stack gap={4}>
       <Text as="div" tone="red">
-        There is no exit, as there is no logon.
+        {messages.shell.dialogs.exit.text}
       </Text>
       <Text as="div" tone="dim">
-        Type LOGON to sign in.
+        {messages.shell.dialogs.exit.hint}
       </Text>
     </Stack>
   );

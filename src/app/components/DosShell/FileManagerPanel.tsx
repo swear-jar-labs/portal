@@ -1,14 +1,13 @@
 import { Button, cx, FileTable, Panel } from "@swearjar/dos";
 import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
+import { messages, pluralForms } from "@/content/messages";
 import { formatSummary } from "@/lib/format";
 import type { FileListSize } from "./useFileManager";
 import { FILES_ZONE } from "./zones";
 import styles from "./DosShell.module.css";
 
-const COLLAPSE_LABEL = "Collapse file list";
-const EXPAND_LABEL = "Expand file list";
-const HEADER_CYCLE_LABEL = "Cycle file list size (header)";
-const FOOTER_CYCLE_LABEL = "Cycle file list size (footer)";
+// DOS flavor path: canonical chrome, not a localizable string.
+const FILES_PANEL_TITLE = "C:\\SWEARJAR";
 const CORNER_PADDING = "0 6px";
 
 export type FileManagerPanelProps = {
@@ -32,7 +31,7 @@ export function FileManagerPanel({
 }: FileManagerPanelProps) {
   return (
     <Panel
-      title="C:\SWEARJAR"
+      title={FILES_PANEL_TITLE}
       zone={FILES_ZONE}
       scroll={false}
       padded={false}
@@ -48,7 +47,7 @@ export function FileManagerPanel({
           <Button
             variant="ghost"
             style={{ padding: CORNER_PADDING }}
-            ariaLabel={COLLAPSE_LABEL}
+            ariaLabel={messages.shell.files.collapse}
             onClick={() => onCycleSize(-1)}
           >
             [▲]
@@ -56,13 +55,13 @@ export function FileManagerPanel({
         ) : undefined
       }
       onTitleActivate={isMobile ? () => onCycleSize(1) : undefined}
-      titleActionLabel={HEADER_CYCLE_LABEL}
+      titleActionLabel={messages.shell.files.cycleHeader}
       actions={
         isMobile ? (
           <Button
             variant="ghost"
             style={{ padding: CORNER_PADDING }}
-            ariaLabel={EXPAND_LABEL}
+            ariaLabel={messages.shell.files.expand}
             onClick={() => onCycleSize(1)}
           >
             [▼]
@@ -74,10 +73,10 @@ export function FileManagerPanel({
         className={styles.fileTable}
         columns={columns}
         items={rows}
-        label="Files"
-        footer={formatSummary(dirCount, fileCount)}
+        label={messages.shell.files.tableLabel}
+        footer={formatSummary(dirCount, fileCount, pluralForms)}
         onFooterActivate={isMobile ? () => onCycleSize(1) : undefined}
-        footerActionLabel={FOOTER_CYCLE_LABEL}
+        footerActionLabel={messages.shell.files.cycleFooter}
       />
     </Panel>
   );

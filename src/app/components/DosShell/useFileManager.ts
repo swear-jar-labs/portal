@@ -4,14 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import { commandById, fileGroups, type CommandId } from "@/content/commands";
 import type { DocId } from "@/content/landing";
+import { messages } from "@/content/messages";
 import { buildRowIds, dirRowId, fileRowId, nextRowId } from "@/lib/file-manager";
 import { formatSize } from "@/lib/format";
 import { MOBILE_QUERY } from "./hooks/useIsMobile";
 
 const FILE_COLUMNS: FileTableColumn[] = [
-  { id: "name", label: "NAME" },
-  { id: "type", label: "TYPE", width: "6ch" },
-  { id: "size", label: "SIZE", width: "6ch", align: "right" },
+  { id: "name", label: messages.shell.files.columns.name },
+  { id: "type", label: messages.shell.files.columns.type, width: "6ch" },
+  { id: "size", label: messages.shell.files.columns.size, width: "6ch", align: "right" },
 ];
 
 const FILE_SIZE_ORDER = ["peek", "compact", "full"] as const;
@@ -20,7 +21,7 @@ export type FileListSize = (typeof FILE_SIZE_ORDER)[number];
 const INITIAL_DOC_ID: DocId = "ABOUT";
 const INITIAL_CURSOR_ID = fileRowId(INITIAL_DOC_ID);
 
-export function useFileManager(isMobile: boolean) {
+export function useFileManager(isMobile: boolean, onDocumentOpened: () => void) {
   const [selectedDocId, setSelectedDocId] = useState<DocId | null>(INITIAL_DOC_ID);
   const [cursorId, setCursorId] = useState(INITIAL_CURSOR_ID);
   const [collapsedGroups, setCollapsedGroups] = useState<readonly string[]>([]);
@@ -64,8 +65,9 @@ export function useFileManager(isMobile: boolean) {
       const group = command.file?.group;
       if (group) setCollapsedGroups((groups) => groups.filter((id) => id !== group));
       if (isMobile) setListSize("compact");
+      onDocumentOpened();
     },
-    [isMobile],
+    [isMobile, onDocumentOpened],
   );
 
   const closeDoc = useCallback(() => setSelectedDocId(null), []);

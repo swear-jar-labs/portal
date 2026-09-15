@@ -11,12 +11,13 @@ export type KeyBarItem = {
 
 export type KeyBarProps = {
   items: KeyBarItem[];
+  ariaLabel?: string;
   className?: string;
 };
 
-export function KeyBar({ items, className }: KeyBarProps) {
+export function KeyBar({ items, ariaLabel = "Function keys", className }: KeyBarProps) {
   return (
-    <div className={cx(styles.keyBar, className)} role="toolbar" aria-label="Function keys">
+    <div className={cx(styles.keyBar, className)} role="toolbar" aria-label={ariaLabel}>
       {items.map((item) => (
         <button key={item.key} type="button" className={styles.key} onClick={item.onSelect}>
           <b className={styles.badge}>{item.key}</b>

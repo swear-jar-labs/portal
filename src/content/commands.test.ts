@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { commandById, commands, fileGroups, keyDefs, menuDefs } from "./commands";
 import { docsById } from "./landing";
+import { messages } from "./messages";
 
 describe("commands content", () => {
   it("keeps command ids unique", () => {
     const ids = commands.map((command) => command.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("keeps registry texts in sync with the command ids", () => {
+    const described = Object.keys(messages.shell.registry.descriptions).sort();
+    const ids = commands.map((command) => command.id).sort();
+    expect(described).toEqual(ids);
+    for (const command of commands) {
+      expect(command.description).toBe(messages.shell.registry.descriptions[command.id]);
+    }
   });
 
   it("resolves every command referenced by the menu", () => {

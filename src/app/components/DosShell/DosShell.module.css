@@ -72,11 +72,6 @@
   background: var(--dos-blue);
 }
 
-.panelRight {
-  flex: 1 1 auto;
-  background: var(--dos-black);
-}
-
 .fileTable {
   height: 100%;
 }

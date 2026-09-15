@@ -10,7 +10,7 @@ Early, in active development: this repository currently holds the platform skele
 
 - **Next.js** (App Router, React Server Components) + TypeScript strict
 - **PostgreSQL** + **Drizzle ORM**
-- **Better Auth** (Google, GitHub, and handle + password)
+- **Better Auth** (Google, GitHub, and user + password)
 - **SWEARJAR.DOS** — our DOS-style UI kit (in progress)
 - **CSS Modules** for CRT/DOS styling
 - **Vitest** + **Playwright**

@@ -13,6 +13,14 @@ test("boots into the DOS shell with the file manager and content", async ({ page
   await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
 });
 
+test("switches the CRT on only as the boot completes", async ({ page }) => {
+  const animation = await page.getByRole("menubar").evaluate((element) => {
+    const shell = element.parentElement;
+    return shell ? getComputedStyle(shell).animationName : "missing";
+  });
+  expect(animation).toContain("crtOn");
+});
+
 test("hides the brand text on mobile and keeps it on desktop", async ({ page }) => {
   const brandText = page.getByText(/SWEARJAR\.DOS v0\.1/);
   await expect(brandText).toBeVisible();
@@ -207,7 +215,7 @@ test.describe("file manager", () => {
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "TYPE" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "SIZE" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
   });
 
   test("moves the selection with arrows without changing the document", async ({ page }) => {
@@ -302,7 +310,7 @@ test.describe("mobile file manager", () => {
   test("cycles peek, compact and full via the header and footer", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
 
     const scroller = files.locator("table").locator("..");
     const height = () => scroller.evaluate((el) => el.clientHeight);

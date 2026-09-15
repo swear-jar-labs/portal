@@ -2,7 +2,7 @@
 
 import { useId, type ChangeEvent } from "react";
 import { cx } from "../tone";
-import styles from "./Field.module.css";
+import styles from "../formControls.module.css";
 
 export type FieldProps = {
   label: string;
@@ -52,7 +52,7 @@ export function Field({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={styles.input}
+        className={styles.control}
       />
       {error ? (
         <span id={errorId} className={styles.error}>

@@ -27,6 +27,9 @@ export const messages = {
         TICKETS: "Tickets",
         APPLY: "Apply...",
         LOGON: "Logon...",
+        PROFILE: "Profile...",
+        SETTINGS: "Settings...",
+        LOGOFF: "Logoff",
         HELP: "Commands...",
         COFFEE: "Coffee",
       },
@@ -43,6 +46,8 @@ export const messages = {
         STATUS: "Status",
         APPLY: "Apply",
         LOGON: "Logon",
+        PROFILE: "Profile",
+        LOGOFF: "Logoff",
         EXIT: "Exit",
       },
     },
@@ -88,12 +93,21 @@ export const messages = {
         title: "EXIT",
         text: "There is no exit, as there is no logon.",
         hint: "Type LOGON to sign in.",
+        memberText: "There is no exit. The door is on the F9 key.",
+        memberHint: "LOGOFF ends the session; the jar stays.",
       },
       error: {
         title: "ERROR",
         headline: "Bad command or file name.",
         jar: "The jar clinks. +1 coin.",
         hint: "Try HELP.",
+      },
+      logoff: {
+        title: "LOGOFF",
+        text: "End the session?",
+        hint: "The jar stays.",
+        confirm: "[ LOG OFF ]",
+        cancel: "[ CANCEL ]",
       },
     },
     doc: {
@@ -119,7 +133,9 @@ export const messages = {
         TICKETS: "the work queue",
         APPLY: "join the team",
         LOGON: "member login",
+        PROFILE: "your account",
         SETTINGS: "tune the terminal",
+        LOGOFF: "sign out",
         COFFEE: "brew something",
         DOOM: "the only OS without DOOM",
         EXIT: "end the session",
@@ -129,10 +145,119 @@ export const messages = {
       },
     },
   },
+  account: {
+    gate: {
+      heading: "AUTH REQUIRED",
+      text: "This file belongs to members. Log on to open it.",
+      logon: "LOGON",
+      apply: "APPLY",
+    },
+    apply: {
+      metadata: {
+        title: "Apply — Swear Jar Labs",
+        description: "Apply to join Swear Jar Labs as a learner or a reviewer.",
+      },
+      heading: "JOIN THE TEAM",
+      intro:
+        "We take learners and reviewers. Tell us what you built, what you broke, and why by hand.",
+      fields: {
+        role: "Role",
+        user: "User",
+        userPlaceholder: "ada-lovelace",
+        email: "Email",
+        experience: "What you have built or broken",
+        weeklyHours: "Hours a week",
+        motivation: "Why by hand",
+      },
+      roles: {
+        learner: "Learner",
+        reviewer: "Reviewer",
+      },
+      weeklyHours: {
+        "under-5": "Under 5",
+        "5-10": "5 to 10",
+        "over-10": "Over 10",
+      },
+      errors: {
+        user: "2-32 characters: letters, digits, - or _.",
+        email: "An email address is needed.",
+        experience: "Keep it under 2000 characters.",
+        motivation: "A few words, at least.",
+      },
+      submit: "[ SUBMIT ]",
+      receipt: {
+        heading: "APPLICATION RECEIVED",
+        text: "Your application is on file. We read every one by hand.",
+        applicant: "APPLICANT",
+        hint: "Pick a file on the left while you wait.",
+      },
+    },
+    login: {
+      metadata: {
+        title: "Logon — Swear Jar Labs",
+        description: "Member logon for Swear Jar Labs.",
+      },
+      heading: "MEMBER LOGON",
+      fields: {
+        user: "User",
+        password: "Password",
+      },
+      hint: "User names are lower-case: letters, digits, - or _.",
+      submit: "[ LOG ON ]",
+      sso: {
+        label: "OR LOG ON WITH",
+        providers: {
+          google: "[ GOOGLE ]",
+          github: "[ GITHUB ]",
+        },
+      },
+      errors: {
+        user: "2-32 characters: letters, digits, - or _.",
+        password: "A password is needed.",
+        invalid: "Bad user or password.",
+        unavailable: "Sessions arrive with the backend. This build has no auth yet.",
+      },
+      applyPrompt: "No account yet?",
+      applyLink: "APPLY",
+    },
+    profile: {
+      metadata: {
+        title: "Profile — Swear Jar Labs",
+        description: "Your Swear Jar Labs account.",
+      },
+      joined: "MEMBER SINCE",
+      roles: {
+        member: "Member",
+      },
+      stats: {
+        merged: "MERGED",
+        reviews: "REVIEWS",
+        errata: "ERRATA",
+      },
+      activityHeading: "RECENT ACTIVITY",
+      activityEmpty: "No merged work yet. The jar is watching.",
+    },
+    settings: {
+      metadata: {
+        title: "Settings — Swear Jar Labs",
+        description: "Terminal preferences for Swear Jar Labs.",
+      },
+      heading: "TERMINAL SETTINGS",
+      screensaver: {
+        heading: "SCREENSAVER",
+        enabled: "Starfield after idle",
+        delay: "Idle delay",
+      },
+      save: "[ SAVE ]",
+      saved: "Saved on this terminal.",
+      hint: "These preferences live in this browser until accounts arrive.",
+    },
+  },
 } as const;
 
 export const pluralForms = {
   coin: { one: "COIN", other: "COINS" },
   dir: { one: "DIR", other: "DIRS" },
   file: { one: "FILE", other: "FILES" },
+  minute: { one: "MINUTE", other: "MINUTES" },
 } as const satisfies Record<string, PluralForms>;

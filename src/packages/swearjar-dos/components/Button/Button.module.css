@@ -25,16 +25,20 @@
 }
 
 .button:disabled {
+  background: var(--dos-light-gray);
   color: var(--dos-dark-gray);
+  border-color: var(--dos-light-gray);
   cursor: default;
 }
 
 .primary {
-  background: var(--dos-light-cyan);
+  background: var(--dos-cyan);
+  color: var(--dos-black);
 }
 
 .danger {
   background: var(--dos-light-red);
+  color: var(--dos-black);
 }
 
 .ghost {

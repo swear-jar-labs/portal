@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CmdLine,
@@ -15,11 +15,20 @@ import {
   Text,
   cx,
 } from "@swearjar/dos";
-import { commands, keyDefs, menuDefs } from "@/content/commands";
+import {
+  fileGroupsFor,
+  HOME_PATH,
+  keyDefsFor,
+  menuDefsFor,
+  visibleCommands,
+  type CommandId,
+} from "@/content/commands";
 import { bootLines, welcome } from "@/content/landing";
 import { messages, pluralForms } from "@/content/messages";
-import { defaultScreensaver } from "@/content/settings";
 import { formatCount } from "@/lib/format";
+import { mockLogoff } from "../Account/mock-session-actions";
+import type { MockSession } from "../Account/mock-session";
+import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "../Account/screensaver-prefs";
 import { BootScreen } from "./BootScreen";
 import { StatusClock } from "./StatusClock";
 import { WelcomeBody } from "./dialogs";
@@ -35,13 +44,12 @@ import { useFileCursorKeys } from "../FileManager/useFileCursorKeys";
 import { useFileManager } from "../FileManager/useFileManager";
 import styles from "./DosShell.module.css";
 
-const HOME_PATH = "/";
-
 export type DosShellProps = {
   children: ReactNode;
+  session: MockSession | null;
 };
 
-export function DosShell({ children }: DosShellProps) {
+export function DosShell({ children, session }: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
@@ -50,29 +58,72 @@ export function DosShell({ children }: DosShellProps) {
 
   const isMobile = useIsMobile();
   // The boot screen and the welcome dialog belong to the home route only.
-  const { phase, revealed } = useBootState(isHome, bootLines.length);
+  const { phase, revealed, bootFired } = useBootState(isHome, bootLines.length);
   const booted = phase === "ready";
-  const screensaverOn = useIdleScreensaver(defaultScreensaver.delayMs, defaultScreensaver.enabled);
+  const screensaverPrefs = useScreensaverPrefs((state) => state.prefs);
+  const hydrateScreensaverPrefs = useScreensaverPrefs((state) => state.hydrate);
+  const screensaverOn = useIdleScreensaver(
+    screensaverDelayMsForPrefs(screensaverPrefs),
+    screensaverPrefs.enabled,
+  );
+  const signedIn = session !== null;
+  // Welcome is a boot-time greeting: guests see it once per load, and neither a
+  // logon nor a logoff mid-session turns it back on.
+  const [welcomeEligible, setWelcomeEligible] = useState(() => !signedIn);
 
   const openDialog = useCallback((next: DialogState) => setDialog(next), []);
+  const closeDialog = useCallback(() => setDialog(null), []);
   const addCoin = useCallback(() => setCoins((value) => value + 1), []);
   const push = useCallback((href: string) => router.push(href), [router]);
   const goHome = useCallback(() => {
     if (!isHome) router.push(HOME_PATH);
   }, [isHome, router]);
 
-  const fileManager = useFileManager(isMobile, goHome);
+  const commandList = useMemo(() => visibleCommands(signedIn), [signedIn]);
+  const groups = useMemo(() => fileGroupsFor(signedIn), [signedIn]);
+  const functionKeys = useMemo(() => keyDefsFor(signedIn), [signedIn]);
+
+  // The runner needs the file manager (to open docs) and the file manager needs
+  // the runner (to run LOGOFF): the ref breaks the cycle.
+  const runRef = useRef<(commandId: CommandId) => void>(() => {});
+  const onCommand = useCallback((commandId: CommandId) => runRef.current(commandId), []);
+  const fileManager = useFileManager({
+    isMobile,
+    pathname,
+    signedIn,
+    onDocumentOpened: goHome,
+    groups,
+    onCommand,
+  });
+
+  const logoff = useCallback(() => {
+    setWelcomeEligible(false);
+    void mockLogoff().then(() => router.push(HOME_PATH));
+  }, [router]);
 
   const run = useCommandRunner({
     openDialog,
+    closeDialog,
     addCoin,
     openDocument: fileManager.openCommand,
     clearDocument: fileManager.closeDoc,
+    logoff,
     push,
+    commands: commandList,
+    groups,
+    signedIn,
   });
 
+  useEffect(() => {
+    runRef.current = run;
+  }, [run]);
+
+  useEffect(() => {
+    hydrateScreensaverPrefs();
+  }, [hydrateScreensaverPrefs]);
+
   const controlsEnabled = booted && dialog === null && !screensaverOn;
-  useFunctionKeys(keyDefs, run, controlsEnabled);
+  useFunctionKeys(functionKeys, run, controlsEnabled);
   useFileCursorKeys({
     enabled: controlsEnabled,
     cursorId: fileManager.cursorId,
@@ -85,11 +136,13 @@ export function DosShell({ children }: DosShellProps) {
   const openWelcome = useCallback(() => {
     openDialog({ title: welcome.title, body: <WelcomeBody /> });
   }, [openDialog]);
-  useWelcomeDialog(isHome && booted, openWelcome);
+  // Welcome belongs to the boot: without a boot (deep link into an inner
+  // route) entering home must not greet the guest out of nowhere.
+  useWelcomeDialog(isHome && booted && bootFired && !signedIn && welcomeEligible, openWelcome);
 
   const menus = useMemo(
     () =>
-      menuDefs.map((menu) => ({
+      menuDefsFor(signedIn).map((menu) => ({
         id: menu.id,
         label: menu.label,
         entries: menu.entries.map((entry) =>
@@ -103,17 +156,17 @@ export function DosShell({ children }: DosShellProps) {
               },
         ),
       })),
-    [run],
+    [run, signedIn],
   );
 
   const keyItems = useMemo(
     () =>
-      keyDefs.map((def) => ({
+      functionKeys.map((def) => ({
         key: def.key,
         label: def.label,
         onSelect: () => run(def.command),
       })),
-    [run],
+    [functionKeys, run],
   );
 
   if (!booted) {
@@ -122,7 +175,8 @@ export function DosShell({ children }: DosShellProps) {
 
   return (
     <Stack as="main" align="center" justify="center" className={styles.stage}>
-      <Crt boot className={styles.shell}>
+      {/* The CRT switch-on belongs to the boot: routes without it open plainly. */}
+      <Crt boot={bootFired} className={styles.shell}>
         <MenuBar
           menus={menus}
           brand={
@@ -154,7 +208,7 @@ export function DosShell({ children }: DosShellProps) {
         </FileManagerProvider>
 
         <CmdLine
-          commands={commands}
+          commands={commandList}
           onSubmit={run}
           onSubmitEmpty={fileManager.activateSelection}
           onNavigate={fileManager.moveCursor}
@@ -170,7 +224,7 @@ export function DosShell({ children }: DosShellProps) {
           }
           right={
             <>
-              <Text as="span">{messages.shell.statusBar.guest}</Text>
+              <Text as="span">{session ? session.user : messages.shell.statusBar.guest}</Text>
               <StatusClock />
             </>
           }

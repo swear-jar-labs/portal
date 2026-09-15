@@ -12,7 +12,17 @@ export type FileMeta = {
   size: number;
 };
 
-type AppCommandDef = Command & { file?: FileMeta };
+// Who sees a command: guests only, signed-in members only, or everyone.
+// Presentation only — real authorization stays on the server (see TECH.md).
+export type Audience = "any" | "guest" | "member";
+
+// The shell home: docs open here, so no route command matches it.
+export const HOME_PATH = "/";
+
+type AppCommandDef = Command & {
+  file?: FileMeta;
+  audience?: Audience;
+};
 
 const commandDefs = [
   {
@@ -79,19 +89,35 @@ const commandDefs = [
     id: "APPLY",
     description: messages.shell.registry.descriptions.APPLY,
     href: "/apply",
+    audience: "guest",
     file: { group: "account", name: "APPLY", ext: "EXE", size: 512 },
   },
   {
     id: "LOGON",
     description: messages.shell.registry.descriptions.LOGON,
     href: "/login",
+    audience: "guest",
     file: { group: "account", name: "LOGON", ext: "EXE", size: 512 },
+  },
+  {
+    id: "PROFILE",
+    description: messages.shell.registry.descriptions.PROFILE,
+    href: "/profile",
+    audience: "member",
+    file: { group: "account", name: "PROFILE", ext: "EXE", size: 512 },
   },
   {
     id: "SETTINGS",
     description: messages.shell.registry.descriptions.SETTINGS,
     href: "/settings",
+    audience: "member",
     file: { group: "account", name: "SETTINGS", ext: "EXE", size: 512 },
+  },
+  {
+    id: "LOGOFF",
+    description: messages.shell.registry.descriptions.LOGOFF,
+    audience: "member",
+    file: { group: "account", name: "LOGOFF", ext: "EXE", size: 512 },
   },
   { id: "COFFEE", description: messages.shell.registry.descriptions.COFFEE },
   {
@@ -116,6 +142,7 @@ export type AppCommand = Omit<Command, "id" | "doc" | "href"> & {
   doc?: DocId;
   href?: `/${string}`;
   file?: FileMeta;
+  audience?: Audience;
 };
 
 export const commands: readonly AppCommand[] = commandDefs;
@@ -123,6 +150,44 @@ export const commands: readonly AppCommand[] = commandDefs;
 export const commandById: ReadonlyMap<CommandId, AppCommand> = new Map(
   commands.map((command) => [command.id, command]),
 );
+
+// Commands that run in place: dialogs, terminal actions or a session change.
+// They own no route and no document, so the file row renders as a button.
+export const actionCommandIds = [
+  "HELP",
+  "DIR",
+  "CLS",
+  "COFFEE",
+  "DOOM",
+  "EXIT",
+  "LOGOFF",
+] as const satisfies readonly CommandId[];
+
+export type ActionCommandId = (typeof actionCommandIds)[number];
+
+const actionCommands: ReadonlySet<CommandId> = new Set(actionCommandIds);
+
+export function isActionCommand(id: CommandId): id is ActionCommandId {
+  return actionCommands.has(id);
+}
+
+export function commandIdForPath(pathname: string): CommandId | undefined {
+  return commands.find((command) => command.href === pathname)?.id;
+}
+
+export function isVisibleFor(command: Pick<AppCommand, "audience">, signedIn: boolean): boolean {
+  const audience = command.audience ?? "any";
+  return audience === "any" || audience === (signedIn ? "member" : "guest");
+}
+
+export function visibleCommands(signedIn: boolean): AppCommand[] {
+  return commands.filter((command) => isVisibleFor(command, signedIn));
+}
+
+export function fileTitle(commandId: CommandId): string {
+  const file = commandById.get(commandId)?.file;
+  return file ? `${file.name}.${file.ext}` : commandId;
+}
 
 export type FileItem = {
   command: CommandId;
@@ -144,14 +209,16 @@ const fileGroupDefs = [
   { id: "account", ...messages.shell.files.groups.account },
 ] as const satisfies readonly { id: FileGroupId; label: string; short: string }[];
 
-export const fileGroups: FileGroup[] = fileGroupDefs.map((group) => ({
-  ...group,
-  items: commands.flatMap((command) => {
-    const file = command.file;
-    if (!file || file.group !== group.id) return [];
-    return [{ command: command.id, name: file.name, ext: file.ext, size: file.size }];
-  }),
-}));
+export function fileGroupsFor(signedIn: boolean): FileGroup[] {
+  return fileGroupDefs.map((group) => ({
+    ...group,
+    items: commands.flatMap((command) => {
+      const file = command.file;
+      if (!file || file.group !== group.id || !isVisibleFor(command, signedIn)) return [];
+      return [{ command: command.id, name: file.name, ext: file.ext, size: file.size }];
+    }),
+  }));
+}
 
 export type MenuEntry =
   { kind: "separator" } | { kind: "command"; command: CommandId; label: string };
@@ -162,7 +229,7 @@ export type MenuDef = {
   entries: MenuEntry[];
 };
 
-export const menuDefs: MenuDef[] = [
+const menuDefs: MenuDef[] = [
   {
     id: "file",
     label: messages.shell.menuBar.titles.file,
@@ -174,6 +241,9 @@ export const menuDefs: MenuDef[] = [
       { kind: "separator" },
       { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
       { kind: "command", command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
+      { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
+      { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
+      { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
     ],
   },
   {
@@ -197,6 +267,9 @@ export const menuDefs: MenuDef[] = [
     entries: [
       { kind: "command", command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
       { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
+      { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
+      { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
+      { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
     ],
   },
   {
@@ -210,13 +283,37 @@ export const menuDefs: MenuDef[] = [
   },
 ];
 
+function trimSeparators(entries: MenuEntry[]): MenuEntry[] {
+  const result: MenuEntry[] = [];
+  for (const entry of entries) {
+    const last = result.at(-1);
+    if (entry.kind === "separator" && (last === undefined || last.kind === "separator")) continue;
+    result.push(entry);
+  }
+  while (result.at(-1)?.kind === "separator") result.pop();
+  return result;
+}
+
+export function menuDefsFor(signedIn: boolean): MenuDef[] {
+  return menuDefs.map((menu) => ({
+    ...menu,
+    entries: trimSeparators(
+      menu.entries.filter((entry) => {
+        if (entry.kind === "separator") return true;
+        const command = commandById.get(entry.command);
+        return command === undefined || isVisibleFor(command, signedIn);
+      }),
+    ),
+  }));
+}
+
 export type KeyDef = {
   key: string;
   label: string;
   command: CommandId;
 };
 
-export const keyDefs: KeyDef[] = [
+const keyDefs: KeyDef[] = [
   { key: "F1", label: messages.shell.keyBar.labels.HELP, command: "HELP" },
   { key: "F2", label: messages.shell.keyBar.labels.ABOUT, command: "ABOUT" },
   { key: "F3", label: messages.shell.keyBar.labels.MANIFESTO, command: "MANIFESTO" },
@@ -226,5 +323,14 @@ export const keyDefs: KeyDef[] = [
   { key: "F7", label: messages.shell.keyBar.labels.STATUS, command: "STATUS" },
   { key: "F8", label: messages.shell.keyBar.labels.APPLY, command: "APPLY" },
   { key: "F9", label: messages.shell.keyBar.labels.LOGON, command: "LOGON" },
+  { key: "F8", label: messages.shell.keyBar.labels.PROFILE, command: "PROFILE" },
+  { key: "F9", label: messages.shell.keyBar.labels.LOGOFF, command: "LOGOFF" },
   { key: "F10", label: messages.shell.keyBar.labels.EXIT, command: "EXIT" },
 ];
+
+export function keyDefsFor(signedIn: boolean): KeyDef[] {
+  return keyDefs.filter((def) => {
+    const command = commandById.get(def.command);
+    return command === undefined || isVisibleFor(command, signedIn);
+  });
+}

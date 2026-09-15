@@ -9,7 +9,7 @@
   font-weight: 700;
 }
 
-.input {
+.control {
   background: var(--dos-black);
   color: var(--dos-light-cyan);
   border: var(--dos-border-width) solid;
@@ -17,7 +17,7 @@
   padding: 1px 8px;
 }
 
-.input::placeholder {
+.control::placeholder {
   color: var(--dos-dark-gray);
 }
 

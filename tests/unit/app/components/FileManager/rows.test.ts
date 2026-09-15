@@ -3,6 +3,7 @@ import type { FileGroup } from "@/content/commands";
 import {
   buildRowIds,
   DIR_ROW_PREFIX,
+  fallbackRowId,
   FILE_ROW_PREFIX,
   nextRowId,
 } from "@/app/components/FileManager/rows";
@@ -65,5 +66,29 @@ describe("nextRowId", () => {
 
   it("returns undefined for an empty list", () => {
     expect(nextRowId([], "a", "down")).toBeUndefined();
+  });
+});
+
+describe("fallbackRowId", () => {
+  const fallbackRowIds = ["dir-read", "file-ABOUT", "file-RULES"];
+  const defaultRowId = "file-ABOUT";
+
+  it("prefers the displayed document row", () => {
+    expect(fallbackRowId(fallbackRowIds, "file-RULES", defaultRowId)).toBe("file-RULES");
+  });
+
+  it("falls back to the default when the document row is hidden", () => {
+    expect(fallbackRowId(["dir-read", "file-ABOUT"], "file-RULES", defaultRowId)).toBe(
+      "file-ABOUT",
+    );
+    expect(fallbackRowId(fallbackRowIds, undefined, defaultRowId)).toBe("file-ABOUT");
+  });
+
+  it("falls back to the first row when the default is hidden too", () => {
+    expect(fallbackRowId(["dir-read"], "file-RULES", defaultRowId)).toBe("dir-read");
+  });
+
+  it("returns the default for an empty list", () => {
+    expect(fallbackRowId([], undefined, defaultRowId)).toBe(defaultRowId);
   });
 });

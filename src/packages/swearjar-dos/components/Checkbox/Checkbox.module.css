@@ -1,0 +1,37 @@
+.field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.box {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  background: var(--dos-black);
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-border-sunken);
+  cursor: pointer;
+}
+
+.box::before {
+  content: "X";
+  color: var(--dos-light-cyan);
+  font-weight: 700;
+  line-height: 1;
+  transform: scale(0);
+}
+
+.box:checked::before {
+  transform: none;
+}
+
+.label {
+  color: var(--dos-yellow);
+  font-weight: 700;
+  cursor: pointer;
+}

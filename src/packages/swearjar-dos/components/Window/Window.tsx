@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { DOS_WINDOW_BODY_ATTR } from "../../attributes";
 import { cx } from "../tone";
 import styles from "./Window.module.css";
 
@@ -33,7 +34,7 @@ export function Window({
           </button>
         ) : null}
       </div>
-      <div className={styles.body} tabIndex={0}>
+      <div className={styles.body} tabIndex={0} {...{ [DOS_WINDOW_BODY_ATTR]: "" }}>
         {children}
       </div>
       {footer ? <div className={styles.footer}>{footer}</div> : null}

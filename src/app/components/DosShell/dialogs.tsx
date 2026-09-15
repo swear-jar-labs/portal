@@ -1,11 +1,9 @@
-import { buildHelp, Heading, Sprite, Stack, Text } from "@swearjar/dos";
-import { commands, fileGroups } from "@/content/commands";
+import { buildHelp, Button, Heading, Sprite, Stack, Text } from "@swearjar/dos";
+import type { AppCommand, FileGroup } from "@/content/commands";
 import { welcome } from "@/content/landing";
 import { messages } from "@/content/messages";
 
-const fileList = fileGroups.flatMap((group) => group.items);
-
-export function HelpBody() {
+export function HelpBody({ commands }: { commands: readonly AppCommand[] }) {
   return <Text as="div">{buildHelp(commands, messages.shell.dialogs.help)}</Text>;
 }
 
@@ -25,7 +23,9 @@ export function ErrorBody() {
   );
 }
 
-export function DirBody() {
+export function DirBody({ groups }: { groups: readonly FileGroup[] }) {
+  const fileList = groups.flatMap((group) => group.items);
+
   return (
     <Stack gap={2}>
       {fileList.map((item) => (
@@ -48,15 +48,36 @@ export function DoomBody() {
   );
 }
 
-export function ExitBody() {
+export function ExitBody({ signedIn }: { signedIn: boolean }) {
   return (
     <Stack gap={4}>
       <Text as="div" tone="red">
-        {messages.shell.dialogs.exit.text}
+        {signedIn ? messages.shell.dialogs.exit.memberText : messages.shell.dialogs.exit.text}
       </Text>
       <Text as="div" tone="dim">
-        {messages.shell.dialogs.exit.hint}
+        {signedIn ? messages.shell.dialogs.exit.memberHint : messages.shell.dialogs.exit.hint}
       </Text>
+    </Stack>
+  );
+}
+
+export function LogoffBody({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Stack gap={8}>
+      <Text as="div">{messages.shell.dialogs.logoff.text}</Text>
+      <Text as="div">{messages.shell.dialogs.logoff.hint}</Text>
+      <Stack direction="row" gap={10} wrap>
+        <Button variant="primary" onClick={onConfirm}>
+          {messages.shell.dialogs.logoff.confirm}
+        </Button>
+        <Button onClick={onCancel}>{messages.shell.dialogs.logoff.cancel}</Button>
+      </Stack>
     </Stack>
   );
 }

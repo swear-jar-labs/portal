@@ -315,7 +315,7 @@ export const applications = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     role: applicationRole("role").notNull(),
-    handle: text("handle").notNull(),
+    user: text("user").notNull(),
     email: text("email").notNull(),
     experience: text("experience"),
     weeklyHours: text("weekly_hours"),

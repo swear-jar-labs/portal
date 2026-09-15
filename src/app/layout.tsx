@@ -4,6 +4,7 @@ import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
 import { DosShell } from "./components/DosShell/DosShell";
+import { getMockSession } from "./components/Account/mock-session.server";
 import { messages } from "@/content/messages";
 
 const vt323 = VT323({
@@ -29,11 +30,13 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await getMockSession();
+
   return (
     <html lang="en" className={`${vt323.variable} ${plexMono.variable}`}>
       <body>
-        <DosShell>{children}</DosShell>
+        <DosShell session={session}>{children}</DosShell>
       </body>
     </html>
   );

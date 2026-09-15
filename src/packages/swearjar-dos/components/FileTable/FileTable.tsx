@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type MouseEvent, type ReactNode } from "react";
 import { cx } from "../tone";
 import styles from "./FileTable.module.css";
 
@@ -20,7 +20,8 @@ export type FileTableItem = {
   selected?: boolean;
   current?: boolean;
   href?: string;
-  onActivate?: () => void;
+  // Rows without a click (e.g. keyboard activation) pass no event.
+  onActivate?: (event?: MouseEvent<HTMLElement>) => void;
 };
 
 export type FileTableProps = {

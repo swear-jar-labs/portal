@@ -11,6 +11,6 @@ export default defineConfig({
   test: {
     environment: "node",
     css: { modules: { classNameStrategy: "non-scoped" } },
-    include: ["tests/unit/**/*.test.{ts,tsx}", "src/packages/*/tests/**/*.test.ts"],
+    include: ["tests/unit/**/*.test.{ts,tsx}", "src/packages/*/tests/**/*.test.{ts,tsx}"],
   },
 });

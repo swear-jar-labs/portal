@@ -13,6 +13,17 @@ test("boots into the DOS shell with the file manager and content", async ({ page
   await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
 });
 
+test("hides the brand text on mobile and keeps it on desktop", async ({ page }) => {
+  const brandText = page.getByText(/SWEARJAR\.DOS v0\.1/);
+  await expect(brandText).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 780 });
+  await expect(brandText).toBeHidden();
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(brandText).toBeVisible();
+});
+
 test("opens a static doc from the file manager", async ({ page }) => {
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
   await files.getByRole("button", { name: /RULES/ }).click();

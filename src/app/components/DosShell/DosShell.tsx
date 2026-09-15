@@ -128,7 +128,7 @@ export function DosShell({ children }: DosShellProps) {
           brand={
             <>
               <Sprite name="jar" cell={2} decorative />
-              <Text as="span">
+              <Text as="span" className={styles.brandName}>
                 {messages.shell.brand.name}{" "}
                 <Text as="span" tone="red">
                   {messages.shell.brand.version}

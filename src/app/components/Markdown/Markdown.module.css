@@ -1,0 +1,16 @@
+.paragraph {
+  margin-bottom: 12px;
+}
+
+.heading {
+  margin-bottom: 12px;
+  letter-spacing: 0.22em;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}

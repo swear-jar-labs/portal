@@ -3,7 +3,8 @@ import type { PluralForms } from "@/lib/plural";
 // UI text lives here only: every localizable string of the app. The shell is the
 // landing experience (chrome + its surfaces); page sections of future routes are
 // added as siblings. Ids, routes, file names and other canon stay in code;
-// boot/welcome/doc content stays structural in landing.ts.
+// boot/welcome stay structural in landing.ts, docs are Markdown files under
+// content/docs/ (see src/content/docs.ts).
 export const messages = {
   metadata: {
     title: "Swear Jar Labs",

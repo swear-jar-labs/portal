@@ -3,19 +3,6 @@
   color: var(--dos-light-gray);
 }
 
-.paragraph {
-  margin-bottom: 12px;
-}
-
-.heading {
-  margin-bottom: 12px;
-  letter-spacing: 0.22em;
-}
-
-.centered {
-  text-align: center;
-}
-
 .hero {
   padding-bottom: 14px;
   margin-bottom: 14px;

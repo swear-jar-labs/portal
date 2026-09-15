@@ -1,5 +1,5 @@
 import type { Command } from "@swearjar/dos";
-import type { DocId } from "./landing";
+import type { DocId } from "./docs";
 import { messages } from "./messages";
 
 export type FileExt = "TXT" | "EXE";

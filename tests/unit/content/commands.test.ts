@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { commandById, commands, fileGroups, keyDefs, menuDefs } from "@/content/commands";
-import { docsById } from "@/content/landing";
+import { docs } from "@/content/docs";
 import { messages } from "@/content/messages";
 
 describe("commands content", () => {
@@ -64,10 +64,13 @@ describe("commands content", () => {
   it("resolves every doc command to a document", () => {
     for (const command of commands) {
       if (!command.doc) continue;
-      expect(
-        docsById[command.doc],
-        `${command.id} references missing doc ${command.doc}`,
-      ).toBeDefined();
+      const doc = docs.find((entry) => entry.id === command.doc);
+      expect(doc, `${command.id} references missing doc ${command.doc}`).toBeDefined();
+      if (command.file && doc) {
+        expect(doc.title, `${command.id} doc title must mirror the file entry`).toBe(
+          `${command.file.name}.${command.file.ext}`,
+        );
+      }
     }
   });
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import { commandById, fileGroups, type CommandId } from "@/content/commands";
-import type { DocId } from "@/content/landing";
+import type { DocId } from "@/content/docs";
 import { messages } from "@/content/messages";
 import { formatSize } from "@/lib/format";
 import { buildRowIds, dirRowId, fileRowId, nextRowId } from "./rows";

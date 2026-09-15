@@ -4,7 +4,7 @@ import { Heading, Stack, Text } from "@swearjar/dos";
 import { docsById } from "@/content/landing";
 import { messages } from "@/content/messages";
 import { DocView } from "../DocView/DocView";
-import { useFileManagerState } from "../DosShell/FileManagerContext";
+import { useFileManagerState } from "../FileManager/FileManagerContext";
 import { ShellPanel } from "../ShellPanel/ShellPanel";
 
 // DOS flavor path for the empty panel: canonical chrome, not a localizable string.

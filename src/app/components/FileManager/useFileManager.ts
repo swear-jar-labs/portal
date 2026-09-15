@@ -5,9 +5,8 @@ import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import { commandById, fileGroups, type CommandId } from "@/content/commands";
 import type { DocId } from "@/content/landing";
 import { messages } from "@/content/messages";
-import { buildRowIds, dirRowId, fileRowId, nextRowId } from "@/lib/file-manager";
 import { formatSize } from "@/lib/format";
-import { MOBILE_QUERY } from "./hooks/useIsMobile";
+import { buildRowIds, dirRowId, fileRowId, nextRowId } from "./rows";
 
 const FILE_COLUMNS: FileTableColumn[] = [
   { id: "name", label: messages.shell.files.columns.name },
@@ -27,15 +26,12 @@ export function useFileManager(isMobile: boolean, onDocumentOpened: () => void) 
   const [collapsedGroups, setCollapsedGroups] = useState<readonly string[]>([]);
   const [listSize, setListSize] = useState<FileListSize>("compact");
   const focusCursor = useRef(false);
+  const wasMobile = useRef(isMobile);
 
   useEffect(() => {
-    const query = window.matchMedia(MOBILE_QUERY);
-    const onChange = () => {
-      if (!query.matches) setListSize("compact");
-    };
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
-  }, []);
+    if (wasMobile.current && !isMobile) setListSize("compact");
+    wasMobile.current = isMobile;
+  }, [isMobile]);
 
   const rowIds = useMemo(() => buildRowIds(fileGroups, collapsedGroups), [collapsedGroups]);
 

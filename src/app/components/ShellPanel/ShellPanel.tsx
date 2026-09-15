@@ -1,5 +1,5 @@
 import { Panel, type PanelProps } from "@swearjar/dos";
-import { DOC_ZONE } from "../DosShell/zones";
+import { DOC_ZONE } from "../zones";
 import styles from "./ShellPanel.module.css";
 
 export type ShellPanelProps = Omit<PanelProps, "zone" | "className">;

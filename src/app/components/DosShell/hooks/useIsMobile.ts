@@ -2,8 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 
-// Mirrors the 720px breakpoint in base.css and DosShell.module.css (media queries cannot read CSS vars).
-export const MOBILE_QUERY = "(max-width: 720px)";
+// Mirrors the 720px breakpoint in base.css and component CSS modules (media queries cannot read CSS vars).
+const MOBILE_QUERY = "(max-width: 720px)";
 const mobileQuery = () => window.matchMedia(MOBILE_QUERY);
 
 function subscribe(onChange: () => void) {

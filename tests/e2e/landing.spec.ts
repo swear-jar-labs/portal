@@ -368,12 +368,20 @@ test.describe("mobile to desktop", () => {
   test.use({ viewport: { width: 390, height: 780 } });
 
   test("keeps the desktop layout after widening the viewport", async ({ page }) => {
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+    const scroller = files.locator("table").locator("..");
+    const height = () => scroller.evaluate((el) => el.clientHeight);
+    const compact = await height();
+
     await page.getByRole("button", { name: "Expand file list" }).click();
+    const full = await height();
+    expect(full).toBeGreaterThan(compact);
+
     await page.setViewportSize({ width: 1280, height: 800 });
 
     await expect(page.getByRole("button", { name: "Expand file list" })).toHaveCount(0);
 
-    const ratio = await page.getByRole("region", { name: "C:\\SWEARJAR" }).evaluate((element) => {
+    const ratio = await files.evaluate((element) => {
       const parent = element.parentElement;
       if (!parent) return 0;
       return element.getBoundingClientRect().width / parent.getBoundingClientRect().width;
@@ -383,5 +391,8 @@ test.describe("mobile to desktop", () => {
 
     await page.setViewportSize({ width: 390, height: 780 });
     await expect(page.getByRole("button", { name: "Cycle file list size (header)" })).toBeVisible();
+
+    // Widening the viewport resets the mobile list size, so the panel is compact again.
+    expect(await height()).toBe(compact);
   });
 });

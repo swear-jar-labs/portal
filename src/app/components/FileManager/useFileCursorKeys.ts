@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos";
-import { DIR_ROW_PREFIX } from "@/lib/file-manager";
 import { DOC_ZONE, FILES_ZONE } from "../zones";
+import { DIR_ROW_PREFIX } from "./rows";
 
 const INPUT_GUARD_SELECTOR = "input, textarea, select, [role='menubar'], [role='menu']";
 

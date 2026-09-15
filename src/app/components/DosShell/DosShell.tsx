@@ -21,21 +21,20 @@ import { messages, pluralForms } from "@/content/messages";
 import { defaultScreensaver } from "@/content/settings";
 import { formatCount } from "@/lib/format";
 import { BootScreen } from "./BootScreen";
-import { FileManagerProvider } from "./FileManagerContext";
-import { FileManagerPanel } from "./FileManagerPanel";
+import { StatusClock } from "./StatusClock";
 import { WelcomeBody } from "./dialogs";
 import { useBootState } from "./hooks/useBootState";
-import { useClock } from "./hooks/useClock";
-import { useFileCursorKeys } from "./hooks/useFileCursorKeys";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./useCommandRunner";
-import { useFileManager } from "./useFileManager";
+import { FileManagerProvider } from "../FileManager/FileManagerContext";
+import { FileManagerPanel } from "../FileManager/FileManagerPanel";
+import { useFileCursorKeys } from "../FileManager/useFileCursorKeys";
+import { useFileManager } from "../FileManager/useFileManager";
 import styles from "./DosShell.module.css";
 
-const CLOCK_INTERVAL_MS = 10_000;
 const HOME_PATH = "/";
 
 export type DosShellProps = {
@@ -87,8 +86,6 @@ export function DosShell({ children }: DosShellProps) {
     openDialog({ title: welcome.title, body: <WelcomeBody /> });
   }, [openDialog]);
   useWelcomeDialog(isHome && booted, openWelcome);
-
-  const time = useClock(CLOCK_INTERVAL_MS);
 
   const menus = useMemo(
     () =>
@@ -174,7 +171,7 @@ export function DosShell({ children }: DosShellProps) {
           right={
             <>
               <Text as="span">{messages.shell.statusBar.guest}</Text>
-              <Text as="span">{time ?? messages.shell.statusBar.clockFallback}</Text>
+              <StatusClock />
             </>
           }
         />

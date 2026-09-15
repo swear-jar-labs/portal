@@ -3,8 +3,8 @@ import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatSummary } from "@/lib/format";
 import type { FileListSize } from "./useFileManager";
-import { FILES_ZONE } from "./zones";
-import styles from "./DosShell.module.css";
+import { FILES_ZONE } from "../zones";
+import styles from "./FileManager.module.css";
 
 // DOS flavor path: canonical chrome, not a localizable string.
 const FILES_PANEL_TITLE = "C:\\SWEARJAR";

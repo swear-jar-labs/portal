@@ -1,6 +1,4 @@
 .stage {
-  --file-row-height: 1.8em;
-  --file-table-chrome: calc(3 * 1.4em + 25px);
   width: 100%;
   height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
@@ -63,19 +61,6 @@
   background: var(--dos-black);
 }
 
-.panel {
-  min-height: 0;
-}
-
-.panelLeft {
-  flex: 0 0 33%;
-  background: var(--dos-blue);
-}
-
-.fileTable {
-  height: 100%;
-}
-
 .jar.flash {
   animation: flash 0.3s steps(2) 2;
 }
@@ -97,29 +82,5 @@
   .shell {
     width: 100%;
     height: 100%;
-  }
-
-  .panelLeft {
-    flex: 0 0 auto;
-  }
-
-  .fileTable {
-    --dos-table-row-line-height: 1.8;
-  }
-
-  .panelPeek {
-    flex: 0 0 auto;
-    height: calc(2 * var(--file-row-height) + var(--file-table-chrome));
-  }
-
-  .panelCompact {
-    flex: 0 0 auto;
-    height: calc(5 * var(--file-row-height) + var(--file-table-chrome));
-  }
-
-  .panelExpanded {
-    flex: 0 0 auto;
-    height: auto;
-    max-height: 70%;
   }
 }

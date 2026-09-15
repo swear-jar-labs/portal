@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pluralForms } from "@/content/messages";
-import { formatCount, formatSize, formatSummary } from "./format";
+import { formatCount, formatSize, formatSummary } from "@/lib/format";
 
 describe("formatSize", () => {
   it("keeps bytes below a kilobyte", () => {

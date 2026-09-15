@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { commandById, commands, fileGroups, keyDefs, menuDefs } from "./commands";
-import { docsById } from "./landing";
-import { messages } from "./messages";
+import { commandById, commands, fileGroups, keyDefs, menuDefs } from "@/content/commands";
+import { docsById } from "@/content/landing";
+import { messages } from "@/content/messages";
 
 describe("commands content", () => {
   it("keeps command ids unique", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOT_DONE_PADDING_MS, buildBootSchedule } from "./boot";
+import { BOOT_DONE_PADDING_MS, buildBootSchedule } from "@/app/components/DosShell/boot";
 
 describe("buildBootSchedule", () => {
   it("reveals one line per step, starting at the first step delay", () => {

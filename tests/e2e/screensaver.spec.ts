@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { defaultScreensaver } from "../src/content/settings";
+import { defaultScreensaver } from "../../src/content/settings";
 
 test("the starfield screensaver wakes on any key", async ({ page }) => {
   await page.clock.install();

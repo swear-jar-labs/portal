@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FileGroup } from "@/content/commands";
-import { buildRowIds, DIR_ROW_PREFIX, FILE_ROW_PREFIX, nextRowId } from "./file-manager";
+import { buildRowIds, DIR_ROW_PREFIX, FILE_ROW_PREFIX, nextRowId } from "@/lib/file-manager";
 
 const groups: FileGroup[] = [
   {

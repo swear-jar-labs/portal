@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { Command } from "./types";
+import type { Command } from "../../commands/types";
 import {
   buildHelp,
   findCommands,
   nextCompletion,
   resolveCommand,
   visibleCommands,
-} from "./registry";
+} from "../../commands/registry";
 
 const commands: Command[] = [
   { id: "ABOUT", description: "what is this place", doc: "ABOUT" },

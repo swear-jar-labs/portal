@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { plural } from "./plural";
+import { plural } from "@/lib/plural";
 
 const coin = { one: "COIN", other: "COINS" };
 

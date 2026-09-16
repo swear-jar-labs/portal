@@ -23,6 +23,33 @@ test("does not boot on inner routes and keeps the shell chrome", async ({ page }
   expect(results.violations).toEqual([]);
 });
 
+test("keeps the menu dropdown above the file list on a cold inner route", async ({ page }) => {
+  // Without a boot the CRT switch-on (and the stacking context its animation
+  // leaves behind) is absent, so the dropdown must carry itself with z-index
+  // over the file table's sticky header.
+  await page.goto("/apply");
+
+  await page.getByRole("menuitem", { name: "File" }).click();
+  await expect(page.getByRole("menu")).toBeVisible();
+
+  const coveredBy = await page.evaluate(() => {
+    const menu = document.querySelector('[role="menu"]');
+    const header = document.querySelector("thead th");
+    if (!menu || !header) return "missing menu or header";
+    const menuRect = menu.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    const x = Math.max(menuRect.left, headerRect.left) + 2;
+    const y = Math.max(menuRect.top, headerRect.top) + 2;
+    const overlaps =
+      x < Math.min(menuRect.right, headerRect.right) &&
+      y < Math.min(menuRect.bottom, headerRect.bottom);
+    if (!overlaps) return "no overlap to check";
+    const top = document.elementFromPoint(x, y);
+    return menu.contains(top) ? "" : (top?.textContent ?? "unknown").slice(0, 20);
+  });
+  expect(coveredBy).toBe("");
+});
+
 test("keeps the shell when a board file navigates to a route", async ({ page }) => {
   await enterShell(page);
 

@@ -6,7 +6,6 @@
   color: var(--dos-black);
   font-weight: 700;
   user-select: none;
-  z-index: var(--dos-z-menu);
 }
 
 .trigger {
@@ -38,6 +37,7 @@
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-raised);
   box-shadow: var(--dos-blur-shadow);
+  z-index: var(--dos-z-menu);
 }
 
 .item {

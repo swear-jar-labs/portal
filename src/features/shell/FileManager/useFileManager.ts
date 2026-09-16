@@ -176,6 +176,7 @@ export function useFileManager({
           size: formatSize(item.size),
           kind: item.ext === "EXE" ? "exe" : "file",
           icon: item.icon,
+          nested: true,
           selected: activeCursorId === rowId,
           // Documents are current only where they are shown (the home panel);
           // sections are current on their own route.

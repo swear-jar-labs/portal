@@ -102,6 +102,11 @@ tbody .cell:first-child {
   cursor: pointer;
 }
 
+/* Files under an expanded directory shift right; the dir row stays at the edge. */
+.nested .control {
+  padding-left: 16px;
+}
+
 .control::after {
   content: "";
   position: absolute;

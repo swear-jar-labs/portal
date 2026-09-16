@@ -67,6 +67,20 @@ test("keeps the shell when a board file navigates to a route", async ({ page }) 
   );
 });
 
+test.describe("file tree", () => {
+  test("indents files under their expanded directory", async ({ page }) => {
+    await enterShell(page);
+
+    // READ is expanded by default and ABOUT is its first file.
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+    const dirIcon = await files.locator("#dir-read svg").boundingBox();
+    const fileIcon = await files.locator("#file-ABOUT svg").boundingBox();
+    if (!dirIcon || !fileIcon) throw new Error("file rows are not rendered");
+
+    expect(fileIcon.x - dirIcon.x).toBeGreaterThanOrEqual(8);
+  });
+});
+
 test.describe("welcome", () => {
   test("does not greet again when a routed file leads back home", async ({ page }) => {
     await enterShell(page);

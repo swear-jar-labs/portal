@@ -21,6 +21,9 @@ export type FileTableItem = {
   // A row's own sprite (the shell maps program files to their app icon).
   icon?: SpriteName;
   expanded?: boolean;
+  // Files inside an expanded directory: the row shifts right, the dir stays at
+  // the edge, so the list reads as a tree.
+  nested?: boolean;
   selected?: boolean;
   current?: boolean;
   href?: string;
@@ -131,6 +134,7 @@ export function FileTable({
                   styles.row,
                   item.kind === "dir" && styles.dir,
                   item.kind === "exe" && styles.exe,
+                  item.nested && styles.nested,
                   item.selected && styles.selected,
                 )}
               >

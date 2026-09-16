@@ -68,9 +68,7 @@ export function LogonForm() {
   return (
     <Form onSubmit={handleSubmit} ariaLabel={messages.account.login.heading}>
       <Stack gap={10}>
-        <Heading level={1} tone="yellow">
-          {messages.account.login.heading}
-        </Heading>
+        <Heading level={1}>{messages.account.login.heading}</Heading>
 
         <Field
           label={messages.account.login.fields.user}
@@ -92,13 +90,9 @@ export function LogonForm() {
           error={errors.password}
         />
 
-        {errors.form ? (
-          <Text tone="red" weight="bold">
-            {errors.form}
-          </Text>
-        ) : null}
+        {errors.form ? <Text role="danger">{errors.form}</Text> : null}
 
-        <Text tone="dim">{messages.account.login.hint}</Text>
+        <Text role="hint">{messages.account.login.hint}</Text>
 
         <Stack direction="row" gap={10}>
           <Button type="submit" variant="primary" disabled={pending}>
@@ -106,7 +100,7 @@ export function LogonForm() {
           </Button>
         </Stack>
 
-        <Text tone="dim" className={styles.divider}>
+        <Text role="hint" className={styles.divider}>
           {messages.account.login.sso.label}
         </Text>
         <Stack direction="row" gap={10} wrap>

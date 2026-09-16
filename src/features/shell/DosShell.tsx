@@ -191,7 +191,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
               <Sprite name="jar" cell={2} decorative />
               <Text as="span" className={styles.brandName}>
                 {messages.shell.brand.name}{" "}
-                <Text as="span" tone="red">
+                <Text as="span" role="danger">
                   {messages.shell.brand.version}
                 </Text>
               </Text>

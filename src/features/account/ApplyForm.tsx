@@ -65,14 +65,12 @@ export function ApplyForm() {
   if (sent) {
     return (
       <Stack gap={8}>
-        <Heading level={1} tone="yellow">
-          {messages.account.apply.receipt.heading}
-        </Heading>
+        <Heading level={1}>{messages.account.apply.receipt.heading}</Heading>
         <Text>{messages.account.apply.receipt.text}</Text>
-        <Text tone="dim">
+        <Text role="hint">
           {messages.account.apply.receipt.applicant}: {values.user}
         </Text>
-        <Text tone="dim">{messages.account.apply.receipt.hint}</Text>
+        <Text role="hint">{messages.account.apply.receipt.hint}</Text>
       </Stack>
     );
   }
@@ -80,9 +78,7 @@ export function ApplyForm() {
   return (
     <Form onSubmit={handleSubmit} ariaLabel={messages.account.apply.heading}>
       <Stack gap={10}>
-        <Heading level={1} tone="yellow">
-          {messages.account.apply.heading}
-        </Heading>
+        <Heading level={1}>{messages.account.apply.heading}</Heading>
         <Text>{messages.account.apply.intro}</Text>
 
         <Select

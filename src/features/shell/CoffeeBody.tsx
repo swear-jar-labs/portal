@@ -34,7 +34,7 @@ export function CoffeeBody() {
         </Text>
         <Text as="span" tone="yellow">{` ${progress}%`}</Text>
       </Text>
-      <Text as="div" tone="white">
+      <Text as="div">
         {progress >= BREW_DONE_PERCENT
           ? messages.shell.dialogs.coffee.done
           : messages.shell.dialogs.coffee.brewing}

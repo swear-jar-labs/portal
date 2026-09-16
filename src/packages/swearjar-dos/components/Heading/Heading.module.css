@@ -1,24 +1,24 @@
 .heading {
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.04em;
+  color: var(--dos-text-color, inherit);
+  font-weight: var(--dos-text-weight, inherit);
+  line-height: var(--dos-text-line-height, inherit);
+  letter-spacing: var(--dos-text-tracking, inherit);
 }
 
 .level1 {
-  font-size: 1.7rem;
-  color: var(--dos-yellow);
+  font-size: var(--dos-text-h1-size);
 }
 
 .level2 {
-  font-size: 1.3rem;
+  font-size: var(--dos-text-h2-size);
 }
 
 .level3 {
-  font-size: 1.15rem;
+  font-size: var(--dos-text-h3-size);
 }
 
 .level4,
 .level5,
 .level6 {
-  font-size: 1rem;
+  font-size: var(--dos-text-h4-size);
 }

@@ -32,7 +32,7 @@ export function HomeBoard({ docs }: HomeBoardProps) {
           <Heading level={1} className="sr-only">
             {messages.shell.doc.emptyHeading}
           </Heading>
-          <Text tone="dim">{messages.shell.doc.empty}</Text>
+          <Text role="hint">{messages.shell.doc.empty}</Text>
         </Stack>
       )}
     </ShellPanel>

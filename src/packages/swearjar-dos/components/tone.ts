@@ -7,19 +7,26 @@ export type Tone =
 // form-like one (the prototype's .win-body.form).
 export type Surface = "dark" | "light";
 
-// Tone colors are theme hooks: a surface class (Panel surface="light") may
-// override --dos-tone-*; the fallback keeps the dark look.
+// Typography roles: the semantic UI-text contract (Text and Heading). The role
+// table in tokens.css keys off data-dos-role and owns color, weight, size,
+// line-height and tracking; tones stay the content palette.
+export const textRoles = ["body", "hint", "accent", "danger", "positive", "heading"] as const;
+
+export type TextRole = (typeof textRoles)[number];
+
+// Tone colors are theme hooks: tokens.css holds the dark palette and the
+// surface class (Panel surface="light") remaps --dos-tone-*.
 export const toneColor: Record<Tone, string> = {
-  default: "var(--dos-tone-default, var(--dos-light-gray))",
-  dim: "var(--dos-tone-dim, var(--dos-text-dim))",
-  white: "var(--dos-tone-white, var(--dos-white))",
-  black: "var(--dos-tone-black, var(--dos-black))",
-  blue: "var(--dos-tone-blue, var(--dos-light-blue))",
-  cyan: "var(--dos-tone-cyan, var(--dos-light-cyan))",
-  green: "var(--dos-tone-green, var(--dos-light-green))",
-  yellow: "var(--dos-tone-yellow, var(--dos-yellow))",
-  red: "var(--dos-tone-red, var(--dos-light-red))",
-  magenta: "var(--dos-tone-magenta, var(--dos-light-magenta))",
+  default: "var(--dos-tone-default)",
+  dim: "var(--dos-tone-dim)",
+  white: "var(--dos-tone-white)",
+  black: "var(--dos-tone-black)",
+  blue: "var(--dos-tone-blue)",
+  cyan: "var(--dos-tone-cyan)",
+  green: "var(--dos-tone-green)",
+  yellow: "var(--dos-tone-yellow)",
+  red: "var(--dos-tone-red)",
+  magenta: "var(--dos-tone-magenta)",
 };
 
 export function toneStyle(tone: Tone | undefined): CSSProperties | undefined {

@@ -15,13 +15,13 @@ export function HelpBody({ commands }: { commands: readonly AppCommand[] }) {
 export function ErrorBody() {
   return (
     <Stack gap={4}>
-      <Text as="div" tone="red" weight="bold">
+      <Text as="div" role="danger">
         {messages.shell.dialogs.error.headline}
       </Text>
-      <Text as="div" tone="yellow">
+      <Text as="div" role="accent">
         {messages.shell.dialogs.error.jar}
       </Text>
-      <Text as="div" tone="dim">
+      <Text as="div" role="hint">
         {messages.shell.dialogs.error.hint}
       </Text>
     </Stack>
@@ -34,7 +34,7 @@ export function DirBody({ groups }: { groups: readonly FileGroup[] }) {
   return (
     <Stack gap={2}>
       {fileList.map((item) => (
-        <Text key={item.command} as="div" tone="green">
+        <Text key={item.command} as="div" role="positive">
           {`  ${item.name}.${item.ext}`}
         </Text>
       ))}
@@ -46,7 +46,7 @@ export function DoomBody() {
   return (
     <Stack gap={4}>
       <Text as="div">{messages.shell.dialogs.doom.text}</Text>
-      <Text as="div" tone="yellow">
+      <Text as="div" role="accent">
         {messages.shell.dialogs.doom.hint}
       </Text>
     </Stack>
@@ -59,7 +59,7 @@ export function ExitBody({ signedIn }: { signedIn: boolean }) {
       <Text as="div">
         {signedIn ? messages.shell.dialogs.exit.memberText : messages.shell.dialogs.exit.text}
       </Text>
-      <Text as="div" tone="dim">
+      <Text as="div" role="hint">
         {signedIn ? messages.shell.dialogs.exit.memberHint : messages.shell.dialogs.exit.hint}
       </Text>
     </Stack>
@@ -76,7 +76,7 @@ export function LogoffBody({
   return (
     <Stack gap={8}>
       <Text as="div">{messages.shell.dialogs.logoff.text}</Text>
-      <Text as="div" tone="dim">
+      <Text as="div" role="hint">
         {messages.shell.dialogs.logoff.hint}
       </Text>
       <Stack direction="row" gap={10} wrap>
@@ -96,9 +96,7 @@ export function WelcomeBody() {
     <Stack direction="row" align="start" gap={18} wrap>
       <Sprite name="jar" cell={4} decorative />
       <Stack gap={6}>
-        <Heading level={2} tone="yellow">
-          {welcome.heading}
-        </Heading>
+        <Heading level={2}>{welcome.heading}</Heading>
         <Text>{welcome.intro}</Text>
         {welcome.lines.map((line) => (
           <Text key={line}>
@@ -108,7 +106,7 @@ export function WelcomeBody() {
             {line}
           </Text>
         ))}
-        <Text tone="dim">{welcome.footer}</Text>
+        <Text role="hint">{welcome.footer}</Text>
       </Stack>
     </Stack>
   );

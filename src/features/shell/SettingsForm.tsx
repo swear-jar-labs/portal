@@ -45,9 +45,7 @@ export function SettingsForm() {
   return (
     <Form onSubmit={save} ariaLabel={messages.account.settings.heading}>
       <Stack gap={12}>
-        <Heading level={1} tone="yellow">
-          {messages.account.settings.heading}
-        </Heading>
+        <Heading level={1}>{messages.account.settings.heading}</Heading>
 
         <Stack gap={8}>
           <Heading level={2}>{messages.account.settings.screensaver.heading}</Heading>
@@ -66,13 +64,13 @@ export function SettingsForm() {
           />
         </Stack>
 
-        <Text tone="dim">{messages.account.settings.hint}</Text>
+        <Text role="hint">{messages.account.settings.hint}</Text>
 
         <Stack direction="row" gap={10} align="center" wrap>
           <Button type="submit" variant="primary" disabled={!dirty}>
             {messages.account.settings.save}
           </Button>
-          {saved ? <Text tone="green">{messages.account.settings.saved}</Text> : null}
+          {saved ? <Text role="positive">{messages.account.settings.saved}</Text> : null}
         </Stack>
       </Stack>
     </Form>

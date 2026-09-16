@@ -8,9 +8,7 @@ export function AccountGate({ title }: { title: string }) {
   return (
     <ShellPanel title={title} closable>
       <Stack gap={8}>
-        <Heading level={1} tone="yellow">
-          {messages.account.gate.heading}
-        </Heading>
+        <Heading level={1}>{messages.account.gate.heading}</Heading>
         <Text>{messages.account.gate.text}</Text>
         <Stack gap={4}>
           <Text>

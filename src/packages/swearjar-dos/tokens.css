@@ -22,10 +22,35 @@
   /* Keyboard focus: light cyan on black; light surfaces override it (see Panel). */
   --dos-focus-ring: var(--dos-light-cyan);
 
+  /* Dark-surface tone palette: the light surface below remaps --dos-tone-*;
+     tone.ts references the variables. */
+  --dos-tone-default: var(--dos-light-gray);
+  --dos-tone-dim: var(--dos-text-dim);
+  --dos-tone-white: var(--dos-white);
+  --dos-tone-black: var(--dos-black);
+  --dos-tone-blue: var(--dos-light-blue);
+  --dos-tone-cyan: var(--dos-light-cyan);
+  --dos-tone-green: var(--dos-light-green);
+  --dos-tone-yellow: var(--dos-yellow);
+  --dos-tone-red: var(--dos-light-red);
+  --dos-tone-magenta: var(--dos-light-magenta);
+
   --dos-font: var(--font-vt323), var(--font-plex-mono), "Courier New", monospace;
   --dos-font-size: 20px;
   --dos-font-size-narrow: 18px;
   --dos-line-height: 1.4;
+
+  --dos-weight-regular: 400;
+  --dos-weight-bold: 700;
+
+  --dos-text-hint-size: 0.9em;
+  --dos-text-hint-stroke: 0.6px;
+  --dos-text-h1-size: 1.7rem;
+  --dos-text-h2-size: 1.3rem;
+  --dos-text-h3-size: 1.15rem;
+  --dos-text-h4-size: 1rem;
+  --dos-text-heading-line-height: 1.1;
+  --dos-text-heading-tracking: 0.04em;
 
   --dos-border-width: 2px;
   --dos-border-raised: var(--dos-white) var(--dos-black) var(--dos-black) var(--dos-white);
@@ -48,6 +73,43 @@
   --dos-z-screensaver: 4000;
 }
 
+/* Typography roles: one row per role for color, weight, size, line-height,
+   tracking and stroke (Text/Heading read --dos-text-* with fallbacks). Role
+   colors come from the tone palette, so the light surface remap below applies
+   to them too. */
+[data-dos-role="body"] {
+  --dos-text-line-height: var(--dos-line-height);
+}
+
+[data-dos-role="hint"] {
+  --dos-text-color: var(--dos-tone-dim);
+  --dos-text-size: var(--dos-text-hint-size);
+  --dos-text-weight: var(--dos-weight-regular);
+  /* VT323 has no intermediate weight (600 and 700 render the same synthetic
+     bold), so a light stroke is the only "a bit bolder than regular" knob. */
+  --dos-text-stroke: var(--dos-text-hint-stroke);
+}
+
+[data-dos-role="accent"] {
+  --dos-text-color: var(--dos-tone-yellow);
+}
+
+[data-dos-role="danger"] {
+  --dos-text-color: var(--dos-tone-red);
+  --dos-text-weight: var(--dos-weight-bold);
+}
+
+[data-dos-role="positive"] {
+  --dos-text-color: var(--dos-tone-green);
+}
+
+[data-dos-role="heading"] {
+  --dos-text-color: var(--dos-tone-yellow);
+  --dos-text-weight: var(--dos-weight-bold);
+  --dos-text-line-height: var(--dos-text-heading-line-height);
+  --dos-text-tracking: var(--dos-text-heading-tracking);
+}
+
 /* Light surface (the prototype's .win-body.form): black text on light gray.
    Panel and the Window body opt in through the data-dos-surface attribute.
    Each repeats background/color in a compound guard so the surface outranks a
@@ -57,8 +119,8 @@
   color: var(--dos-black);
   /* The light surface carries the interface's primary text (black on gray, and
      the shell's dialogs): VT323's 400 strokes read too thin there, so the
-     surface itself is bold — tones keep their colors. */
-  font-weight: 700;
+     surface itself is bold — tones keep their colors, roles override. */
+  font-weight: var(--dos-weight-bold);
   --dos-tone-default: var(--dos-black);
   --dos-tone-dim: var(--dos-blue);
   --dos-tone-green: var(--dos-blue);

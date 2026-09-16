@@ -7,13 +7,13 @@ const render = (source: string) => renderToStaticMarkup(<Markdown>{source}</Mark
 describe("Markdown pipeline", () => {
   it("renders tone directives as kit tone spans", () => {
     const html = render(":cyan[hello]");
-    expect(html).toContain("--dos-light-cyan");
+    expect(html).toContain("--dos-tone-cyan");
     expect(html).toContain(">hello</span>");
   });
 
   it("keeps bold inside a tone directive", () => {
     const html = render(":yellow[**jar**]");
-    expect(html).toContain("--dos-yellow");
+    expect(html).toContain("--dos-tone-yellow");
     expect(html).toContain("<strong");
   });
 

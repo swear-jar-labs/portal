@@ -1,15 +1,12 @@
 .text {
-  line-height: 1.4;
+  color: var(--dos-text-color, inherit);
+  font-size: var(--dos-text-size, inherit);
+  font-weight: var(--dos-text-weight, inherit);
+  line-height: var(--dos-text-line-height, inherit);
+  letter-spacing: var(--dos-text-tracking, inherit);
+  -webkit-text-stroke: var(--dos-text-stroke, inherit);
 }
 
 .bold {
-  font-weight: 700;
-}
-
-.center {
-  text-align: center;
-}
-
-.right {
-  text-align: right;
+  font-weight: var(--dos-weight-bold);
 }

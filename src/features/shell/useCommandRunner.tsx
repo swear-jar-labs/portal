@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, type ReactNode } from "react";
-import { resolveCommand } from "@swearjar/dos";
+import { resolveCommand, type Surface } from "@swearjar/dos";
 import {
   isActionCommand,
   type ActionCommandId,
@@ -18,6 +18,7 @@ export type DialogState = {
   tone?: "default" | "error";
   // A wider window for content that reads better in columns (HELP).
   wide?: boolean;
+  surface?: Surface;
   body: ReactNode;
 };
 
@@ -46,6 +47,13 @@ export function useCommandRunner({
   groups,
   signedIn,
 }: CommandRunnerOptions) {
+  // Light dialogs read as forms (the prototype's .win-body.form): black text on
+  // light gray. HELP and welcome stay dark — console output keeps its tones.
+  const openLightDialog = useCallback(
+    (dialog: Omit<DialogState, "surface">) => openDialog({ ...dialog, surface: "light" }),
+    [openDialog],
+  );
+
   const handlers = useMemo<Record<ActionCommandId, () => void>>(
     () => ({
       HELP: () =>
@@ -55,19 +63,25 @@ export function useCommandRunner({
           body: <HelpBody commands={commands} />,
         }),
       DIR: () =>
-        openDialog({ title: messages.shell.dialogs.dir.title, body: <DirBody groups={groups} /> }),
+        openLightDialog({
+          title: messages.shell.dialogs.dir.title,
+          body: <DirBody groups={groups} />,
+        }),
       CLS: clearDocument,
       COFFEE: () =>
-        openDialog({ title: messages.shell.dialogs.coffee.title, body: <CoffeeBody /> }),
-      DOOM: () => openDialog({ title: messages.shell.dialogs.doom.title, body: <DoomBody /> }),
+        openLightDialog({
+          title: messages.shell.dialogs.coffee.title,
+          body: <CoffeeBody />,
+        }),
+      DOOM: () => openLightDialog({ title: messages.shell.dialogs.doom.title, body: <DoomBody /> }),
       EXIT: () =>
-        openDialog({
+        openLightDialog({
           title: messages.shell.dialogs.exit.title,
           body: <ExitBody signedIn={signedIn} />,
         }),
       // Logging off ends the session, so it asks first.
       LOGOFF: () =>
-        openDialog({
+        openLightDialog({
           title: messages.shell.dialogs.logoff.title,
           body: (
             <LogoffBody
@@ -80,7 +94,7 @@ export function useCommandRunner({
           ),
         }),
     }),
-    [clearDocument, closeDialog, commands, groups, logoff, openDialog, signedIn],
+    [clearDocument, closeDialog, commands, groups, logoff, openDialog, openLightDialog, signedIn],
   );
 
   return useCallback(
@@ -88,7 +102,7 @@ export function useCommandRunner({
       const command = resolveCommand(commands, raw);
       if (!command) {
         addCoin();
-        openDialog({
+        openLightDialog({
           title: messages.shell.dialogs.error.title,
           tone: "error",
           body: <ErrorBody />,
@@ -107,6 +121,6 @@ export function useCommandRunner({
         push(command.href);
       }
     },
-    [addCoin, commands, handlers, openDialog, openDocument, push],
+    [addCoin, commands, handlers, openLightDialog, openDocument, push],
   );
 }

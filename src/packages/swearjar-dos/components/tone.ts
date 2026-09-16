@@ -3,6 +3,10 @@ import type { CSSProperties } from "react";
 export type Tone =
   "default" | "dim" | "white" | "black" | "blue" | "cyan" | "green" | "yellow" | "red" | "magenta";
 
+// Panels and windows share two surfaces: the dark default and the light
+// form-like one (the prototype's .win-body.form).
+export type Surface = "dark" | "light";
+
 // Tone colors are theme hooks: a surface class (Panel surface="light") may
 // override --dos-tone-*; the fallback keeps the dark look.
 export const toneColor: Record<Tone, string> = {

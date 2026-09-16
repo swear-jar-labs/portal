@@ -5,6 +5,11 @@
   --dos-window-width: 1040px;
 }
 
+/* Confirmation pair: each button claims an equal share of the window width. */
+.action {
+  flex: 1 1 0;
+}
+
 .help {
   column-count: 2;
   column-width: 22em;

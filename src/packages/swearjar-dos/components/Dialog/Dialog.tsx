@@ -4,7 +4,7 @@ import * as RadixDialog from "@radix-ui/react-dialog";
 import { useCallback, useRef, type ReactNode } from "react";
 import { DOS_WINDOW_BODY_ATTR } from "../../attributes";
 import { FOCUSABLE_SELECTOR, nextControlIndex } from "../../focus";
-import { cx } from "../tone";
+import { cx, type Surface } from "../tone";
 import { Window } from "../Window/Window";
 import styles from "./Dialog.module.css";
 
@@ -24,6 +24,7 @@ export type DialogProps = {
   children: ReactNode;
   footer?: ReactNode;
   tone?: "default" | "error";
+  surface?: Surface;
   closeLabel?: string;
   className?: string;
 };
@@ -35,6 +36,7 @@ export function Dialog({
   children,
   footer,
   tone = "default",
+  surface,
   closeLabel,
   className,
 }: DialogProps) {
@@ -105,6 +107,7 @@ export function Dialog({
               </RadixDialog.Title>
             }
             tone={tone}
+            surface={surface}
             onClose={() => onOpenChange(false)}
             closeLabel={closeLabel}
             footer={footer}

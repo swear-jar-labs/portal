@@ -9,7 +9,13 @@
   color: var(--dos-black);
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-raised);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.65);
+  /* Double frame: the raised border's right/bottom edges are black and would
+     vanish over the black doc panel; the light outer ring keeps the silhouette
+     readable on any backdrop. */
+  box-shadow:
+    0 0 0 var(--dos-border-width) var(--dos-black),
+    0 0 0 4px var(--dos-light-gray),
+    8px 8px 0 rgba(0, 0, 0, 0.65);
 }
 
 .titleBar {
@@ -46,9 +52,20 @@
   word-break: break-word;
 }
 
+/* The modal body takes focus (the scroll region needs it), but draws no ring:
+   focus is trapped in the window, so the ring only flickered with the input
+   modality; the controls keep their own rings. This still cancels the global
+   :focus-visible outline. */
 .body:focus-visible {
-  outline: 2px solid var(--dos-focus-ring);
-  outline-offset: -2px;
+  outline: none;
+}
+
+/* Specificity guard: the light palette lives in tokens.css
+   ([data-dos-surface="light"]); the pair of selectors beats the base body
+   colors, so the surface owns the body. */
+.body[data-dos-surface="light"] {
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
 }
 
 .footer {

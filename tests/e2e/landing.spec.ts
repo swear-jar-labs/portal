@@ -1,10 +1,23 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { enterShell } from "./helpers";
+import { expect, test, type Page } from "@playwright/test";
+import { enterShell, expectMinimumContrast } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await enterShell(page);
 });
+
+// Reads a design token through a probe element, so assertions compare computed
+// colors against tokens instead of literals.
+async function tokenColor(page: Page, token: string): Promise<string> {
+  return page.evaluate((name) => {
+    const sample = document.createElement("span");
+    sample.style.backgroundColor = `var(${name})`;
+    document.body.append(sample);
+    const value = getComputedStyle(sample).backgroundColor;
+    sample.remove();
+    return value;
+  }, token);
+}
 
 test("boots into the DOS shell with the file manager and content", async ({ page }) => {
   await expect(page.getByRole("menubar")).toBeVisible();
@@ -112,6 +125,30 @@ test("an unknown command feeds the swear jar", async ({ page }) => {
   await expect(page.getByText("JAR: 1 COIN")).toBeVisible();
 });
 
+test("light dialogs take the light surface while HELP stays dark", async ({ page }) => {
+  const input = page.getByLabel("Command line");
+  await input.focus();
+  await page.keyboard.type("ASDF");
+  await page.keyboard.press("Enter");
+
+  const error = page.getByRole("dialog");
+  const errorBody = error.locator("[data-dos-window-body]");
+  await expect(errorBody).toHaveAttribute("data-dos-surface", "light");
+  await expect(errorBody).toHaveCSS("background-color", await tokenColor(page, "--dos-light-gray"));
+  // The bold red headline counts as large text, so AA holds at 3:1.
+  await expectMinimumContrast(error.getByText("Bad command or file name."), 3);
+  await expectMinimumContrast(error.getByText("The jar clinks. +1 coin."));
+  await expectMinimumContrast(error.getByText("Try HELP."));
+
+  await page.keyboard.press("Enter");
+  await expect(error).toBeHidden();
+
+  await page.keyboard.press("F1");
+  const helpBody = page.getByRole("dialog").locator("[data-dos-window-body]");
+  await expect(helpBody).not.toHaveAttribute("data-dos-surface", "light");
+  await expect(helpBody).toHaveCSS("background-color", await tokenColor(page, "--dos-black"));
+});
+
 test("F1 opens help from the keyboard", async ({ page }) => {
   await page.keyboard.press("F1");
   await expect(page.getByText("Available commands:")).toBeVisible();
@@ -147,8 +184,12 @@ test("does not autofocus the close button of a dialog", async ({ page }) => {
   await expect(dialog).toBeVisible();
   // HELP has no controls: the window body (the scroll region) takes focus, so
   // ↑/↓ scroll a long text natively.
-  await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
+  const body = dialog.locator("[data-dos-window-body]");
+  await expect(body).toBeFocused();
   await expect(dialog.getByRole("button", { name: "Close" })).not.toBeFocused();
+  // The body draws no focus ring: focus is trapped in the window, and the ring
+  // would only appear by input modality. Controls keep their own rings.
+  await expect(body).toHaveCSS("outline-style", "none");
 });
 
 test("closes a dialog with Enter or Space", async ({ page }) => {

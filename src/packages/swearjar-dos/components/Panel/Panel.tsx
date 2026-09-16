@@ -1,9 +1,7 @@
 import { type ReactNode } from "react";
-import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "../../attributes";
-import { cx } from "../tone";
+import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR, DOS_ZONE_ATTR } from "../../attributes";
+import { cx, type Surface } from "../tone";
 import styles from "./Panel.module.css";
-
-export type PanelSurface = "dark" | "light";
 
 export type PanelProps = {
   title: string;
@@ -15,7 +13,7 @@ export type PanelProps = {
   scroll?: boolean;
   padded?: boolean;
   zone?: string;
-  surface?: PanelSurface;
+  surface?: Surface;
   className?: string;
 };
 
@@ -33,12 +31,14 @@ export function Panel({
   className,
 }: PanelProps) {
   const zoneAttrs = zone ? { [DOS_ZONE_ATTR]: zone } : undefined;
+  const surfaceAttrs = surface === "light" ? { [DOS_SURFACE_ATTR]: surface } : undefined;
 
   return (
     <section
-      className={cx(styles.panel, surface === "light" && styles.light, className)}
+      className={cx(styles.panel, className)}
       aria-label={title}
       {...zoneAttrs}
+      {...surfaceAttrs}
     >
       <div className={styles.titleBar}>
         {leading ? <div className={styles.leading}>{leading}</div> : null}

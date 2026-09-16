@@ -34,12 +34,15 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 
 ## Surfaces and keys
 
-- `Panel surface="light"` turns the panel into a dialog-like form window (the prototype's
-  `.win-body.form`): black text on light gray, white inputs. The surface re-colors tones,
-  form controls and focus rings through CSS variables (`--dos-tone-*`, `--dos-field-*`,
-  `--dos-check-*`, `--dos-link`, `--dos-focus-ring`); the dark look is the fallback, and a
-  focused body marks the whole window frame. Disabled buttons get their own body color per
-  surface, so they stay visible.
+- `Panel surface="light"` and `Window surface="light"` (reached through `Dialog surface`) share
+  the light surface — the prototype's `.win-body.form`: black text on light gray, white inputs,
+  re-colored tones, form controls and focus rings. The palette lives once in `tokens.css` under
+  `[data-dos-surface="light"]` (`DOS_SURFACE_ATTR`); the components opt in through the attribute,
+  and the dark look stays the fallback. The surface is bold: primary text is black on gray there,
+  and VT323's 400 strokes read too thin — tones keep their colors, controls may override weight.
+  Panel repeats background/color in a compound rule, so the surface owns them against a consumer's
+  single-class background; a focused body marks the whole window frame. Disabled buttons get their
+  own body color per surface, so they stay visible.
 - The kit owns focus primitives (`focus.ts`), the consumer owns the model: the shell speaks
   Norton Commander — **Tab toggles the file list and the right-hand window** (from a form
   control too), **bare ↑/↓ walk the window's controls** with wrap-around, **Enter/Space
@@ -62,7 +65,8 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
   content root) — the shell's HELP dialog does, to flow its list into columns.
 - `Dialog`: Tab stays native inside the Radix trap; ←/→/↑/↓ cycle the body's controls, while
   on the window surface ↑/↓ stay native so a long HELP text scrolls (the body takes focus
-  when the dialog has no controls).
+  when the dialog has no controls). The modal body draws no focus ring — focus is trapped in
+  the window and the ring only flickered with the input modality; controls keep their rings.
 - `Form` and `Panel` are semantic owners of intrinsics: the app composes them, never HTML.
 
 ## Extraction

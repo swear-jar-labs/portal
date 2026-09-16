@@ -32,7 +32,7 @@ export { Checkbox } from "./components/Checkbox/Checkbox";
 export type { CheckboxProps } from "./components/Checkbox/Checkbox";
 
 export { Panel } from "./components/Panel/Panel";
-export type { PanelProps, PanelSurface } from "./components/Panel/Panel";
+export type { PanelProps } from "./components/Panel/Panel";
 
 export { StatusBar } from "./components/StatusBar/StatusBar";
 export type { StatusBarProps } from "./components/StatusBar/StatusBar";
@@ -81,4 +81,4 @@ export { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
 export { FOCUSABLE_SELECTOR, nextControlIndex } from "./focus";
 
 export { toneColor, toneStyle, cx } from "./components/tone";
-export type { Tone } from "./components/tone";
+export type { Surface, Tone } from "./components/tone";

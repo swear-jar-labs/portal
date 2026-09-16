@@ -47,3 +47,35 @@
   --dos-z-scanlines: 3000;
   --dos-z-screensaver: 4000;
 }
+
+/* Light surface (the prototype's .win-body.form): black text on light gray.
+   Panel and the Window body opt in through the data-dos-surface attribute.
+   Each repeats background/color in a compound guard so the surface outranks a
+   consumer's single-class background; everything else lives here, once. */
+[data-dos-surface="light"] {
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  /* The light surface carries the interface's primary text (black on gray, and
+     the shell's dialogs): VT323's 400 strokes read too thin there, so the
+     surface itself is bold — tones keep their colors. */
+  font-weight: 700;
+  --dos-tone-default: var(--dos-black);
+  --dos-tone-dim: var(--dos-blue);
+  --dos-tone-green: var(--dos-blue);
+  --dos-tone-cyan: var(--dos-blue);
+  --dos-tone-yellow: var(--dos-black);
+  --dos-tone-red: var(--dos-red);
+  /* White reads only on dark; on the light surface it is body text. */
+  --dos-tone-white: var(--dos-black);
+  --dos-link: var(--dos-blue);
+  --dos-focus-ring: var(--dos-blue);
+  --dos-field-label: var(--dos-black);
+  --dos-field-bg: var(--dos-white);
+  --dos-field-fg: var(--dos-black);
+  --dos-field-error: var(--dos-red);
+  --dos-check-bg: var(--dos-white);
+  --dos-check-mark: var(--dos-black);
+  /* Disabled buttons need a body darker than the surface, or they vanish into it. */
+  --dos-button-disabled-bg: var(--dos-dark-gray);
+  --dos-button-disabled-fg: var(--dos-light-gray);
+}

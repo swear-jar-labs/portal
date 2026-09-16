@@ -56,7 +56,7 @@ export function DoomBody() {
 export function ExitBody({ signedIn }: { signedIn: boolean }) {
   return (
     <Stack gap={4}>
-      <Text as="div" tone="red">
+      <Text as="div">
         {signedIn ? messages.shell.dialogs.exit.memberText : messages.shell.dialogs.exit.text}
       </Text>
       <Text as="div" tone="dim">
@@ -76,12 +76,16 @@ export function LogoffBody({
   return (
     <Stack gap={8}>
       <Text as="div">{messages.shell.dialogs.logoff.text}</Text>
-      <Text as="div">{messages.shell.dialogs.logoff.hint}</Text>
+      <Text as="div" tone="dim">
+        {messages.shell.dialogs.logoff.hint}
+      </Text>
       <Stack direction="row" gap={10} wrap>
-        <Button variant="primary" onClick={onConfirm}>
+        <Button variant="primary" className={styles.action} onClick={onConfirm}>
           {messages.shell.dialogs.logoff.confirm}
         </Button>
-        <Button onClick={onCancel}>{messages.shell.dialogs.logoff.cancel}</Button>
+        <Button className={styles.action} onClick={onCancel}>
+          {messages.shell.dialogs.logoff.cancel}
+        </Button>
       </Stack>
     </Stack>
   );

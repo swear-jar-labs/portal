@@ -77,7 +77,7 @@ export type { Command } from "./commands/types";
 export { sprites } from "./sprites";
 export type { SpriteData } from "./sprites";
 
-export { DOS_ROLE_ATTR, DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
+export { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
 export { FOCUSABLE_SELECTOR, nextControlIndex } from "./focus";
 
 export { toneColor, toneStyle, cx } from "./components/tone";

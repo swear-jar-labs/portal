@@ -55,6 +55,13 @@ function Control({ item }: { item: FileTableItem }) {
         href={item.href}
         aria-current={item.current ? "true" : undefined}
         onClick={item.onActivate}
+        onKeyDown={(event) => {
+          // A link activates natively on Enter only; Space is the button idiom
+          // the file list shares, so the row forwards it like a click.
+          if (event.key !== " ") return;
+          event.preventDefault();
+          item.onActivate?.();
+        }}
       >
         {content}
       </a>

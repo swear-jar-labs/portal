@@ -343,6 +343,15 @@ test.describe("file manager", () => {
     await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
   });
 
+  test("opens a route file with Space from the focused row", async ({ page }) => {
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+
+    await files.getByRole("link", { name: "APPLY" }).focus();
+    await page.keyboard.press(" ");
+
+    await expect(page).toHaveURL("/apply");
+  });
+
   test("collapses and expands folders with arrows and clicks", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 

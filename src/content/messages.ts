@@ -78,7 +78,7 @@ export const messages = {
         intro: "Available commands:",
         keys: [
           "Tab switches panels; ▲/▼ moves between controls in a window.",
-          "Enter activates; Shift+Enter sends a form; Shift+▲/▼ scrolls the window.",
+          "Space or Enter activates; Shift+Enter sends a form; Shift+▲/▼ scrolls the window.",
         ].join("\n"),
         outro: "Tab completes in the command line. Try an unknown command — the jar clinks.",
       },

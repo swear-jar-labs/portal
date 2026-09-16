@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos";
 import { CMD_ZONE, DOC_ZONE, FILES_ZONE } from "../zones";
+import { hasCommandModifier, shouldSkipEvent } from "../hooks/keyboard";
 import { DIR_ROW_PREFIX } from "./rows";
 
 const INPUT_GUARD_SELECTOR = "input, textarea, select, [role='menubar'], [role='menu']";
@@ -28,7 +29,7 @@ export function useFileCursorKeys({
     if (!enabled) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
+      if (shouldSkipEvent(event)) return;
       const target = event.target as HTMLElement | null;
       const zone = target?.closest(`[${DOS_ZONE_ATTR}]`)?.getAttribute(DOS_ZONE_ATTR);
 
@@ -36,7 +37,7 @@ export function useFileCursorKeys({
       // any control of the panel too, and back from the command line. Shift
       // does not change the target.
       if (event.key === "Tab") {
-        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (hasCommandModifier(event)) return;
         if (zone === FILES_ZONE) {
           const doc = document.querySelector<HTMLElement>(
             `[${DOS_ZONE_ATTR}='${DOC_ZONE}'] [${DOS_SCROLL_ATTR}]`,
@@ -59,14 +60,14 @@ export function useFileCursorKeys({
       if (zone === DOC_ZONE) return;
 
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (hasCommandModifier(event)) return;
         event.preventDefault();
         moveCursor(event.key === "ArrowUp" ? "up" : "down");
         return;
       }
 
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (hasCommandModifier(event)) return;
         if (cursorId.startsWith(DIR_ROW_PREFIX)) {
           const groupId = cursorId.slice(DIR_ROW_PREFIX.length);
           const collapsed = collapsedGroups.includes(groupId);

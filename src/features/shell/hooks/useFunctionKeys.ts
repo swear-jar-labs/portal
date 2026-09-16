@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import type { CommandId, KeyDef } from "@/content/commands";
+import { shouldSkipEvent } from "./keyboard";
 
 export function useFunctionKeys(
   keyDefs: readonly KeyDef[],
@@ -17,6 +18,7 @@ export function useFunctionKeys(
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (shouldSkipEvent(event)) return;
       const command = byKey.get(event.key);
       if (!command) return;
       // Swallow F-keys even while disabled so the browser does not act on them (e.g. F5 reload).

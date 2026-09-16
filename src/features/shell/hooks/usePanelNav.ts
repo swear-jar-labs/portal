@@ -8,6 +8,7 @@ import {
   nextControlIndex,
 } from "@swearjar/dos";
 import { DOC_ZONE } from "../zones";
+import { hasCommandModifier, shouldSkipEvent } from "./keyboard";
 
 // Bare ↑/↓ walk the controls of the right-hand panel with wrap-around, from the
 // panel surface (the Tab entry point) and from any control in it. The shell owns
@@ -24,8 +25,8 @@ export function usePanelNav(enabled: boolean) {
     if (!enabled) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.isComposing) return;
-      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      if (shouldSkipEvent(event)) return;
+      if (hasCommandModifier(event)) return;
       const step = STEP_BY_KEY[event.key];
       if (!step) return;
 

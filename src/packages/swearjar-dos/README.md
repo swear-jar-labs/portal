@@ -44,6 +44,10 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
   Norton Commander — **Tab toggles the file list and the right-hand window** (from a form
   control too), **bare ↑/↓ walk the window's controls** with wrap-around, **Enter/Space
   activate**. The command-line capture skips controls, `[role='combobox']` included.
+- Keys reached by several window listeners follow one precedence: **the local control first,
+  then the consumer's hook by zone, then chrome**. Whoever handles an event calls
+  `preventDefault()`; the rest respect `defaultPrevented` — listener registration order is
+  not a contract. Control semantics stay in the kit, navigation stays in the shell.
 - `Select` opens on `Enter`/`Space`/`Alt+↓`; a printable key opens the list at the matching
   option (type-ahead). Its arrows belong to the shell's walk while closed.
 - `CmdLine` takes `zone` like `Panel`: the shell routes Tab from the line back to the file

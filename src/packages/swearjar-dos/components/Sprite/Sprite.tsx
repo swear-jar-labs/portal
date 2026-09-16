@@ -1,9 +1,9 @@
 import { cx } from "../tone";
-import { sprites, type SpriteData } from "../../sprites";
+import { sprites, type SpriteData, type SpriteName } from "../../sprites";
 import styles from "./Sprite.module.css";
 
 export type SpriteProps = {
-  name?: keyof typeof sprites;
+  name?: SpriteName;
   map?: readonly string[];
   palette?: Readonly<Record<string, string>>;
   cell?: number;

@@ -1,5 +1,7 @@
 import { type MouseEvent, type ReactNode } from "react";
+import type { SpriteName } from "../../sprites";
 import { cx } from "../tone";
+import { FileIcon } from "./FileIcon";
 import styles from "./FileTable.module.css";
 
 export type FileTableColumn = {
@@ -16,6 +18,8 @@ export type FileTableItem = {
   type: string;
   size?: string;
   kind?: "file" | "dir" | "exe";
+  // A row's own sprite (the shell maps program files to their app icon).
+  icon?: SpriteName;
   expanded?: boolean;
   selected?: boolean;
   current?: boolean;
@@ -35,17 +39,12 @@ export type FileTableProps = {
 };
 
 function Control({ item }: { item: FileTableItem }) {
-  const content =
-    item.kind === "dir" ? (
-      <>
-        <span className={styles.mark} aria-hidden="true">
-          {item.expanded ? "[-]" : "[+]"}
-        </span>
-        <span className={styles.name}>{item.name}</span>
-      </>
-    ) : (
+  const content = (
+    <>
+      <FileIcon kind={item.kind ?? "file"} expanded={item.expanded} icon={item.icon} />
       <span className={styles.name}>{item.name}</span>
-    );
+    </>
+  );
 
   if (item.href) {
     return (

@@ -1,4 +1,4 @@
-import type { Command } from "@swearjar/dos";
+import type { Command, SpriteName } from "@swearjar/dos";
 import type { DocId } from "./docs";
 import { messages } from "./messages";
 
@@ -10,6 +10,8 @@ export type FileMeta = {
   name: string;
   ext: FileExt;
   size: number;
+  // Program files carry their app icon; documents share the sheet sprite.
+  icon?: SpriteName;
 };
 
 // Who sees a command: guests only, signed-in members only, or everyone.
@@ -59,65 +61,65 @@ const commandDefs = [
     id: "DISCUSSIONS",
     description: messages.shell.registry.descriptions.DISCUSSIONS,
     href: "/discussions",
-    file: { group: "board", name: "DISCUSSIONS", ext: "EXE", size: 2048 },
+    file: { group: "board", name: "DISCUSSIONS", ext: "EXE", size: 2048, icon: "speech" },
   },
   {
     id: "ERRATA",
     description: messages.shell.registry.descriptions.ERRATA,
     href: "/errata",
-    file: { group: "board", name: "ERRATA", ext: "EXE", size: 4096 },
+    file: { group: "board", name: "ERRATA", ext: "EXE", size: 4096, icon: "errata" },
   },
   {
     id: "READROOM",
     description: messages.shell.registry.descriptions.READROOM,
     href: "/readroom",
-    file: { group: "board", name: "READROOM", ext: "EXE", size: 3072 },
+    file: { group: "board", name: "READROOM", ext: "EXE", size: 3072, icon: "book" },
   },
   {
     id: "PRODUCTS",
     description: messages.shell.registry.descriptions.PRODUCTS,
     href: "/products",
-    file: { group: "board", name: "PRODUCTS", ext: "EXE", size: 2048 },
+    file: { group: "board", name: "PRODUCTS", ext: "EXE", size: 2048, icon: "box" },
   },
   {
     id: "TICKETS",
     description: messages.shell.registry.descriptions.TICKETS,
     href: "/tickets",
-    file: { group: "board", name: "TICKETS", ext: "EXE", size: 1024 },
+    file: { group: "board", name: "TICKETS", ext: "EXE", size: 1024, icon: "ticket" },
   },
   {
     id: "APPLY",
     description: messages.shell.registry.descriptions.APPLY,
     href: "/apply",
     audience: "guest",
-    file: { group: "account", name: "APPLY", ext: "EXE", size: 512 },
+    file: { group: "account", name: "APPLY", ext: "EXE", size: 512, icon: "check" },
   },
   {
     id: "LOGON",
     description: messages.shell.registry.descriptions.LOGON,
     href: "/login",
     audience: "guest",
-    file: { group: "account", name: "LOGON", ext: "EXE", size: 512 },
+    file: { group: "account", name: "LOGON", ext: "EXE", size: 512, icon: "key" },
   },
   {
     id: "PROFILE",
     description: messages.shell.registry.descriptions.PROFILE,
     href: "/profile",
     audience: "member",
-    file: { group: "account", name: "PROFILE", ext: "EXE", size: 512 },
+    file: { group: "account", name: "PROFILE", ext: "EXE", size: 512, icon: "person" },
   },
   {
     id: "SETTINGS",
     description: messages.shell.registry.descriptions.SETTINGS,
     href: "/settings",
     audience: "member",
-    file: { group: "account", name: "SETTINGS", ext: "EXE", size: 512 },
+    file: { group: "account", name: "SETTINGS", ext: "EXE", size: 512, icon: "gear" },
   },
   {
     id: "LOGOFF",
     description: messages.shell.registry.descriptions.LOGOFF,
     audience: "member",
-    file: { group: "account", name: "LOGOFF", ext: "EXE", size: 512 },
+    file: { group: "account", name: "LOGOFF", ext: "EXE", size: 512, icon: "door" },
   },
   { id: "COFFEE", description: messages.shell.registry.descriptions.COFFEE },
   {
@@ -194,6 +196,7 @@ export type FileItem = {
   name: string;
   ext: FileExt;
   size: number;
+  icon?: SpriteName;
 };
 
 export type FileGroup = {
@@ -215,7 +218,9 @@ export function fileGroupsFor(signedIn: boolean): FileGroup[] {
     items: commands.flatMap((command) => {
       const file = command.file;
       if (!file || file.group !== group.id || !isVisibleFor(command, signedIn)) return [];
-      return [{ command: command.id, name: file.name, ext: file.ext, size: file.size }];
+      return [
+        { command: command.id, name: file.name, ext: file.ext, size: file.size, icon: file.icon },
+      ];
     }),
   }));
 }

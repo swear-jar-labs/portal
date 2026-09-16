@@ -15,7 +15,7 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - `base.css` — reset and base element styles
 - `components/<Name>/{Name.tsx, Name.module.css}` — primitives and surfaces
 - `commands/` — command types + registry helpers (completion, HELP)
-- `sprites.ts` — pixel sprite data (the swear jar)
+- `sprites.ts` — 16×16 pixel sprite data (the jar and the file-row glyphs)
 - `attributes.ts` — shared `data-*` contracts (`DOS_SCROLL_ATTR`, `DOS_ZONE_ATTR`,
   `DOS_ROLE_ATTR`) for keyboard-navigation and typography code in consumers
 - `focus.ts` — `FOCUSABLE_SELECTOR` (focusable controls in DOM order, shared by the

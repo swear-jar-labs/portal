@@ -93,6 +93,7 @@ describe("commands content", () => {
             name: item.name,
             ext: item.ext,
             size: item.size,
+            icon: item.icon,
           });
         }
       }
@@ -108,6 +109,21 @@ describe("commands content", () => {
         group.items.map((item) => item.command),
       );
       expect([...listed].sort()).toEqual([...filed].sort());
+    }
+  });
+
+  it("gives every program an icon and leaves documents on the sheet", () => {
+    for (const signedIn of SESSIONS) {
+      for (const group of fileGroupsFor(signedIn)) {
+        for (const item of group.items) {
+          const file = `${item.name}.${item.ext}`;
+          if (item.ext === "EXE") {
+            expect(item.icon, `${file} is a program without an icon`).toBeDefined();
+          } else {
+            expect(item.icon, `${file} is a document with its own icon`).toBeUndefined();
+          }
+        }
+      }
     }
   });
 

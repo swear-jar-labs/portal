@@ -82,8 +82,7 @@ tbody .cell:first-child {
 
 .selected .name,
 .selected .type,
-.selected .size,
-.selected .mark {
+.selected .size {
   color: var(--dos-black);
 }
 
@@ -126,8 +125,20 @@ tbody .cell:first-child {
   margin: -2px -1px;
 }
 
-.mark {
-  color: var(--dos-yellow);
+.icon {
+  /* The silhouette outline; the row state flips it (black reads on the selected
+     row, light gray on the blue panel). */
+  --dos-icon-outline: var(--dos-light-gray);
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.selected .icon {
+  --dos-icon-outline: var(--dos-black);
+}
+
+.outline {
+  fill: var(--dos-icon-outline);
 }
 
 .type {

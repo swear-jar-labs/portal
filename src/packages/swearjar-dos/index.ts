@@ -75,7 +75,7 @@ export { buildHelp, nextCompletion, resolveCommand } from "./commands/registry";
 export type { Command } from "./commands/types";
 
 export { sprites } from "./sprites";
-export type { SpriteData } from "./sprites";
+export type { SpriteData, SpriteName } from "./sprites";
 
 export { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
 export { FOCUSABLE_SELECTOR, nextControlIndex } from "./focus";

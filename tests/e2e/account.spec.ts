@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/app/components/Account/screensaver-prefs";
+import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
 import { enterShell } from "./helpers";
 

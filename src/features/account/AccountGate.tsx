@@ -1,6 +1,6 @@
 import { Heading, Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { ShellPanel } from "../ShellPanel/ShellPanel";
+import { ShellPanel } from "@/features/shell";
 
 // Member-only routes render this for guests instead of redirecting: the shell
 // stays put and the next step (logon or apply) is one click away.

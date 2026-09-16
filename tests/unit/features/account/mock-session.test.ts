@@ -6,8 +6,8 @@ import {
   parseMockSession,
   socialProviderUsers,
   socialProviders,
-} from "@/app/components/Account/mock-session";
-import { USER_PATTERN } from "@/data/account";
+} from "@/features/account/mock-session";
+import { USER_PATTERN } from "@/features/account/schema";
 
 describe("parseMockSession", () => {
   it("accepts a lowercase user", () => {

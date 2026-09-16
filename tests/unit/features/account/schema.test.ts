@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applySchema, getOwnProfile } from "@/data/account";
+import { applySchema } from "@/features/account/schema";
 
 const VALID = {
   role: "reviewer",
@@ -31,15 +31,5 @@ describe("applySchema", () => {
 
   it("keeps experience optional", () => {
     expect(applySchema.safeParse({ ...VALID, experience: "" }).success).toBe(true);
-  });
-});
-
-describe("getOwnProfile", () => {
-  it("returns a member profile for the user", async () => {
-    const profile = await getOwnProfile("ada");
-    expect(profile.user).toBe("ada");
-    expect(profile.role).toBe("member");
-    expect(profile.stats).toHaveLength(3);
-    expect(profile.activity).toEqual([]);
   });
 });

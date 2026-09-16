@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button, Field, Form, Heading, Select, Stack, Text, Textarea } from "@swearjar/dos";
 import type { ZodError } from "zod";
 import { messages } from "@/content/messages";
-import { applyRoles, applySchema, weeklyHourIds, type ApplyInput } from "@/data/account";
+import { applyRoles, applySchema, weeklyHourIds, type ApplyInput } from "./schema";
 
 const EXPERIENCE_ROWS = 3;
 const MOTIVATION_ROWS = 5;

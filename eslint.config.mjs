@@ -27,9 +27,69 @@ const eslintConfig = defineConfig([
         {
           patterns: [
             {
-              group: ["@/*", "**/app/**", "**/db/**", "**/lib/**"],
+              group: ["@/*", "**/app/**", "**/db/**", "**/lib/**", "**/features/**"],
               message:
-                "The kit must stay standalone: it never imports app code (src/app, src/db, src/lib).",
+                "The kit must stay standalone: it never imports app code (src/app, src/db, src/lib, src/features).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Feature layout (see AGENTS.md): src/app is routing only and reaches
+  // features through their facades; features stack app -> features -> shared
+  // -> lib/content/db/packages, and only the shell is shared across features.
+  {
+    files: ["src/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/features/*/*", "**/features/*/*"],
+              message:
+                "Import a feature through its facade (@/features/<name>); its internals stay private.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/features/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/**", "**/app/**"],
+              message: "Features never import the routing layer (src/app).",
+            },
+            {
+              group: ["@/features/*", "!@/features/shell"],
+              message: "Cross-feature imports are forbidden; a feature may import only the shell.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/features/shell/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/**", "**/app/**"],
+              message: "Features never import the routing layer (src/app).",
+            },
+            {
+              group: ["@/features/*"],
+              message: "The shell is the frame: features depend on it, never the other way around.",
             },
           ],
         },

@@ -5,6 +5,10 @@ Contributions are welcome. Keep changes small and readable; expect review.
 ## Code style
 
 - TypeScript strict. Small, explicit modules. Avoid premature abstraction.
+- Layout is feature-sliced: routes in `src/app` stay thin (re-export a feature facade);
+  a section lives in `src/features/<name>` with a public `index.ts`. Imports point
+  `app → features → lib/content/db/packages`; cross-feature imports are lint errors, except
+  `features/* → features/shell` (the frame).
 - Prefer readable code over clever code.
 - Comments explain _why_, not _what_; most code needs none.
 - Keep files focused. A component around 200 lines or a hook around 80 is a prompt to ask

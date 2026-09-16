@@ -1,6 +1,6 @@
 import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { ShellPanel } from "./components/ShellPanel/ShellPanel";
+import { ShellPanel } from "@/features/shell";
 
 export default function NotFound() {
   return (

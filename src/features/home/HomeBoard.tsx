@@ -4,8 +4,7 @@ import { Heading, Stack, Text } from "@swearjar/dos";
 import type { ReactNode } from "react";
 import type { DocId } from "@/content/docs";
 import { messages } from "@/content/messages";
-import { useFileManagerState } from "../FileManager/FileManagerContext";
-import { ShellPanel } from "../ShellPanel/ShellPanel";
+import { ShellPanel, useFileManagerState } from "@/features/shell";
 
 // DOS flavor path for the empty panel: canonical chrome, not a localizable string.
 const EMPTY_PANEL_TITLE = "C:\\";

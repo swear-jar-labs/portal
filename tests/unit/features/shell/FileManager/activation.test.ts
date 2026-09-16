@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPlainActivation } from "@/app/components/FileManager/activation";
+import { isPlainActivation } from "@/features/shell/FileManager/activation";
 
 describe("isPlainActivation", () => {
   it("treats a missing event as a plain activation", () => {

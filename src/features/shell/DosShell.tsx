@@ -26,9 +26,7 @@ import {
 import { bootLines, welcome } from "@/content/landing";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { mockLogoff } from "../Account/mock-session-actions";
-import type { MockSession } from "../Account/mock-session";
-import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "../Account/screensaver-prefs";
+import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "./screensaver-prefs";
 import { BootScreen } from "./BootScreen";
 import { StatusClock } from "./StatusClock";
 import { WelcomeBody } from "./dialogs";
@@ -38,18 +36,23 @@ import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./useCommandRunner";
-import { FileManagerProvider } from "../FileManager/FileManagerContext";
-import { FileManagerPanel } from "../FileManager/FileManagerPanel";
-import { useFileCursorKeys } from "../FileManager/useFileCursorKeys";
-import { useFileManager } from "../FileManager/useFileManager";
+import { FileManagerProvider } from "./FileManager/FileManagerContext";
+import { FileManagerPanel } from "./FileManager/FileManagerPanel";
+import { useFileCursorKeys } from "./FileManager/useFileCursorKeys";
+import { useFileManager } from "./FileManager/useFileManager";
 import styles from "./DosShell.module.css";
+
+// The shell knows nothing about auth: any session-shaped value with a user
+// works, and logoff is injected by the layout (mock action until auth lands).
+export type ShellSession = { user: string } | null;
 
 export type DosShellProps = {
   children: ReactNode;
-  session: MockSession | null;
+  session: ShellSession;
+  logoff: () => Promise<void>;
 };
 
-export function DosShell({ children, session }: DosShellProps) {
+export function DosShell({ children, session, logoff }: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
@@ -96,10 +99,10 @@ export function DosShell({ children, session }: DosShellProps) {
     onCommand,
   });
 
-  const logoff = useCallback(() => {
+  const handleLogoff = useCallback(() => {
     setWelcomeEligible(false);
-    void mockLogoff().then(() => router.push(HOME_PATH));
-  }, [router]);
+    void logoff().then(() => router.push(HOME_PATH));
+  }, [logoff, router]);
 
   const run = useCommandRunner({
     openDialog,
@@ -107,7 +110,7 @@ export function DosShell({ children, session }: DosShellProps) {
     addCoin,
     openDocument: fileManager.openCommand,
     clearDocument: fileManager.closeDoc,
-    logoff,
+    logoff: handleLogoff,
     push,
     commands: commandList,
     groups,

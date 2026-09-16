@@ -3,8 +3,8 @@ import { VT323, IBM_Plex_Mono } from "next/font/google";
 import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
-import { DosShell } from "./components/DosShell/DosShell";
-import { getMockSession } from "./components/Account/mock-session.server";
+import { getMockSession, mockLogoff } from "@/features/account";
+import { DosShell } from "@/features/shell";
 import { messages } from "@/content/messages";
 
 const vt323 = VT323({
@@ -36,7 +36,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${vt323.variable} ${plexMono.variable}`}>
       <body>
-        <DosShell session={session}>{children}</DosShell>
+        <DosShell session={session} logoff={mockLogoff}>
+          {children}
+        </DosShell>
       </body>
     </html>
   );

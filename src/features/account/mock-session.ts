@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { USER_PATTERN, userSchema } from "@/data/account";
+import { USER_PATTERN, userSchema } from "./schema";
 
 // Mock session until Better Auth lands (Phase 5, see TECH.md): the cookie
 // carries the user, nothing is signed. Presentation only — never a security

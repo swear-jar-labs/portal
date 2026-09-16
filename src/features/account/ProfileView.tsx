@@ -1,6 +1,6 @@
 import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import type { MemberProfile } from "@/data/account";
+import type { MemberProfile } from "./data";
 
 export function ProfileView({ profile }: { profile: MemberProfile }) {
   return (

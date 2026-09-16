@@ -4,7 +4,7 @@ import {
   parseScreensaverPrefs,
   screensaverDelayMsForPrefs,
   serializeScreensaverPrefs,
-} from "@/app/components/Account/screensaver-prefs";
+} from "@/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "@/content/settings";
 
 describe("parseScreensaverPrefs", () => {

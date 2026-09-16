@@ -6,7 +6,7 @@ import {
   fallbackRowId,
   FILE_ROW_PREFIX,
   nextRowId,
-} from "@/app/components/FileManager/rows";
+} from "@/features/shell/FileManager/rows";
 
 const groups: FileGroup[] = [
   {

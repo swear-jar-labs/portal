@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
-import { enterShell } from "./helpers";
+import { enterShell, expectMinimumContrast } from "./helpers";
 
 const FILES_REGION = "C:\\SWEARJAR";
 const USER_LABEL = "User";
@@ -20,6 +20,9 @@ async function logon(page: Page, user = "ada") {
 }
 
 async function expectNoViolations(page: Page, context: string) {
+  // Client-side navigation updates <title> asynchronously; axe would otherwise
+  // flag an empty document title mid-transition (caught under parallel load).
+  await expect.poll(() => page.title()).not.toBe("");
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
   expect(results.violations, context).toEqual([]);
 }
@@ -107,13 +110,17 @@ test.describe("member session", () => {
     await expect(dialog.getByText("End the session?")).toBeVisible();
     await expectNoViolations(page, "logoff confirmation");
 
-    // The first action is focused; arrows cycle through the actions.
+    // The first action is focused; all four arrows cycle through the actions.
     const confirm = page.getByRole("button", { name: "[ LOG OFF ]" });
     const cancel = page.getByRole("button", { name: "[ CANCEL ]" });
     await expect(confirm).toBeFocused();
     await page.keyboard.press("ArrowRight");
     await expect(cancel).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(confirm).toBeFocused();
     await page.keyboard.press("ArrowRight");
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press("ArrowUp");
     await expect(confirm).toBeFocused();
     await page.keyboard.press("ArrowLeft");
     await expect(cancel).toBeFocused();
@@ -150,6 +157,34 @@ test.describe("member session", () => {
       await expectNoViolations(page, path);
     }
   });
+
+  test("settings controls walk with the plain arrows and keep the disabled SAVE visible", async ({
+    page,
+  }) => {
+    await logon(page);
+    await page.goto("/settings");
+
+    const save = page.getByRole("button", { name: "[ SAVE ]" });
+    const toggle = page.getByRole("checkbox", { name: "Starfield after idle" });
+    const delay = page.getByLabel("Idle delay");
+
+    // A disabled button keeps a body of its own: darker than the light window.
+    const colors = await save.evaluate((element) => ({
+      button: getComputedStyle(element).backgroundColor,
+      panel: getComputedStyle(element.closest("[data-dos-zone]") ?? element).backgroundColor,
+    }));
+    expect(colors.button).toBe("rgb(85, 85, 85)");
+    expect(colors.button).not.toBe(colors.panel);
+
+    await page.locator("#file-SETTINGS").focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("ArrowDown");
+    await expect(toggle).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(delay).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(toggle).toBeFocused();
+  });
 });
 
 test.describe("apply form", () => {
@@ -182,6 +217,12 @@ test.describe("apply form", () => {
     const role = page.getByLabel("Role");
     await role.focus();
 
+    // Plain ↑/↓ walk controls instead of opening the list.
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await expect(page.getByLabel(USER_LABEL)).toBeFocused();
+
+    await role.focus();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("option", { name: "Learner" })).toBeVisible();
 
@@ -195,6 +236,119 @@ test.describe("apply form", () => {
     await page.keyboard.press("Escape");
     await expect(role).toContainText("Reviewer");
     await expect(page.getByRole("listbox")).toHaveCount(0);
+
+    // Tab from an open list commits the active option and toggles panels.
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await expect(role).toContainText("Learner");
+    await expect(page.locator("#file-APPLY")).toBeFocused();
+  });
+
+  test("typing on a closed dropdown opens it at the match without feeding the command line", async ({
+    page,
+  }) => {
+    await page.goto("/apply");
+    const role = page.getByLabel("Role");
+    await role.focus();
+    await expect(role).toContainText("Learner");
+
+    await page.keyboard.type("r");
+    await expect(page.getByRole("listbox")).toBeVisible();
+    await expect(page.getByRole("option", { name: "Reviewer" })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+    // The global print capture must not steal the letter.
+    await expect(page.getByLabel("Command line")).toHaveValue("");
+
+    await page.keyboard.press("Enter");
+    await expect(role).toContainText("Reviewer");
+  });
+
+  test("a textarea keeps its caret and only arrows out from its edges", async ({ page }) => {
+    await page.goto("/apply");
+    const message = page.getByLabel("Why by hand");
+    const experience = page.getByLabel("What you have built or broken");
+    const submit = page.getByRole("button", { name: SUBMIT_BUTTON });
+
+    const text = "A compiler is a conversation.\nGravity is optional.";
+    await message.fill(text);
+
+    // The caret is placed by position so the edge checks are deterministic.
+    const caretAt = (offset: number) =>
+      message.evaluate((element, value) => {
+        if (!(element instanceof HTMLTextAreaElement)) return;
+        element.focus();
+        element.setSelectionRange(value, value);
+      }, offset);
+
+    // Not at the start: ↑ moves the caret, focus stays; Shift+↑ selects.
+    await caretAt(text.length);
+    await page.keyboard.press("ArrowUp");
+    await expect(message).toBeFocused();
+    await page.keyboard.press("Shift+ArrowUp");
+    const selected = await message.evaluate((element) => {
+      if (!(element instanceof HTMLTextAreaElement)) return false;
+      return element.selectionStart !== element.selectionEnd;
+    });
+    expect(selected).toBe(true);
+    await expect(message).toBeFocused();
+
+    // At the start: ↑ leaves to the previous control.
+    await caretAt(0);
+    await page.keyboard.press("ArrowUp");
+    await expect(experience).toBeFocused();
+
+    // At the end: ↓ leaves to the next control.
+    await caretAt(text.length);
+    await page.keyboard.press("ArrowDown");
+    await expect(submit).toBeFocused();
+
+    // Not at the end: ↓ keeps the caret in the field.
+    await caretAt(0);
+    await page.keyboard.press("ArrowDown");
+    await expect(message).toBeFocused();
+  });
+
+  test("Enter keeps the newline and Shift+Enter sends the form", async ({ page }) => {
+    await page.goto("/apply");
+    const message = page.getByLabel("Why by hand");
+
+    await message.click();
+    await page.keyboard.type("first");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("second");
+    await expect(message).toHaveValue("first\nsecond");
+    await expect(page.getByText("An email address is needed.")).toHaveCount(0);
+
+    await page.keyboard.press("Shift+Enter");
+    await expect(page.getByText("An email address is needed.")).toBeVisible();
+  });
+
+  test("Shift + arrows scroll an overflowing window", async ({ page }) => {
+    await page.goto("/apply");
+    const body = page.locator("[data-dos-scroll]");
+    const scrollTop = () => body.evaluate((element) => element.scrollTop);
+
+    expect(await scrollTop()).toBe(0);
+
+    // From a non-text control the arrows scroll instead of walking.
+    await page.getByLabel("Role").focus();
+    await page.keyboard.press("Shift+ArrowDown");
+    const scrolled = await scrollTop();
+    expect(scrolled).toBeGreaterThan(0);
+    await page.keyboard.press("Shift+ArrowUp");
+    expect(await scrollTop()).toBeLessThan(scrolled);
+    await expect(page.getByLabel("Role")).toBeFocused();
+
+    // A textarea keeps Shift+↑ for selection: the window stays put.
+    const message = page.getByLabel("Why by hand");
+    await message.click();
+    const before = await scrollTop();
+    await page.keyboard.press("Shift+ArrowUp");
+    expect(await scrollTop()).toBe(before);
   });
 
   test("has no accessibility violations", async ({ page }) => {
@@ -236,6 +390,84 @@ test.describe("social logon", () => {
   });
 });
 
+test.describe("logon window", () => {
+  test("Tab toggles the file list and the window, from its controls too", async ({ page }) => {
+    await page.goto("/login");
+    const doc = page.locator("[data-dos-scroll]");
+    const row = page.locator("#file-LOGON");
+    const user = page.getByLabel(USER_LABEL);
+
+    await row.focus();
+    await page.keyboard.press("Tab");
+    await expect(doc).toBeFocused();
+    // The focused window marks its whole frame (title bar included), in the
+    // surface's ring color — blue on a light form window.
+    const outline = await doc.evaluate(
+      (element) => getComputedStyle(element.parentElement ?? element).outline,
+    );
+    expect(outline).toContain("rgb(0, 0, 170)");
+
+    // ↑/↓ walk the controls from the surface...
+    await page.keyboard.press("ArrowDown");
+    await expect(user).toBeFocused();
+
+    // ...and Tab still toggles panels from a control (the user report).
+    await page.keyboard.press("Tab");
+    await expect(row).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(doc).toBeFocused();
+  });
+
+  test("plain arrows walk the form controls with wrap-around", async ({ page }) => {
+    await page.goto("/login");
+    const form = page.getByRole("form", { name: "MEMBER LOGON" });
+    const user = page.getByLabel(USER_LABEL);
+    const password = page.getByLabel(PASSWORD_LABEL);
+    const apply = form.getByRole("link", { name: "APPLY" });
+
+    // From the panel surface the walk enters at the matching edge.
+    await page.locator("#file-LOGON").focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("ArrowUp");
+    await expect(apply).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(user).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(password).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(user).toBeFocused();
+  });
+
+  test("a window without a scrollbar ignores Shift + arrows", async ({ page }) => {
+    await page.goto("/login");
+    const body = page.locator("[data-dos-scroll]");
+    const google = page.getByRole("button", { name: "[ GOOGLE ]" });
+
+    await google.focus();
+    await page.keyboard.press("Shift+ArrowDown");
+    expect(await body.evaluate((element) => element.scrollTop)).toBe(0);
+    await expect(google).toBeFocused();
+  });
+
+  test("the window [X] closes back to the default document", async ({ page }) => {
+    for (const path of ["/login", "/apply", "/profile"]) {
+      await page.goto(path);
+      await page.getByRole("button", { name: "Close" }).click();
+      await expect(page).toHaveURL("/");
+      await expect(page.getByRole("region", { name: "ABOUT.TXT" })).toBeVisible();
+    }
+  });
+
+  test("secondary text keeps WCAG AA contrast on light and dark surfaces", async ({ page }) => {
+    await page.goto("/login");
+    await expectMinimumContrast(page.getByText("User names are lower-case"));
+    await expectMinimumContrast(page.getByText("OR LOG ON WITH"));
+
+    await page.goto("/no-such-route");
+    await expectMinimumContrast(page.getByText("No such route in the file list"));
+  });
+});
+
 test.describe("screensaver settings", () => {
   test("apply only after SAVE and persist on this terminal", async ({ page }) => {
     await logon(page);
@@ -266,6 +498,30 @@ test.describe("screensaver settings", () => {
     await page.reload();
     await expect(toggle).not.toBeChecked();
     await expect(delay).toContainText("1 MINUTE");
+  });
+
+  test("Enter toggles the checkbox and Shift+Enter saves the form", async ({ page }) => {
+    await logon(page);
+    await page.goto("/settings");
+
+    const toggle = page.getByRole("checkbox", { name: "Starfield after idle" });
+    const save = page.getByRole("button", { name: "[ SAVE ]" });
+    const stored = () =>
+      page.evaluate((key) => localStorage.getItem(key), SCREENSAVER_PREFS_STORAGE_KEY);
+
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    await expect(toggle).not.toBeChecked();
+    await expect(save).toBeEnabled();
+
+    await page.keyboard.press("Shift+Enter");
+    await expect(page.getByText("Saved on this terminal.")).toBeVisible();
+    await expect(save).toBeDisabled();
+    await expect.poll(stored).toBe('{"enabled":false,"delayMinutes":5}');
+
+    // Space keeps toggling natively after the save.
+    await page.keyboard.press(" ");
+    await expect(toggle).toBeChecked();
   });
 
   test("a disabled screensaver never appears", async ({ page }) => {

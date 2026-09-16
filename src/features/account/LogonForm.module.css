@@ -1,0 +1,15 @@
+/* A rule with the label in the middle: ─── OR LOG ON WITH ─── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.55;
+}

@@ -16,7 +16,7 @@
 
 .icon {
   flex: 0 0 auto;
-  color: var(--dos-light-cyan);
+  color: var(--dos-field-fg, var(--dos-light-cyan));
 }
 
 .content {

@@ -5,13 +5,13 @@
 }
 
 .label {
-  color: var(--dos-yellow);
+  color: var(--dos-field-label, var(--dos-yellow));
   font-weight: 700;
 }
 
 .control {
-  background: var(--dos-black);
-  color: var(--dos-light-cyan);
+  background: var(--dos-field-bg, var(--dos-black));
+  color: var(--dos-field-fg, var(--dos-light-cyan));
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-sunken);
   padding: 1px 8px;
@@ -22,6 +22,6 @@
 }
 
 .error {
-  color: var(--dos-light-red);
+  color: var(--dos-field-error, var(--dos-light-red));
   font-weight: 700;
 }

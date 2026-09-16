@@ -2,9 +2,14 @@ import { buildHelp, Button, Heading, Sprite, Stack, Text } from "@swearjar/dos";
 import type { AppCommand, FileGroup } from "@/content/commands";
 import { welcome } from "@/content/landing";
 import { messages } from "@/content/messages";
+import styles from "./dialogs.module.css";
 
 export function HelpBody({ commands }: { commands: readonly AppCommand[] }) {
-  return <Text as="div">{buildHelp(commands, messages.shell.dialogs.help)}</Text>;
+  return (
+    <Text as="div" className={styles.help}>
+      {buildHelp(commands, messages.shell.dialogs.help)}
+    </Text>
+  );
 }
 
 export function ErrorBody() {

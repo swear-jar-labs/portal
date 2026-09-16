@@ -1,0 +1,12 @@
+/* HELP dialog: the window widens so the command list can flow into two columns.
+   The column width is the fallback switch — as soon as the window cap (or the
+   screen) cannot fit two columns, the text falls back to one. */
+.wide {
+  --dos-window-width: 1040px;
+}
+
+.help {
+  column-count: 2;
+  column-width: 22em;
+  column-gap: 2em;
+}

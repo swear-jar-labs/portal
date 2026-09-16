@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos";
-import { DOC_ZONE, FILES_ZONE } from "../zones";
+import { CMD_ZONE, DOC_ZONE, FILES_ZONE } from "../zones";
 import { DIR_ROW_PREFIX } from "./rows";
 
 const INPUT_GUARD_SELECTOR = "input, textarea, select, [role='menubar'], [role='menu']";
@@ -30,29 +30,32 @@ export function useFileCursorKeys({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
       const target = event.target as HTMLElement | null;
-      if (target?.closest(INPUT_GUARD_SELECTOR)) return;
       const zone = target?.closest(`[${DOS_ZONE_ATTR}]`)?.getAttribute(DOS_ZONE_ATTR);
 
+      // Tab is the panel toggle: the file list and the right-hand panel, from
+      // any control of the panel too, and back from the command line. Shift
+      // does not change the target.
       if (event.key === "Tab") {
         if (event.ctrlKey || event.metaKey || event.altKey) return;
         if (zone === FILES_ZONE) {
-          const doc = document.querySelector<HTMLElement>(`[${DOS_SCROLL_ATTR}]`);
+          const doc = document.querySelector<HTMLElement>(
+            `[${DOS_ZONE_ATTR}='${DOC_ZONE}'] [${DOS_SCROLL_ATTR}]`,
+          );
           if (!doc) return;
           event.preventDefault();
           doc.focus();
           return;
         }
-        if (zone === DOC_ZONE) {
-          const row = document.getElementById(cursorId);
-          if (!row) return;
-          event.preventDefault();
-          row.scrollIntoView({ block: "nearest" });
-          row.focus();
-          return;
-        }
+        if (zone !== DOC_ZONE && zone !== CMD_ZONE) return;
+        const row = document.getElementById(cursorId);
+        if (!row) return;
+        event.preventDefault();
+        row.scrollIntoView({ block: "nearest" });
+        row.focus();
         return;
       }
 
+      if (target?.closest(INPUT_GUARD_SELECTOR)) return;
       if (zone === DOC_ZONE) return;
 
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {

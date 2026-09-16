@@ -24,8 +24,10 @@ const FILE_COLUMNS: FileTableColumn[] = [
 const FILE_SIZE_ORDER = ["peek", "compact", "full"] as const;
 export type FileListSize = (typeof FILE_SIZE_ORDER)[number];
 
-const INITIAL_DOC_ID: DocId = "ABOUT";
-const INITIAL_CURSOR_ID = fileRowId(INITIAL_DOC_ID);
+// The document shown when no route owns the right panel (boot, CLS, [X] on an
+// inner window): the shell's default view.
+export const DEFAULT_DOC_ID: DocId = "ABOUT";
+const INITIAL_CURSOR_ID = fileRowId(DEFAULT_DOC_ID);
 
 type CursorState = {
   id: string;
@@ -61,7 +63,7 @@ export function useFileManager({
   groups,
   onCommand,
 }: FileManagerOptions) {
-  const [selectedDocId, setSelectedDocId] = useState<DocId | null>(INITIAL_DOC_ID);
+  const [selectedDocId, setSelectedDocId] = useState<DocId | null>(DEFAULT_DOC_ID);
   const [cursor, setCursor] = useState<CursorState>(() => cursorStateFor(pathname, signedIn));
   const [collapsedGroups, setCollapsedGroups] = useState<readonly string[]>([]);
   const [listSize, setListSize] = useState<FileListSize>("compact");

@@ -76,7 +76,11 @@ export const messages = {
       help: {
         title: "HELP",
         intro: "Available commands:",
-        outro: "Tab completes. Try an unknown command — the jar clinks.",
+        keys: [
+          "Tab switches panels; ▲/▼ moves between controls in a window.",
+          "Enter activates; Shift+Enter sends a form; Shift+▲/▼ scrolls the window.",
+        ].join("\n"),
+        outro: "Tab completes in the command line. Try an unknown command — the jar clinks.",
       },
       dir: { title: "DIR" },
       coffee: {

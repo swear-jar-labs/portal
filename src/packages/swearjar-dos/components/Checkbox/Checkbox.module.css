@@ -12,7 +12,7 @@
   width: 1.1em;
   height: 1.1em;
   margin: 0;
-  background: var(--dos-black);
+  background: var(--dos-check-bg, var(--dos-black));
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-sunken);
   cursor: pointer;
@@ -20,7 +20,7 @@
 
 .box::before {
   content: "X";
-  color: var(--dos-light-cyan);
+  color: var(--dos-check-mark, var(--dos-light-cyan));
   font-weight: 700;
   line-height: 1;
   transform: scale(0);
@@ -31,7 +31,7 @@
 }
 
 .label {
-  color: var(--dos-yellow);
+  color: var(--dos-field-label, var(--dos-yellow));
   font-weight: 700;
   cursor: pointer;
 }

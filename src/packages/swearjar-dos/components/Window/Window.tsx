@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 import { DOS_WINDOW_BODY_ATTR } from "../../attributes";
 import { cx } from "../tone";
+import { CloseButton } from "../CloseButton/CloseButton";
 import styles from "./Window.module.css";
 
 export type WindowProps = {
@@ -28,11 +29,7 @@ export function Window({
     <div className={cx(styles.window, tone === "error" && styles.error, className)}>
       <div className={styles.titleBar}>
         <span className={styles.title}>{title}</span>
-        {onClose ? (
-          <button type="button" className={styles.close} onClick={onClose} aria-label={closeLabel}>
-            [X]
-          </button>
-        ) : null}
+        {onClose ? <CloseButton onClose={onClose} label={closeLabel} /> : null}
       </div>
       <div className={styles.body} tabIndex={0} {...{ [DOS_WINDOW_BODY_ATTR]: "" }}>
         {children}

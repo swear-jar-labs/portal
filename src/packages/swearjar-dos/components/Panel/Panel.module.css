@@ -8,6 +8,31 @@
   border-color: var(--dos-border-raised);
 }
 
+/* A dialog-like form surface (the prototype's .win-body.form): black text on
+   light gray, with the tone/control colors the kit components read. The pair of
+   classes outranks a consumer's single-class background, so the surface owns it. */
+.panel.light {
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  --dos-tone-default: var(--dos-black);
+  --dos-tone-dim: var(--dos-blue);
+  --dos-tone-green: var(--dos-blue);
+  --dos-tone-cyan: var(--dos-blue);
+  --dos-tone-yellow: var(--dos-black);
+  --dos-tone-red: var(--dos-red);
+  --dos-link: var(--dos-blue);
+  --dos-focus-ring: var(--dos-blue);
+  --dos-field-label: var(--dos-black);
+  --dos-field-bg: var(--dos-white);
+  --dos-field-fg: var(--dos-black);
+  --dos-field-error: var(--dos-red);
+  --dos-check-bg: var(--dos-white);
+  --dos-check-mark: var(--dos-black);
+  /* Disabled buttons need a body darker than the surface, or they vanish into it. */
+  --dos-button-disabled-bg: var(--dos-dark-gray);
+  --dos-button-disabled-fg: var(--dos-light-gray);
+}
+
 .titleBar {
   position: relative;
   display: flex;
@@ -60,8 +85,10 @@
   padding: 6px 8px;
 }
 
-.body:focus-visible {
-  outline: 2px solid var(--dos-light-cyan);
+/* A focused body marks the whole window (frame and title bar), not just the
+   content area: the ring sits on the panel border, like an active DOS window. */
+.panel:has(> .body:focus-visible) {
+  outline: 2px solid var(--dos-focus-ring);
   outline-offset: -2px;
 }
 

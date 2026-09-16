@@ -3,8 +3,19 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { useCallback, useRef, type ReactNode } from "react";
 import { DOS_WINDOW_BODY_ATTR } from "../../attributes";
+import { FOCUSABLE_SELECTOR, nextControlIndex } from "../../focus";
+import { cx } from "../tone";
 import { Window } from "../Window/Window";
 import styles from "./Dialog.module.css";
+
+const ARROW_STEP: Record<string, 1 | -1> = {
+  ArrowDown: 1,
+  ArrowRight: 1,
+  ArrowUp: -1,
+  ArrowLeft: -1,
+};
+
+const VERTICAL_KEYS = ["ArrowUp", "ArrowDown"];
 
 export type DialogProps = {
   open: boolean;
@@ -14,6 +25,7 @@ export type DialogProps = {
   footer?: ReactNode;
   tone?: "default" | "error";
   closeLabel?: string;
+  className?: string;
 };
 
 export function Dialog({
@@ -24,15 +36,21 @@ export function Dialog({
   footer,
   tone = "default",
   closeLabel,
+  className,
 }: DialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Action buttons live in the window body; the title-bar [X] is not part of
-  // the arrow cycle (Tab still reaches it).
-  const actionButtons = useCallback((): HTMLElement[] => {
-    const body = contentRef.current?.querySelector(`[${DOS_WINDOW_BODY_ATTR}]`);
-    return body ? Array.from(body.querySelectorAll("button")) : [];
-  }, []);
+  const body = useCallback(
+    () => contentRef.current?.querySelector<HTMLElement>(`[${DOS_WINDOW_BODY_ATTR}]`) ?? null,
+    [],
+  );
+
+  // Controls of the window body, in DOM order: the arrow cycle. The title-bar
+  // [X] is not part of it (Tab still reaches it natively).
+  const controls = useCallback((): HTMLElement[] => {
+    const node = body();
+    return node ? Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)) : [];
+  }, [body]);
 
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -40,34 +58,41 @@ export function Dialog({
         <RadixDialog.Overlay className={styles.overlay} />
         <RadixDialog.Content
           ref={contentRef}
-          className={styles.content}
+          className={cx(styles.content, className)}
           aria-describedby={undefined}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
-            const [first] = actionButtons();
-            (first ?? contentRef.current)?.focus();
+            const [first] = controls();
+            // With no controls the body itself takes focus: it is the scroll
+            // region, so ↑/↓ scroll a long text (HELP) natively.
+            (first ?? body() ?? contentRef.current)?.focus();
           }}
           onKeyDown={(event) => {
             if (event.defaultPrevented || event.repeat) return;
             if (event.nativeEvent.isComposing) return;
             if (event.ctrlKey || event.metaKey || event.altKey) return;
 
-            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-              const buttons = actionButtons();
-              if (buttons.length < 2) return;
+            const step = ARROW_STEP[event.key];
+            if (step) {
+              const list = controls();
+              if (list.length === 0) return;
               const active = document.activeElement;
-              const current = active instanceof HTMLElement ? buttons.indexOf(active) : -1;
-              const step = event.key === "ArrowRight" ? 1 : -1;
-              // Focus outside the buttons (surface, [X]) enters the row from its edge.
-              const start = current === -1 ? (step === 1 ? -1 : 0) : current;
-              const next = buttons[(start + step + buttons.length) % buttons.length];
+              const current = active instanceof HTMLElement ? list.indexOf(active) : -1;
+              // On the surface ↑/↓ stay native (they scroll the body); ←/→
+              // enter the control row from its edge. Inside the controls all
+              // four arrows cycle with wrap-around.
+              if (current === -1 && VERTICAL_KEYS.includes(event.key)) return;
+              const next = list[nextControlIndex(list.length, current, step)];
               if (!next) return;
               event.preventDefault();
               next.focus();
               return;
             }
 
-            if (event.target !== event.currentTarget) return;
+            // Enter/Space on the surface close the window; on a control they
+            // activate it natively.
+            const target = event.target instanceof HTMLElement ? event.target : null;
+            if (target !== event.currentTarget && target !== body()) return;
             if (event.key !== "Enter" && event.key !== " ") return;
             event.preventDefault();
             onOpenChange(false);

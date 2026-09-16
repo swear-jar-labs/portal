@@ -16,6 +16,8 @@ import { DirBody, DoomBody, ErrorBody, ExitBody, HelpBody, LogoffBody } from "./
 export type DialogState = {
   title: string;
   tone?: "default" | "error";
+  // A wider window for content that reads better in columns (HELP).
+  wide?: boolean;
   body: ReactNode;
 };
 
@@ -49,6 +51,7 @@ export function useCommandRunner({
       HELP: () =>
         openDialog({
           title: messages.shell.dialogs.help.title,
+          wide: true,
           body: <HelpBody commands={commands} />,
         }),
       DIR: () =>

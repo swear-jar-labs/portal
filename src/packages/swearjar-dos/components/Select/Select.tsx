@@ -51,8 +51,8 @@ export function Select<T extends string>({
     optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, open]);
 
-  function openList() {
-    setActiveIndex(Math.max(selectedIndex, 0));
+  function openList(index = Math.max(selectedIndex, 0)) {
+    setActiveIndex(index);
     setOpen(true);
   }
 
@@ -70,19 +70,38 @@ export function Select<T extends string>({
   // Focus stays on the trigger (the listbox is operated via aria-activedescendant),
   // so every key is handled here.
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey) return;
+    // Shift+Enter is the form's submit accelerator: leave it to the form
+    // instead of opening or committing the list.
+    if (event.key === "Enter" && event.shiftKey) return;
 
     if (!open) {
-      const opens =
-        event.key === "ArrowDown" ||
-        event.key === "ArrowUp" ||
+      // Enter, Space and Alt+↓ open the list. Plain ↑/↓ stay untouched: the
+      // shell's panel walk moves focus to the neighbouring control.
+      if (
         event.key === "Enter" ||
-        event.key === " ";
-      if (!opens) return;
+        event.key === " " ||
+        (event.altKey && event.key === "ArrowDown")
+      ) {
+        event.preventDefault();
+        openList();
+        return;
+      }
+      if (event.altKey) return;
+      // A printable key opens the list at the first match (type-ahead) and must
+      // never reach the shell's global command-line capture.
+      if (event.key.length !== 1 || event.key === " ") return;
       event.preventDefault();
-      openList();
+      const match = typeaheadIndex(
+        options.map((option) => option.label),
+        Math.max(selectedIndex, 0),
+        event.key,
+      );
+      if (match !== undefined) openList(match);
       return;
     }
+
+    if (event.altKey) return;
 
     switch (event.key) {
       case "ArrowDown":
@@ -155,6 +174,10 @@ export function Select<T extends string>({
             align="start"
             sideOffset={2}
             onOpenAutoFocus={(event) => event.preventDefault()}
+            // Focus never leaves the trigger while the list operates, so the
+            // default return-on-close would only snatch it back from wherever
+            // the Tab keydown handed it (e.g. the shell's panel toggle).
+            onCloseAutoFocus={(event) => event.preventDefault()}
             onMouseDown={(event) => event.preventDefault()}
           >
             <div id={listboxId} role="listbox" aria-labelledby={labelId} className={styles.listbox}>

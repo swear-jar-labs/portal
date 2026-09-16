@@ -9,6 +9,7 @@
   text-transform: uppercase;
   cursor: pointer;
   padding: 1px 16px;
+  min-width: 12ch;
   background: var(--dos-light-gray);
   color: var(--dos-black);
   border: var(--dos-border-width) solid;
@@ -20,14 +21,14 @@
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--dos-light-cyan);
+  outline: 2px solid var(--dos-focus-ring);
   outline-offset: 2px;
 }
 
 .button:disabled {
-  background: var(--dos-light-gray);
-  color: var(--dos-dark-gray);
-  border-color: var(--dos-light-gray);
+  background: var(--dos-button-disabled-bg, var(--dos-light-gray));
+  color: var(--dos-button-disabled-fg, var(--dos-dark-gray));
+  border-color: var(--dos-button-disabled-bg, var(--dos-light-gray));
   cursor: default;
 }
 
@@ -45,5 +46,6 @@
   background: transparent;
   border: 0;
   padding: 0;
+  min-width: 0;
   font-weight: inherit;
 }

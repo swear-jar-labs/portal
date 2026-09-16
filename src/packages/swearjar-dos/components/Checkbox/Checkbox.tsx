@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ChangeEvent } from "react";
+import { useId, type ChangeEvent, type KeyboardEvent } from "react";
 import { cx } from "../tone";
 import styles from "./Checkbox.module.css";
 
@@ -19,6 +19,15 @@ export function Checkbox({ label, name, checked, onChange, className }: Checkbox
     onChange(event.target.checked);
   }
 
+  // The DOS model activates with Enter; Space stays native. Shift+Enter is not
+  // ours: the form owns it as its submit accelerator.
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    if (event.ctrlKey || event.altKey || event.metaKey) return;
+    event.preventDefault();
+    onChange(!checked);
+  }
+
   return (
     <div className={cx(styles.field, className)}>
       <input
@@ -27,6 +36,7 @@ export function Checkbox({ label, name, checked, onChange, className }: Checkbox
         type="checkbox"
         checked={checked}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
         className={styles.box}
       />
       <label className={styles.label} htmlFor={id}>

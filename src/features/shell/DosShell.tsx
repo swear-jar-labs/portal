@@ -34,12 +34,15 @@ import { useBootState } from "./hooks/useBootState";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
+import { usePanelNav } from "./hooks/usePanelNav";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./useCommandRunner";
+import { CMD_ZONE } from "./zones";
 import { FileManagerProvider } from "./FileManager/FileManagerContext";
 import { FileManagerPanel } from "./FileManager/FileManagerPanel";
 import { useFileCursorKeys } from "./FileManager/useFileCursorKeys";
 import { useFileManager } from "./FileManager/useFileManager";
+import dialogsStyles from "./dialogs.module.css";
 import styles from "./DosShell.module.css";
 
 // The shell knows nothing about auth: any session-shaped value with a user
@@ -127,6 +130,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
 
   const controlsEnabled = booted && dialog === null && !screensaverOn;
   useFunctionKeys(functionKeys, run, controlsEnabled);
+  usePanelNav(controlsEnabled);
   useFileCursorKeys({
     enabled: controlsEnabled,
     cursorId: fileManager.cursorId,
@@ -217,6 +221,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
           onNavigate={fileManager.moveCursor}
           captureDisabled={dialog !== null || screensaverOn}
           ariaLabel={messages.shell.cmdLine.ariaLabel}
+          zone={CMD_ZONE}
         />
         <KeyBar items={keyItems} ariaLabel={messages.shell.keyBar.ariaLabel} />
         <StatusBar
@@ -242,6 +247,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
         title={dialog?.title ?? ""}
         tone={dialog?.tone}
         closeLabel={messages.shell.window.closeLabel}
+        className={dialog?.wide ? dialogsStyles.wide : undefined}
       >
         {dialog?.body}
       </Dialog>

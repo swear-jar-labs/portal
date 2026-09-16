@@ -137,9 +137,11 @@ export function ApplyForm() {
           error={errors.motivation}
         />
 
-        <Button type="submit" variant="primary">
-          {messages.account.apply.submit}
-        </Button>
+        <Stack direction="row" gap={10}>
+          <Button type="submit" variant="primary">
+            {messages.account.apply.submit}
+          </Button>
+        </Stack>
       </Stack>
     </Form>
   );

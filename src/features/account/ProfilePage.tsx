@@ -16,7 +16,7 @@ export async function ProfilePage() {
   const profile = await getOwnProfile(session.user);
 
   return (
-    <ShellPanel title={fileTitle("PROFILE")}>
+    <ShellPanel title={fileTitle("PROFILE")} closable>
       <ProfileView profile={profile} />
     </ShellPanel>
   );

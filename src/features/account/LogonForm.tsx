@@ -6,6 +6,7 @@ import { Button, Field, Form, Heading, Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { mockLogonSchema, socialProviders, type SocialProvider } from "./mock-session";
 import { mockLogon, mockSocialLogon } from "./mock-session-actions";
+import styles from "./LogonForm.module.css";
 
 type LogonErrors = {
   user?: string;
@@ -91,14 +92,23 @@ export function LogonForm() {
           error={errors.password}
         />
 
-        {errors.form ? <Text tone="red">{errors.form}</Text> : null}
+        {errors.form ? (
+          <Text tone="red" weight="bold">
+            {errors.form}
+          </Text>
+        ) : null}
 
         <Text tone="dim">{messages.account.login.hint}</Text>
-        <Button type="submit" variant="primary" disabled={pending}>
-          {messages.account.login.submit}
-        </Button>
 
-        <Text tone="dim">{messages.account.login.sso.label}</Text>
+        <Stack direction="row" gap={10}>
+          <Button type="submit" variant="primary" disabled={pending}>
+            {messages.account.login.submit}
+          </Button>
+        </Stack>
+
+        <Text tone="dim" className={styles.divider}>
+          {messages.account.login.sso.label}
+        </Text>
         <Stack direction="row" gap={10} wrap>
           {socialProviders.map((provider) => (
             <Button key={provider} onClick={() => handleProvider(provider)} disabled={pending}>

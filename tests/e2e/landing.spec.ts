@@ -55,21 +55,34 @@ test("Tab completes a command", async ({ page }) => {
   await expect(input).toHaveValue("ABOUT");
 });
 
-test("Tab leaves an empty command line", async ({ page }) => {
+test("Tab from the command line returns to the file manager", async ({ page }) => {
   const input = page.getByLabel("Command line");
   await input.focus();
   await page.keyboard.press("Tab");
   await expect(input).not.toBeFocused();
   await expect(input).toHaveValue("");
+  await expect(page.locator("#file-ABOUT")).toBeFocused();
 });
 
-test("Shift+Tab always leaves the command line", async ({ page }) => {
+test("Shift+Tab from the command line returns to the file manager", async ({ page }) => {
   const input = page.getByLabel("Command line");
   await input.focus();
   await page.keyboard.type("ABO");
   await page.keyboard.press("Shift+Tab");
   await expect(input).not.toBeFocused();
   await expect(input).toHaveValue("ABO");
+  await expect(page.locator("#file-ABOUT")).toBeFocused();
+});
+
+test("Tab on a complete command completes nothing and returns to the file manager", async ({
+  page,
+}) => {
+  const input = page.getByLabel("Command line");
+  await input.focus();
+  await page.keyboard.type("ABOUT");
+  await page.keyboard.press("Tab");
+  await expect(input).toHaveValue("ABOUT");
+  await expect(page.locator("#file-ABOUT")).toBeFocused();
 });
 
 test("Tab toggles focus between the file list and the document", async ({ page }) => {
@@ -104,24 +117,50 @@ test("F1 opens help from the keyboard", async ({ page }) => {
   await expect(page.getByText("Available commands:")).toBeVisible();
 });
 
+test("lays HELP out in two columns, and in one when the screen is narrow", async ({ page }) => {
+  await page.keyboard.press("F1");
+  const dialog = page.getByRole("dialog");
+  const help = dialog.locator("[data-dos-window-body] > div");
+
+  // With two columns the vertical centre of the block is the gap between them
+  // and no text fragment crosses it; with one wide column text does cross.
+  const crossingFragments = () =>
+    help.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const centre = box.left + box.width / 2;
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return Array.from(range.getClientRects()).filter(
+        (rect) => rect.left < centre && rect.right > centre,
+      ).length;
+    });
+
+  expect(await crossingFragments()).toBe(0);
+
+  await page.setViewportSize({ width: 700, height: 800 });
+  expect(await crossingFragments()).toBeGreaterThan(0);
+});
+
 test("does not autofocus the close button of a dialog", async ({ page }) => {
   await page.keyboard.press("F1");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog).toBeFocused();
+  // HELP has no controls: the window body (the scroll region) takes focus, so
+  // ↑/↓ scroll a long text natively.
+  await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
   await expect(dialog.getByRole("button", { name: "Close" })).not.toBeFocused();
 });
 
 test("closes a dialog with Enter or Space", async ({ page }) => {
   await page.keyboard.press("F1");
   const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeFocused();
+  await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
 
   await page.keyboard.press("Enter");
   await expect(dialog).toBeHidden();
 
   await page.keyboard.press("F1");
-  await expect(dialog).toBeFocused();
+  await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
   await page.keyboard.press(" ");
   await expect(dialog).toBeHidden();
 });

@@ -19,7 +19,7 @@
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
   left: calc(16px + env(safe-area-inset-left));
-  color: var(--dos-dark-gray);
+  color: var(--dos-text-dim);
 }
 
 .hint {
@@ -27,6 +27,6 @@
   bottom: calc(16px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  color: var(--dos-dark-gray);
+  color: var(--dos-text-dim);
   white-space: nowrap;
 }

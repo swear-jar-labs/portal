@@ -13,7 +13,7 @@ export async function ApplyPage() {
   if (session) redirect("/profile");
 
   return (
-    <ShellPanel title={fileTitle("APPLY")}>
+    <ShellPanel title={fileTitle("APPLY")} surface="light" closable>
       <ApplyForm />
     </ShellPanel>
   );

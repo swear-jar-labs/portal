@@ -60,14 +60,22 @@ describe("resolveCommand", () => {
 });
 
 describe("buildHelp", () => {
-  const texts = { intro: "Commands:", outro: "Tab completes." };
+  const texts = {
+    intro: "Commands:",
+    keys: "Tab switches panels; ▲/▼ moves between controls.",
+    outro: "Tab completes in the command line.",
+  };
 
-  it("lists visible commands and the completion hint", () => {
+  it("lists visible commands, the keys hint and the completion hint", () => {
     const help = buildHelp(commands, texts);
     expect(help.startsWith("Commands:")).toBe(true);
     expect(help).toContain("ABOUT");
     expect(help).toContain("APPLY");
     expect(help).not.toContain("SECRET");
-    expect(help.endsWith("Tab completes.")).toBe(true);
+    // The window keys come right after the list; the command-line hint closes.
+    expect(help).toContain(
+      `Tab switches panels; ▲/▼ moves between controls.\n\nTab completes in the command line.`,
+    );
+    expect(help.endsWith("Tab completes in the command line.")).toBe(true);
   });
 });

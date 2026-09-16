@@ -33,6 +33,7 @@ const HELP_DOTS = 15;
 export type HelpTexts = {
   intro: string;
   outro: string;
+  keys: string;
 };
 
 export function buildHelp(commands: readonly Command[], texts: HelpTexts): string {
@@ -41,6 +42,8 @@ export function buildHelp(commands: readonly Command[], texts: HelpTexts): strin
     const dots = ".".repeat(Math.max(1, HELP_DOTS - command.id.length));
     lines.push(`  ${command.id} ${dots} ${command.description}`);
   }
+  lines.push("");
+  lines.push(texts.keys);
   lines.push("");
   lines.push(texts.outro);
   return lines.join("\n");

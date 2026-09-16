@@ -1,7 +1,9 @@
 .window {
   display: flex;
   flex-direction: column;
-  width: min(560px, 94%);
+  /* Consumers may widen a specific window through the variable (the shell's
+     HELP dialog does); 94% keeps the default window inside a narrow screen. */
+  width: min(var(--dos-window-width, 560px), 94%);
   max-height: 86%;
   background: var(--dos-light-gray);
   color: var(--dos-black);
@@ -32,22 +34,6 @@
   white-space: nowrap;
 }
 
-.close {
-  cursor: pointer;
-  padding: 0 4px;
-  font: inherit;
-  font-weight: inherit;
-  text-transform: uppercase;
-  color: inherit;
-  background: transparent;
-  border: 0;
-}
-
-.close:hover {
-  background: var(--dos-light-red);
-  color: var(--dos-black);
-}
-
 .body {
   flex: 1 1 auto;
   min-height: 0;
@@ -61,7 +47,7 @@
 }
 
 .body:focus-visible {
-  outline: 2px solid var(--dos-light-cyan);
+  outline: 2px solid var(--dos-focus-ring);
   outline-offset: -2px;
 }
 

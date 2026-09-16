@@ -16,6 +16,12 @@
   --dos-yellow: #ffff55;
   --dos-white: #ffffff;
 
+  /* Secondary text on black: the CGA dark gray (#555555) sits at ~2.8:1. */
+  --dos-text-dim: #8a8a8a;
+
+  /* Keyboard focus: light cyan on black; light surfaces override it (see Panel). */
+  --dos-focus-ring: var(--dos-light-cyan);
+
   --dos-font: var(--font-vt323), var(--font-plex-mono), "Courier New", monospace;
   --dos-font-size: 20px;
   --dos-font-size-narrow: 18px;

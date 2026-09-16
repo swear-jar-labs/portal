@@ -1,5 +1,5 @@
 .link {
-  color: var(--dos-cyan);
+  color: var(--dos-link, var(--dos-cyan));
   text-decoration: none;
   cursor: pointer;
 }

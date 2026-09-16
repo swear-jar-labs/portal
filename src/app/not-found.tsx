@@ -4,7 +4,7 @@ import { ShellPanel } from "@/features/shell";
 
 export default function NotFound() {
   return (
-    <ShellPanel title={messages.shell.notFound.title}>
+    <ShellPanel title={messages.shell.notFound.title} closable>
       <Stack gap={8}>
         <Heading level={1} tone="yellow">
           {messages.shell.notFound.heading}

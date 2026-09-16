@@ -75,7 +75,7 @@ test.describe("spa navigation", () => {
     await page.keyboard.press("Enter");
 
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeFocused();
+    await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();
     await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();

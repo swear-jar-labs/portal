@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { Command } from "../../commands/types";
 import { nextCompletion } from "../../commands/registry";
+import { DOS_ZONE_ATTR } from "../../attributes";
 import { cx } from "../tone";
 import styles from "./CmdLine.module.css";
 
@@ -15,6 +16,9 @@ export type CmdLineProps = {
   prompt?: string;
   placeholder?: string;
   ariaLabel?: string;
+  // Keyboard zone of the line: Tab leaves through it to the consumer's
+  // panel model (the shell routes it to the file list).
+  zone?: string;
   className?: string;
 };
 
@@ -27,6 +31,7 @@ export function CmdLine({
   prompt = "C:\\>",
   placeholder,
   ariaLabel = "Command line",
+  zone,
   className,
 }: CmdLineProps) {
   const [value, setValue] = useState("");
@@ -55,7 +60,9 @@ export function CmdLine({
       if (event.key.length !== 1 || event.key === " ") return;
       const target = event.target as HTMLElement | null;
       if (
-        target?.closest("input, textarea, select, [role='menubar'], [role='menu'], [role='dialog']")
+        target?.closest(
+          "input, textarea, select, [role='menubar'], [role='menu'], [role='dialog'], [role='combobox']",
+        )
       ) {
         return;
       }
@@ -84,9 +91,11 @@ export function CmdLine({
     }
 
     if (event.key === "Tab") {
+      // Completion only while it changes the value; otherwise the Tab falls
+      // through to the shell, which moves focus back to the file list.
       if (event.shiftKey || !value.trim()) return;
       const completion = nextCompletion(commands, value);
-      if (!completion) return;
+      if (!completion || completion === value) return;
       event.preventDefault();
       setValue(completion);
       return;
@@ -110,6 +119,7 @@ export function CmdLine({
   return (
     <div
       className={cx(styles.cmdLine, className)}
+      {...(zone ? { [DOS_ZONE_ATTR]: zone } : undefined)}
       onClick={(event) => {
         if (event.target === inputRef.current) return;
         inputRef.current?.focus();

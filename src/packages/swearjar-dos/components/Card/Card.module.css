@@ -1,16 +1,16 @@
 .card {
   position: relative;
   padding: 4px 8px 6px;
-  border: var(--dos-border-width) solid var(--dos-dark-gray);
-  background: var(--dos-black);
+  border: var(--dos-border-width) solid var(--dos-card-border, var(--dos-dark-gray));
+  background: var(--dos-card-bg, var(--dos-black));
 }
 
 .card:hover {
-  border-color: var(--dos-light-blue);
+  border-color: var(--dos-card-hover, var(--dos-light-blue));
 }
 
 .current {
-  border-color: var(--dos-light-cyan);
+  border-color: var(--dos-card-current, var(--dos-light-cyan));
 }
 
 .titleRow {
@@ -32,7 +32,7 @@
 }
 
 .link {
-  color: var(--dos-light-cyan);
+  color: var(--dos-link, var(--dos-light-cyan));
   text-decoration: none;
   overflow-wrap: break-word;
 }
@@ -50,12 +50,12 @@
 }
 
 .card:hover .link {
-  color: var(--dos-white);
+  color: var(--dos-link-hover, var(--dos-white));
 }
 
 /* The focused link marks the whole card, like an active DOS window. */
 .card:has(.link:focus-visible) {
-  outline: 2px solid var(--dos-focus-ring);
+  outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
   outline-offset: -2px;
 }
 

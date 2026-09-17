@@ -29,7 +29,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--dos-focus-ring);
+  outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
   outline-offset: 2px;
 }
 

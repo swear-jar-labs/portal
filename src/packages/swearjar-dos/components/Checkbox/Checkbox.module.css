@@ -14,7 +14,7 @@
   margin: 0;
   background: var(--dos-check-bg, var(--dos-black));
   border: var(--dos-border-width) solid;
-  border-color: var(--dos-border-sunken);
+  border-color: var(--dos-field-border, var(--dos-light-gray));
   cursor: pointer;
 }
 

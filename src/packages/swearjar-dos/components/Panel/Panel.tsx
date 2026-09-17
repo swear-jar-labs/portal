@@ -14,6 +14,7 @@ export type PanelProps = {
   padded?: boolean;
   zone?: string;
   surface?: Surface;
+  titleTone?: "default" | "blue";
   className?: string;
 };
 
@@ -28,6 +29,7 @@ export function Panel({
   padded = true,
   zone,
   surface = "dark",
+  titleTone = "default",
   className,
 }: PanelProps) {
   const zoneAttrs = zone ? { [DOS_ZONE_ATTR]: zone } : undefined;
@@ -35,7 +37,7 @@ export function Panel({
 
   return (
     <section
-      className={cx(styles.panel, className)}
+      className={cx(styles.panel, titleTone === "blue" && styles.blueTitle, className)}
       aria-label={title}
       {...zoneAttrs}
       {...surfaceAttrs}

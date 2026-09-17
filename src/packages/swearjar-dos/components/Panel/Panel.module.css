@@ -13,7 +13,7 @@
    single-class background (the shell panel passes black), so the surface owns
    the background. */
 .panel[data-dos-surface="light"] {
-  background: var(--dos-light-gray);
+  background: var(--dos-paper);
   color: var(--dos-black);
 }
 
@@ -72,7 +72,7 @@
 /* A focused body marks the whole window (frame and title bar), not just the
    content area: the ring sits on the panel border, like an active DOS window. */
 .panel:has(> .body:focus-visible) {
-  outline: 2px solid var(--dos-focus-ring);
+  outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
   outline-offset: -2px;
 }
 

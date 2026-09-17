@@ -231,6 +231,11 @@ test("opens a thread over the feed and pops back to the focused card", async ({ 
   const thread = page.getByRole("region", { name: CI_CACHE });
   await expect(page).toHaveURL(threadPath("ci-cache-poisoning"));
   await expect(thread).toBeVisible();
+  await expect(thread).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(thread.getByRole("heading", { name: CI_CACHE }).locator("..")).toHaveCSS(
+    "background-color",
+    "rgb(0, 0, 170)",
+  );
   // The thread body takes the keyboard; the feed layer below goes inert.
   await expect(page.locator(`[${DOC_TOP_ATTR}] [data-dos-scroll]`)).toBeFocused();
   await expect(layers(page)).toHaveCount(2);

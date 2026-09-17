@@ -19,7 +19,7 @@ export async function ProfilePage() {
   const now = new Date().toISOString();
 
   return (
-    <ShellPanel title={fileTitle("PROFILE")} closable>
+    <ShellPanel title={fileTitle("PROFILE")} surface="light" closable>
       <ProfileView profile={profile} threads={threads} now={now} />
     </ShellPanel>
   );

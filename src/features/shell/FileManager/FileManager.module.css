@@ -6,7 +6,7 @@
   --file-row-height: 1.8em;
   --file-table-chrome: calc(3 * 1.4em + 25px);
   flex: 0 0 33%;
-  background: var(--dos-blue);
+  background: var(--dos-filetable-bg);
 }
 
 .fileTable {

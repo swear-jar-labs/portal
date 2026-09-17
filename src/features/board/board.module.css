@@ -8,16 +8,18 @@
 }
 
 .post {
-  padding-top: 10px;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--dos-dark-gray);
+  background: var(--dos-post-bg, var(--dos-black));
 }
 
-.post + .post {
-  border-top: 2px solid var(--dos-dark-gray);
+.threadMeta {
+  padding-bottom: 6px;
 }
 
 /* The post is a focusable navigation row: the ring marks which post the
    arrows are on. */
 .post:focus-visible {
-  outline: 2px solid var(--dos-focus-ring);
+  outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
   outline-offset: -2px;
 }

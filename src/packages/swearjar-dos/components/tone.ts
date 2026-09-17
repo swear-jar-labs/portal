@@ -29,6 +29,22 @@ export const toneColor: Record<Tone, string> = {
   magenta: "var(--dos-tone-magenta)",
 };
 
+// The block color of a tone: the raw CGA palette, untouched by the surface
+// remap. Paper chips spend the tone as a fill and need the vivid colors there,
+// where toneColor would hand out the dark ink instead.
+export const toneBlockColor: Record<Tone, string> = {
+  default: "var(--dos-light-gray)",
+  dim: "var(--dos-dark-gray)",
+  white: "var(--dos-white)",
+  black: "var(--dos-black)",
+  blue: "var(--dos-blue)",
+  cyan: "var(--dos-cyan)",
+  green: "var(--dos-green)",
+  yellow: "var(--dos-yellow)",
+  red: "var(--dos-red)",
+  magenta: "var(--dos-magenta)",
+};
+
 export function toneStyle(tone: Tone | undefined): CSSProperties | undefined {
   if (!tone || tone === "default") return undefined;
   return { color: toneColor[tone] };

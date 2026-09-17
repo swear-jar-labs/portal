@@ -64,7 +64,7 @@
    ([data-dos-surface="light"]); the pair of selectors beats the base body
    colors, so the surface owns the body. */
 .body[data-dos-surface="light"] {
-  background: var(--dos-light-gray);
+  background: var(--dos-paper);
   color: var(--dos-black);
 }
 

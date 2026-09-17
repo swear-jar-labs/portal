@@ -50,7 +50,7 @@ export function useCommandRunner({
   // Light dialogs read as forms (the prototype's .win-body.form): black text on
   // light gray. HELP and welcome stay dark — console output keeps its tones.
   const openLightDialog = useCallback(
-    (dialog: Omit<DialogState, "surface">) => openDialog({ ...dialog, surface: "light" }),
+    (dialog: Omit<DialogState, "surface">) => openDialog({ ...dialog, surface: "dark" }),
     [openDialog],
   );
 

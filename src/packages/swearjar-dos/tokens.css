@@ -19,8 +19,11 @@
   /* Secondary text on black: the CGA dark gray (#555555) sits at ~2.8:1. */
   --dos-text-dim: #8a8a8a;
 
-  /* Keyboard focus: light cyan on black; light surfaces override it (see Panel). */
+  /* Keyboard focus: light cyan on black; light surfaces override it (see Panel).
+     The ring width is a token because the blue ink ring needs extra weight on
+     the paper surface to read at all. */
   --dos-focus-ring: var(--dos-light-cyan);
+  --dos-focus-ring-width: var(--dos-border-width);
 
   /* Dark-surface tone palette: the light surface below remaps --dos-tone-*;
      tone.ts references the variables. */
@@ -64,7 +67,15 @@
 
   --dos-shell-max-width: 1600px;
 
-  --dos-filetable-bg: var(--dos-blue);
+  /* The file browser surface: a Windows-style white list, not the CGA blue. */
+  --dos-filetable-bg: var(--dos-white);
+
+  /* Windows 3.x silver: the EXE windows' surface and the file browser chrome
+     (header, footer, hover). */
+  --dos-silver: #c0c0c0;
+
+  /* The paper surface of the EXE windows (the board, forms, profile). */
+  --dos-paper: var(--dos-silver);
 
   --dos-z-menu: 70;
   --dos-z-window: 1500;
@@ -110,30 +121,41 @@
   --dos-text-tracking: var(--dos-text-heading-tracking);
 }
 
-/* Light surface (the prototype's .win-body.form): black text on light gray.
-   Panel and the Window body opt in through the data-dos-surface attribute.
-   Each repeats background/color in a compound guard so the surface outranks a
-   consumer's single-class background; everything else lives here, once. */
+/* Paper surface, the EXE windows (the board, forms, profile): silver with black
+   ink. Panel and the Window body opt in through the data-dos-surface attribute;
+   each repeats background/color in a compound guard so the surface outranks a
+   consumer's single-class background. CGA vivid colors do not read on silver
+   (1.2–3.3:1), so the ink accents are the dark quarter of the palette and color
+   comes back as blocks (tag fills, fields, buttons). */
 [data-dos-surface="light"] {
-  background: var(--dos-light-gray);
+  background: var(--dos-paper);
   color: var(--dos-black);
-  /* The light surface carries the interface's primary text (black on gray, and
-     the shell's dialogs): VT323's 400 strokes read too thin there, so the
-     surface itself is bold — tones keep their colors, roles override. */
+  /* VT323's 400 strokes read too thin on paper, so the surface itself is bold. */
   font-weight: var(--dos-weight-bold);
   --dos-tone-default: var(--dos-black);
-  --dos-tone-dim: var(--dos-blue);
-  --dos-tone-green: var(--dos-blue);
-  --dos-tone-cyan: var(--dos-blue);
+  /* #8a8a8a of the black surface would not read here. */
+  --dos-tone-dim: #444444;
+  --dos-tone-green: #006400;
+  --dos-tone-cyan: #000080;
+  --dos-tone-blue: #000080;
   --dos-tone-yellow: var(--dos-black);
   --dos-tone-red: var(--dos-red);
-  /* White reads only on dark; on the light surface it is body text. */
+  --dos-tone-magenta: #800080;
+  /* White reads only on dark; on the paper surface it is body text. */
   --dos-tone-white: var(--dos-black);
   --dos-link: var(--dos-blue);
+  --dos-link-hover: var(--dos-black);
   --dos-focus-ring: var(--dos-blue);
+  --dos-focus-ring-width: calc(2 * var(--dos-border-width));
+  --dos-card-bg: var(--dos-white);
+  --dos-card-border: var(--dos-dark-gray);
+  --dos-card-hover: var(--dos-blue);
+  --dos-card-current: var(--dos-black);
+  --dos-post-bg: var(--dos-white);
   --dos-field-label: var(--dos-black);
   --dos-field-bg: var(--dos-white);
   --dos-field-fg: var(--dos-black);
+  --dos-field-border: var(--dos-border-sunken);
   --dos-field-error: var(--dos-red);
   --dos-check-bg: var(--dos-white);
   --dos-check-mark: var(--dos-black);

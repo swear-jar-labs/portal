@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { cx, toneStyle, type Tone } from "../tone";
+import type { CSSProperties, ReactNode } from "react";
+import { cx, toneBlockColor, toneColor, type Tone } from "../tone";
 import styles from "./Tag.module.css";
 
 export type TagProps = {
@@ -13,7 +13,16 @@ export type TagProps = {
 
 export function Tag({ children, tone, onClick, active = false, className }: TagProps) {
   const classes = cx(styles.tag, onClick && styles.button, active && styles.active, className);
-  const style = active ? undefined : toneStyle(tone);
+  // The tone travels as custom properties, not as an inline color: the surface
+  // owns how a chip spends it — ink by default, fill (the raw CGA block) on the
+  // paper surface (the cast only adds the custom properties to CSSProperties).
+  const style =
+    active || !tone
+      ? undefined
+      : ({
+          "--dos-tag-tone": toneColor[tone],
+          "--dos-tag-fill": toneBlockColor[tone],
+        } as CSSProperties);
 
   if (onClick) {
     return (

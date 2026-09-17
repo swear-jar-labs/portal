@@ -22,11 +22,11 @@
 }
 
 .scroll::-webkit-scrollbar-track {
-  background: var(--dos-dark-gray);
+  background: var(--dos-silver);
 }
 
 .scroll::-webkit-scrollbar-thumb {
-  background: var(--dos-light-gray);
+  background: var(--dos-white);
   border: 2px solid var(--dos-dark-gray);
 }
 
@@ -65,30 +65,33 @@ tbody .cell:first-child {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--dos-filetable-bg);
-  color: var(--dos-white);
+  background: var(--dos-silver);
+  color: var(--dos-black);
   font-weight: 700;
   padding: 4px 4px 2px;
-  border-bottom: 1px solid var(--dos-light-gray);
+  border-bottom: 1px solid var(--dos-dark-gray);
 }
 
 .row {
   position: relative;
+  /* The list is a white surface now, so the names are black ink, not the
+     shell's light gray body text. */
+  color: var(--dos-black);
 }
 
 .row:hover:not(.selected) {
-  background: var(--dos-light-blue);
+  background: var(--dos-silver);
 }
 
 .selected {
-  background: var(--dos-light-cyan);
-  color: var(--dos-black);
+  background: var(--dos-blue);
+  color: var(--dos-white);
 }
 
 .selected .name,
 .selected .type,
 .selected .size {
-  color: var(--dos-black);
+  color: var(--dos-white);
 }
 
 .control {
@@ -126,6 +129,10 @@ tbody .cell:first-child {
   box-shadow: inset 0 0 0 2px var(--dos-black);
 }
 
+.selected .control:focus-visible::after {
+  box-shadow: inset 0 0 0 2px var(--dos-white);
+}
+
 .name {
   flex: 1 1 auto;
   min-width: 0;
@@ -136,15 +143,15 @@ tbody .cell:first-child {
 }
 
 .icon {
-  /* The silhouette outline; the row state flips it (black reads on the selected
-     row, light gray on the blue panel). */
-  --dos-icon-outline: var(--dos-light-gray);
+  /* The silhouette outline; the row state flips it (white on the selected blue
+     row, dark gray on the white list). */
+  --dos-icon-outline: var(--dos-dark-gray);
   flex: 0 0 auto;
   align-self: center;
 }
 
 .selected .icon {
-  --dos-icon-outline: var(--dos-black);
+  --dos-icon-outline: var(--dos-white);
 }
 
 .outline {
@@ -152,19 +159,19 @@ tbody .cell:first-child {
 }
 
 .type {
-  color: var(--dos-light-cyan);
+  color: var(--dos-dark-gray);
 }
 
 .dir .type {
-  color: var(--dos-white);
+  color: var(--dos-black);
 }
 
 .exe .type {
-  color: var(--dos-yellow);
+  color: var(--dos-red);
 }
 
 .size {
-  color: var(--dos-light-gray);
+  color: var(--dos-dark-gray);
   text-align: right;
 }
 
@@ -172,7 +179,8 @@ tbody .cell:first-child {
   flex: 0 0 auto;
   padding: 2px 8px 4px;
   border-top: 2px solid var(--dos-dark-gray);
-  color: var(--dos-light-gray);
+  background: var(--dos-silver);
+  color: var(--dos-black);
 }
 
 .footerButton {
@@ -182,7 +190,7 @@ tbody .cell:first-child {
   font-weight: inherit;
   text-align: left;
   color: inherit;
-  background: transparent;
+  background: var(--dos-silver);
   border: 0;
   border-top: 2px solid var(--dos-dark-gray);
   cursor: pointer;

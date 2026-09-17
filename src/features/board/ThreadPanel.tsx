@@ -12,7 +12,7 @@ export type ThreadPanelProps = {
 
 function ThreadMeta({ thread, now }: ThreadPanelProps) {
   return (
-    <Stack direction="row" gap={6} align="baseline" wrap>
+    <Stack direction="row" gap={6} align="baseline" wrap className={styles.threadMeta}>
       {thread.pinned ? (
         <Text as="span" role="accent">
           {messages.board.card.pinned}

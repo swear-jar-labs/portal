@@ -2,6 +2,7 @@
   display: inline-block;
   padding: 0 1ch;
   border: 1px solid currentColor;
+  color: var(--dos-tag-tone, inherit);
   font-size: 0.85em;
   line-height: 1.3;
   white-space: nowrap;
@@ -17,11 +18,24 @@
   color: var(--dos-white);
 }
 
-/* The pressed state is a fixed CGA pair: the tone remap of the light surface
+/* The pressed state is a fixed CGA pair: the tone remap of the paper surface
    would otherwise leave some tones without contrast as a background. */
 .active,
 .active:hover {
   background: var(--dos-light-cyan);
   border-color: var(--dos-black);
   color: var(--dos-black);
+}
+
+/* Paper surface (the EXE windows): the vivid CGA tones do not read as ink on
+   silver, so a toned chip turns into a fill with black text instead. */
+:global([data-dos-surface="light"]) .tag:not(.active) {
+  background: var(--dos-tag-fill, transparent);
+  border-color: var(--dos-black);
+  color: var(--dos-black);
+}
+
+:global([data-dos-surface="light"]) .button:not(.active):hover {
+  background: var(--dos-blue);
+  color: var(--dos-white);
 }

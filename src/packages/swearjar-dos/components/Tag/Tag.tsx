@@ -15,7 +15,7 @@ export function Tag({ children, tone, onClick, active = false, className }: TagP
   const classes = cx(styles.tag, onClick && styles.button, active && styles.active, className);
   // The tone travels as custom properties, not as an inline color: the surface
   // owns how a chip spends it — ink by default, fill (the raw CGA block) on the
-  // paper surface (the cast only adds the custom properties to CSSProperties).
+  // light surfaces (the cast only adds the custom properties to CSSProperties).
   const style =
     active || !tone
       ? undefined

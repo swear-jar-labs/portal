@@ -13,7 +13,7 @@ export async function LoginPage() {
   if (session) redirect("/profile");
 
   return (
-    <ShellPanel title={fileTitle("LOGON")} surface="light" closable>
+    <ShellPanel title={fileTitle("LOGON")} closable>
       <LogonForm />
     </ShellPanel>
   );

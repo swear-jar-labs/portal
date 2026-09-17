@@ -33,15 +33,18 @@
   color: var(--dos-black);
 }
 
-/* Paper surface (the EXE windows): the vivid CGA tones do not read as ink on
-   silver, so a toned chip turns into a fill with black text instead. */
-:global([data-dos-surface="light"]) .tag:not(.active) {
+/* Light surfaces (the silver windows and the paper client area): the vivid CGA
+   tones do not read as ink there, so a toned chip turns into a fill with black
+   text instead. */
+:global([data-dos-surface="light"]) .tag:not(.active),
+:global([data-dos-surface="paper"]) .tag:not(.active) {
   background: var(--dos-tag-fill, transparent);
   border-color: var(--dos-black);
   color: var(--dos-black);
 }
 
-:global([data-dos-surface="light"]) .button:not(.active):hover {
+:global([data-dos-surface="light"]) .button:not(.active):hover,
+:global([data-dos-surface="paper"]) .button:not(.active):hover {
   background: var(--dos-blue);
   color: var(--dos-white);
 }

@@ -1,7 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { DOS_ROW_ATTR, DOS_SCROLL_ATTR, FOCUSABLE_SELECTOR } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
-import { DOS_ROW_ATTR } from "../../src/packages/swearjar-dos/attributes";
-import { FOCUSABLE_SELECTOR } from "../../src/packages/swearjar-dos/focus";
 import { FEED_PATH, threadPath } from "../../src/shared/board/threads";
 import { expectNoViolations, repeatKey, waitForHydration } from "./helpers";
 
@@ -13,7 +12,7 @@ const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
 // The PanelStack effect focuses the top layer's body and attaches the Esc
 // listener; the focus is the sync point for keyboard tests, as the island
 // hydrates behind a Suspense boundary after the shell clock already ticks.
-const focusedBody = (page: Page) => page.locator(`[${DOC_TOP_ATTR}] [data-dos-scroll]`);
+const focusedBody = (page: Page) => page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`);
 
 test("renders the hot feed and re-sorts by new", async ({ page }) => {
   await page.goto(FEED_PATH);
@@ -150,9 +149,9 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
   // The row in sight: the first row whose own control is inside the region.
   const rowInSight = (edge: "first" | "last") =>
     surface.evaluate(
-      (el, { selector, edge }) => {
+      (el, { selector, rowAttr, edge }) => {
         const box = el.getBoundingClientRect();
-        const row = Array.from(el.querySelectorAll<HTMLElement>("[data-dos-row]"))
+        const row = Array.from(el.querySelectorAll<HTMLElement>(`[${rowAttr}]`))
           .filter((candidate) => {
             const control = candidate.querySelector<HTMLElement>(selector);
             if (!control) return false;
@@ -162,7 +161,7 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
           .at(edge === "first" ? 0 : -1);
         return row?.querySelector<HTMLElement>(selector)?.id ?? null;
       },
-      { selector: FOCUSABLE_SELECTOR, edge },
+      { selector: FOCUSABLE_SELECTOR, rowAttr: DOS_ROW_ATTR, edge },
     );
 
   // The wheel scrolls the panel without moving the keyboard focus.
@@ -241,7 +240,7 @@ test("opens a thread over the feed and pops back to the focused card", async ({ 
     "rgb(0, 0, 170)",
   );
   // The thread body takes the keyboard; the feed layer below goes inert.
-  await expect(page.locator(`[${DOC_TOP_ATTR}] [data-dos-scroll]`)).toBeFocused();
+  await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await expect(layers(page)).toHaveCount(2);
   await expect(layers(page).first()).toHaveAttribute("inert", "");
   await expect(layers(page).last()).not.toHaveAttribute("inert", "");
@@ -332,7 +331,7 @@ test("a deep link opens the stack and Tab from the file list reaches the top lay
 
   await files.locator("#file-DISCUSSIONS").focus();
   await page.keyboard.press("Tab");
-  await expect(page.locator(`[${DOC_TOP_ATTR}] [data-dos-scroll]`)).toBeFocused();
+  await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(files.locator("#file-DISCUSSIONS")).toBeFocused();
 

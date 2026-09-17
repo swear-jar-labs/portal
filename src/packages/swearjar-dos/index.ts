@@ -83,7 +83,13 @@ export type { Command } from "./commands/types";
 export { sprites } from "./sprites";
 export type { SpriteData, SpriteName } from "./sprites";
 
-export { DOS_ROW_ATTR, DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
+export {
+  DOS_ROW_ATTR,
+  DOS_SCROLL_ATTR,
+  DOS_SURFACE_ATTR,
+  DOS_WINDOW_BODY_ATTR,
+  DOS_ZONE_ATTR,
+} from "./attributes";
 export { FOCUSABLE_SELECTOR, isInScrollView, nextStepIndex } from "./focus";
 export { hasCommandModifier, shouldSkipEvent } from "./keyboard";
 export { useControlWalk } from "./walk";

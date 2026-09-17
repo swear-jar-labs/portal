@@ -100,7 +100,11 @@ export function WelcomeBody() {
     <Stack direction="row" align="start" gap={18} wrap>
       <Sprite name="jar" cell={4} decorative />
       <Stack gap={6}>
-        <Heading level={2}>{welcome.heading}</Heading>
+        <Heading level={2}>
+          <Text as="span" tone="blue">
+            {welcome.heading}
+          </Text>
+        </Heading>
         <Text>{welcome.intro}</Text>
         {welcome.lines.map((line) => (
           <Text key={line}>

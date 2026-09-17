@@ -60,10 +60,15 @@
   outline: none;
 }
 
-/* Specificity guard: the light palette lives in tokens.css
-   ([data-dos-surface="light"]); the pair of selectors beats the base body
-   colors, so the surface owns the body. */
+/* Specificity guard: the light palettes live in tokens.css
+   ([data-dos-surface="light"] and "paper"); the pair of selectors beats the base
+   body colors, so the surface owns the body. */
 .body[data-dos-surface="light"] {
+  background: var(--dos-silver);
+  color: var(--dos-black);
+}
+
+.body[data-dos-surface="paper"] {
   background: var(--dos-paper);
   color: var(--dos-black);
 }

@@ -1,9 +1,34 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { enterShell } from "./helpers";
+import { expect, test, type Page } from "@playwright/test";
+import { DOS_SURFACE_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos/contracts";
+import { DOC_ZONE } from "../../src/features/shell/zones";
+import { enterShell, expectMinimumContrast } from "./helpers";
+
+// The doc panel is the paper surface; the file list is paper too, so the zone
+// picks the reading surface (the file list lives in the files zone).
+const PAPER_DOC = `[${DOS_ZONE_ATTR}="${DOC_ZONE}"][${DOS_SURFACE_ATTR}="paper"]`;
 
 test.beforeEach(async ({ page }) => {
   await enterShell(page);
+});
+
+// Tones resolve against the panel's palette, not the shell's dark body, so a
+// sample must live inside the panel.
+function resolveTone(page: Page, token: string): Promise<string> {
+  return page.locator(PAPER_DOC).evaluate((surface, name) => {
+    const sample = document.createElement("span");
+    sample.style.color = `var(${name})`;
+    surface.append(sample);
+    const value = getComputedStyle(sample).color;
+    sample.remove();
+    return value;
+  }, token);
+}
+
+test("puts the document on the white paper surface", async ({ page }) => {
+  const panel = page.locator(PAPER_DOC);
+  await expect(panel).toBeVisible();
+  await expect(panel).toHaveCSS("background-color", "rgb(255, 255, 255)");
 });
 
 test("renders the about hero and tone formatting", async ({ page }) => {
@@ -12,16 +37,9 @@ test("renders the about hero and tone formatting", async ({ page }) => {
   const phrase = page.getByText("keeping the craft of building software systems alive");
   await expect(phrase).toBeVisible();
 
-  const cyan = await page.evaluate(() => {
-    const sample = document.createElement("span");
-    sample.style.color = "var(--dos-light-cyan)";
-    document.body.append(sample);
-    const value = getComputedStyle(sample).color;
-    sample.remove();
-    return value;
-  });
-  await expect(phrase).toHaveCSS("color", cyan);
+  await expect(phrase).toHaveCSS("color", await resolveTone(page, "--dos-tone-cyan"));
   await expect(phrase).toHaveCSS("font-weight", "700");
+  await expectMinimumContrast(phrase);
 });
 
 test("centers the manifesto heading and right-aligns the signature", async ({ page }) => {
@@ -30,16 +48,11 @@ test("centers the manifesto heading and right-aligns the signature", async ({ pa
   const heading = page.getByRole("heading", { level: 2, name: "THE MANIFESTO" });
   await expect(heading).toBeVisible();
   await expect(heading).toHaveCSS("text-align", "center");
-
-  const yellow = await page.evaluate(() => {
-    const sample = document.createElement("span");
-    sample.style.color = "var(--dos-yellow)";
-    document.body.append(sample);
-    const value = getComputedStyle(sample).color;
-    sample.remove();
-    return value;
-  });
-  await expect(page.getByText("THE MANIFESTO")).toHaveCSS("color", yellow);
+  await expect(page.getByText("THE MANIFESTO")).toHaveCSS(
+    "color",
+    await resolveTone(page, "--dos-tone-yellow"),
+  );
+  await expectMinimumContrast(heading);
 
   await expect(page.getByText("— the team")).toHaveCSS("text-align", "right");
 });

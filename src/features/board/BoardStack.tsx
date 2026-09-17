@@ -45,11 +45,7 @@ export type BoardStackProps = {
 
 /** The feed panel before the URL filters are known (the Suspense fallback). */
 export function BoardFallback() {
-  return (
-    <ShellPanel title={fileTitle("DISCUSSIONS")} surface="light">
-      {null}
-    </ShellPanel>
-  );
+  return <ShellPanel title={fileTitle("DISCUSSIONS")}>{null}</ShellPanel>;
 }
 
 export function BoardStack({ threads, now, thread }: BoardStackProps) {
@@ -123,7 +119,7 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
 
   return (
     <PanelStack onCloseTop={closeThread}>
-      <ShellPanel title={fileTitle("DISCUSSIONS")} surface="light" closable>
+      <ShellPanel title={fileTitle("DISCUSSIONS")} closable>
         <FeedPanel
           threads={visible}
           now={now}
@@ -136,7 +132,6 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
       {thread ? (
         <ShellPanel
           title={thread.title}
-          surface="light"
           titleTone="blue"
           actions={<CloseButton onClose={closeThread} label={messages.shell.window.closeLabel} />}
         >

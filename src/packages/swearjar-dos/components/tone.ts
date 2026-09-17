@@ -3,9 +3,10 @@ import type { CSSProperties } from "react";
 export type Tone =
   "default" | "dim" | "white" | "black" | "blue" | "cyan" | "green" | "yellow" | "red" | "magenta";
 
-// Panels and windows share two surfaces: the dark default and the light
-// form-like one (the prototype's .win-body.form).
-export type Surface = "dark" | "light";
+// Panels and windows share two light surfaces: the silver window chrome (the
+// prototype's .win-body.form) and the white paper client area of readers.
+// Both remap --dos-tone-* in tokens.css.
+export type Surface = "light" | "paper";
 
 // Typography roles: the semantic UI-text contract (Text and Heading). The role
 // table in tokens.css keys off data-dos-role and owns color, weight, size,

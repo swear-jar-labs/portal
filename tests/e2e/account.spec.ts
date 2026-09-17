@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { DOS_SURFACE_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos/contracts";
 import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
 import {
@@ -169,10 +170,13 @@ test.describe("member session", () => {
     const delay = page.getByLabel("Idle delay");
 
     // A disabled button keeps a body of its own: darker than the light window.
-    const colors = await save.evaluate((element) => ({
-      button: getComputedStyle(element).backgroundColor,
-      panel: getComputedStyle(element.closest("[data-dos-zone]") ?? element).backgroundColor,
-    }));
+    const colors = await save.evaluate(
+      (element, zoneAttr) => ({
+        button: getComputedStyle(element).backgroundColor,
+        panel: getComputedStyle(element.closest(`[${zoneAttr}]`) ?? element).backgroundColor,
+      }),
+      DOS_ZONE_ATTR,
+    );
     expect(colors.button).toBe("rgb(85, 85, 85)");
     expect(colors.button).not.toBe(colors.panel);
 
@@ -546,12 +550,14 @@ test.describe("logon window", () => {
     }
   });
 
-  test("secondary text keeps WCAG AA contrast on light and dark surfaces", async ({ page }) => {
+  test("secondary text keeps WCAG AA contrast on the light surfaces", async ({ page }) => {
     await page.goto("/login");
     await expectMinimumContrast(page.getByText("User names are lower-case"));
     await expectMinimumContrast(page.getByText("OR LOG ON WITH"));
 
     await page.goto("/no-such-route");
+    const panel = page.getByRole("region", { name: "404.TXT" });
+    await expect(panel).toHaveAttribute(DOS_SURFACE_ATTR, "paper");
     await expectMinimumContrast(page.getByText("No such route in the file list"));
   });
 });

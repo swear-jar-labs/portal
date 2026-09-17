@@ -24,7 +24,7 @@ export function HomeBoard({ docs }: HomeBoardProps) {
   const doc = docs.find((entry) => entry.id === selectedDocId);
 
   return (
-    <ShellPanel title={doc ? doc.title : EMPTY_PANEL_TITLE}>
+    <ShellPanel title={doc ? doc.title : EMPTY_PANEL_TITLE} surface="paper">
       {doc ? (
         doc.content
       ) : (

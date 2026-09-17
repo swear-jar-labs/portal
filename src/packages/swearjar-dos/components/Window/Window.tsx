@@ -22,12 +22,12 @@ export function Window({
   children,
   footer,
   tone = "default",
-  surface = "dark",
+  surface = "light",
   onClose,
   closeLabel = "Close",
   className,
 }: WindowProps) {
-  const surfaceAttrs = surface === "light" ? { [DOS_SURFACE_ATTR]: surface } : undefined;
+  const surfaceAttrs = { [DOS_SURFACE_ATTR]: surface };
 
   return (
     <div className={cx(styles.window, tone === "error" && styles.error, className)}>

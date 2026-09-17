@@ -287,7 +287,6 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
         }}
         title={dialog?.title ?? ""}
         tone={dialog?.tone}
-        surface={dialog?.surface}
         closeLabel={messages.shell.window.closeLabel}
         className={dialog?.wide ? dialogsStyles.wide : undefined}
       >

@@ -28,12 +28,12 @@ export function Panel({
   scroll = true,
   padded = true,
   zone,
-  surface = "dark",
+  surface = "light",
   titleTone = "default",
   className,
 }: PanelProps) {
   const zoneAttrs = zone ? { [DOS_ZONE_ATTR]: zone } : undefined;
-  const surfaceAttrs = surface === "light" ? { [DOS_SURFACE_ATTR]: surface } : undefined;
+  const surfaceAttrs = { [DOS_SURFACE_ATTR]: surface };
 
   return (
     <section

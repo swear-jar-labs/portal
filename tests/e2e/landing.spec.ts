@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR, DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
 import { docScroll, enterShell, expectMinimumContrast } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
@@ -158,16 +159,16 @@ test("an unknown command feeds the swear jar", async ({ page }) => {
   await expect(error.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
 });
 
-test("light dialogs take the light surface while HELP stays dark", async ({ page }) => {
+test("dialogs take the light surface", async ({ page }) => {
   const input = page.getByLabel("Command line");
   await input.focus();
   await page.keyboard.type("ASDF");
   await page.keyboard.press("Enter");
 
   const error = page.getByRole("dialog");
-  const errorBody = error.locator("[data-dos-window-body]");
-  await expect(errorBody).toHaveAttribute("data-dos-surface", "light");
-  await expect(errorBody).toHaveCSS("background-color", await tokenColor(page, "--dos-paper"));
+  const errorBody = error.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
+  await expect(errorBody).toHaveAttribute(DOS_SURFACE_ATTR, "light");
+  await expect(errorBody).toHaveCSS("background-color", await tokenColor(page, "--dos-silver"));
   // The bold red headline counts as large text, so AA holds at 3:1.
   await expectMinimumContrast(error.getByText("Bad command or file name."), 3);
   await expectMinimumContrast(error.getByText("The jar clinks. +1 coin."));
@@ -178,9 +179,9 @@ test("light dialogs take the light surface while HELP stays dark", async ({ page
   await expect(error).toBeHidden();
 
   await page.keyboard.press("F1");
-  const helpBody = page.getByRole("dialog").locator("[data-dos-window-body]");
-  await expect(helpBody).not.toHaveAttribute("data-dos-surface", "light");
-  await expect(helpBody).toHaveCSS("background-color", await tokenColor(page, "--dos-black"));
+  const helpBody = page.getByRole("dialog").locator(`[${DOS_WINDOW_BODY_ATTR}]`);
+  await expect(helpBody).toHaveAttribute(DOS_SURFACE_ATTR, "light");
+  await expect(helpBody).toHaveCSS("background-color", await tokenColor(page, "--dos-silver"));
 });
 
 test("F1 opens help from the keyboard", async ({ page }) => {
@@ -191,7 +192,7 @@ test("F1 opens help from the keyboard", async ({ page }) => {
 test("lays HELP out in two columns, and in one when the screen is narrow", async ({ page }) => {
   await page.keyboard.press("F1");
   const dialog = page.getByRole("dialog");
-  const help = dialog.locator("[data-dos-window-body] > div");
+  const help = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}] > div`);
 
   // With two columns the vertical centre of the block is the gap between them
   // and no text fragment crosses it; with one wide column text does cross.
@@ -218,7 +219,7 @@ test("does not autofocus the close button of a dialog", async ({ page }) => {
   await expect(dialog).toBeVisible();
   // HELP has no controls: the window body (the scroll region) takes focus, so
   // ↑/↓ scroll a long text natively.
-  const body = dialog.locator("[data-dos-window-body]");
+  const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
   await expect(body).toBeFocused();
   await expect(dialog.getByRole("button", { name: "Close" })).not.toBeFocused();
   // The body draws no focus ring: focus is trapped in the window, and the ring
@@ -229,13 +230,13 @@ test("does not autofocus the close button of a dialog", async ({ page }) => {
 test("closes a dialog with Enter or Space", async ({ page }) => {
   await page.keyboard.press("F1");
   const dialog = page.getByRole("dialog");
-  await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
+  await expect(dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`)).toBeFocused();
 
   await page.keyboard.press("Enter");
   await expect(dialog).toBeHidden();
 
   await page.keyboard.press("F1");
-  await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
+  await expect(dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`)).toBeFocused();
   await page.keyboard.press(" ");
   await expect(dialog).toBeHidden();
 });
@@ -390,7 +391,7 @@ test.describe("file manager", () => {
     // A short shell: the file list has to scroll for its rows to fit.
     await page.setViewportSize({ width: 1280, height: 420 });
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-    const scroll = files.locator("[data-dos-scroll]");
+    const scroll = files.locator(`[${DOS_SCROLL_ATTR}]`);
 
     // The cursor sits on ABOUT; the wheel scrolls the list away from it.
     await files.locator("#file-ABOUT").focus();

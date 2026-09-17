@@ -33,6 +33,7 @@ export function FileManagerPanel({
     <Panel
       title={FILES_PANEL_TITLE}
       zone={FILES_ZONE}
+      surface="paper"
       scroll={false}
       padded={false}
       className={cx(

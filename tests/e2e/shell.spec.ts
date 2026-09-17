@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { enterShell } from "./helpers";
+import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR, DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
+import { enterShell, expectMinimumContrast } from "./helpers";
 
 // A section without a page yet: the RSC 404 falls back to a full load.
 const STUB_ROUTE = "/errata";
@@ -60,7 +61,7 @@ test("navigates from the board file to the route without a reload", async ({ pag
   await page.keyboard.type("ASDF");
   await page.keyboard.press("Enter");
   const error = page.getByRole("dialog");
-  await expect(error.locator("[data-dos-window-body]")).toBeFocused();
+  await expect(error.locator(`[${DOS_WINDOW_BODY_ATTR}]`)).toBeFocused();
   await expect(error.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
   await page.keyboard.press("Enter");
   await expect(error).toBeHidden();
@@ -90,7 +91,7 @@ test("hands the keyboard to the right panel after a routed file opens", async ({
   // keyboard; opening it again (same route) focuses it right away.
   await files.getByRole("link", { name: "APPLY" }).click();
   await expect(page).toHaveURL("/apply");
-  const panel = page.getByRole("region", { name: "APPLY.EXE" }).locator("[data-dos-scroll]");
+  const panel = page.getByRole("region", { name: "APPLY.EXE" }).locator(`[${DOS_SCROLL_ATTR}]`);
   await expect(panel).toBeFocused();
 
   await files.getByRole("link", { name: "APPLY" }).click();
@@ -113,7 +114,7 @@ test("keeps the panel keyboard when a route takes a slow reply", async ({ page }
 
   const feed = page.getByRole("region", { name: "DISCUSSIONS.EXE" });
   await expect(feed.getByRole("article")).toHaveCount(8);
-  await expect(feed.locator("[data-dos-scroll]")).toBeFocused();
+  await expect(feed.locator(`[${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
 });
@@ -142,6 +143,25 @@ test.describe("file tree", () => {
 });
 
 test.describe("welcome", () => {
+  test("uses the silver surface with readable blue and green accents", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
+    await page.keyboard.press("Enter");
+
+    const dialog = page.getByRole("dialog");
+    const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
+    const heading = dialog.getByRole("heading", { name: "WELCOME TO SWEARJAR.DOS" });
+    // The heading role colors the h2; the welcome override sits on its span.
+    const headingText = heading.locator("span");
+    const prompt = dialog.getByText("> ", { exact: true }).first();
+    await expect(body).toHaveAttribute(DOS_SURFACE_ATTR, "light");
+    await expect(headingText).toHaveCSS("color", "rgb(0, 0, 204)");
+    await expect(prompt).toHaveCSS("color", "rgb(0, 90, 0)");
+    await expectMinimumContrast(headingText);
+    await expectMinimumContrast(prompt);
+    await expectMinimumContrast(dialog.getByText("The public terminal of Swear Jar Labs"));
+  });
+
   test("does not greet again when a routed file leads back home", async ({ page }) => {
     await enterShell(page);
 
@@ -176,7 +196,7 @@ test.describe("spa navigation", () => {
     await page.keyboard.press("Enter");
 
     const dialog = page.getByRole("dialog");
-    await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
+    await expect(dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`)).toBeFocused();
     await expect(dialog.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();

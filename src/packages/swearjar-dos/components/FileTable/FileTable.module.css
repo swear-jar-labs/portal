@@ -185,7 +185,9 @@ tbody .cell:first-child {
   font: inherit;
   font-weight: inherit;
   text-align: left;
-  color: inherit;
+  /* The .footer ink owns the color: inheriting would hand the light-gray of a
+     dark window surface to a silver bar. */
+  color: var(--dos-black);
   background: var(--dos-silver);
   border: 0;
   border-top: 2px solid var(--dos-dark-gray);

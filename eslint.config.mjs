@@ -124,6 +124,26 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Tests consume the kit through its public entries: the CSS-free contracts
+  // entry for DOM-level constants, never the internals (the main entry pulls
+  // CSS modules, which the Playwright transform cannot load).
+  {
+    files: ["tests/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/packages/swearjar-dos/*", "@swearjar/dos/*", "!@swearjar/dos/contracts"],
+              message:
+                "Import DOM contracts from @swearjar/dos/contracts; the kit's internals stay private.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
   // Override default ignores of eslint-config-next.
   globalIgnores([

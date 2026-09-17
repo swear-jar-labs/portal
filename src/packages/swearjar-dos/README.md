@@ -5,14 +5,19 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 ## Boundary
 
 - Self-contained: **no imports from the app** (`src/app`, `src/db`, `src/lib`, `src/features`); enforced by ESLint.
-- Public API only through `index.ts`.
+- Public API: `index.ts` (components, surfaces, keyboard helpers) and the CSS-free
+  `contracts.ts` (`@swearjar/dos/contracts`: `data-*` attributes and
+  `FOCUSABLE_SELECTOR`) for consumers without a CSS-aware bundler — the Playwright e2e
+  transform cannot load CSS modules, so tests import the contracts entry, never internals.
 - Styling: CSS Modules + `tokens.css`. No visual CSS frameworks.
-- Import from the app as `@swearjar/dos`.
+- Import from the app as `@swearjar/dos` (components) or `@swearjar/dos/contracts` (DOM contracts).
 
 ## Layout
 
 - `tokens.css` — palette, typography (roles and scale), borders, motion, z-index
 - `base.css` — reset and base element styles
+- `contracts.ts` — the CSS-free public entry: `data-*` attributes and
+  `FOCUSABLE_SELECTOR`, re-exported from `attributes.ts`/`focus.ts`
 - `components/<Name>/{Name.tsx, Name.module.css}` — primitives and surfaces
 - `commands/` — command types + registry helpers (completion, HELP)
 - `sprites.ts` — 16×16 pixel sprite data (the jar and the file-row glyphs)
@@ -77,15 +82,22 @@ boldness from `--dos-text-hint-stroke`, the only in-between knob.
 
 ## Surfaces and keys
 
-- `Panel surface="light"` and `Window surface="light"` (reached through `Dialog surface`) share
-  the light surface — the prototype's `.win-body.form`: black text on light gray, white inputs,
-  re-colored tones, form controls and focus rings. The palette lives once in `tokens.css` under
-  `[data-dos-surface="light"]` (`DOS_SURFACE_ATTR`); the components opt in through the attribute,
-  and the dark look stays the fallback. The surface is bold: primary text is black on gray there,
-  and VT323's 400 strokes read too thin — roles override the weight where they differ (`hint` is
-  regular), controls may override it too. Panel repeats background/color in a compound rule, so
-  the surface owns them against a consumer's single-class background; a focused body marks the
-  whole window frame. Disabled buttons get their own body color per surface, so they stay visible.
+- Surfaces: **`light`** (default) — the silver window chrome of dialogs, forms, the board
+  and the file browser (`Panel`, `Window`, reached through `Dialog`) — and **`paper`** — the
+  white client area of readers and lists (documents, the file list). Both share one ink
+  family: black text, white inputs and cards, re-colored tones, blue focus rings and links.
+  The palettes live once in `tokens.css` under `[data-dos-surface="light" | "paper"]`
+  (`DOS_SURFACE_ATTR`); Panel and Window stamp the attribute always. CGA vivid colors do
+  not read on light, so accents use their darker, AA-readable relatives and vivid color
+  comes back as blocks (tag fills, title bars, selection); a lighter ground raises the AA
+  luminance budget, so `paper` carries the brighter accents (still ≥4.5:1 on white). The
+  surfaces are bold: VT323's 400 strokes read too thin there, and roles override the weight
+  where they differ (`hint` is regular), controls may override it too. Panel and Window
+  repeat background/color in a compound rule, so the surface owns them against a consumer's
+  single-class background; a focused body marks the whole window frame. Disabled buttons
+  get their own body color per surface, so they stay visible. The dark palette remains the
+  base for the console chrome outside the windows (boot, command line, screensaver), which
+  carry their own backgrounds.
 - The kit owns the walk (`walk.ts`); the consumer owns zones, gates and closing: the shell
   speaks Norton Commander — **Tab toggles the file list and the right-hand window** (from a
   form control too), **arrows walk the window's controls** with wrap-around, **Enter/Space

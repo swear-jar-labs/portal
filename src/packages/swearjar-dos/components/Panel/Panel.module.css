@@ -8,11 +8,16 @@
   border-color: var(--dos-border-raised);
 }
 
-/* Specificity guard: the light palette lives in tokens.css
-   ([data-dos-surface="light"]); the pair of selectors must outrank a consumer's
-   single-class background (the shell panel passes black), so the surface owns
-   the background. */
+/* Specificity guard: the light palettes live in tokens.css
+   ([data-dos-surface="light"] and "paper"); the pair of selectors must outrank a
+   consumer's single-class background (the shell panel passes black), so the
+   surface owns the background. */
 .panel[data-dos-surface="light"] {
+  background: var(--dos-silver);
+  color: var(--dos-black);
+}
+
+.panel[data-dos-surface="paper"] {
   background: var(--dos-paper);
   color: var(--dos-black);
 }

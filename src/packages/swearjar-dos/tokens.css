@@ -5,7 +5,6 @@
   --dos-cyan: #00aaaa;
   --dos-red: #aa0000;
   --dos-magenta: #aa00aa;
-  --dos-brown: #aa5500;
   --dos-light-gray: #aaaaaa;
   --dos-dark-gray: #555555;
   --dos-light-blue: #5555ff;
@@ -67,15 +66,12 @@
 
   --dos-shell-max-width: 1600px;
 
-  /* The file browser surface: a Windows-style white list, not the CGA blue. */
-  --dos-filetable-bg: var(--dos-white);
-
-  /* Windows 3.x silver: the EXE windows' surface and the file browser chrome
-     (header, footer, hover). */
+  /* Windows 3.x silver: the chrome of the light windows (frames, title bars,
+     the file browser, dialogs and forms). */
   --dos-silver: #c0c0c0;
 
-  /* The paper surface of the EXE windows (the board, forms, profile). */
-  --dos-paper: var(--dos-silver);
+  /* The white client area: reading surfaces (documents) and the file browser. */
+  --dos-paper: var(--dos-white);
 
   --dos-z-menu: 70;
   --dos-z-window: 1500;
@@ -121,35 +117,39 @@
   --dos-text-tracking: var(--dos-text-heading-tracking);
 }
 
-/* Paper surface, the EXE windows (the board, forms, profile): silver with black
-   ink. Panel and the Window body opt in through the data-dos-surface attribute;
-   each repeats background/color in a compound guard so the surface outranks a
-   consumer's single-class background. CGA vivid colors do not read on silver
-   (1.2–3.3:1), so the ink accents are the dark quarter of the palette and color
-   comes back as blocks (tag fills, fields, buttons). */
-[data-dos-surface="light"] {
-  background: var(--dos-paper);
+/* The light family — silver windows (`light`) and the white paper client area of
+   readers (`paper`) — shares the light chrome: black text, white inputs and
+   cards, blue focus and links. Panel and the Window body stamp the surface
+   through the data-dos-surface attribute; each repeats background/color in a
+   compound guard so the surface outranks a consumer's single-class background.
+   CGA vivid colors do not read on light, so ink accents use their darker,
+   AA-readable relatives; vivid color comes back as blocks (tag fills, fields,
+   buttons). */
+[data-dos-surface="light"],
+[data-dos-surface="paper"] {
   color: var(--dos-black);
-  /* VT323's 400 strokes read too thin on paper, so the surface itself is bold. */
+  /* VT323's 400 strokes read too thin on light, so the surface itself is bold. */
   font-weight: var(--dos-weight-bold);
   --dos-tone-default: var(--dos-black);
-  /* #8a8a8a of the black surface would not read here. */
+  /* #8a8a8a, the dim of the dark palette, would not read here. */
   --dos-tone-dim: #444444;
-  --dos-tone-green: #006400;
-  --dos-tone-cyan: #000080;
-  --dos-tone-blue: #000080;
-  --dos-tone-yellow: var(--dos-black);
-  --dos-tone-red: var(--dos-red);
-  --dos-tone-magenta: #800080;
-  /* White reads only on dark; on the paper surface it is body text. */
+  /* #c0c0c0 caps ink luminance at 0.078 (AA, 4.5:1): blue has headroom, the warm
+     hues sit at their chromatic limit — hence the near-black accents. */
+  --dos-tone-green: #005a00;
+  --dos-tone-cyan: #005858;
+  --dos-tone-blue: #0000cc;
+  --dos-tone-yellow: #7a3c00;
+  --dos-tone-red: #a00000;
+  --dos-tone-magenta: #8a008a;
+  /* White reads only on dark; on the light surfaces it is body text. */
   --dos-tone-white: var(--dos-black);
-  --dos-link: var(--dos-blue);
+  --dos-link: var(--dos-tone-blue);
   --dos-link-hover: var(--dos-black);
   --dos-focus-ring: var(--dos-blue);
   --dos-focus-ring-width: calc(2 * var(--dos-border-width));
   --dos-card-bg: var(--dos-white);
   --dos-card-border: var(--dos-dark-gray);
-  --dos-card-hover: var(--dos-blue);
+  --dos-card-hover: var(--dos-tone-blue);
   --dos-card-current: var(--dos-black);
   --dos-post-bg: var(--dos-white);
   --dos-field-label: var(--dos-black);
@@ -162,4 +162,21 @@
   /* Disabled buttons need a body darker than the surface, or they vanish into it. */
   --dos-button-disabled-bg: var(--dos-dark-gray);
   --dos-button-disabled-fg: var(--dos-light-gray);
+}
+
+[data-dos-surface="light"] {
+  background: var(--dos-silver);
+}
+
+/* The paper client area: white doubles the AA luminance budget, so the accents
+   keep their real hue (green, teal, amber, red, magenta) at ≥4.5:1 on white;
+   blue stays the family accent. */
+[data-dos-surface="paper"] {
+  background: var(--dos-paper);
+  --dos-tone-dim: #555555;
+  --dos-tone-green: #008400;
+  --dos-tone-cyan: #008080;
+  --dos-tone-yellow: #a05a00;
+  --dos-tone-red: #c00000;
+  --dos-tone-magenta: #c000c0;
 }

@@ -2,10 +2,11 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { enterShell } from "./helpers";
 
-const INNER_ROUTE = "/discussions";
+// A section without a page yet: the RSC 404 falls back to a full load.
+const STUB_ROUTE = "/errata";
 
 test("does not boot on inner routes and keeps the shell chrome", async ({ page }) => {
-  await page.goto(INNER_ROUTE);
+  await page.goto(STUB_ROUTE);
 
   await expect(page.getByRole("menubar")).toBeVisible();
   await expect(page.getByRole("region", { name: "C:\\SWEARJAR" })).toBeVisible();
@@ -50,21 +51,76 @@ test("keeps the menu dropdown above the file list on a cold inner route", async 
   expect(coveredBy).toBe("");
 });
 
-test("keeps the shell when a board file navigates to a route", async ({ page }) => {
+test("navigates from the board file to the route without a reload", async ({ page }) => {
   await enterShell(page);
+
+  // A coin is the reload detector: a full page load resets the counter.
+  const input = page.getByLabel("Command line");
+  await input.focus();
+  await page.keyboard.type("ASDF");
+  await page.keyboard.press("Enter");
+  const error = page.getByRole("dialog");
+  await expect(error.locator("[data-dos-window-body]")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(error).toBeHidden();
+  await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
 
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
   await files.getByRole("link", { name: "DISCUSSIONS" }).click();
 
-  // The route has no page yet: Next answers the RSC request with a 404 and
-  // falls back to a full load; the shell survives because the layout renders
-  // the 404 panel. Once the Board page exists this becomes a soft navigation.
-  await expect(page).toHaveURL(INNER_ROUTE);
+  // The Board page exists now: the shell survives through a soft navigation.
+  await expect(page).toHaveURL("/discussions");
   await expect(page.getByRole("menubar")).toBeVisible();
+  await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
   await expect(files.getByRole("link", { name: "DISCUSSIONS" })).toHaveAttribute(
     "aria-current",
     "true",
   );
+});
+
+test("hands the keyboard to the right panel after a routed file opens", async ({ page }) => {
+  await enterShell(page);
+  const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+
+  // An EXE route: the panel arrives together with the page and takes the
+  // keyboard; opening it again (same route) focuses it right away.
+  await files.getByRole("link", { name: "APPLY" }).click();
+  await expect(page).toHaveURL("/apply");
+  const panel = page.getByRole("region", { name: "APPLY.EXE" }).locator("[data-dos-scroll]");
+  await expect(panel).toBeFocused();
+
+  await files.getByRole("link", { name: "APPLY" }).click();
+  await expect(panel).toBeFocused();
+});
+
+test("keeps the panel keyboard when a route takes a slow reply", async ({ page }) => {
+  await enterShell(page);
+  const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+
+  // The armed request must survive a navigation that outlives the transition
+  // window: the keyboard lands in the panel when the route finally commits.
+  await page.route("**/discussions**", async (route) => {
+    if (route.request().url().includes("_rsc")) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    await route.continue();
+  });
+  await files.getByRole("link", { name: "DISCUSSIONS" }).click();
+
+  const feed = page.getByRole("region", { name: "DISCUSSIONS.EXE" });
+  await expect(feed.getByRole("article")).toHaveCount(8);
+  await expect(feed.locator("[data-dos-scroll]")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
+});
+
+test("keeps the keyboard in the list when a doc opens", async ({ page }) => {
+  await enterShell(page);
+  const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+
+  await files.getByRole("button", { name: "MANIFESTO" }).click();
+  await expect(page.getByRole("region", { name: "MANIFESTO.TXT" })).toBeVisible();
+  await expect(files.locator("#file-MANIFESTO")).toBeFocused();
 });
 
 test.describe("file tree", () => {

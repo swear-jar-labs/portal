@@ -17,7 +17,8 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - `commands/` — command types + registry helpers (completion, HELP)
 - `sprites.ts` — 16×16 pixel sprite data (the jar and the file-row glyphs)
 - `attributes.ts` — shared `data-*` contracts (`DOS_SCROLL_ATTR`, `DOS_ZONE_ATTR`,
-  `DOS_ROLE_ATTR`) for keyboard-navigation and typography code in consumers
+  `DOS_ROW_ATTR`, `DOS_ROLE_ATTR`) for keyboard-navigation and typography code in consumers;
+  `Stack row` stamps the row mark, the shell walks rows with ↑/↓ and their controls with ←/→
 - `focus.ts` — `FOCUSABLE_SELECTOR` (focusable controls in DOM order, shared by the
   panel walk and the dialog arrow cycle; hidden inputs and "smart" controls — native
   date/time/number pickers, ranges, radios — are excluded, since they consume arrows
@@ -72,7 +73,8 @@ boldness from `--dos-text-hint-stroke`, the only in-between knob.
 - The kit owns focus primitives (`focus.ts`), the consumer owns the model: the shell speaks
   Norton Commander — **Tab toggles the file list and the right-hand window** (from a form
   control too), **bare ↑/↓ walk the window's controls** with wrap-around, **Enter/Space
-  activate**. The command-line capture skips controls, `[role='combobox']` included.
+  activate**. The command-line capture skips controls, `[role='combobox']` included;
+  `Backspace` belongs to the capture too — it edits the line from anywhere.
 - Keys reached by several window listeners follow one precedence: **the local control first,
   then the consumer's hook by zone, then chrome**. Whoever handles an event calls
   `preventDefault()`; the rest respect `defaultPrevented` — listener registration order is

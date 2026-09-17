@@ -77,7 +77,7 @@ export const messages = {
         title: "HELP",
         intro: "Available commands:",
         keys: [
-          "Tab switches panels; ▲/▼ moves between controls in a window.",
+          "Tab switches panels; ▲/▼ moves between rows in a window, ◀/▶ inside a row.",
           "Space or Enter activates; Shift+Enter sends a form; Shift+▲/▼ scrolls the window.",
         ].join("\n"),
         outro: "Tab completes in the command line. Try an unknown command — the jar clinks.",
@@ -238,6 +238,10 @@ export const messages = {
         reviews: "REVIEWS",
         errata: "ERRATA",
       },
+      threads: {
+        heading: "MY THREADS",
+        empty: "No threads yet. Say something by hand.",
+      },
       activityHeading: "RECENT ACTIVITY",
       activityEmpty: "No merged work yet. The jar is watching.",
     },
@@ -257,6 +261,57 @@ export const messages = {
       hint: "These preferences live in this browser until accounts arrive.",
     },
   },
+  board: {
+    metadata: {
+      title: "Discussions — Swear Jar Labs",
+      description: "The Swear Jar Labs board: threads, proposals and postmortems.",
+    },
+    boards: {
+      general: "GENERAL",
+      compiler: "COMPILER",
+      tooling: "TOOLING",
+    },
+    tags: {
+      proposal: "PROPOSAL",
+      decision: "DECISION",
+      question: "QUESTION",
+      compilers: "COMPILERS",
+      tooling: "TOOLING",
+      craft: "CRAFT",
+      meta: "META",
+    },
+    roles: {
+      member: "MEMBER",
+      contributor: "CONTRIBUTOR",
+      maintainer: "MAINTAINER",
+    },
+    feed: {
+      heading: "DISCUSSIONS",
+      boardLabel: "BOARD",
+      sortLabel: "SORT",
+      tagLabel: "TAGS",
+      allBoards: "ALL BOARDS",
+      sorts: { hot: "HOT", new: "NEW" },
+      empty: "No threads yet. The board is quiet.",
+      emptyFilter: "No threads match these filters.",
+    },
+    card: {
+      pinned: "[PINNED]",
+      locked: "[LOCKED]",
+    },
+    thread: {
+      postsEmpty: "No posts here yet.",
+      locked: "This thread is locked.",
+    },
+    age: {
+      now: "JUST NOW",
+      suffix: "AGO",
+      minute: "M",
+      hour: "H",
+      day: "D",
+      week: "W",
+    },
+  },
 } as const;
 
 export const pluralForms = {
@@ -264,4 +319,7 @@ export const pluralForms = {
   dir: { one: "DIR", other: "DIRS" },
   file: { one: "FILE", other: "FILES" },
   minute: { one: "MINUTE", other: "MINUTES" },
+  thread: { one: "THREAD", other: "THREADS" },
+  vote: { one: "VOTE", other: "VOTES" },
+  reply: { one: "REPLY", other: "REPLIES" },
 } as const satisfies Record<string, PluralForms>;

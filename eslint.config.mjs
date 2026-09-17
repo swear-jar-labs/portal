@@ -22,6 +22,9 @@ const eslintConfig = defineConfig([
   {
     files: ["src/packages/swearjar-dos/**/*.{ts,tsx}"],
     rules: {
+      // The kit stays framework-agnostic (a future standalone package):
+      // next/image is an app-level concern.
+      "@next/next/no-img-element": "off",
       "no-restricted-imports": [
         "error",
         {
@@ -50,6 +53,31 @@ const eslintConfig = defineConfig([
               group: ["@/features/*/*", "**/features/*/*"],
               message:
                 "Import a feature through its facade (@/features/<name>); its internals stay private.",
+            },
+            {
+              group: ["@/shared/*"],
+              message:
+                "Routing imports features, not shared modules; shared code reaches the app through a facade.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/shared/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/**", "**/app/**"],
+              message: "Shared modules never import the routing layer (src/app).",
+            },
+            {
+              group: ["@/features/**", "**/features/**"],
+              message: "Shared modules never import features; features import shared.",
             },
           ],
         },

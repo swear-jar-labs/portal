@@ -1,8 +1,7 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
-import { enterShell, expectMinimumContrast } from "./helpers";
+import { enterShell, expectMinimumContrast, expectNoViolations } from "./helpers";
 
 const FILES_REGION = "C:\\SWEARJAR";
 const USER_LABEL = "User";
@@ -17,14 +16,6 @@ async function logon(page: Page, user = "ada") {
   await page.getByLabel(PASSWORD_LABEL).fill("secret");
   await page.getByRole("button", { name: "[ LOG ON ]" }).click();
   await expect(page).toHaveURL("/profile");
-}
-
-async function expectNoViolations(page: Page, context: string) {
-  // Client-side navigation updates <title> asynchronously; axe would otherwise
-  // flag an empty document title mid-transition (caught under parallel load).
-  await expect.poll(() => page.title()).not.toBe("");
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
-  expect(results.violations, context).toEqual([]);
 }
 
 async function skipBootAsGuest(page: Page) {
@@ -72,6 +63,9 @@ test.describe("member session", () => {
   test("logon swaps the account chrome and skips the guest welcome", async ({ page }) => {
     await logon(page);
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
+
+    // The Google demo user carries a picture; the letter square stays the fallback.
+    await expect(page.locator('img[src="/avatars/ada.svg"]')).toBeVisible();
 
     await page.goto("/");
     await page.keyboard.press("Enter");
@@ -184,6 +178,65 @@ test.describe("member session", () => {
     await expect(delay).toBeFocused();
     await page.keyboard.press("ArrowUp");
     await expect(toggle).toBeFocused();
+  });
+});
+
+test.describe("member threads", () => {
+  test("lists the member's threads and opens one with a click or Space", async ({ page }) => {
+    await logon(page);
+
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 2, name: "MY THREADS" })).toBeVisible();
+    await expect(
+      profile.getByRole("link", { name: "CI cache poisoning: how we lost a day" }),
+    ).toBeVisible();
+    await expect(
+      profile.getByRole("link", { name: "READ FIRST: how this board works" }),
+    ).toBeVisible();
+
+    // A window marker survives a soft navigation; a full load would wipe it.
+    await page.evaluate(() => {
+      (window as unknown as { sjSpaMarker?: number }).sjSpaMarker = 1;
+    });
+    await profile.getByRole("link", { name: "CI cache poisoning: how we lost a day" }).click();
+    await expect(page).toHaveURL("/discussions/ci-cache-poisoning");
+    await expect(
+      page.getByRole("region", { name: "CI cache poisoning: how we lost a day" }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() => (window as unknown as { sjSpaMarker?: number }).sjSpaMarker),
+    ).toBe(1);
+
+    // Space activates a focused row (Enter is the native link activation).
+    await page.goBack();
+    await expect(page).toHaveURL("/profile");
+    const row = page.getByRole("link", { name: "READ FIRST: how this board works" });
+    await row.focus();
+    await page.keyboard.press(" ");
+    await expect(page).toHaveURL("/discussions/read-first");
+  });
+
+  test("closes a thread back to the profile that pushed it", async ({ page }) => {
+    await logon(page);
+
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await profile.getByRole("link", { name: "READ FIRST: how this board works" }).click();
+    await expect(page).toHaveURL("/discussions/read-first");
+    await expect(
+      page.getByRole("region", { name: "READ FIRST: how this board works" }),
+    ).toBeVisible();
+
+    // The profile's push is the one history entry behind the thread: a close
+    // returns to the profile, not to the feed (the memory of the last push
+    // must include the member's rows, not only the feed's cards).
+    await page.keyboard.press("Escape");
+    await expect(page).toHaveURL("/profile");
+    await expect(profile.getByRole("heading", { level: 2, name: "MY THREADS" })).toBeVisible();
+  });
+
+  test("shows the empty state for a member without threads", async ({ page }) => {
+    await logon(page, "nobody");
+    await expect(page.getByText("No threads yet. Say something by hand.")).toBeVisible();
   });
 });
 

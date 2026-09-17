@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CmdLine,
@@ -16,6 +24,7 @@ import {
   cx,
 } from "@swearjar/dos";
 import {
+  commandById,
   fileGroupsFor,
   HOME_PATH,
   keyDefsFor,
@@ -38,10 +47,12 @@ import { usePanelNav } from "./hooks/usePanelNav";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./useCommandRunner";
 import { CMD_ZONE } from "./zones";
+import { ShellControlsProvider } from "./ShellControls";
 import { FileManagerProvider } from "./FileManager/FileManagerContext";
 import { FileManagerPanel } from "./FileManager/FileManagerPanel";
 import { useFileCursorKeys } from "./FileManager/useFileCursorKeys";
 import { useFileManager } from "./FileManager/useFileManager";
+import { focusPanelBody, keepPanelBodyFocus } from "./panel-focus";
 import dialogsStyles from "./dialogs.module.css";
 import styles from "./DosShell.module.css";
 
@@ -80,10 +91,20 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
   const openDialog = useCallback((next: DialogState) => setDialog(next), []);
   const closeDialog = useCallback(() => setDialog(null), []);
   const addCoin = useCallback(() => setCoins((value) => value + 1), []);
-  const push = useCallback((href: string) => router.push(href), [router]);
+  // The push is a transition, so the shell can tell when the route has arrived:
+  // the file manager hands the keyboard to the right panel exactly then.
+  const [isNavigating, startNavigation] = useTransition();
+  const panelFocusTarget = useRef<string | null>(null);
+
+  const push = useCallback(
+    (href: string) => {
+      startNavigation(() => router.push(href));
+    },
+    [router, startNavigation],
+  );
   const goHome = useCallback(() => {
-    if (!isHome) router.push(HOME_PATH);
-  }, [isHome, router]);
+    if (!isHome) push(HOME_PATH);
+  }, [isHome, push]);
 
   const commandList = useMemo(() => visibleCommands(signedIn), [signedIn]);
   const groups = useMemo(() => fileGroupsFor(signedIn), [signedIn]);
@@ -92,15 +113,40 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
   // The runner needs the file manager (to open docs) and the file manager needs
   // the runner (to run LOGOFF): the ref breaks the cycle.
   const runRef = useRef<(commandId: CommandId) => void>(() => {});
-  const onCommand = useCallback((commandId: CommandId) => runRef.current(commandId), []);
+
+  // Opening a program (EXE route) hands the keyboard to the right panel; docs
+  // keep it in the list and dialogs take focus themselves. A route that is
+  // already open focuses right away, the rest wait for the route to settle.
+  const runFromFiles = useCallback(
+    (commandId: CommandId) => {
+      const href = commandById.get(commandId)?.href;
+      if (href) {
+        if (href === pathname) focusPanelBody();
+        else panelFocusTarget.current = href;
+      }
+      runRef.current(commandId);
+    },
+    [pathname],
+  );
+
   const fileManager = useFileManager({
     isMobile,
     pathname,
     signedIn,
     onDocumentOpened: goHome,
     groups,
-    onCommand,
+    onCommand: runFromFiles,
   });
+
+  useEffect(() => {
+    const target = panelFocusTarget.current;
+    if (isNavigating || target === null) return;
+    panelFocusTarget.current = null;
+    if (pathname !== target) return;
+    // The route can commit a Suspense placeholder before its island streams
+    // in: the body focused now belongs to the placeholder and is replaced.
+    return keepPanelBodyFocus(target);
+  }, [isNavigating, pathname]);
 
   const handleLogoff = useCallback(() => {
     setWelcomeEligible(false);
@@ -210,7 +256,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
               dirCount={fileManager.dirCount}
               fileCount={fileManager.fileCount}
             />
-            {children}
+            <ShellControlsProvider enabled={controlsEnabled}>{children}</ShellControlsProvider>
           </Stack>
         </FileManagerProvider>
 

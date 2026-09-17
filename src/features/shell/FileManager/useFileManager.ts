@@ -12,7 +12,7 @@ import {
 import type { DocId } from "@/content/docs";
 import { messages } from "@/content/messages";
 import { formatSize } from "@/lib/format";
-import { isPlainActivation } from "./activation";
+import { isPlainActivation } from "@/lib/activation";
 import { buildRowIds, dirRowId, fallbackRowId, fileRowId, nextRowId } from "./rows";
 
 const FILE_COLUMNS: FileTableColumn[] = [
@@ -146,6 +146,9 @@ export function useFileManager({
   const rows = useMemo<FileTableItem[]>(() => {
     const items: FileTableItem[] = [];
     const onHome = pathname === HOME_PATH;
+    // Deep routes belong to their section: /discussions/<id> keeps the section
+    // row current (see commandIdForPath).
+    const routeCommandId = commandIdForPath(pathname);
     for (const group of groups) {
       const collapsed = collapsedGroups.includes(group.id);
       const dirId = dirRowId(group.id);
@@ -179,8 +182,8 @@ export function useFileManager({
           nested: true,
           selected: activeCursorId === rowId,
           // Documents are current only where they are shown (the home panel);
-          // sections are current on their own route.
-          current: docId ? onHome && docId === selectedDocId : href === pathname,
+          // sections are current on their own route and its deep routes.
+          current: docId ? onHome && docId === selectedDocId : routeCommandId === item.command,
           href,
           onActivate: (event) => {
             setCursorId(rowId);

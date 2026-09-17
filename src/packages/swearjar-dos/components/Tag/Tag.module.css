@@ -1,0 +1,27 @@
+.tag {
+  display: inline-block;
+  padding: 0 1ch;
+  border: 1px solid currentColor;
+  font-size: 0.85em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.button {
+  cursor: pointer;
+  background: transparent;
+}
+
+.button:hover {
+  background: var(--dos-light-blue);
+  color: var(--dos-white);
+}
+
+/* The pressed state is a fixed CGA pair: the tone remap of the light surface
+   would otherwise leave some tones without contrast as a background. */
+.active,
+.active:hover {
+  background: var(--dos-light-cyan);
+  border-color: var(--dos-black);
+  color: var(--dos-black);
+}

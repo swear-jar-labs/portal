@@ -1,0 +1,80 @@
+.card {
+  position: relative;
+  padding: 4px 8px 6px;
+  border: var(--dos-border-width) solid var(--dos-dark-gray);
+  background: var(--dos-black);
+}
+
+.card:hover {
+  border-color: var(--dos-light-blue);
+}
+
+.current {
+  border-color: var(--dos-light-cyan);
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.leading {
+  flex: 0 0 auto;
+}
+
+.heading {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* The card title is a link, not a heading-colored text: the anchor below owns
+     the color (cyan, like any link). */
+  color: inherit;
+}
+
+.link {
+  color: var(--dos-light-cyan);
+  text-decoration: none;
+  overflow-wrap: break-word;
+}
+
+/* The stretched hit area: the anchor is not positioned, so ::after covers the
+   whole card. */
+.link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.link:focus-visible {
+  outline: none;
+}
+
+.card:hover .link {
+  color: var(--dos-white);
+}
+
+/* The focused link marks the whole card, like an active DOS window. */
+.card:has(.link:focus-visible) {
+  outline: 2px solid var(--dos-focus-ring);
+  outline-offset: -2px;
+}
+
+.meta {
+  margin-top: 2px;
+}
+
+.actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  /* The gaps stay click-through: only the controls themselves sit above the
+     stretched link. */
+  pointer-events: none;
+}
+
+.actions > * {
+  pointer-events: auto;
+}

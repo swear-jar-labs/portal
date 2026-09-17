@@ -1,15 +1,28 @@
-import { Heading, Stack, Text } from "@swearjar/dos";
+import { Avatar, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import type { ThreadSummary } from "@/shared/board/threads";
 import type { MemberProfile } from "./data";
+import { ProfileThreads } from "./ProfileThreads";
 
-export function ProfileView({ profile }: { profile: MemberProfile }) {
+export type ProfileViewProps = {
+  profile: MemberProfile;
+  threads: readonly ThreadSummary[];
+  now: string;
+};
+
+export function ProfileView({ profile, threads, now }: ProfileViewProps) {
   return (
     <Stack gap={10}>
-      <Heading level={1}>{profile.user}</Heading>
-      <Text role="hint">
-        {messages.account.profile.roles[profile.role]} · {messages.account.profile.joined}{" "}
-        {profile.joined}
-      </Text>
+      <Stack direction="row" gap={10} align="center">
+        <Avatar user={profile.user} src={profile.avatar} size="lg" />
+        <Stack gap={2}>
+          <Heading level={1}>{profile.user}</Heading>
+          <Text role="hint">
+            {messages.account.profile.roles[profile.role]} · {messages.account.profile.joined}{" "}
+            {profile.joined}
+          </Text>
+        </Stack>
+      </Stack>
       <Text>{profile.bio}</Text>
 
       <Stack gap={2}>
@@ -18,6 +31,15 @@ export function ProfileView({ profile }: { profile: MemberProfile }) {
             {messages.account.profile.stats[stat.id]}: {stat.value}
           </Text>
         ))}
+      </Stack>
+
+      <Stack gap={4}>
+        <Heading level={2}>{messages.account.profile.threads.heading}</Heading>
+        {threads.length === 0 ? (
+          <Text role="hint">{messages.account.profile.threads.empty}</Text>
+        ) : (
+          <ProfileThreads threads={threads} now={now} />
+        )}
       </Stack>
 
       <Stack gap={4}>

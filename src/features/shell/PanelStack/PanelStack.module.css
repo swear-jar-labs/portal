@@ -1,0 +1,34 @@
+.stack {
+  /* The cascade step: the vertical offset reveals the title bar of the layer
+     below (border 2px + title 28px), so DISCUSSIONS.EXE stays readable behind
+     the open thread. */
+  --dos-panel-stack-offset: 32px;
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.layer,
+.top {
+  position: relative;
+  z-index: 0;
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The top of a real stack owns a stacking context of its own: otherwise
+   positioned parts of the base layer (cards, rows) would paint over it. */
+.top {
+  z-index: 1;
+  margin-top: var(--dos-panel-stack-offset);
+}
+
+@media (max-width: 720px) {
+  .top {
+    margin-top: 0;
+  }
+}

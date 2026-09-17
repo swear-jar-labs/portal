@@ -174,7 +174,14 @@ export function isActionCommand(id: CommandId): id is ActionCommandId {
 }
 
 export function commandIdForPath(pathname: string): CommandId | undefined {
-  return commands.find((command) => command.href === pathname)?.id;
+  const exact = commands.find((command) => command.href === pathname);
+  if (exact) return exact.id;
+  // Deep routes belong to their section: /discussions/<id> keeps the cursor on
+  // DISCUSSIONS.EXE. The trailing slash holds the segment boundary, so
+  // /discussions-archive is not the board.
+  return commands.find(
+    (command) => command.href !== undefined && pathname.startsWith(`${command.href}/`),
+  )?.id;
 }
 
 export function isVisibleFor(command: Pick<AppCommand, "audience">, signedIn: boolean): boolean {

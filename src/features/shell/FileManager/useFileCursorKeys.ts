@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos";
+import { DOC_TOP_ATTR } from "../attributes";
 import { CMD_ZONE, DOC_ZONE, FILES_ZONE } from "../zones";
 import { hasCommandModifier, shouldSkipEvent } from "../hooks/keyboard";
 import { DIR_ROW_PREFIX } from "./rows";
@@ -39,9 +40,13 @@ export function useFileCursorKeys({
       if (event.key === "Tab") {
         if (hasCommandModifier(event)) return;
         if (zone === FILES_ZONE) {
-          const doc = document.querySelector<HTMLElement>(
-            `[${DOS_ZONE_ATTR}='${DOC_ZONE}'] [${DOS_SCROLL_ATTR}]`,
-          );
+          // In a panel stack the top layer is the target; without one the doc
+          // zone owns a single panel body.
+          const doc =
+            document.querySelector<HTMLElement>(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`) ??
+            document.querySelector<HTMLElement>(
+              `[${DOS_ZONE_ATTR}='${DOC_ZONE}'] [${DOS_SCROLL_ATTR}]`,
+            );
           if (!doc) return;
           event.preventDefault();
           doc.focus();

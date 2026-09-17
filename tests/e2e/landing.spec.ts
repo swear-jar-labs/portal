@@ -87,6 +87,22 @@ test("Shift+Tab from the command line returns to the file manager", async ({ pag
   await expect(page.locator("#file-ABOUT")).toBeFocused();
 });
 
+test("erases the command line with Backspace from the file manager", async ({ page }) => {
+  const input = page.getByLabel("Command line");
+
+  await input.focus();
+  await page.keyboard.type("ABX");
+  await page.keyboard.press("Shift+Tab");
+  await expect(input).toHaveValue("ABX");
+  await expect(input).not.toBeFocused();
+
+  // Backspace is part of the shell's type-anywhere capture: it edits the line
+  // and hands it the keyboard.
+  await page.keyboard.press("Backspace");
+  await expect(input).toHaveValue("AB");
+  await expect(input).toBeFocused();
+});
+
 test("Tab on a complete command completes nothing and returns to the file manager", async ({
   page,
 }) => {
@@ -102,6 +118,8 @@ test("Tab toggles focus between the file list and the document", async ({ page }
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
   const doc = page.locator("[data-dos-scroll]");
 
+  // A doc open keeps the keyboard in the list; Tab hands it to the panel and
+  // back.
   await files.getByRole("button", { name: "ABOUT" }).click();
   await expect(files.locator("#file-ABOUT")).toBeFocused();
 

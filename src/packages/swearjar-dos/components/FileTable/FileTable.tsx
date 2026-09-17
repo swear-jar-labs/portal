@@ -59,10 +59,12 @@ function Control({ item }: { item: FileTableItem }) {
         onClick={item.onActivate}
         onKeyDown={(event) => {
           // A link activates natively on Enter only; Space is the button idiom
-          // the file list shares, so the row forwards it like a click.
+          // the file list shares, so a row with an in-app handler forwards it
+          // like a click. Without one, Space stays native.
+          if (!item.onActivate) return;
           if (event.key !== " ") return;
           event.preventDefault();
-          item.onActivate?.();
+          item.onActivate();
         }}
       >
         {content}

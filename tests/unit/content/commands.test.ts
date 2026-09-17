@@ -209,6 +209,13 @@ describe("commands content", () => {
     expect(commandIdForPath("/unknown")).toBeUndefined();
   });
 
+  it("maps deep routes to their section command by segment boundary", () => {
+    expect(commandIdForPath("/discussions/3f2a1c")).toBe("DISCUSSIONS");
+    expect(commandIdForPath("/discussions/3f2a1c/")).toBe("DISCUSSIONS");
+    expect(commandIdForPath("/discussions-archive")).toBeUndefined();
+    expect(commandIdForPath("/errata/2019/05")).toBe("ERRATA");
+  });
+
   it("keeps every route owned by a single command", () => {
     const hrefs = commands.flatMap((command) => (command.href ? [command.href] : []));
     expect(new Set(hrefs).size).toBe(hrefs.length);

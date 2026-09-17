@@ -1,6 +1,6 @@
 import { Heading, Sprite, Stack, Text } from "@swearjar/dos";
 import type { Doc } from "@/content/docs";
-import { Markdown } from "../Markdown/Markdown";
+import { Markdown } from "@/shared/Markdown/Markdown";
 import styles from "./DocView.module.css";
 
 export type DocViewProps = {

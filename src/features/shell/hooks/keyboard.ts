@@ -2,7 +2,8 @@
 // when nobody has handled the event and no IME composition is in progress, and
 // command modifiers stay with the browser and the OS (native shortcuts,
 // word-wise caret movement). `repeat` is not a guard: it is each listener's own
-// policy (the walk and the F-keys ignore it, the panel scroll allows it).
+// policy (the walk, the F-keys and the stack's Esc ignore it, the panel scroll
+// allows it).
 
 export type KeyboardGuardEvent = Pick<
   KeyboardEvent,

@@ -1,4 +1,6 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page } from "@playwright/test";
+import { messages } from "../../src/content/messages";
 
 export async function enterShell(page: Page) {
   await page.goto("/");
@@ -10,6 +12,21 @@ export async function enterShell(page: Page) {
   await expect(dialog.getByRole("heading", { name: "WELCOME TO SWEARJAR.DOS" })).toBeVisible();
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(dialog).toBeHidden();
+}
+
+// The status clock is client state: the "--:--" placeholder disappears once
+// hydration ran. Keyboard- and click-driven tests wait on it, or their events
+// can land before the shell listeners exist (a full run under parallel load).
+export async function waitForHydration(page: Page) {
+  await expect(page.getByText(messages.shell.statusBar.clockFallback)).toHaveCount(0);
+}
+
+// Client-side navigation updates <title> asynchronously; axe would otherwise
+// flag an empty document title mid-transition (caught under parallel load).
+export async function expectNoViolations(page: Page, context: string) {
+  await expect.poll(() => page.title()).not.toBe("");
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  expect(results.violations, context).toEqual([]);
 }
 
 type Rgb = { r: number; g: number; b: number };

@@ -1,0 +1,23 @@
+.feed {
+  min-height: 100%;
+}
+
+.filters {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--dos-dark-gray);
+}
+
+.post {
+  padding-top: 10px;
+}
+
+.post + .post {
+  border-top: 2px solid var(--dos-dark-gray);
+}
+
+/* The post is a focusable navigation row: the ring marks which post the
+   arrows are on. */
+.post:focus-visible {
+  outline: 2px solid var(--dos-focus-ring);
+  outline-offset: -2px;
+}

@@ -57,7 +57,10 @@ export function CmdLine({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
-      if (event.key.length !== 1 || event.key === " ") return;
+      // The line is the shell's text target: printable keys type into it from
+      // anywhere, and Backspace edits it from anywhere too.
+      const erasing = event.key === "Backspace";
+      if (!erasing && (event.key.length !== 1 || event.key === " ")) return;
       const target = event.target as HTMLElement | null;
       if (
         target?.closest(
@@ -68,7 +71,7 @@ export function CmdLine({
       }
       event.preventDefault();
       inputRef.current?.focus();
-      setValue((current) => current + event.key);
+      setValue((current) => (erasing ? current.slice(0, -1) : current + event.key));
     };
 
     window.addEventListener("keydown", onKeyDown);

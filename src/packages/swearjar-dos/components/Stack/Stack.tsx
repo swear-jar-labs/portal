@@ -1,4 +1,5 @@
 import { createElement, type CSSProperties, type ReactNode } from "react";
+import { DOS_ROW_ATTR } from "../../attributes";
 import { cx } from "../tone";
 
 type StackElement =
@@ -13,6 +14,11 @@ export type StackProps = {
   justify?: CSSProperties["justifyContent"];
   wrap?: boolean;
   grow?: boolean;
+  // Stamps the navigation-row contract: the shell's panel walk steps ↑/↓
+  // between rows and ←/→ between the focusables inside one.
+  row?: boolean;
+  // A focusable row (a post) joins its own row as the first control.
+  tabIndex?: number;
   className?: string;
 };
 
@@ -25,6 +31,8 @@ export function Stack({
   justify,
   wrap = false,
   grow = false,
+  row = false,
+  tabIndex,
   className,
 }: StackProps) {
   const style: CSSProperties = {
@@ -39,5 +47,14 @@ export function Stack({
     minHeight: 0,
   };
 
-  return createElement(as, { className: cx(className), style }, children);
+  return createElement(
+    as,
+    {
+      className: cx(className),
+      style,
+      ...(row ? { [DOS_ROW_ATTR]: "" } : undefined),
+      tabIndex,
+    },
+    children,
+  );
 }

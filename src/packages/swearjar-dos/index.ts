@@ -13,6 +13,15 @@ export type { ListProps } from "./components/List/List";
 export { Link } from "./components/Link/Link";
 export type { LinkProps } from "./components/Link/Link";
 
+export { Avatar } from "./components/Avatar/Avatar";
+export type { AvatarProps, AvatarSize } from "./components/Avatar/Avatar";
+
+export { Tag } from "./components/Tag/Tag";
+export type { TagProps } from "./components/Tag/Tag";
+
+export { Card } from "./components/Card/Card";
+export type { CardProps } from "./components/Card/Card";
+
 export { Button } from "./components/Button/Button";
 export type { ButtonProps } from "./components/Button/Button";
 
@@ -77,7 +86,7 @@ export type { Command } from "./commands/types";
 export { sprites } from "./sprites";
 export type { SpriteData, SpriteName } from "./sprites";
 
-export { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
+export { DOS_ROW_ATTR, DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
 export { FOCUSABLE_SELECTOR, nextControlIndex } from "./focus";
 
 export { toneColor, toneStyle, cx } from "./components/tone";

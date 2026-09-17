@@ -1,11 +1,16 @@
 .keyBar {
   flex: 0 0 auto;
   display: flex;
-  background: var(--dos-black);
-  color: var(--dos-white);
+  /* Windows status strip: silver with black ink, so the row is its own bar
+     instead of the tail of the black command line above. */
+  background: var(--dos-silver);
+  color: var(--dos-black);
   font-weight: 700;
   overflow-x: auto;
   scrollbar-width: none;
+  border-top: var(--dos-border-width) solid var(--dos-dark-gray);
+  /* Light surface: the cyan ring of the dark chrome vanishes on silver. */
+  --dos-focus-ring: var(--dos-black);
 }
 
 .keyBar::-webkit-scrollbar {
@@ -32,8 +37,21 @@
   color: var(--dos-white);
 }
 
+/* The key cap flips to black: on silver the light-gray cap has no contrast. */
 .badge {
-  background: var(--dos-light-gray);
-  color: var(--dos-black);
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
   padding: 0 5px;
+}
+
+/* The session tray (user, clock) closes the right edge of the strip. */
+.trailing {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding: 1px 8px;
+  color: inherit;
+  white-space: nowrap;
 }

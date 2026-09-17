@@ -61,9 +61,9 @@ test("navigates from the board file to the route without a reload", async ({ pag
   await page.keyboard.press("Enter");
   const error = page.getByRole("dialog");
   await expect(error.locator("[data-dos-window-body]")).toBeFocused();
+  await expect(error.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
   await page.keyboard.press("Enter");
   await expect(error).toBeHidden();
-  await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
 
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
   await files.getByRole("link", { name: "DISCUSSIONS" }).click();
@@ -71,11 +71,15 @@ test("navigates from the board file to the route without a reload", async ({ pag
   // The Board page exists now: the shell survives through a soft navigation.
   await expect(page).toHaveURL("/discussions");
   await expect(page.getByRole("menubar")).toBeVisible();
-  await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
   await expect(files.getByRole("link", { name: "DISCUSSIONS" })).toHaveAttribute(
     "aria-current",
     "true",
   );
+
+  await input.focus();
+  await page.keyboard.type("ASDF");
+  await page.keyboard.press("Enter");
+  await expect(error.getByText("JAR: 2 COINS", { exact: true })).toBeVisible();
 });
 
 test("hands the keyboard to the right panel after a routed file opens", async ({ page }) => {
@@ -173,9 +177,9 @@ test.describe("spa navigation", () => {
 
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator("[data-dos-window-body]")).toBeFocused();
+    await expect(dialog.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();
-    await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     const apply = files.getByRole("link", { name: "APPLY" });
@@ -183,14 +187,17 @@ test.describe("spa navigation", () => {
 
     await expect(page).toHaveURL("/apply");
     await expect(page.getByRole("menubar")).toBeVisible();
-    await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
     await expect(apply).toHaveAttribute("aria-current", "true");
 
     await page.goBack();
     await expect(page).toHaveURL("/");
     await expect(page.getByRole("menubar")).toBeVisible();
-    await expect(page.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
     await expect(apply).not.toHaveAttribute("aria-current", "true");
+
+    await input.focus();
+    await page.keyboard.type("ASDF");
+    await page.keyboard.press("Enter");
+    await expect(dialog.getByText("JAR: 2 COINS", { exact: true })).toBeVisible();
   });
 
   test("selects the route file on a direct visit", async ({ page }) => {

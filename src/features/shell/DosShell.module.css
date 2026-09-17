@@ -57,24 +57,10 @@
 .panels {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 2px;
+  /* No extra black strip above the command line: the panel's bottom border and
+     the line's silver frame keep the gap equal to the one under the line. */
+  padding: 2px 2px 0;
   background: var(--dos-black);
-}
-
-.jar.flash {
-  animation: flash 0.3s steps(2) 2;
-}
-
-@keyframes flash {
-  50% {
-    background: var(--dos-yellow);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .jar.flash {
-    animation: none;
-  }
 }
 
 @media (max-width: 720px) {

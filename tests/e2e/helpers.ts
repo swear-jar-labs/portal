@@ -22,11 +22,11 @@ export async function enterShell(page: Page) {
   await expect(dialog).toBeHidden();
 }
 
-// The status clock is client state: the "--:--" placeholder disappears once
+// The command-bar clock is client state: the "--:--" placeholder disappears once
 // hydration ran. Keyboard- and click-driven tests wait on it, or their events
 // can land before the shell listeners exist (a full run under parallel load).
 export async function waitForHydration(page: Page) {
-  await expect(page.getByText(messages.shell.statusBar.clockFallback)).toHaveCount(0);
+  await expect(page.getByText(messages.shell.keyBar.clockFallback)).toHaveCount(0);
 }
 
 const ARROW_KEY_CODES = {

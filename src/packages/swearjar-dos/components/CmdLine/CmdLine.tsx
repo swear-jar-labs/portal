@@ -128,26 +128,28 @@ export function CmdLine({
         inputRef.current?.focus();
       }}
     >
-      <span className={styles.prompt} aria-hidden="true">
-        {prompt}
-      </span>
-      <span ref={mirrorRef} className={styles.mirror} aria-hidden="true">
-        {value || placeholder || ""}
-      </span>
-      <input
-        ref={inputRef}
-        className={styles.input}
-        type="text"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        autoComplete="off"
-        autoCapitalize="characters"
-        spellCheck={false}
-        aria-label={ariaLabel}
-      />
-      <span className={styles.cursor} aria-hidden="true" />
+      <div className={styles.field}>
+        <span className={styles.prompt} aria-hidden="true">
+          {prompt}
+        </span>
+        <span ref={mirrorRef} className={styles.mirror} aria-hidden="true">
+          {value || placeholder || ""}
+        </span>
+        <input
+          ref={inputRef}
+          className={styles.input}
+          type="text"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          aria-label={ariaLabel}
+        />
+        <span className={styles.cursor} aria-hidden="true" />
+      </div>
     </div>
   );
 }

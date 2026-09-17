@@ -21,7 +21,9 @@ async function tokenColor(page: Page, token: string): Promise<string> {
 
 test("boots into the DOS shell with the file manager and content", async ({ page }) => {
   await expect(page.getByRole("menubar")).toBeVisible();
-  await expect(page.getByRole("toolbar", { name: "Function keys" })).toBeVisible();
+  const keyBar = page.getByRole("toolbar", { name: "Function keys" });
+  await expect(keyBar).toBeVisible();
+  await expect(keyBar.getByText("GUEST", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Command line")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
 });
@@ -43,6 +45,18 @@ test("hides the brand text on mobile and keeps it on desktop", async ({ page }) 
 
   await page.setViewportSize({ width: 1280, height: 800 });
   await expect(brandText).toBeVisible();
+});
+
+test("starts the mobile command bar at the session details", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 780 });
+
+  const keyBar = page.getByRole("toolbar", { name: "Function keys" });
+  await expect(keyBar.getByText("GUEST", { exact: true })).toBeVisible();
+  await expect
+    .poll(() =>
+      keyBar.evaluate((element) => element.scrollLeft + element.clientWidth >= element.scrollWidth),
+    )
+    .toBe(true);
 });
 
 test("opens a static doc from the file manager", async ({ page }) => {
@@ -139,8 +153,9 @@ test("an unknown command feeds the swear jar", async ({ page }) => {
   await page.keyboard.type("ASDF");
   await page.keyboard.press("Enter");
 
-  await expect(page.getByText("Bad command or file name.")).toBeVisible();
-  await expect(page.getByText("JAR: 1 COIN")).toBeVisible();
+  const error = page.getByRole("dialog");
+  await expect(error.getByText("Bad command or file name.")).toBeVisible();
+  await expect(error.getByText("JAR: 1 COIN", { exact: true })).toBeVisible();
 });
 
 test("light dialogs take the light surface while HELP stays dark", async ({ page }) => {
@@ -152,10 +167,11 @@ test("light dialogs take the light surface while HELP stays dark", async ({ page
   const error = page.getByRole("dialog");
   const errorBody = error.locator("[data-dos-window-body]");
   await expect(errorBody).toHaveAttribute("data-dos-surface", "light");
-  await expect(errorBody).toHaveCSS("background-color", await tokenColor(page, "--dos-light-gray"));
+  await expect(errorBody).toHaveCSS("background-color", await tokenColor(page, "--dos-paper"));
   // The bold red headline counts as large text, so AA holds at 3:1.
   await expectMinimumContrast(error.getByText("Bad command or file name."), 3);
   await expectMinimumContrast(error.getByText("The jar clinks. +1 coin."));
+  await expectMinimumContrast(error.getByText("JAR: 1 COIN", { exact: true }));
   await expectMinimumContrast(error.getByText("Try HELP."));
 
   await page.keyboard.press("Enter");

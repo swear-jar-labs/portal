@@ -1,7 +1,8 @@
 import { buildHelp, Button, Heading, Sprite, Stack, Text } from "@swearjar/dos";
 import type { AppCommand, FileGroup } from "@/content/commands";
 import { welcome } from "@/content/landing";
-import { messages } from "@/content/messages";
+import { messages, pluralForms } from "@/content/messages";
+import { formatCount } from "@/lib/format";
 import styles from "./dialogs.module.css";
 
 export function HelpBody({ commands }: { commands: readonly AppCommand[] }) {
@@ -12,7 +13,7 @@ export function HelpBody({ commands }: { commands: readonly AppCommand[] }) {
   );
 }
 
-export function ErrorBody() {
+export function ErrorBody({ coins }: { coins: number }) {
   return (
     <Stack gap={4}>
       <Text as="div" role="danger">
@@ -20,6 +21,9 @@ export function ErrorBody() {
       </Text>
       <Text as="div" role="accent">
         {messages.shell.dialogs.error.jar}
+      </Text>
+      <Text as="div" role="accent">
+        {`${messages.shell.dialogs.error.jarTotal}: ${formatCount(coins, pluralForms.coin)}`}
       </Text>
       <Text as="div" role="hint">
         {messages.shell.dialogs.error.hint}

@@ -36,6 +36,8 @@ export const messages = {
     },
     keyBar: {
       ariaLabel: "Function keys",
+      guest: "GUEST",
+      clockFallback: "--:--",
       labels: {
         HELP: "Help",
         ABOUT: "About",
@@ -52,11 +54,6 @@ export const messages = {
       },
     },
     cmdLine: { ariaLabel: "Command line" },
-    statusBar: {
-      guest: "GUEST",
-      jar: "JAR",
-      clockFallback: "--:--",
-    },
     window: { closeLabel: "Close" },
     screensaver: { title: "STARFIELD.SCR", hint: "PRESS ANY KEY TO WAKE UP" },
     files: {
@@ -104,6 +101,7 @@ export const messages = {
         title: "ERROR",
         headline: "Bad command or file name.",
         jar: "The jar clinks. +1 coin.",
+        jarTotal: "JAR",
         hint: "Try HELP.",
       },
       logoff: {

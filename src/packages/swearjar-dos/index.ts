@@ -43,9 +43,6 @@ export type { CheckboxProps } from "./components/Checkbox/Checkbox";
 export { Panel } from "./components/Panel/Panel";
 export type { PanelProps } from "./components/Panel/Panel";
 
-export { StatusBar } from "./components/StatusBar/StatusBar";
-export type { StatusBarProps } from "./components/StatusBar/StatusBar";
-
 export { KeyBar } from "./components/KeyBar/KeyBar";
 export type { KeyBarItem, KeyBarProps } from "./components/KeyBar/KeyBar";
 

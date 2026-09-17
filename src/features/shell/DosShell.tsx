@@ -19,9 +19,7 @@ import {
   Screensaver,
   Sprite,
   Stack,
-  StatusBar,
   Text,
-  cx,
 } from "@swearjar/dos";
 import {
   commandById,
@@ -33,11 +31,10 @@ import {
   type CommandId,
 } from "@/content/commands";
 import { bootLines, welcome } from "@/content/landing";
-import { messages, pluralForms } from "@/content/messages";
-import { formatCount } from "@/lib/format";
+import { messages } from "@/content/messages";
 import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "./screensaver-prefs";
 import { BootScreen } from "./BootScreen";
-import { StatusClock } from "./StatusClock";
+import { KeyBarClock } from "./KeyBarClock";
 import { WelcomeBody } from "./dialogs";
 import { useBootState } from "./hooks/useBootState";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
@@ -157,6 +154,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
     openDialog,
     closeDialog,
     addCoin,
+    coins,
     openDocument: fileManager.openCommand,
     clearDocument: fileManager.closeDoc,
     logoff: handleLogoff,
@@ -269,17 +267,14 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
           ariaLabel={messages.shell.cmdLine.ariaLabel}
           zone={CMD_ZONE}
         />
-        <KeyBar items={keyItems} ariaLabel={messages.shell.keyBar.ariaLabel} />
-        <StatusBar
-          left={
-            <Text key={coins} as="span" className={cx(styles.jar, coins > 0 && styles.flash)}>
-              {`${messages.shell.statusBar.jar}: ${formatCount(coins, pluralForms.coin)}`}
-            </Text>
-          }
-          right={
+        <KeyBar
+          items={keyItems}
+          ariaLabel={messages.shell.keyBar.ariaLabel}
+          scrollTrailingIntoView={isMobile}
+          trailing={
             <>
-              <Text as="span">{session ? session.user : messages.shell.statusBar.guest}</Text>
-              <StatusClock />
+              <Text as="span">{session ? session.user : messages.shell.keyBar.guest}</Text>
+              <KeyBarClock />
             </>
           }
         />

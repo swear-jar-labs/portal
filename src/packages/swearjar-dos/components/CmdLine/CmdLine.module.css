@@ -1,14 +1,24 @@
+/* Windows-style row: a silver frame with the black terminal line inset. */
 .cmdLine {
   position: relative;
   display: flex;
+  flex: 0 0 auto;
+  background: var(--dos-silver);
+  padding: var(--dos-border-width);
+  /* Light surface: the cyan ring of the dark chrome vanishes on silver. */
+  --dos-focus-ring: var(--dos-black);
+}
+
+.field {
+  flex: 1 1 auto;
+  display: flex;
   align-items: center;
   gap: 0;
-  flex: 0 0 auto;
-  background: var(--dos-light-gray);
-  color: var(--dos-black);
-  font-weight: 700;
   padding: 1px 8px;
   min-height: 1.5em;
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
+  font-weight: 700;
 }
 
 .prompt {
@@ -39,7 +49,7 @@
   font: inherit;
   font-weight: inherit;
   text-transform: uppercase;
-  color: var(--dos-black);
+  color: var(--dos-white);
   caret-color: transparent;
 }
 
@@ -54,7 +64,7 @@
 .cursor {
   width: 1ch;
   height: 1em;
-  background: var(--dos-black);
+  background: var(--dos-light-cyan);
   animation: blink var(--dos-blink);
 }
 

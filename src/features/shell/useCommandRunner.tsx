@@ -26,6 +26,7 @@ export type CommandRunnerOptions = {
   openDialog: (dialog: DialogState) => void;
   closeDialog: () => void;
   addCoin: () => void;
+  coins: number;
   openDocument: (commandId: CommandId) => void;
   clearDocument: () => void;
   logoff: () => void;
@@ -39,6 +40,7 @@ export function useCommandRunner({
   openDialog,
   closeDialog,
   addCoin,
+  coins,
   openDocument,
   clearDocument,
   logoff,
@@ -50,7 +52,7 @@ export function useCommandRunner({
   // Light dialogs read as forms (the prototype's .win-body.form): black text on
   // light gray. HELP and welcome stay dark — console output keeps its tones.
   const openLightDialog = useCallback(
-    (dialog: Omit<DialogState, "surface">) => openDialog({ ...dialog, surface: "dark" }),
+    (dialog: Omit<DialogState, "surface">) => openDialog({ ...dialog, surface: "light" }),
     [openDialog],
   );
 
@@ -105,7 +107,7 @@ export function useCommandRunner({
         openLightDialog({
           title: messages.shell.dialogs.error.title,
           tone: "error",
-          body: <ErrorBody />,
+          body: <ErrorBody coins={coins + 1} />,
         });
         return;
       }
@@ -121,6 +123,6 @@ export function useCommandRunner({
         push(command.href);
       }
     },
-    [addCoin, commands, handlers, openLightDialog, openDocument, push],
+    [addCoin, coins, commands, handlers, openLightDialog, openDocument, push],
   );
 }

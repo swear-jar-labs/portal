@@ -233,7 +233,7 @@ export const sprites = {
     palette: {
       K: "#000000",
       W: "#FFFFFF",
-      n: "#55FF55",
+      n: "#009900",
     },
     map: [
       "................",

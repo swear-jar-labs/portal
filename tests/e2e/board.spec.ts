@@ -3,7 +3,7 @@ import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attribute
 import { DOS_ROW_ATTR } from "../../src/packages/swearjar-dos/attributes";
 import { FOCUSABLE_SELECTOR } from "../../src/packages/swearjar-dos/focus";
 import { FEED_PATH, threadPath } from "../../src/shared/board/threads";
-import { expectNoViolations, waitForHydration } from "./helpers";
+import { expectNoViolations, repeatKey, waitForHydration } from "./helpers";
 
 const FEED_REGION = "DISCUSSIONS.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
@@ -123,6 +123,20 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(cards.last().getByRole("link")).toBeFocused();
+});
+
+test("keeps walking while an arrow is held (system auto-repeat)", async ({ page }) => {
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+
+  // Enter the feed, then hold ▼: each auto-repeat event is a step, so the walk
+  // follows the held key instead of ignoring it.
+  await focusedBody(page).focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
+  await repeatKey(page, "ArrowDown");
+  await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
 });
 
 test("enters the scrolled feed from its visible edge", async ({ page }) => {

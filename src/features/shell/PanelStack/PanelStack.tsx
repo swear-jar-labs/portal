@@ -1,9 +1,8 @@
 "use client";
 
 import { Children, useEffect, useRef, type ReactNode } from "react";
-import { DOS_SCROLL_ATTR } from "@swearjar/dos";
+import { DOS_SCROLL_ATTR, hasCommandModifier, shouldSkipEvent } from "@swearjar/dos";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../attributes";
-import { hasCommandModifier, shouldSkipEvent } from "../hooks/keyboard";
 import { useShellControls } from "../ShellControls";
 import styles from "./PanelStack.module.css";
 

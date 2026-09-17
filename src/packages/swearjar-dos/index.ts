@@ -87,7 +87,10 @@ export { sprites } from "./sprites";
 export type { SpriteData, SpriteName } from "./sprites";
 
 export { DOS_ROW_ATTR, DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "./attributes";
-export { FOCUSABLE_SELECTOR, isInScrollView, nextControlIndex, nextStepIndex } from "./focus";
+export { FOCUSABLE_SELECTOR, isInScrollView, nextStepIndex } from "./focus";
+export { hasCommandModifier, shouldSkipEvent } from "./keyboard";
+export { useControlWalk } from "./walk";
+export type { ControlWalkOptions } from "./walk";
 
 export { toneColor, toneStyle, cx } from "./components/tone";
 export type { Surface, TextRole, Tone } from "./components/tone";

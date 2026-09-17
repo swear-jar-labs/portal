@@ -3,19 +3,12 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { useCallback, useRef, type ReactNode } from "react";
 import { DOS_WINDOW_BODY_ATTR } from "../../attributes";
-import { FOCUSABLE_SELECTOR, nextControlIndex } from "../../focus";
+import { FOCUSABLE_SELECTOR } from "../../focus";
+import { hasCommandModifier, shouldSkipEvent } from "../../keyboard";
+import { useControlWalk } from "../../walk";
 import { cx, type Surface } from "../tone";
 import { Window } from "../Window/Window";
 import styles from "./Dialog.module.css";
-
-const ARROW_STEP: Record<string, 1 | -1> = {
-  ArrowDown: 1,
-  ArrowRight: 1,
-  ArrowUp: -1,
-  ArrowLeft: -1,
-};
-
-const VERTICAL_KEYS = ["ArrowUp", "ArrowDown"];
 
 export type DialogProps = {
   open: boolean;
@@ -47,12 +40,25 @@ export function Dialog({
     [],
   );
 
-  // Controls of the window body, in DOM order: the arrow cycle. The title-bar
-  // [X] is not part of it (Tab still reaches it natively).
+  // Controls of the window body, in DOM order: the autofocus target. The
+  // title-bar [X] is not part of it (Tab still reaches it natively).
   const controls = useCallback((): HTMLElement[] => {
     const node = body();
     return node ? Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)) : [];
   }, [body]);
+
+  // The body is the walk region: a flat list (no marked rows), so all four
+  // arrows step through the controls; with no controls the arrows stay native,
+  // and on the body surface ↑/↓ scroll a long text (HELP).
+  const region = useCallback(
+    (target: Element): Element | null => {
+      const node = body();
+      return node !== null && node.contains(target) ? node : null;
+    },
+    [body],
+  );
+
+  useControlWalk({ region, enabled: open });
 
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -70,29 +76,13 @@ export function Dialog({
             (first ?? body() ?? contentRef.current)?.focus();
           }}
           onKeyDown={(event) => {
-            if (event.defaultPrevented || event.repeat) return;
-            if (event.nativeEvent.isComposing) return;
-            if (event.ctrlKey || event.metaKey || event.altKey) return;
-
-            const step = ARROW_STEP[event.key];
-            if (step) {
-              const list = controls();
-              if (list.length === 0) return;
-              const active = document.activeElement;
-              const current = active instanceof HTMLElement ? list.indexOf(active) : -1;
-              // On the surface ↑/↓ stay native (they scroll the body); ←/→
-              // enter the control row from its edge. Inside the controls all
-              // four arrows cycle with wrap-around.
-              if (current === -1 && VERTICAL_KEYS.includes(event.key)) return;
-              const next = list[nextControlIndex(list.length, current, step)];
-              if (!next) return;
-              event.preventDefault();
-              next.focus();
-              return;
-            }
+            if (shouldSkipEvent(event.nativeEvent)) return;
+            if (hasCommandModifier(event.nativeEvent)) return;
+            // Holding Enter or Space is still one close.
+            if (event.repeat) return;
 
             // Enter/Space on the surface close the window; on a control they
-            // activate it natively.
+            // activate it natively. The arrows belong to the kit's walk.
             const target = event.target instanceof HTMLElement ? event.target : null;
             if (target !== event.currentTarget && target !== body()) return;
             if (event.key !== "Enter" && event.key !== " ") return;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { shouldSkipEvent } from "@swearjar/dos";
 import type { CommandId, KeyDef } from "@/content/commands";
-import { shouldSkipEvent } from "./keyboard";
 
 export function useFunctionKeys(
   keyDefs: readonly KeyDef[],

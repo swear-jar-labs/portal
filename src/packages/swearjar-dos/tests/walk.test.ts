@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupControlRows } from "@/features/shell/hooks/control-rows";
+import { groupControlRows } from "../walk";
 
 type Cell = { id: string };
 type Row = { id: string };

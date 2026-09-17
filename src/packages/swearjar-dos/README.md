@@ -18,17 +18,27 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - `sprites.ts` — 16×16 pixel sprite data (the jar and the file-row glyphs)
 - `attributes.ts` — shared `data-*` contracts (`DOS_SCROLL_ATTR`, `DOS_ZONE_ATTR`,
   `DOS_ROW_ATTR`, `DOS_ROLE_ATTR`) for keyboard-navigation and typography code in consumers;
-  `Stack navRow` stamps the row mark, the shell walks rows with ↑/↓ and their controls with ←/→;
-  `DOS_SCROLL_ATTR` marks a keyboard scroll region (a panel body, the file list's scroll box)
-  that the walk measures row visibility against
-- `focus.ts` — `FOCUSABLE_SELECTOR` (focusable controls in DOM order, shared by the
-  panel walk and the dialog arrow cycle; hidden inputs and "smart" controls — native
-  date/time/number pickers, ranges, radios — are excluded, since they consume arrows
-  themselves), `nextControlIndex` (wrapping walk, `-1` enters from an edge) and
-  `nextStepIndex` with `isInScrollView` (a row scrolled out of its region enters the
-  visible area from the edge in the direction of travel — ↓ first visible, ↑ last
-  visible; the region's `scroll-padding` insets the measured viewport, so a sticky
-  header stays out of sight)
+  `Stack navRow` stamps the row mark, `useControlWalk` steps between rows with ↑/↓ and
+  between their controls with ←/→; `DOS_SCROLL_ATTR` marks a keyboard scroll region
+  (a panel body, the file list's scroll box) that the walk measures row visibility against
+- `focus.ts` — `FOCUSABLE_SELECTOR` (focusable controls in DOM order for the walk;
+  hidden inputs and "smart" controls — native date/time/number pickers, ranges, radios —
+  are excluded, since they consume arrows themselves), `nextStepIndex` with
+  `isInScrollView` (a row scrolled out of its region enters the visible area from the
+  edge in the direction of travel — ↓ first visible, ↑ last visible; the region's
+  `scroll-padding` insets the measured viewport, so a sticky header stays out of sight)
+  and `nextControlIndex` (the wrapping step both build on)
+- `keyboard.ts` — window-listener guards: `shouldSkipEvent` (`defaultPrevented` or
+  `isComposing`) and `hasCommandModifier` (Ctrl/Alt/Meta; Shift is not a command
+  modifier). `repeat` is not a guard — each listener owns that policy.
+- `walk.ts` — `useControlWalk`, the kit's arrow-navigation model. A region with at
+  least one marked row (`Stack navRow`) is two-axis: ↑/↓ walk the rows, ←/→ the cells
+  of the current row (outside a row they stay native). A region without row markup is
+  a flat list: all four arrows step through the controls in DOM order. A step out of
+  sight (or without a current control) enters from the visible edge; a held arrow
+  walks on with the system auto-repeat; Shift+↑/↓ scrolls an overflowing region. The
+  consumer supplies the region resolver (the shell filters by `zone`, `Dialog`
+  returns its window body) and its gates.
 - `index.ts` — public entrypoint
 
 ## Components
@@ -76,30 +86,31 @@ boldness from `--dos-text-hint-stroke`, the only in-between knob.
   regular), controls may override it too. Panel repeats background/color in a compound rule, so
   the surface owns them against a consumer's single-class background; a focused body marks the
   whole window frame. Disabled buttons get their own body color per surface, so they stay visible.
-- The kit owns focus primitives (`focus.ts`), the consumer owns the model: the shell speaks
-  Norton Commander — **Tab toggles the file list and the right-hand window** (from a form
-  control too), **bare ↑/↓ walk the window's controls** with wrap-around, **Enter/Space
+- The kit owns the walk (`walk.ts`); the consumer owns zones, gates and closing: the shell
+  speaks Norton Commander — **Tab toggles the file list and the right-hand window** (from a
+  form control too), **arrows walk the window's controls** with wrap-around, **Enter/Space
   activate**. The command-line capture skips controls, `[role='combobox']` included;
   `Backspace` belongs to the capture too — it edits the line from anywhere.
 - Keys reached by several window listeners follow one precedence: **the local control first,
-  then the consumer's hook by zone, then chrome**. Whoever handles an event calls
-  `preventDefault()`; the rest respect `defaultPrevented` — listener registration order is
-  not a contract. Control semantics stay in the kit, navigation stays in the shell.
+  then the walk by region, then chrome**. Whoever handles an event calls `preventDefault()`;
+  the rest respect `defaultPrevented` — listener registration order is not a contract.
+  Control semantics and the walk stay in the kit; zones, gates and closing stay in the app.
 - `Select` opens on `Enter`/`Space`/`Alt+↓`; a printable key opens the list at the matching
-  option (type-ahead). Its arrows belong to the shell's walk while closed.
+  option (type-ahead). Its arrows belong to the walk while closed.
 - `CmdLine` takes `zone` like `Panel`: the shell routes Tab from the line back to the file
   list. Completion applies only while it changes the value (a complete command passes
   through to the panel model).
 - Forms: `Enter` toggles a `Checkbox` (Space stays native) and activates buttons;
   `Shift+Enter` submits the form from any control except buttons and links (`Select`
-  lets it through). `Shift+↑/↓` scrolls an overflowing window in the shell's panel
-  model; text fields keep their selection.
+  lets it through). `Shift+↑/↓` scrolls an overflowing walk region; text fields keep
+  their selection.
 - A window's width is `--dos-window-width` (default `min(560px, 94%)`): a consumer
   widens a specific window through the variable (`Dialog` takes `className` for its
   content root) — the shell's HELP dialog does, to flow its list into columns.
-- `Dialog`: Tab stays native inside the Radix trap; ←/→/↑/↓ cycle the body's controls, while
-  on the window surface ↑/↓ stay native so a long HELP text scrolls (the body takes focus
-  when the dialog has no controls). The modal body draws no focus ring — focus is trapped in
+- `Dialog`: Tab stays native inside the Radix trap; the window body is a flat walk
+  region (`useControlWalk`), so all four arrows step through its controls with wrap-around,
+  and a body without controls keeps the arrows native — the body itself takes focus then,
+  so a long HELP text scrolls. The modal body draws no focus ring — focus is trapped in
   the window and the ring only flickered with the input modality; controls keep their rings.
 - `Form` and `Panel` are semantic owners of intrinsics: the app composes them, never HTML.
 

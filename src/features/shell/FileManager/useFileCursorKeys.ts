@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos";
+import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR, hasCommandModifier, shouldSkipEvent } from "@swearjar/dos";
 import { DOC_TOP_ATTR } from "../attributes";
 import { CMD_ZONE, DOC_ZONE, FILES_ZONE } from "../zones";
-import { hasCommandModifier, shouldSkipEvent } from "../hooks/keyboard";
 import { DIR_ROW_PREFIX } from "./rows";
 
 const INPUT_GUARD_SELECTOR = "input, textarea, select, [role='menubar'], [role='menu']";

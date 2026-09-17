@@ -1,7 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
-import { docScroll, enterShell, expectMinimumContrast, expectNoViolations } from "./helpers";
+import {
+  docScroll,
+  enterShell,
+  expectMinimumContrast,
+  expectNoViolations,
+  repeatKey,
+} from "./helpers";
 
 const FILES_REGION = "C:\\SWEARJAR";
 const USER_LABEL = "User";
@@ -363,6 +369,10 @@ test.describe("apply form", () => {
     await caretAt(0);
     await page.keyboard.press("ArrowDown");
     await expect(message).toBeFocused();
+
+    // A held ↓ repeats the same guard: the caret keeps the repeat.
+    await repeatKey(page, "ArrowDown");
+    await expect(message).toBeFocused();
   });
 
   test("Enter keeps the newline and Shift+Enter sends the form", async ({ page }) => {
@@ -488,6 +498,31 @@ test.describe("logon window", () => {
     await page.keyboard.press("ArrowDown");
     await expect(password).toBeFocused();
     await page.keyboard.press("ArrowUp");
+    await expect(user).toBeFocused();
+  });
+
+  test("plain left/right arrows walk a flat window and keep the caret in fields", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+    const form = page.getByRole("form", { name: "MEMBER LOGON" });
+    const user = page.getByLabel(USER_LABEL);
+    const logon = form.getByRole("button", { name: "[ LOG ON ]" });
+    const google = form.getByRole("button", { name: "[ GOOGLE ]" });
+
+    // The form stacks controls without row markup: a flat region walks ←/→
+    // exactly like ↑/↓.
+    await logon.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(google).toBeFocused();
+    await page.keyboard.press("ArrowLeft");
+    await expect(logon).toBeFocused();
+
+    // A text field keeps ←/→ for the caret: focus stays put.
+    await user.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(user).toBeFocused();
+    await page.keyboard.press("ArrowLeft");
     await expect(user).toBeFocused();
   });
 

@@ -1,9 +1,9 @@
-// Shared guards for the shell's window keydown listeners. A listener runs only
+// Shared guards for the kit's window keydown listeners. A listener runs only
 // when nobody has handled the event and no IME composition is in progress, and
 // command modifiers stay with the browser and the OS (native shortcuts,
 // word-wise caret movement). `repeat` is not a guard: it is each listener's own
-// policy (the walk, the F-keys and the stack's Esc ignore it, the panel scroll
-// allows it).
+// policy (the walk and its Shift-scroll repeat with the system auto-repeat, the
+// F-keys and the stack's Esc ignore it).
 
 export type KeyboardGuardEvent = Pick<
   KeyboardEvent,

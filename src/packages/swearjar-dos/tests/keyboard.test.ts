@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  hasCommandModifier,
-  shouldSkipEvent,
-  type KeyboardGuardEvent,
-} from "@/features/shell/hooks/keyboard";
+import { hasCommandModifier, shouldSkipEvent, type KeyboardGuardEvent } from "../keyboard";
 
 type GuardInput = KeyboardGuardEvent & { shiftKey: boolean };
 

@@ -29,6 +29,30 @@ export async function waitForHydration(page: Page) {
   await expect(page.getByText(messages.shell.statusBar.clockFallback)).toHaveCount(0);
 }
 
+const ARROW_KEY_CODES = {
+  ArrowLeft: 37,
+  ArrowUp: 38,
+  ArrowRight: 39,
+  ArrowDown: 40,
+} as const;
+
+// Playwright's keyboard.press is a single stroke; the walk follows the system
+// auto-repeat, so a held key goes through CDP: the browser then marks the
+// event as a repeat, exactly as holding the key down would.
+export async function repeatKey(page: Page, key: keyof typeof ARROW_KEY_CODES): Promise<void> {
+  const client = await page.context().newCDPSession(page);
+  const virtualKeyCode = ARROW_KEY_CODES[key];
+  const stroke = {
+    key,
+    code: key,
+    windowsVirtualKeyCode: virtualKeyCode,
+    nativeVirtualKeyCode: virtualKeyCode,
+  };
+  await client.send("Input.dispatchKeyEvent", { ...stroke, type: "rawKeyDown", autoRepeat: true });
+  await client.send("Input.dispatchKeyEvent", { ...stroke, type: "keyUp" });
+  await client.detach();
+}
+
 // Client-side navigation updates <title> asynchronously; axe would otherwise
 // flag an empty document title mid-transition (caught under parallel load).
 export async function expectNoViolations(page: Page, context: string) {

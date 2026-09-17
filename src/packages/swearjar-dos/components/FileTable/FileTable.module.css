@@ -143,15 +143,11 @@ tbody .cell:first-child {
 }
 
 .icon {
-  /* The silhouette outline; the row state flips it (white on the selected blue
-     row, dark gray on the white list). */
+  /* The silhouette outline does not flip with the row state: the selection
+     keeps the same outline as the white list. */
   --dos-icon-outline: var(--dos-dark-gray);
   flex: 0 0 auto;
   align-self: center;
-}
-
-.selected .icon {
-  --dos-icon-outline: var(--dos-white);
 }
 
 .outline {

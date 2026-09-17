@@ -21,6 +21,12 @@
   color: var(--dos-dark-gray);
 }
 
+/* The field ring sits on the control edge: no transparent pixels between the
+   control and the ring (same fix as the tag chip). */
+.control:focus-visible {
+  outline-offset: calc(-1 * var(--dos-border-width));
+}
+
 .error {
   color: var(--dos-field-error, var(--dos-light-red));
   font-weight: 700;

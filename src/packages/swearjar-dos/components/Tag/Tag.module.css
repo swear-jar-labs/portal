@@ -13,6 +13,12 @@
   background: transparent;
 }
 
+/* A focused tag is a compact control: put its ring on the chip edge, matching
+   the focused card frame instead of leaving a silver gap around it. */
+.button:focus-visible {
+  outline-offset: calc(-1 * var(--dos-border-width));
+}
+
 .button:hover {
   background: var(--dos-light-blue);
   color: var(--dos-white);

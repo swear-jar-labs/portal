@@ -22,7 +22,15 @@
 
 .button:focus-visible {
   outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
-  outline-offset: 2px;
+  /* The ring sits on the button edge: no transparent pixels between the
+     control and the ring (same fix as the tag chip). */
+  outline-offset: calc(-1 * var(--dos-border-width));
+}
+
+/* A ghost button has no border and no padding: the inset ring would cut into
+   its glyph, so the ring only drops the offset. */
+.ghost:focus-visible {
+  outline-offset: 0;
 }
 
 .button:disabled {

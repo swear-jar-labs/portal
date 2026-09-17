@@ -100,6 +100,10 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
+  await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toHaveCSS(
+    "outline-offset",
+    "-2px",
+  );
 
   // ◀/▶ walk inside the tag row.
   await page.keyboard.press("ArrowRight");

@@ -18,6 +18,11 @@
   cursor: pointer;
 }
 
+/* The box ring sits on the control edge, like the field and the tag chip. */
+.box:focus-visible {
+  outline-offset: calc(-1 * var(--dos-border-width));
+}
+
 .box::before {
   content: "X";
   color: var(--dos-check-mark, var(--dos-light-cyan));

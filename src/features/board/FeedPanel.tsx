@@ -50,7 +50,7 @@ export function FeedPanel({
       </Heading>
 
       <Stack gap={4} className={styles.filters}>
-        <Stack direction="row" gap={16} align="flex-end" wrap row>
+        <Stack direction="row" gap={16} align="flex-end" wrap navRow>
           <Select
             label={messages.board.feed.boardLabel}
             name="board"
@@ -72,7 +72,7 @@ export function FeedPanel({
           </Stack>
         </Stack>
 
-        <Stack direction="row" gap={4} align="center" wrap row>
+        <Stack direction="row" gap={4} align="center" wrap navRow>
           <Text as="span" role="hint">
             {messages.board.feed.tagLabel}
           </Text>
@@ -98,7 +98,7 @@ export function FeedPanel({
       ) : (
         <Stack gap={8}>
           {threads.map((thread) => (
-            <Stack key={thread.id} row>
+            <Stack key={thread.id} navRow>
               <ThreadCard
                 thread={thread}
                 now={now}

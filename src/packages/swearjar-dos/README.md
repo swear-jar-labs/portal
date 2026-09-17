@@ -18,11 +18,17 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - `sprites.ts` — 16×16 pixel sprite data (the jar and the file-row glyphs)
 - `attributes.ts` — shared `data-*` contracts (`DOS_SCROLL_ATTR`, `DOS_ZONE_ATTR`,
   `DOS_ROW_ATTR`, `DOS_ROLE_ATTR`) for keyboard-navigation and typography code in consumers;
-  `Stack row` stamps the row mark, the shell walks rows with ↑/↓ and their controls with ←/→
+  `Stack navRow` stamps the row mark, the shell walks rows with ↑/↓ and their controls with ←/→;
+  `DOS_SCROLL_ATTR` marks a keyboard scroll region (a panel body, the file list's scroll box)
+  that the walk measures row visibility against
 - `focus.ts` — `FOCUSABLE_SELECTOR` (focusable controls in DOM order, shared by the
   panel walk and the dialog arrow cycle; hidden inputs and "smart" controls — native
   date/time/number pickers, ranges, radios — are excluded, since they consume arrows
-  themselves) and `nextControlIndex` (wrapping walk, `-1` enters from an edge)
+  themselves), `nextControlIndex` (wrapping walk, `-1` enters from an edge) and
+  `nextStepIndex` with `isInScrollView` (a row scrolled out of its region enters the
+  visible area from the edge in the direction of travel — ↓ first visible, ↑ last
+  visible; the region's `scroll-padding` insets the measured viewport, so a sticky
+  header stays out of sight)
 - `index.ts` — public entrypoint
 
 ## Components

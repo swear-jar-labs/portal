@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { enterShell, expectMinimumContrast } from "./helpers";
+import { docScroll, enterShell, expectMinimumContrast } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await enterShell(page);
@@ -116,7 +116,7 @@ test("Tab on a complete command completes nothing and returns to the file manage
 
 test("Tab toggles focus between the file list and the document", async ({ page }) => {
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-  const doc = page.locator("[data-dos-scroll]");
+  const doc = docScroll(page);
 
   // A doc open keeps the keyboard in the list; Tab hands it to the panel and
   // back.
@@ -370,6 +370,42 @@ test.describe("file manager", () => {
     await expect(page).toHaveURL("/apply");
   });
 
+  test("enters the scrolled file list from its visible edge", async ({ page }) => {
+    // A short shell: the file list has to scroll for its rows to fit.
+    await page.setViewportSize({ width: 1280, height: 420 });
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+    const scroll = files.locator("[data-dos-scroll]");
+
+    // The cursor sits on ABOUT; the wheel scrolls the list away from it.
+    await files.locator("#file-ABOUT").focus();
+    await scroll.hover();
+    await page.mouse.wheel(0, 2000);
+    await expect.poll(() => scroll.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+
+    await page.keyboard.press("ArrowDown");
+    const state = await scroll.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const stickyTop = box.top + (Number.parseFloat(getComputedStyle(el).scrollPaddingTop) || 0);
+      const rows = Array.from(el.querySelectorAll("tbody tr"));
+      const firstInSight = rows.find((row) => {
+        const rect = row.getBoundingClientRect();
+        return rect.bottom > stickyTop && rect.top < box.bottom;
+      });
+      const active = document.activeElement;
+      const activeRect = active?.getBoundingClientRect();
+      return {
+        scrollTop: el.scrollTop,
+        enteredTop: firstInSight !== undefined && firstInSight === active?.closest("tr"),
+        belowStickyHeader: activeRect !== undefined && activeRect.top >= stickyTop - 1,
+      };
+    });
+    // The cursor enters the first row in sight (below the sticky header) and
+    // the list keeps the user's scroll position instead of jumping to the top.
+    expect(state.enteredTop).toBe(true);
+    expect(state.belowStickyHeader).toBe(true);
+    expect(state.scrollTop).toBeGreaterThan(0);
+  });
+
   test("collapses and expands folders with arrows and clicks", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
@@ -475,7 +511,7 @@ test.describe("mobile file manager", () => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     await files.getByRole("button", { name: "ABOUT" }).click();
     await page.keyboard.press("Tab");
-    await expect(page.locator("[data-dos-scroll]")).toBeFocused();
+    await expect(docScroll(page)).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(files.locator("#file-ABOUT")).toBeFocused();
   });

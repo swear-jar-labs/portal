@@ -32,3 +32,35 @@ export function nextControlIndex(count: number, current: number, step: 1 | -1): 
   if (current < 0) return step === 1 ? 0 : count - 1;
   return (current + step + count) % count;
 }
+
+// Steps through list rows when the current one may be scrolled out of its
+// region: a visible current keeps the plain step with wrap-around, while a
+// current that is not in sight (or absent, -1) enters the visible area from
+// the edge in the direction of travel — ↓ lands on the first visible row, ↑ on
+// the last one. Without a visible row the step falls back to the list edge.
+export function nextStepIndex(
+  count: number,
+  current: number,
+  step: 1 | -1,
+  isVisible: (index: number) => boolean,
+): number {
+  if (current >= 0 && current < count && isVisible(current)) {
+    return nextControlIndex(count, current, step);
+  }
+  for (let index = step === 1 ? 0 : count - 1; index >= 0 && index < count; index += step) {
+    if (isVisible(index)) return index;
+  }
+  return nextControlIndex(count, current, step);
+}
+
+// Whether the element sits inside the region's usable viewport: its client box
+// inset by the region's scroll padding, so a sticky header declared through
+// `scroll-padding-top` stays outside the visible area.
+export function isInScrollView(element: Element, region: Element): boolean {
+  const box = region.getBoundingClientRect();
+  const rect = element.getBoundingClientRect();
+  const style = getComputedStyle(region);
+  const insetTop = Number.parseFloat(style.scrollPaddingTop) || 0;
+  const insetBottom = Number.parseFloat(style.scrollPaddingBottom) || 0;
+  return rect.bottom > box.top + insetTop && rect.top < box.bottom - insetBottom;
+}

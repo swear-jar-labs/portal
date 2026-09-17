@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DOS_SCROLL_ATTR, isInScrollView, nextStepIndex } from "@swearjar/dos";
 import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import {
   commandById,
@@ -13,7 +14,7 @@ import type { DocId } from "@/content/docs";
 import { messages } from "@/content/messages";
 import { formatSize } from "@/lib/format";
 import { isPlainActivation } from "@/lib/activation";
-import { buildRowIds, dirRowId, fallbackRowId, fileRowId, nextRowId } from "./rows";
+import { buildRowIds, dirRowId, fallbackRowId, fileRowId } from "./rows";
 
 const FILE_COLUMNS: FileTableColumn[] = [
   { id: "name", label: messages.shell.files.columns.name },
@@ -104,7 +105,24 @@ export function useFileManager({
 
   const moveCursor = useCallback(
     (direction: "up" | "down") => {
-      const next = nextRowId(rowIds, activeCursorId, direction);
+      if (rowIds.length === 0) return;
+      const step = direction === "down" ? 1 : -1;
+      // The list scrolls: a cursor out of sight enters the visible rows from
+      // the edge in the direction of travel, so the list never jumps back to
+      // the row the cursor left behind (see nextStepIndex).
+      const region =
+        document.getElementById(activeCursorId)?.closest(`[${DOS_SCROLL_ATTR}]`) ?? null;
+      const nextIndex = nextStepIndex(
+        rowIds.length,
+        rowIds.indexOf(activeCursorId),
+        step,
+        (index) => {
+          const id = rowIds[index];
+          const element = id === undefined ? null : document.getElementById(id);
+          return region !== null && element !== null && isInScrollView(element, region);
+        },
+      );
+      const next = rowIds[nextIndex];
       if (!next) return;
       focusCursor.current = true;
       setCursorId(next);

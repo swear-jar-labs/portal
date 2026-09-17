@@ -1,6 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page } from "@playwright/test";
 import { messages } from "../../src/content/messages";
+import { DOC_ZONE } from "../../src/features/shell/zones";
+import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "../../src/packages/swearjar-dos/attributes";
+
+// The right-hand document's scroll body. The file list carries a keyboard
+// scroll region of its own, so the bare scroll attribute matches both.
+export function docScroll(page: Page): Locator {
+  return page.locator(`[${DOS_ZONE_ATTR}="${DOC_ZONE}"] [${DOS_SCROLL_ATTR}]`);
+}
 
 export async function enterShell(page: Page) {
   await page.goto("/");

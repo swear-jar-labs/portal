@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { DOS_ROW_ATTR } from "../../src/packages/swearjar-dos/attributes";
+import { FOCUSABLE_SELECTOR } from "../../src/packages/swearjar-dos/focus";
 import { FEED_PATH, threadPath } from "../../src/shared/board/threads";
 import { expectNoViolations, waitForHydration } from "./helpers";
 
@@ -122,6 +123,68 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(cards.last().getByRole("link")).toBeFocused();
+});
+
+test("enters the scrolled feed from its visible edge", async ({ page }) => {
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const surface = focusedBody(page);
+  // The row in sight: the first row whose own control is inside the region.
+  const rowInSight = (edge: "first" | "last") =>
+    surface.evaluate(
+      (el, { selector, edge }) => {
+        const box = el.getBoundingClientRect();
+        const row = Array.from(el.querySelectorAll<HTMLElement>("[data-dos-row]"))
+          .filter((candidate) => {
+            const control = candidate.querySelector<HTMLElement>(selector);
+            if (!control) return false;
+            const rect = control.getBoundingClientRect();
+            return rect.bottom > box.top && rect.top < box.bottom;
+          })
+          .at(edge === "first" ? 0 : -1);
+        return row?.querySelector<HTMLElement>(selector)?.id ?? null;
+      },
+      { selector: FOCUSABLE_SELECTOR, edge },
+    );
+
+  // The wheel scrolls the panel without moving the keyboard focus.
+  await surface.focus();
+  await surface.hover();
+  await page.mouse.wheel(0, 2000);
+  await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  const expected = await rowInSight("first");
+
+  // The walk enters where the user is looking — the first row in sight — and
+  // the view keeps the user's scroll instead of snapping back to the top.
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator(`#${expected}`)).toBeFocused();
+  const entered = await surface.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const rect = document.activeElement?.getBoundingClientRect();
+    return {
+      inSight: rect !== undefined && rect.bottom > box.top && rect.top < box.bottom,
+      scrollTop: el.scrollTop,
+      max: el.scrollHeight - el.clientHeight,
+    };
+  });
+  expect(entered.inSight).toBe(true);
+  expect(entered.scrollTop).toBeGreaterThan(entered.max / 2);
+
+  // The mirror case: with the feed back at the top, ▲ enters the last row in
+  // sight, not the feed's last row.
+  await surface.focus();
+  await surface.hover();
+  await page.mouse.wheel(0, -2000);
+  await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBe(0);
+  const mirroredExpected = await rowInSight("last");
+
+  await page.keyboard.press("ArrowUp");
+  await expect(page.locator(`#${mirroredExpected}`)).toBeFocused();
+  const mirrored = await surface.evaluate((el) => ({
+    scrollTop: el.scrollTop,
+    max: el.scrollHeight - el.clientHeight,
+  }));
+  expect(mirrored.scrollTop).toBeLessThan(mirrored.max / 2);
 });
 
 test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {

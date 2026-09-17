@@ -1,4 +1,5 @@
 import { type MouseEvent, type ReactNode } from "react";
+import { DOS_SCROLL_ATTR } from "../../attributes";
 import type { SpriteName } from "../../sprites";
 import { cx } from "../tone";
 import { FileIcon } from "./FileIcon";
@@ -108,7 +109,9 @@ export function FileTable({
 }: FileTableProps) {
   return (
     <div className={cx(styles.wrap, className)}>
-      <div className={styles.scroll}>
+      {/* The row list is a keyboard scroll region: the shell's cursor walk
+          measures visibility against it (see isInScrollView). */}
+      <div className={styles.scroll} {...{ [DOS_SCROLL_ATTR]: "" }}>
         <table className={styles.table} aria-label={label}>
           <colgroup>
             {columns.map((column) => (

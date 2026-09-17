@@ -9,6 +9,11 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  /* The sticky header's height (line height 1.4em + the head padding) is the
+     scrollport inset: it keeps revealed rows below the header and stays out of
+     the visible-row scan. */
+  --dos-filetable-head-height: calc(1.4em + 6px);
+  scroll-padding-top: var(--dos-filetable-head-height);
 }
 
 .scroll::-webkit-scrollbar {

@@ -6,7 +6,9 @@ import {
   DOS_SCROLL_ATTR,
   DOS_ZONE_ATTR,
   FOCUSABLE_SELECTOR,
+  isInScrollView,
   nextControlIndex,
+  nextStepIndex,
 } from "@swearjar/dos";
 import { DOC_ZONE } from "../zones";
 import { groupControlRows } from "./control-rows";
@@ -89,7 +91,14 @@ export function usePanelNav(enabled: boolean) {
         if (currentRow && active instanceof HTMLElement) {
           rowMemory.set(currentRow.key, active);
         }
-        const row = rows[nextControlIndex(rows.length, rowIndex, rowStep)];
+        // A row out of sight (or no current row) enters the panel's visible
+        // area from its edge: a scrolled list never snaps back to its first
+        // row. The sight of a row is the sight of the control the step focuses.
+        const nextIndex = nextStepIndex(rows.length, rowIndex, rowStep, (index) => {
+          const cell = rows[index]?.cells[0];
+          return cell !== undefined && isInScrollView(cell, surface);
+        });
+        const row = rows[nextIndex];
         if (!row) return;
         const remembered = rowMemory.get(row.key);
         const next = remembered && row.cells.includes(remembered) ? remembered : row.cells[0];

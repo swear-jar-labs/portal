@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
-import { enterShell, expectMinimumContrast, expectNoViolations } from "./helpers";
+import { docScroll, enterShell, expectMinimumContrast, expectNoViolations } from "./helpers";
 
 const FILES_REGION = "C:\\SWEARJAR";
 const USER_LABEL = "User";
@@ -382,7 +382,7 @@ test.describe("apply form", () => {
 
   test("Shift + arrows scroll an overflowing window", async ({ page }) => {
     await page.goto("/apply");
-    const body = page.locator("[data-dos-scroll]");
+    const body = docScroll(page);
     const scrollTop = () => body.evaluate((element) => element.scrollTop);
 
     expect(await scrollTop()).toBe(0);
@@ -446,7 +446,7 @@ test.describe("social logon", () => {
 test.describe("logon window", () => {
   test("Tab toggles the file list and the window, from its controls too", async ({ page }) => {
     await page.goto("/login");
-    const doc = page.locator("[data-dos-scroll]");
+    const doc = docScroll(page);
     const row = page.locator("#file-LOGON");
     const user = page.getByLabel(USER_LABEL);
 
@@ -493,7 +493,7 @@ test.describe("logon window", () => {
 
   test("a window without a scrollbar ignores Shift + arrows", async ({ page }) => {
     await page.goto("/login");
-    const body = page.locator("[data-dos-scroll]");
+    const body = docScroll(page);
     const google = page.getByRole("button", { name: "[ GOOGLE ]" });
 
     await google.focus();

@@ -14,9 +14,9 @@ export type StackProps = {
   justify?: CSSProperties["justifyContent"];
   wrap?: boolean;
   grow?: boolean;
-  // Stamps the navigation-row contract: the shell's panel walk steps ↑/↓
-  // between rows and ←/→ between the focusables inside one.
-  row?: boolean;
+  // A navigation row of the shell's panel walk: ↑/↓ step between rows and ←/→
+  // between the focusables inside one (stamps DOS_ROW_ATTR).
+  navRow?: boolean;
   // A focusable row (a post) joins its own row as the first control.
   tabIndex?: number;
   className?: string;
@@ -31,7 +31,7 @@ export function Stack({
   justify,
   wrap = false,
   grow = false,
-  row = false,
+  navRow = false,
   tabIndex,
   className,
 }: StackProps) {
@@ -52,7 +52,7 @@ export function Stack({
     {
       className: cx(className),
       style,
-      ...(row ? { [DOS_ROW_ATTR]: "" } : undefined),
+      ...(navRow ? { [DOS_ROW_ATTR]: "" } : undefined),
       tabIndex,
     },
     children,

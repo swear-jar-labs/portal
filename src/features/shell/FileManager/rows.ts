@@ -24,19 +24,6 @@ export function buildRowIds(
   return ids;
 }
 
-export function nextRowId(
-  rowIds: readonly string[],
-  cursorId: string,
-  direction: "up" | "down",
-): string | undefined {
-  if (rowIds.length === 0) return undefined;
-  const step = direction === "down" ? 1 : -1;
-  const current = rowIds.indexOf(cursorId);
-  const start = current === -1 ? 0 : current;
-  const next = (start + step + rowIds.length) % rowIds.length;
-  return rowIds[next];
-}
-
 // The stored cursor row can disappear (session swap, collapsed folder).
 // Preference order: the displayed document's row, the boot default, the first row.
 export function fallbackRowId(

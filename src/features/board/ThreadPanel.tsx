@@ -45,7 +45,7 @@ export function ThreadPanel({ thread, now }: ThreadPanelProps) {
         thread.posts.map((post) => (
           // A post is a navigation row and its own first control: ↑/↓ steps
           // between posts, ←/→ walks the links inside one.
-          <Stack key={post.id} as="article" gap={4} className={styles.post} row tabIndex={0}>
+          <Stack key={post.id} as="article" gap={4} className={styles.post} navRow tabIndex={0}>
             <Stack direction="row" gap={6} align="center" wrap>
               <Avatar user={post.author.user} src={post.author.avatar} />
               <Text as="span">{post.author.user}</Text>

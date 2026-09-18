@@ -15,6 +15,8 @@ export type TextareaProps = {
   placeholder?: string;
   required?: boolean;
   error?: string;
+  // An inline editor: opening it hands the caret to the text right away.
+  autoFocus?: boolean;
   className?: string;
 };
 
@@ -27,6 +29,7 @@ export function Textarea({
   placeholder,
   required = false,
   error,
+  autoFocus = false,
   className,
 }: TextareaProps) {
   const id = useId();
@@ -49,6 +52,7 @@ export function Textarea({
         rows={rows}
         placeholder={placeholder}
         required={required}
+        autoFocus={autoFocus}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         className={styles.control}

@@ -435,7 +435,9 @@ const threads: readonly Thread[] = [
   },
 ];
 
-function summarize(thread: Thread): ThreadSummary {
+/** The thread without its posts: what lists render. The UI-first board also
+ * derives its locally composed threads through it. */
+export function summarizeThread(thread: Thread): ThreadSummary {
   const { posts, ...summary } = thread;
   return {
     ...summary,
@@ -452,7 +454,7 @@ function byId(a: ThreadSummary, b: ThreadSummary): number {
 }
 
 export async function listThreads(): Promise<ThreadSummary[]> {
-  return threads.map(summarize);
+  return threads.map(summarizeThread);
 }
 
 export async function getThread(id: string): Promise<Thread | null> {
@@ -463,7 +465,7 @@ export async function getThread(id: string): Promise<Thread | null> {
 export async function listThreadSummariesByAuthor(user: string): Promise<ThreadSummary[]> {
   return threads
     .filter((thread) => thread.author.user === user)
-    .map(summarize)
+    .map(summarizeThread)
     .sort((a, b) => Date.parse(b.lastActivityAt) - Date.parse(a.lastActivityAt) || byId(a, b));
 }
 

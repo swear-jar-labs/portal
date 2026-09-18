@@ -7,6 +7,7 @@ import {
   enterShell,
   expectMinimumContrast,
   expectNoViolations,
+  logon,
   repeatKey,
 } from "./helpers";
 
@@ -16,14 +17,6 @@ const PASSWORD_LABEL = "Password";
 const SUBMIT_BUTTON = "[ SUBMIT ]";
 const LONG_DELAY_MS = screensaverDelayMs(30);
 const MINUTE_MS = 60_000;
-
-async function logon(page: Page, user = "ada") {
-  await page.goto("/login");
-  await page.getByLabel(USER_LABEL).fill(user);
-  await page.getByLabel(PASSWORD_LABEL).fill("secret");
-  await page.getByRole("button", { name: "[ LOG ON ]" }).click();
-  await expect(page).toHaveURL("/profile");
-}
 
 async function skipBootAsGuest(page: Page) {
   await page.clock.runFor(300);

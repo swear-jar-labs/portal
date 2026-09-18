@@ -6,6 +6,8 @@ import styles from "./Button.module.css";
 
 export type ButtonProps = {
   children: ReactNode;
+  // A known anchor: focus returns to the control that opened a layer.
+  id?: string;
   onClick?: ButtonHTMLAttributes<HTMLButtonElement>["onClick"];
   type?: "button" | "submit" | "reset";
   variant?: "default" | "primary" | "danger" | "ghost";
@@ -17,6 +19,7 @@ export type ButtonProps = {
 
 export function Button({
   children,
+  id,
   onClick,
   type = "button",
   variant = "default",
@@ -27,6 +30,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
+      id={id}
       type={type}
       onClick={onClick}
       disabled={disabled}

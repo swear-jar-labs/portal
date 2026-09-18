@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Heading, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
+import { Button, Heading, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { boardIds, tagIds, tagTones, type TagId, type ThreadSummary } from "@/shared/board/threads";
@@ -12,13 +12,21 @@ import styles from "./board.module.css";
 const BOARD_FILTER_ALL = "all";
 type BoardFilter = (typeof boardIds)[number] | typeof BOARD_FILTER_ALL;
 
+/** The feed's compose control: closing the layer hands focus back to it. */
+export const composeButtonId = "board-compose";
+
 export type FeedPanelProps = {
   threads: readonly ThreadSummary[];
   now: string;
   query: FeedQuery;
   currentThreadId?: string;
+  votedThreadIds: ReadonlySet<string>;
+  // Session-composed threads: their cards activate in place, without a link.
+  localThreadIds: ReadonlySet<string>;
   onQueryChange: (patch: Partial<FeedQuery>) => void;
   onActivateThread: (threadId: string, event?: MouseEvent<HTMLElement>) => void;
+  onVoteThread: (threadId: string) => void;
+  onCompose: () => void;
 };
 
 export function FeedPanel({
@@ -26,8 +34,12 @@ export function FeedPanel({
   now,
   query,
   currentThreadId,
+  votedThreadIds,
+  localThreadIds,
   onQueryChange,
   onActivateThread,
+  onVoteThread,
+  onCompose,
 }: FeedPanelProps) {
   const boardOptions: SelectOption<BoardFilter>[] = [
     { value: BOARD_FILTER_ALL, label: messages.board.feed.allBoards },
@@ -88,7 +100,12 @@ export function FeedPanel({
           ))}
         </Stack>
 
-        <Text role="hint">{formatCount(threads.length, pluralForms.thread)}</Text>
+        <Stack direction="row" gap={8} align="center" justify="space-between" wrap>
+          <Text role="hint">{formatCount(threads.length, pluralForms.thread)}</Text>
+          <Button id={composeButtonId} variant="primary" onClick={onCompose}>
+            {messages.board.feed.newThread}
+          </Button>
+        </Stack>
       </Stack>
 
       {threads.length === 0 ? (
@@ -103,7 +120,10 @@ export function FeedPanel({
                 thread={thread}
                 now={now}
                 current={thread.id === currentThreadId}
+                voted={votedThreadIds.has(thread.id)}
+                local={localThreadIds.has(thread.id)}
                 onActivate={(event) => onActivateThread(thread.id, event)}
+                onVote={() => onVoteThread(thread.id)}
                 onFilterTag={toggleTag}
               />
             </Stack>

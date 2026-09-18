@@ -7,13 +7,16 @@ import {
 } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { FEED_PATH, threadPath } from "../../src/shared/board/threads";
-import { expectNoViolations, repeatKey, waitForHydration } from "./helpers";
+import { expectNoViolations, logon, repeatKey, waitForHydration } from "./helpers";
 
 const FEED_REGION = "DISCUSSIONS.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
 const READ_FIRST = "READ FIRST: how this board works";
 const CI_CACHE = "CI cache poisoning: how we lost a day";
 const HEAP_POSTMORTEM = "Postmortem: heap corruption at 3am";
+const TABS_CLOSED = "Bikeshed closed: tabs, and here is why";
+const NEW_THREAD = "[ NEW THREAD ]";
+const LOGON_PROMPT = "LOGON REQUIRED";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
 // The PanelStack effect focuses the top layer's body and attaches the Esc
 // listener; the focus is the sync point for keyboard tests, as the island
@@ -32,9 +35,12 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   // Hot ends with the quietest thread; new ends with the oldest activity.
   await expect(cards.last()).toContainText("Withdrawn: the weekly call");
 
-  await feed.getByRole("button", { name: "NEW" }).click();
+  await feed.getByRole("button", { name: "NEW", exact: true }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?sort=new`);
-  await expect(feed.getByRole("button", { name: "NEW" })).toHaveAttribute("aria-pressed", "true");
+  await expect(feed.getByRole("button", { name: "NEW", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(cards.last()).toContainText("Bikeshed closed: tabs, and here is why");
 });
 
@@ -119,7 +125,10 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await page.keyboard.press("ArrowRight");
   await expect(feed.getByRole("button", { name: "DECISION" }).first()).toBeFocused();
 
-  // ▼ leaves the row for the first card, ▶ enters its tags.
+  // ▼ leaves the row for the compose control (an unmarked row of its own),
+  // then for the first card; ▶ enters its actions (the vote chip first).
+  await page.keyboard.press("ArrowDown");
+  await expect(feed.getByRole("button", { name: NEW_THREAD })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(cards.first().getByRole("link")).toBeFocused();
   await page.keyboard.press("ArrowRight");
@@ -221,22 +230,30 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
 test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await page.goto(threadPath("read-first"));
   await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
   await expect(focusedBody(page)).toBeFocused();
 
-  const posts = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
-  await expect(posts).toHaveCount(3);
+  // Three posts and the reply composer as the last row; the thread vote above
+  // them is an unmarked row of its own.
+  const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
+  await expect(rows).toHaveCount(4);
 
   await page.keyboard.press("ArrowDown");
-  await expect(posts.nth(0)).toBeFocused();
+  await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(posts.nth(1)).toBeFocused();
+  await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(posts.nth(2)).toBeFocused();
+  await expect(rows.nth(1)).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(rows.nth(2)).toBeFocused();
+  // The reply row's first cell is its textarea.
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
   // The post walk wraps at both ends.
   await page.keyboard.press("ArrowDown");
-  await expect(posts.nth(0)).toBeFocused();
+  await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await expect(posts.nth(2)).toBeFocused();
+  await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
 });
 
 test("opens a thread over the feed and pops back to the focused card", async ({ page }) => {
@@ -360,6 +377,7 @@ test("renders posts, the empty thread and the locked thread", async ({ page }) =
   const thread = page.getByRole("region", { name: READ_FIRST });
   await expect(thread.getByText("THREE RULES, AND THE JAR WATCHES ALL OF THEM.")).toBeVisible();
   await expect(thread.getByRole("listitem")).toHaveCount(3);
+  await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
 
   await page.goto(threadPath("withdrawn-call"));
   await expect(
@@ -369,9 +387,225 @@ test("renders posts, the empty thread and the locked thread", async ({ page }) =
   ).toBeVisible();
 
   await page.goto(threadPath("tabs-vs-spaces"));
-  const locked = page.getByRole("region", { name: "Bikeshed closed: tabs, and here is why" });
+  const locked = page.getByRole("region", { name: TABS_CLOSED });
   await expect(locked.getByText("[LOCKED]").first()).toBeVisible();
   await expect(locked.getByText("THIS THREAD IS LOCKED.")).toBeVisible();
+  // A locked thread takes no replies.
+  await expect(locked.getByRole("textbox", { name: "REPLY" })).toHaveCount(0);
+});
+
+test("a guest action asks for logon and keeps the reply draft", async ({ page }) => {
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  const dialog = page.getByRole("dialog", { name: LOGON_PROMPT });
+
+  // Compose is gated.
+  await feed.getByRole("button", { name: NEW_THREAD }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(dialog).toBeHidden();
+
+  // A vote is gated too, and nothing changes behind the prompt.
+  const vote = feed
+    .getByRole("article")
+    .filter({ hasText: CI_CACHE })
+    .getByRole("button", { name: "▲ 14 VOTES" });
+  await expect(vote).toHaveAttribute("aria-pressed", "false");
+  await vote.click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(vote).toHaveAttribute("aria-pressed", "false");
+
+  // A reply attempt keeps the draft for after the logon.
+  await page.getByRole("link", { name: CI_CACHE }).click();
+  const reply = page
+    .getByRole("region", { name: CI_CACHE })
+    .getByRole("textbox", { name: "REPLY" });
+  await reply.fill("Writing for the jar.");
+  await page.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await expect(dialog).toBeVisible();
+  // The modal hides the page from the a11y tree; check the draft after closing.
+  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(reply).toHaveValue("Writing for the jar.");
+  await page.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "[ LOG ON ]" }).click();
+  await expect(page).toHaveURL("/login");
+});
+
+test("votes a thread once and keeps the delta across panels", async ({ page }) => {
+  await logon(page);
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  const card = feed.getByRole("article").filter({ hasText: CI_CACHE });
+
+  await card.getByRole("button", { name: "▲ 14 VOTES" }).click();
+  await expect(card.getByRole("button", { name: "▲ 15 VOTES" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // The open thread shows the same thread vote; its posts keep their own.
+  await card.getByRole("link", { name: CI_CACHE }).click();
+  const thread = page.getByRole("region", { name: CI_CACHE });
+  await expect(thread.getByRole("button", { name: "▲ 15 VOTES" }).first()).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  const firstPost = thread.getByRole("article").first();
+  await firstPost.getByRole("button", { name: "▲ 14 VOTES" }).click();
+  await expect(firstPost.getByRole("button", { name: "▲ 15 VOTES" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // Closing back to the feed: the card keeps the vote, a second click unvotes.
+  await page.keyboard.press("Escape");
+  const stillVoted = feed
+    .getByRole("article")
+    .filter({ hasText: CI_CACHE })
+    .getByRole("button", { name: "▲ 15 VOTES" });
+  await expect(stillVoted).toHaveAttribute("aria-pressed", "true");
+  await stillVoted.click();
+  await expect(
+    feed
+      .getByRole("article")
+      .filter({ hasText: CI_CACHE })
+      .getByRole("button", { name: "▲ 14 VOTES" }),
+  ).toHaveAttribute("aria-pressed", "false");
+});
+
+test("composes a thread that lives in the session", async ({ page }) => {
+  const title = "Cache keys must hash the toolchain";
+  await logon(page);
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+
+  await feed.getByRole("button", { name: NEW_THREAD }).click();
+  const form = page.getByRole("form", { name: "NEW THREAD" });
+
+  // An empty submit names both required fields.
+  await form.getByRole("button", { name: "[ POST THREAD ]" }).click();
+  await expect(form.getByText("Give the thread a title.")).toBeVisible();
+  await expect(form.getByText("Write the opening post.")).toBeVisible();
+
+  await form.getByRole("combobox", { name: "BOARD" }).click();
+  await page.getByRole("option", { name: "TOOLING" }).click();
+  await form.getByRole("button", { name: "TOOLING" }).click();
+  await form.getByLabel("TITLE").fill(title);
+  await form.getByLabel("BODY").fill("A header edit slipped past the cache again.");
+  await form.getByRole("button", { name: "[ POST THREAD ]" }).click();
+
+  const card = feed.getByRole("article").filter({ hasText: title });
+  await expect(card).toBeVisible();
+  await expect(card).toContainText("TOOLING");
+  await expect(feed.getByText("10 THREADS")).toBeVisible();
+  // The layer closes and focus lands on the card it just created.
+  await expect(form).toHaveCount(0);
+  const cardTitle = card.getByRole("button", { name: title });
+  await expect(cardTitle).toBeFocused();
+  // A composed thread has no route: the card must not pretend to be a link.
+  await expect(card.getByRole("link")).toHaveCount(0);
+
+  // The composed thread opens in place and survives the return to the feed.
+  await cardTitle.click();
+  const thread = page.getByRole("region", { name: title });
+  await expect(thread.getByText("A header edit slipped past the cache again.")).toBeVisible();
+  await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(feed.getByRole("article").filter({ hasText: title })).toBeVisible();
+});
+
+test("replies, edits and tombstones a post", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+
+  // A post by another author offers no edit controls.
+  const gracePost = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  await expect(gracePost.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+
+  const reply = thread.getByRole("textbox", { name: "REPLY" });
+  await reply.fill("Updated rules: the jar takes IOUs now.");
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await expect(reply).toHaveValue("");
+  const added = thread.getByRole("article").last();
+  await expect(added).toContainText("Updated rules: the jar takes IOUs now.");
+
+  // The edit opens with the caret in the text and saves on Shift+Enter.
+  await added.getByRole("button", { name: "[ EDIT ]" }).click();
+  const editor = thread.getByRole("textbox", { name: "EDIT POST" });
+  await expect(editor).toBeFocused();
+  await editor.fill("Updated rules: the jar takes IOUs, by hand.");
+  await page.keyboard.press("Shift+Enter");
+  await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
+  await expect(added).toContainText("[EDITED]");
+  // The editor is gone: the keyboard stays on the post, not on the body.
+  await expect(added).toBeFocused();
+
+  // Cancelling an edit also hands the keyboard back and drops the draft.
+  await added.getByRole("button", { name: "[ EDIT ]" }).click();
+  await thread.getByRole("textbox", { name: "EDIT POST" }).fill("Discarded text.");
+  await added.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(added).toBeFocused();
+  await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
+  await expect(added).not.toContainText("Discarded text.");
+
+  // Delete asks first; cancelling keeps the post, confirming leaves a tombstone.
+  await added.getByRole("button", { name: "[ DELETE ]" }).click();
+  const dialog = page.getByRole("dialog", { name: "DELETE POST" });
+  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(added).toContainText("by hand");
+  await added.getByRole("button", { name: "[ DELETE ]" }).click();
+  await dialog.getByRole("button", { name: "[ DELETE ]" }).click();
+  await expect(added).toContainText("This post was deleted.");
+  await expect(added).not.toContainText("by hand");
+  await expect(added).toContainText("ada");
+  await expect(added.getByRole("button", { name: "VOTES" })).toHaveCount(0);
+});
+
+test("walks the compose layer and returns focus to its button", async ({ page }) => {
+  await logon(page);
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  await page.getByRole("button", { name: NEW_THREAD }).click();
+  const form = page.getByRole("form", { name: "NEW THREAD" });
+  await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
+
+  // The form is a flat walk: any arrow steps to the next control.
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("combobox", { name: "BOARD" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("button", { name: "PROPOSAL" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(form.getByRole("button", { name: "DECISION" })).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(form).toHaveCount(0);
+  await expect(page.getByRole("button", { name: NEW_THREAD })).toBeFocused();
+});
+
+test("keeps the caret in the reply textarea inside its row", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const reply = page.getByRole("textbox", { name: "REPLY" });
+  await reply.fill("first");
+  await reply.focus();
+
+  // ◀ keeps the caret in the text; ▲ leaves the row only from its start.
+  await page.keyboard.press("ArrowLeft");
+  await expect(reply).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(reply).toBeFocused();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowUp");
+  const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
+  await expect(rows.nth(2)).toBeFocused();
 });
 
 test("lays a lone panel flush and steps the stacked thread down", async ({ page }) => {
@@ -436,6 +670,13 @@ test("has no accessibility violations", async ({ page }) => {
   await waitForHydration(page);
   await expectNoViolations(page, FEED_PATH);
 
+  // The guest gate is a dialog of its own.
+  await page.getByRole("button", { name: NEW_THREAD }).click();
+  const prompt = page.getByRole("dialog", { name: LOGON_PROMPT });
+  await expect(prompt).toBeVisible();
+  await expectNoViolations(page, "logon prompt");
+  await prompt.getByRole("button", { name: "[ CANCEL ]" }).click();
+
   await page
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: READ_FIRST })
@@ -447,4 +688,24 @@ test("has no accessibility violations", async ({ page }) => {
   await page.goto(threadPath("heap-postmortem"));
   await expect(page.getByRole("region", { name: HEAP_POSTMORTEM })).toBeVisible();
   await expectNoViolations(page, "thread with code and image");
+});
+
+test("has no accessibility violations as a member", async ({ page }) => {
+  await logon(page);
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+
+  // The compose layer.
+  await page.getByRole("button", { name: NEW_THREAD }).click();
+  await expect(page.getByRole("form", { name: "NEW THREAD" })).toBeVisible();
+  await expectNoViolations(page, "compose layer");
+  await page.keyboard.press("Escape");
+
+  // The thread with vote controls, edit/delete and the reply composer.
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("link", { name: READ_FIRST })
+    .click();
+  await expect(page.getByRole("region", { name: READ_FIRST })).toBeVisible();
+  await expectNoViolations(page, "member thread");
 });

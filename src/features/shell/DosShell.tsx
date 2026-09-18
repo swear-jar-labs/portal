@@ -35,7 +35,7 @@ import { messages } from "@/content/messages";
 import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "./screensaver-prefs";
 import { BootScreen } from "./BootScreen";
 import { KeyBarClock } from "./KeyBarClock";
-import { WelcomeBody } from "./dialogs";
+import { LoginPromptBody, WelcomeBody } from "./dialogs";
 import { useBootState } from "./hooks/useBootState";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
@@ -44,6 +44,8 @@ import { usePanelNav } from "./hooks/usePanelNav";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./useCommandRunner";
 import { CMD_ZONE } from "./zones";
+import { SessionProvider } from "./SessionContext";
+import { ShellDialogsProvider, type ShellDialogs } from "./ShellDialogs";
 import { ShellControlsProvider } from "./ShellControls";
 import { FileManagerProvider } from "./FileManager/FileManagerContext";
 import { FileManagerPanel } from "./FileManager/FileManagerPanel";
@@ -164,6 +166,29 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
     signedIn,
   });
 
+  // Features cannot mount their own modals: they ask the shell to run one. The
+  // guest prompt is the shared form of that (the board's gated actions).
+  const shellDialogs = useMemo<ShellDialogs>(
+    () => ({
+      open: openDialog,
+      close: closeDialog,
+      requestLogin: () =>
+        openDialog({
+          title: messages.shell.dialogs.login.title,
+          body: (
+            <LoginPromptBody
+              onLogon={() => {
+                closeDialog();
+                run("LOGON");
+              }}
+              onCancel={closeDialog}
+            />
+          ),
+        }),
+    }),
+    [closeDialog, openDialog, run],
+  );
+
   useEffect(() => {
     runRef.current = run;
   }, [run]);
@@ -254,7 +279,11 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
               dirCount={fileManager.dirCount}
               fileCount={fileManager.fileCount}
             />
-            <ShellControlsProvider enabled={controlsEnabled}>{children}</ShellControlsProvider>
+            <ShellControlsProvider enabled={controlsEnabled}>
+              <SessionProvider session={session}>
+                <ShellDialogsProvider dialogs={shellDialogs}>{children}</ShellDialogsProvider>
+              </SessionProvider>
+            </ShellControlsProvider>
           </Stack>
         </FileManagerProvider>
 

@@ -35,4 +35,11 @@ describe("Textarea", () => {
     expect(html).toMatch(/aria-describedby="[^"]+"/);
     expect(html).toContain("Required");
   });
+
+  it("can take the caret when it opens (inline editors)", () => {
+    const html = renderToStaticMarkup(
+      <Textarea label="Edit" name="edit" value="text" onChange={() => {}} autoFocus />,
+    );
+    expect(html).toContain("autofocus");
+  });
 });

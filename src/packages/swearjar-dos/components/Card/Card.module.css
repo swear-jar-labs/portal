@@ -37,6 +37,17 @@
   overflow-wrap: break-word;
 }
 
+/* The button form of the title (a card without a route): the same stretched
+   hit area, with the UA button styles reset so it reads as the link. */
+.button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
 /* The stretched hit area: the anchor is not positioned, so ::after covers the
    whole card. */
 .link::after {

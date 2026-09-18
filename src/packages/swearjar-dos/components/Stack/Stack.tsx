@@ -8,6 +8,8 @@ type StackElement =
 export type StackProps = {
   children: ReactNode;
   as?: StackElement;
+  // A known anchor: focus and scrollIntoView targets stay id-based.
+  id?: string;
   direction?: "row" | "column";
   gap?: number | string;
   align?: CSSProperties["alignItems"];
@@ -25,6 +27,7 @@ export type StackProps = {
 export function Stack({
   children,
   as = "div",
+  id,
   direction = "column",
   gap = 0,
   align,
@@ -52,6 +55,7 @@ export function Stack({
     {
       className: cx(className),
       style,
+      id,
       ...(navRow ? { [DOS_ROW_ATTR]: "" } : undefined),
       tabIndex,
     },

@@ -95,6 +95,31 @@ export function LogoffBody({
   );
 }
 
+export function LoginPromptBody({
+  onLogon,
+  onCancel,
+}: {
+  onLogon: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Stack gap={8}>
+      <Text as="div">{messages.shell.dialogs.login.text}</Text>
+      <Text as="div" role="hint">
+        {messages.shell.dialogs.login.hint}
+      </Text>
+      <Stack direction="row" gap={10} wrap>
+        <Button variant="primary" className={styles.action} onClick={onLogon}>
+          {messages.shell.dialogs.login.confirm}
+        </Button>
+        <Button className={styles.action} onClick={onCancel}>
+          {messages.shell.dialogs.login.cancel}
+        </Button>
+      </Stack>
+    </Stack>
+  );
+}
+
 export function WelcomeBody() {
   return (
     <Stack direction="row" align="start" gap={18} wrap>

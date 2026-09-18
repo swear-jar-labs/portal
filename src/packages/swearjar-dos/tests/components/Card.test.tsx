@@ -14,6 +14,22 @@ describe("Card", () => {
     expect(html).toContain('class="link"');
   });
 
+  it("renders a button title when the card has no route", () => {
+    const html = render({ id: "thread-1", title: "Composed here", onActivate: () => {} });
+    expect(html).toContain('<button type="button" id="thread-1"');
+    expect(html).toContain(">Composed here</button>");
+    expect(html).not.toContain("<a ");
+    expect(html).not.toContain("href=");
+  });
+
+  it("does not type-check a title with neither a route nor a handler", () => {
+    // The typecheck gate owns this assertion: a button title without a handler
+    // would be a dead control, so the union requires one. The directive fails
+    // the build if the requirement disappears.
+    // @ts-expect-error a card without href needs onActivate
+    render({ title: "Dead card" });
+  });
+
   it("carries the focus-return id and marks the open card as current", () => {
     const html = render({ id: "thread-1", title: "Hello", href: "/discussions/1", current: true });
     expect(html).toContain('id="thread-1"');

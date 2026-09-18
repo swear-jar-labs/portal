@@ -3,6 +3,8 @@ id: RULES
 title: RULES.TXT
 ---
 
+## :yellow[THE RULES]{align="center"}
+
 - Be kind. Always.
 - AI answers questions. It does not ship code.
 - Write it by hand — even the boilerplate.

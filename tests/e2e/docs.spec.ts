@@ -57,6 +57,22 @@ test("centers the manifesto heading and right-aligns the signature", async ({ pa
   await expect(page.getByText("— the team")).toHaveCSS("text-align", "right");
 });
 
+test("centers the how-it-works and rules headings in the manifesto style", async ({ page }) => {
+  const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+
+  await files.getByRole("button", { name: "HOW-IT-WORKS" }).click();
+  const howHeading = page.getByRole("heading", { level: 2, name: "HOW IT WORKS" });
+  await expect(howHeading).toBeVisible();
+  await expect(howHeading).toHaveCSS("text-align", "center");
+  await expect(howHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-yellow"));
+
+  await files.getByRole("button", { name: "RULES" }).click();
+  const rulesHeading = page.getByRole("heading", { level: 2, name: "THE RULES" });
+  await expect(rulesHeading).toBeVisible();
+  await expect(rulesHeading).toHaveCSS("text-align", "center");
+  await expect(rulesHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-yellow"));
+});
+
 test("has no detectable accessibility violations on a tone-heavy doc", async ({ page }) => {
   await page.keyboard.press("F3");
   await expect(page.getByRole("heading", { level: 2, name: "THE MANIFESTO" })).toBeVisible();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, Button, Form, Stack, Text, Textarea } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
@@ -25,6 +25,17 @@ export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
   const requestLogin = useLoginPrompt();
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | undefined>();
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  // The target changes hand the caret to the field: choosing, switching or
+  // clearing one moves the keyboard there (and the view follows — the composer
+  // is the thread's tail). The first mount is not a change: opening a thread
+  // must leave the view at its head.
+  const focusedTarget = useRef(target?.id);
+  useEffect(() => {
+    if (focusedTarget.current === target?.id) return;
+    focusedTarget.current = target?.id;
+    fieldRef.current?.focus();
+  }, [target?.id]);
 
   function handleSubmit() {
     const parsed = replySchema.safeParse({ body: draft });
@@ -65,17 +76,14 @@ export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
             </Button>
           </Stack>
         ) : null}
-        {/* Setting or clearing the target remounts the field, so the caret
-            lands back in the text the moment the context changes. */}
         <Textarea
-          key={target?.id ?? "none"}
+          ref={fieldRef}
           label={messages.board.reply.label}
           name="reply"
           value={draft}
           onChange={setDraft}
           rows={REPLY_ROWS}
           error={error}
-          autoFocus
         />
         <Stack direction="row" gap={6}>
           <Button type="submit" variant="primary">

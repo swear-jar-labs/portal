@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ChangeEvent } from "react";
+import { useId, type ChangeEvent, type Ref } from "react";
 import { cx } from "../tone";
 import styles from "../formControls.module.css";
 
@@ -17,6 +17,9 @@ export type TextareaProps = {
   error?: string;
   // An inline editor: opening it hands the caret to the text right away.
   autoFocus?: boolean;
+  // The control itself, for a consumer that moves the caret on its own (the
+  // reply target changes hand it back to the field).
+  ref?: Ref<HTMLTextAreaElement>;
   className?: string;
 };
 
@@ -30,6 +33,7 @@ export function Textarea({
   required = false,
   error,
   autoFocus = false,
+  ref,
   className,
 }: TextareaProps) {
   const id = useId();
@@ -45,6 +49,7 @@ export function Textarea({
         {label}
       </label>
       <textarea
+        ref={ref}
         id={id}
         name={name}
         value={value}

@@ -256,6 +256,26 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
 });
 
+test("opens a thread at the top and scrolls to the composer on reply", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("heap-postmortem"));
+  await waitForHydration(page);
+  const surface = focusedBody(page);
+  await expect(surface).toBeFocused();
+  // Reading starts at the head of the thread, not at its tail.
+  await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBe(0);
+
+  // Choosing a parent moves the keyboard to the composer and the view follows:
+  // the field is the thread's tail, so the panel scrolls down to it.
+  await page
+    .getByRole("region", { name: HEAP_POSTMORTEM })
+    .getByRole("article")
+    .first()
+    .getByRole("button", { name: "[ REPLY ]" })
+    .click();
+  await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+});
+
 test("opens a thread over the feed and pops back to the focused card", async ({ page }) => {
   await page.goto(FEED_PATH);
   await waitForHydration(page);

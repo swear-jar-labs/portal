@@ -15,4 +15,4 @@ title: MANIFESTO.TXT
 
 :yellow[**5. What we do not promise.**] A job, a guarantee, or a certificate. We promise the work and the people who do it.
 
-:cyan[— the team]{align="right"}
+:cyan[— The Team]{align="right"}

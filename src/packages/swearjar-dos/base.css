@@ -17,8 +17,10 @@ body {
   color: var(--dos-light-gray);
   font-family: var(--dos-font);
   font-size: var(--dos-font-size);
+  /* VT323 lacks Cyrillic; normalize the IBM Plex Mono fallback to its metrics. */
+  font-size-adjust: from-font;
   line-height: var(--dos-line-height);
-  text-transform: uppercase;
+  letter-spacing: var(--dos-text-body-tracking);
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
 }

@@ -76,9 +76,20 @@ and literal colors stay on the `tone` prop — UI text uses a role.
 rides on the default `body` role. Mixing them is a type error. `Heading` has no role prop — it
 is always `heading` — and its levels read the scale tokens (`--dos-text-h1-size` …
 `--dos-text-h4-size`, one size for h4–h6), `--dos-text-heading-line-height` and
-`--dos-text-heading-tracking`. Weights are `--dos-weight-regular` / `--dos-weight-bold`; VT323
-has no intermediate weight (600/700 render the same synthetic bold), so `hint` gets its slight
+`--dos-text-heading-tracking`. Body text uses the subtle `--dos-text-body-tracking`; headings
+keep their wider tracking. Weights are `--dos-weight-regular` / `--dos-weight-bold`; VT323 has
+no intermediate weight (600/700 render the same synthetic bold), so `hint` gets its slight
 boldness from `--dos-text-hint-stroke`, the only in-between knob.
+
+The kit preserves the case authored by the caller: mixed-case prose and labels stay mixed case,
+while DOS commands and canonical identifiers remain uppercase because their source strings are
+uppercase. Components do not apply `text-transform`; command matching may normalize input
+internally without changing what the user sees. The command line, menu bar and F-key bar are the
+deliberate chrome exceptions: they display their content in uppercase.
+
+VT323 has no Cyrillic glyphs, so the browser uses IBM Plex Mono for them. The
+`font-size-adjust` property matches that fallback's metrics to VT323 without changing the base
+font size or Latin text.
 
 ## Surfaces and keys
 

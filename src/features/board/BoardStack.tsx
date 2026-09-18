@@ -26,6 +26,7 @@ import { avatarFor } from "@/shared/members";
 import { ComposePanel } from "./ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
 import { feedQueryParams, parseFeedQuery, type FeedQuery } from "./feed";
+import { postElementId, postIdFromHash } from "./post-anchor";
 import type { ComposeInput } from "./schema";
 import { ThreadActionsProvider, type ThreadActions } from "./thread-actions";
 import { threadCardId } from "./ThreadCard";
@@ -112,13 +113,21 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
 
   // After a layer pops, focus returns to the card that opened it: the request
   // crosses the page remount in the SPA session memory, and a local close
-  // (state change, no route) runs the same effect.
+  // (state change, no route) runs the same effect. A deep link's post hash
+  // comes second: the return of focus owns the keyboard, the anchor the view.
   useEffect(() => {
     const id = stackMemory.takePendingCardFocus();
-    if (!id) return;
-    const card = document.getElementById(threadCardId(id));
-    card?.focus();
-    card?.scrollIntoView({ block: "nearest" });
+    if (id) {
+      const card = document.getElementById(threadCardId(id));
+      card?.focus();
+      card?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    const postId = postIdFromHash(window.location.hash);
+    if (postId === undefined) return;
+    const post = document.getElementById(postElementId(postId));
+    post?.focus();
+    post?.scrollIntoView({ block: "center" });
   }, [localThreadId]);
 
   // The compose layer hands focus back to the control that opened it (or to the
@@ -162,8 +171,8 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
       onTogglePostVote: (postId) => gate(() => togglePostVote(postId)),
       onEditPost: editPost,
       onDeletePost: deletePost,
-      onReply: (body) => {
-        if (author !== null) addReply(body, author);
+      onReply: (body, replyTo) => {
+        if (author !== null) addReply(body, author, replyTo);
       },
     };
   }, [
@@ -221,6 +230,15 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   const closeLocalThread = useCallback(() => {
     if (openedLocalThread === null) return;
     stackMemory.requestCardFocus(openedLocalThread.id);
+    // The hash of a jump inside the local thread dies with it: the feed must
+    // not keep an anchor to a layer that is gone.
+    if (window.location.hash !== "") {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+    }
     setLocalThreadId(null);
   }, [openedLocalThread]);
 

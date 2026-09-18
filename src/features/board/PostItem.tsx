@@ -5,13 +5,14 @@ import { Avatar, Button, Form, Stack, Text, Textarea } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
 import { formatAge, type ThreadPost } from "@/shared/board/threads";
+import { postElementId, postHash } from "./post-anchor";
 import { replySchema } from "./schema";
+import type { ReplyTarget } from "./thread-actions";
 import { VoteButton } from "./VoteButton";
 import styles from "./board.module.css";
 
 const EDIT_ROWS = 4;
-
-const postItemId = (id: string) => `board-post-${id}`;
+const REPLY_MARKER_GLYPH = "↪";
 
 export type PostItemProps = {
   post: ThreadPost;
@@ -24,7 +25,13 @@ export type PostItemProps = {
   editedBody?: string;
   deleted: boolean;
   canEdit: boolean;
+  // A locked thread takes no replies: the control disappears from the header.
+  canReply: boolean;
+  // The parent this post answers, resolved by the thread view; absent means a
+  // root post. The excerpt is missing when the parent is a tombstone.
+  replyTo?: ReplyTarget;
   onToggleVote: () => void;
+  onReply: () => void;
   onEdit: (body: string) => void;
   onDelete: () => void;
 };
@@ -54,7 +61,10 @@ export function PostItem({
   editedBody,
   deleted,
   canEdit,
+  canReply,
+  replyTo,
   onToggleVote,
+  onReply,
   onEdit,
   onDelete,
 }: PostItemProps) {
@@ -73,8 +83,18 @@ export function PostItem({
     wasDeleted.current = deleted;
     wasEditing.current = editing;
     if (!restored) return;
-    document.getElementById(postItemId(post.id))?.focus();
+    document.getElementById(postElementId(post.id))?.focus();
   }, [deleted, editing, post.id]);
+
+  // The jump is navigation, not history: the hash makes the anchor shareable,
+  // replaceState keeps Back closing the thread instead of walking posts.
+  function jumpToParent() {
+    if (replyTo === undefined) return;
+    window.history.replaceState(window.history.state, "", postHash(replyTo.id));
+    const parent = document.getElementById(postElementId(replyTo.id));
+    parent?.focus();
+    parent?.scrollIntoView({ block: "nearest" });
+  }
 
   function startEdit() {
     setDraft(editedBody ?? post.body);
@@ -148,7 +168,7 @@ export function PostItem({
 
   return (
     <Stack
-      id={postItemId(post.id)}
+      id={postElementId(post.id)}
       as="article"
       gap={4}
       className={styles.post}
@@ -161,6 +181,17 @@ export function PostItem({
         <Text as="span" role="hint">
           {meta.join(" · ")}
         </Text>
+        {replyTo !== undefined ? (
+          <Button
+            variant="ghost"
+            ariaLabel={`${messages.board.post.replyToAria} ${replyTo.user}`}
+            onClick={jumpToParent}
+          >
+            {REPLY_MARKER_GLYPH}
+            <Avatar user={replyTo.user} src={replyTo.avatar} size="sm" />
+            {replyTo.excerpt === undefined ? replyTo.user : `${replyTo.user}: "${replyTo.excerpt}"`}
+          </Button>
+        ) : null}
         {!deleted && !editing ? (
           <>
             <VoteButton
@@ -168,6 +199,11 @@ export function PostItem({
               voted={voted}
               onToggle={onToggleVote}
             />
+            {canReply ? (
+              <Button variant="ghost" onClick={onReply}>
+                {messages.board.post.reply}
+              </Button>
+            ) : null}
             {canEdit ? (
               <>
                 <Button variant="ghost" onClick={startEdit}>

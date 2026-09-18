@@ -13,7 +13,17 @@ export type ThreadActions = {
   onTogglePostVote: (postId: string) => void;
   onEditPost: (postId: string, body: string) => void;
   onDeletePost: (postId: string) => void;
-  onReply: (body: string) => void;
+  // `replyTo` names the post the reply answers; the root reply has none.
+  onReply: (body: string, replyTo?: string) => void;
+};
+
+// The parent a reply points at, resolved for the marker and the composer chip:
+// the face and the name survive a tombstone, the excerpt does not.
+export type ReplyTarget = {
+  id: string;
+  user: string;
+  avatar?: string;
+  excerpt?: string;
 };
 
 const ThreadActionsContext = createContext<ThreadActions | null>(null);

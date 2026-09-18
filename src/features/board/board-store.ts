@@ -87,12 +87,19 @@ export function deletePost(threadId: string, postId: string): void {
   });
 }
 
-/** A session reply: authored by the logged-on member, zero votes. */
-export function addReply(threadId: string, body: string, author: BoardMember): ThreadPost {
+/** A session reply: authored by the logged-on member, zero votes. `replyTo`
+ * names the post it answers; a thread's root reply has none. */
+export function addReply(
+  threadId: string,
+  body: string,
+  author: BoardMember,
+  replyTo?: string,
+): ThreadPost {
   const post: ThreadPost = {
     id: localId(LOCAL_POST_ID_PREFIX),
     author,
     body,
+    ...(replyTo === undefined ? {} : { replyTo }),
     createdAt: new Date().toISOString(),
     votes: 0,
   };

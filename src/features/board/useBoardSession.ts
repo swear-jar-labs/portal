@@ -78,9 +78,9 @@ export function useBoardSession({ threads, now, query, threadId }: BoardSessionO
   );
 
   const addReply = useCallback(
-    (body: string, author: BoardMember) => {
+    (body: string, author: BoardMember, replyTo?: string) => {
       if (threadId === undefined) return;
-      boardStore.addReply(threadId, body, author);
+      boardStore.addReply(threadId, body, author, replyTo);
     },
     [threadId],
   );

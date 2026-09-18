@@ -55,6 +55,9 @@ export type ThreadPost = {
   id: string;
   author: BoardMember;
   body: string;
+  // The post this one answers: the list stays flat, the marker carries the
+  // context. Phase 5 maps it to posts.reply_to_id.
+  replyTo?: string;
   createdAt: string;
   votes: number;
 };
@@ -114,6 +117,7 @@ const threads: readonly Thread[] = [
       {
         id: "read-first-2",
         author: grace,
+        replyTo: "read-first-1",
         createdAt: "2026-08-02T14:20:00.000Z",
         votes: 6,
         body: "Pinned. If a thread drifts, we point here and carry on.",
@@ -210,6 +214,7 @@ const threads: readonly Thread[] = [
       {
         id: "handwritten-parsers-3",
         author: lin,
+        replyTo: "handwritten-parsers-2",
         createdAt: "2026-09-16T09:10:00.000Z",
         votes: 5,
         body: "The stack traces alone are worth it. A generator error message is a fortune cookie.",
@@ -262,6 +267,7 @@ const threads: readonly Thread[] = [
       {
         id: "heap-postmortem-2",
         author: ada,
+        replyTo: "heap-postmortem-1",
         createdAt: "2026-09-15T20:45:00.000Z",
         votes: 7,
         body: "Canaries first, always. Instrument the allocator before you instrument your assumptions.",
@@ -315,6 +321,7 @@ const threads: readonly Thread[] = [
       {
         id: "tabs-vs-spaces-2",
         author: grace,
+        replyTo: "tabs-vs-spaces-1",
         createdAt: "2026-09-02T11:00:00.000Z",
         votes: 11,
         body: "Locking this before someone reopens it with a study about reading speed.",
@@ -346,6 +353,7 @@ const threads: readonly Thread[] = [
       {
         id: "ci-cache-poisoning-2",
         author: grace,
+        replyTo: "ci-cache-poisoning-1",
         createdAt: "2026-09-16T06:05:00.000Z",
         votes: 6,
         body: "Hash the compiler version and the full dependency tree, not the mtime. It costs a second and saves the week.",
@@ -415,6 +423,7 @@ const threads: readonly Thread[] = [
       {
         id: "staging-dump-errata-2",
         author: ken,
+        replyTo: "staging-dump-errata-1",
         createdAt: "2026-09-13T18:40:00.000Z",
         votes: 4,
         body: "The name check is a one-line guard, and it already saved me once this week.",

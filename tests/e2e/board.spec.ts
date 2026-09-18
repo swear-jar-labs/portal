@@ -375,7 +375,10 @@ test("a deep link opens the stack and Tab from the file list reaches the top lay
 test("renders posts, the empty thread and the locked thread", async ({ page }) => {
   await page.goto(threadPath("read-first"));
   const thread = page.getByRole("region", { name: READ_FIRST });
-  await expect(thread.getByText("THREE RULES, AND THE JAR WATCHES ALL OF THEM.")).toBeVisible();
+  // The reply marker quotes the same opening line: read the root post's body.
+  await expect(
+    thread.getByRole("article").first().getByText("THREE RULES, AND THE JAR WATCHES ALL OF THEM."),
+  ).toBeVisible();
   await expect(thread.getByRole("listitem")).toHaveCount(3);
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
 
@@ -515,8 +518,18 @@ test("composes a thread that lives in the session", async ({ page }) => {
   const thread = page.getByRole("region", { name: title });
   await expect(thread.getByText("A header edit slipped past the cache again.")).toBeVisible();
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
+
+  // A jump inside the local thread writes the hash; closing drops it, so the
+  // feed URL never points at a layer that is gone.
+  await thread.getByRole("article").first().getByRole("button", { name: "[ REPLY ]" }).click();
+  await thread.getByRole("textbox", { name: "REPLY" }).fill("Answering the opening post.");
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("article").last().getByRole("button", { name: "In reply to ada" }).click();
+  await expect(page).toHaveURL(/#board-post-/);
+
   await page.keyboard.press("Escape");
   await expect(feed.getByRole("article").filter({ hasText: title })).toBeVisible();
+  await expect(page).toHaveURL(FEED_PATH);
 });
 
 test("replies, edits and tombstones a post", async ({ page }) => {
@@ -566,6 +579,185 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   await expect(added).not.toContainText("by hand");
   await expect(added).toContainText("ada");
   await expect(added.getByRole("button", { name: "VOTES" })).toHaveCount(0);
+});
+
+test("shows the parent of a published reply and jumps to it", async ({ page }) => {
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  // The quoted line also lives in the marker: target the root post by anchor.
+  const parent = page.locator("#board-post-read-first-1");
+  const marker = thread.getByRole("button", { name: "In reply to ada" });
+
+  await expect(marker).toContainText("↪");
+  await expect(marker).toContainText('ada: "Three rules, and the jar watches all of them."');
+  // The answered member's face travels with the quote.
+  await expect(marker.locator("img")).toHaveAttribute("src", "/avatars/ada.png");
+
+  // The jump rewrites the address without a history entry: Back still closes
+  // the thread, and the anchor is shareable.
+  await marker.click();
+  await expect(page).toHaveURL(`${threadPath("read-first")}#board-post-read-first-1`);
+  await expect(parent).toBeFocused();
+});
+
+test("targets a post from the composer and posts the marker", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const reply = thread.getByRole("textbox", { name: "REPLY" });
+
+  await parent.getByRole("button", { name: "[ REPLY ]" }).click();
+  // Choosing a target hands the caret to the composer and names the parent.
+  await expect(reply).toBeFocused();
+  await expect(thread.getByText("REPLYING TO")).toBeVisible();
+  await expect(thread.getByText(/grace: "Pinned\. If a thread drifts/)).toBeVisible();
+  await expect(
+    page
+      .getByRole("form", { name: "Reply to this thread" })
+      .locator('img[src="/avatars/grace.png"]'),
+  ).toBeVisible();
+
+  await reply.fill("Carrying on, with the jar watching.");
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+
+  const added = thread.getByRole("article").last();
+  await expect(added).toContainText("Carrying on, with the jar watching.");
+  await expect(added.getByRole("button", { name: "In reply to grace" })).toContainText(
+    "Pinned. If a thread drifts",
+  );
+  // Posting clears the target: the next reply starts from the tail again.
+  await expect(thread.getByText("REPLYING TO")).toHaveCount(0);
+});
+
+test("cancels the reply target and keeps the draft", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const reply = thread.getByRole("textbox", { name: "REPLY" });
+
+  await parent.getByRole("button", { name: "[ REPLY ]" }).click();
+  await reply.fill("Draft stays.");
+  await thread.getByRole("button", { name: "Cancel reply target" }).click();
+  await expect(reply).toBeFocused();
+  await expect(reply).toHaveValue("Draft stays.");
+  await expect(thread.getByText("REPLYING TO")).toHaveCount(0);
+
+  // Posted without a target, the reply carries no marker.
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  const added = thread.getByRole("article").last();
+  await expect(added).toContainText("Draft stays.");
+  await expect(added.getByRole("button", { name: "In reply to" })).toHaveCount(0);
+});
+
+test("reaches the reply target clear control with the arrows", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  const reply = thread.getByRole("textbox", { name: "REPLY" });
+
+  await thread
+    .getByRole("article")
+    .filter({ hasText: "Pinned. If a thread drifts" })
+    .getByRole("button", { name: "[ REPLY ]" })
+    .click();
+  await expect(reply).toBeFocused();
+
+  // ▲ from the empty caret climbs into the target row: the chip is a row of
+  // its own above the field.
+  await page.keyboard.press("ArrowUp");
+  const clear = thread.getByRole("button", { name: "Cancel reply target" });
+  await expect(clear).toBeFocused();
+
+  // Enter clears the target and hands the caret back to the field.
+  await page.keyboard.press("Enter");
+  await expect(thread.getByText("REPLYING TO")).toHaveCount(0);
+  await expect(reply).toBeFocused();
+});
+
+test("a guest reply keeps its target through the logon prompt", async ({ page }) => {
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  const dialog = page.getByRole("dialog", { name: LOGON_PROMPT });
+
+  await thread
+    .getByRole("article")
+    .filter({ hasText: "Pinned. If a thread drifts" })
+    .getByRole("button", { name: "[ REPLY ]" })
+    .click();
+  const reply = thread.getByRole("textbox", { name: "REPLY" });
+  await reply.fill("Writing for the jar.");
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(thread.getByText("REPLYING TO")).toBeVisible();
+  await expect(reply).toHaveValue("Writing for the jar.");
+});
+
+test("a locked thread takes no reply targets", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("tabs-vs-spaces"));
+  await waitForHydration(page);
+  const locked = page.getByRole("region", { name: TABS_CLOSED });
+
+  // The published marker stays a navigation aid; the reply controls are gone.
+  await expect(locked.getByRole("button", { name: "In reply to ken" })).toBeVisible();
+  await expect(locked.getByRole("button", { name: "[ REPLY ]" })).toHaveCount(0);
+  await expect(locked.getByRole("textbox", { name: "REPLY" })).toHaveCount(0);
+});
+
+test("quotes a tombstoned parent by name only", async ({ page }) => {
+  await logon(page);
+  await page.goto(threadPath("read-first"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  const reply = thread.getByRole("textbox", { name: "REPLY" });
+
+  await reply.fill("Parent to be buried.");
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  const parentAnchor = await thread.getByRole("article").last().getAttribute("id");
+  if (parentAnchor === null) throw new Error("the session post carries no anchor");
+  // The article locator is live; the anchor keeps naming the same post after
+  // the next reply lands below it.
+  const parent = page.locator(`#${parentAnchor}`);
+
+  await parent.getByRole("button", { name: "[ REPLY ]" }).click();
+  await reply.fill("The child keeps the name.");
+  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  const child = thread.getByRole("article").last();
+  const marker = child.getByRole("button", { name: "In reply to ada" });
+  await expect(marker).toContainText("Parent to be buried.");
+
+  await parent.getByRole("button", { name: "[ DELETE ]" }).click();
+  await page
+    .getByRole("dialog", { name: "DELETE POST" })
+    .getByRole("button", { name: "[ DELETE ]" })
+    .click();
+  await expect(marker).not.toContainText("Parent to be buried.");
+  await expect(marker).toContainText("ada");
+
+  // The tombstone keeps its anchor: the jump still lands on it.
+  await marker.click();
+  await expect(page.locator(`#${parentAnchor}`)).toBeFocused();
+});
+
+test("a post hash deep link focuses the post", async ({ page }) => {
+  await page.goto(`${threadPath("read-first")}#board-post-read-first-3`);
+  await waitForHydration(page);
+  await expect(page.locator("#board-post-read-first-3")).toBeFocused();
+});
+
+test("an unknown post hash leaves the keyboard on the panel body", async ({ page }) => {
+  await page.goto(`${threadPath("read-first")}#board-post-no-such-post`);
+  await waitForHydration(page);
+  await expect(focusedBody(page)).toBeFocused();
 });
 
 test("walks the compose layer and returns focus to its button", async ({ page }) => {
@@ -706,6 +898,16 @@ test("has no accessibility violations as a member", async ({ page }) => {
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: READ_FIRST })
     .click();
-  await expect(page.getByRole("region", { name: READ_FIRST })).toBeVisible();
+  const thread = page.getByRole("region", { name: READ_FIRST });
+  await expect(thread).toBeVisible();
   await expectNoViolations(page, "member thread");
+
+  // The reply target chip is part of the composer row.
+  await thread
+    .getByRole("article")
+    .filter({ hasText: "Pinned. If a thread drifts" })
+    .getByRole("button", { name: "[ REPLY ]" })
+    .click();
+  await expect(page.getByText("REPLYING TO")).toBeVisible();
+  await expectNoViolations(page, "member thread with reply target");
 });

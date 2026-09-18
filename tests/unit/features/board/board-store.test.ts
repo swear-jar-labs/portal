@@ -71,6 +71,13 @@ describe("board store", () => {
     expect(store.threadStateOf(state, "b").addedPosts).toHaveLength(1);
   });
 
+  it("keeps the parent of a reply and leaves it empty without one", () => {
+    const linked = store.addReply("a", "Same here.", ada, "a-1");
+    const root = store.addReply("a", "Standalone.", ada);
+    expect(linked.replyTo).toBe("a-1");
+    expect(root.replyTo).toBeUndefined();
+  });
+
   it("composes a thread with one root post", () => {
     const thread = store.addThread(COMPOSE_INPUT, ada);
     store.addThread(COMPOSE_INPUT, ada);

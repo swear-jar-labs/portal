@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
-import { formatAge, type Thread } from "@/shared/board/threads";
+import { formatAge, type Thread } from "./threads";
 import { excerpt } from "./excerpt";
 import { PostItem } from "./PostItem";
 import { ReplyForm } from "./ReplyForm";

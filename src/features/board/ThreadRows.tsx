@@ -6,17 +6,17 @@ import { Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { formatCount } from "@/lib/format";
-import { stackMemory } from "@/shared/board/stack-memory";
-import { formatAge, tagTones, threadPath, type ThreadSummary } from "@/shared/board/threads";
+import { stackMemory } from "./stack-memory";
+import { formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
 
-export type ProfileThreadsProps = {
+type ThreadRowsProps = {
   threads: readonly ThreadSummary[];
   now: string;
 };
 
 /** The member's own threads: read-only rows that open the board's thread panel
  * through a plain SPA push (modified clicks keep the native tab behavior). */
-export function ProfileThreads({ threads, now }: ProfileThreadsProps) {
+export function ThreadRows({ threads, now }: ThreadRowsProps) {
   const router = useRouter();
 
   const activate = (thread: ThreadSummary) => (event?: MouseEvent<HTMLElement>) => {

@@ -4,13 +4,7 @@ import type { MouseEvent } from "react";
 import { Avatar, Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import {
-  formatAge,
-  tagTones,
-  threadPath,
-  type TagId,
-  type ThreadSummary,
-} from "@/shared/board/threads";
+import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "./threads";
 import { VoteButton } from "./VoteButton";
 import styles from "./board.module.css";
 

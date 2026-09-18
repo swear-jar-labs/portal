@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 import { Button, Heading, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { boardIds, tagIds, tagTones, type TagId, type ThreadSummary } from "@/shared/board/threads";
+import { boardIds, tagIds, tagTones, type TagId, type ThreadSummary } from "./threads";
 import { threadSorts, type FeedQuery } from "./feed";
 import { ThreadCard } from "./ThreadCard";
 import styles from "./board.module.css";

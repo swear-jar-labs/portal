@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 import { DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
-import { FEED_PATH } from "../../src/shared/board/threads";
+import { FEED_PATH } from "../../src/features/board/threads";
 import { enterShell, waitForHydration } from "./helpers";
 
 test.beforeEach(async ({ page }) => {

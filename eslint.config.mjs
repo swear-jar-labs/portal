@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import prettier from "eslint-config-prettier/flat";
+import importX from "eslint-plugin-import-x";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -40,8 +41,9 @@ const eslintConfig = defineConfig([
     },
   },
   // Feature layout (see AGENTS.md): src/app is routing only and reaches
-  // features through their facades; features stack app -> features -> shared
-  // -> lib/content/db/packages, and only the shell is shared across features.
+  // features through their facades; a feature stack is app -> features ->
+  // contracts -> own internals -> shared -> lib/content/db/packages, and only
+  // the shell is shared across features.
   {
     files: ["src/app/**/*.{ts,tsx}"],
     rules: {
@@ -96,8 +98,9 @@ const eslintConfig = defineConfig([
               message: "Features never import the routing layer (src/app).",
             },
             {
-              group: ["@/features/*", "!@/features/shell"],
-              message: "Cross-feature imports are forbidden; a feature may import only the shell.",
+              regex: "^@/features/(?!shell(?:/|$)|[^/]+/contracts$).+$",
+              message:
+                "Cross-feature imports are forbidden; a feature may import only the shell or a feature contract.",
             },
           ],
         },
@@ -122,6 +125,50 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+    },
+  },
+  // A feature contract is a visibility manifest: it re-exports the slice's
+  // public surface through relative imports and never reaches another feature.
+  {
+    files: ["src/features/*/contracts/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/**", "**/app/**"],
+              message: "Contracts never import the routing layer (src/app).",
+            },
+            {
+              regex: "^@/features/(?!shell(?:/|$)).+$",
+              message:
+                "Contracts re-export their own slice through relative imports; other features stay unreachable.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // The slice graph must stay acyclic: a contract re-exports its own internals,
+  // so the leaf guarantee is gone and cycles are checked as a graph (see
+  // AGENTS.md). import-x (not eslint-plugin-import, which under flat config
+  // cannot parse imported TS files and silently misses every TS cycle) needs
+  // the parser/extensions settings below; @typescript-eslint/parser is a direct
+  // devDependency because the copy nested under typescript-eslint is not
+  // resolvable for re-parsing, and the graph would stay empty. The kit is out
+  // of scope: it is standalone and never imports app code.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/packages/**"],
+    plugins: { "import-x": importX },
+    settings: {
+      "import-x/extensions": [".ts", ".tsx", ".js", ".jsx"],
+      "import-x/parsers": { "@typescript-eslint/parser": [".ts", ".tsx"] },
+      "import-x/resolver": { typescript: { project: "./tsconfig.json" } },
+    },
+    rules: {
+      "import-x/no-cycle": "error",
     },
   },
   // Tests consume the kit through its public entries: the CSS-free contracts

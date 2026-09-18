@@ -1,8 +1,7 @@
 import { Avatar, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import type { ThreadSummary } from "@/shared/board/threads";
+import { ThreadRows, type ThreadSummary } from "@/features/board/contracts";
 import type { MemberProfile } from "./data";
-import { ProfileThreads } from "./ProfileThreads";
 
 export type ProfileViewProps = {
   profile: MemberProfile;
@@ -38,7 +37,7 @@ export function ProfileView({ profile, threads, now }: ProfileViewProps) {
         {threads.length === 0 ? (
           <Text role="hint">{messages.account.profile.threads.empty}</Text>
         ) : (
-          <ProfileThreads threads={threads} now={now} />
+          <ThreadRows threads={threads} now={now} />
         )}
       </Stack>
 

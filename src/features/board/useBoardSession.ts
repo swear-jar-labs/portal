@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { summarizeThread, type BoardMember, type ThreadSummary } from "@/shared/board/threads";
+import { summarizeThread, type BoardMember, type ThreadSummary } from "./threads";
 import * as boardStore from "./board-store";
 import { filterThreads, rankThreads, type FeedQuery } from "./feed";
 import type { ComposeInput } from "./schema";

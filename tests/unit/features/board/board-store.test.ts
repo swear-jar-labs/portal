@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as store from "@/features/board/board-store";
+import type { BoardMember, ThreadSummary } from "@/features/board/threads";
 import type { ComposeInput } from "@/features/board/schema";
-import type { BoardMember, ThreadSummary } from "@/shared/board/threads";
 
 const ada: BoardMember = { user: "ada", role: "maintainer" };
 const COMPOSE_INPUT: ComposeInput = {

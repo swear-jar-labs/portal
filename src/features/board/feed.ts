@@ -1,4 +1,4 @@
-import { isBoardId, isTagId, type BoardId, type TagId } from "@/shared/board/threads";
+import { isBoardId, isTagId, type BoardId, type TagId } from "./threads";
 
 export const threadSorts = ["hot", "new"] as const;
 export type ThreadSort = (typeof threadSorts)[number];

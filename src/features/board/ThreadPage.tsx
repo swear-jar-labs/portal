@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
-import { getThread, listThreads } from "@/shared/board/threads";
+import { getThread, listThreads } from "./data";
 import { BoardFallback, BoardStack } from "./BoardStack";
 import { ThreadPanel } from "./ThreadPanel";
 

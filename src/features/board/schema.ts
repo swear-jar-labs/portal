@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { boardIds, tagIds } from "@/shared/board/threads";
+import { boardIds, tagIds } from "./threads";
 
 // UI-first slice: input schemas of the board's forms. When the backend lands
 // (Phase 5) the same schemas guard the server actions; the forms do not change.

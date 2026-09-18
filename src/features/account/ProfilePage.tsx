@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
+import { listThreadSummariesByAuthor } from "@/features/board/contracts";
 import { ShellPanel } from "@/features/shell";
-import { listThreadSummariesByAuthor } from "@/shared/board/threads";
 import { AccountGate } from "./AccountGate";
 import { getOwnProfile } from "./data";
 import { getMockSession } from "./mock-session.server";

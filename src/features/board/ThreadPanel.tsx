@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Markdown } from "@/shared/Markdown/Markdown";
-import type { Thread } from "@/shared/board/threads";
+import type { Thread } from "./threads";
 import { ThreadView } from "./ThreadView";
 
 export type ThreadPanelProps = {

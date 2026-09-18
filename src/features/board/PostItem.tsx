@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar, Button, Form, Stack, Text, Textarea } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
-import { formatAge, type ThreadPost } from "@/shared/board/threads";
+import { formatAge, type ThreadPost } from "./threads";
 import { postElementId, postHash } from "./post-anchor";
 import { replySchema } from "./schema";
 import type { ReplyTarget } from "./thread-actions";

@@ -1,4 +1,4 @@
-import type { BoardMember, Thread, ThreadPost, ThreadSummary } from "@/shared/board/threads";
+import type { BoardMember, Thread, ThreadPost, ThreadSummary } from "./threads";
 import type { ComposeInput } from "./schema";
 
 // The board's session memory: the mock state outlives the route remount (the

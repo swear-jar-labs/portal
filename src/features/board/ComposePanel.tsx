@@ -14,7 +14,7 @@ import {
   type SelectOption,
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { boardIds, tagIds, tagTones, type BoardId, type TagId } from "@/shared/board/threads";
+import { boardIds, tagIds, tagTones, type BoardId, type TagId } from "./threads";
 import { composeSchema, type ComposeInput } from "./schema";
 
 const BODY_ROWS = 6;

@@ -57,12 +57,11 @@
   --dos-weight-bold: 700;
 
   --dos-text-hint-size: 0.9em;
-  --dos-text-hint-stroke: 0.6px;
-  /* The bold body on light surfaces gains a touch of stroke; bold alone still
-     reads a bit thin against the bright ground. `hint` overrides with its own.
-     Sub-pixel widths are phase-sensitive: this one paints on paper text but the
-     rasterizer drops it on the menu-bar brand — hence the separate 0.5px below. */
-  --dos-text-light-stroke: 0.3px;
+  /* The DOS bold smear of the light family: a text-shadow copy half a CSS pixel
+     right — one whole device pixel at dpr2. A shadow copy rasterizes at an
+     integer offset and keeps its weight through layout phase changes, unlike a
+     sub-pixel text-stroke, which the rasterizer drops or paints by phase. */
+  --dos-text-light-shadow: 0.5px 0 0 currentColor;
   /* The menu-bar brand is a mark: one visible step over the body. The rasterizer
      draws strokes in whole device pixels, so on the brand anything below 0.5px
      (1 device pixel at dpr2) renders as nothing, and 0.6px already reads heavy. */
@@ -115,10 +114,8 @@
 [data-dos-role="hint"] {
   --dos-text-color: var(--dos-tone-dim);
   --dos-text-size: var(--dos-text-hint-size);
-  --dos-text-weight: var(--dos-weight-regular);
-  /* Greybeard ships real 400/700 only; a light stroke is the "a bit bolder
-     than regular" knob between them. */
-  --dos-text-stroke: var(--dos-text-hint-stroke);
+  /* No weight or stroke of its own: a hint is dim and smaller, and its ink
+     follows the surface (bold plus the smear on the light family). */
 }
 
 [data-dos-role="accent"] {
@@ -153,10 +150,11 @@
 [data-dos-surface="paper"] {
   color: var(--dos-black);
   /* The regular cut reads too light on the bright ground, so the light family
-     carries bold body with a touch of stroke; roles (`hint`) and controls
-     override the weight. The stroke is inherited, so plain text gets it too. */
+     carries bold body plus the DOS bold smear (`--dos-text-light-shadow`);
+     roles (`hint`) and controls override the weight, and `hint` cancels the
+     smear through `--dos-text-shadow`. */
   font-weight: var(--dos-weight-bold);
-  -webkit-text-stroke: var(--dos-text-light-stroke);
+  text-shadow: var(--dos-text-light-shadow);
   --dos-tone-default: var(--dos-black);
   /* #8a8a8a, the dim of the dark palette, would not read here. */
   --dos-tone-dim: #444444;

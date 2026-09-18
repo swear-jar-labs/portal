@@ -59,19 +59,20 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 ## Typography roles
 
 UI text carries one role, stamped as `DOS_ROLE_ATTR` (`data-dos-role`); the role table in
-`tokens.css` owns color, weight, size, line-height, tracking and stroke, and `Text`/`Heading`
-read it through the `--dos-text-*` variables. Role colors come from the tone palette, so the
+`tokens.css` owns color, weight, size, line-height, tracking and the light family's bold
+smear, and `Text`/`Heading` read it through the `--dos-text-*` variables. Role colors come
+from the tone palette, so the
 light surface remap applies to them too; the content palette (markdown directives, boot/welcome)
 and literal colors stay on the `tone` prop — UI text uses a role.
 
-| Role       | Color   | Weight  | Notes                                                         |
-| ---------- | ------- | ------- | ------------------------------------------------------------- |
-| `body`     | inherit | inherit | The default; the light surface makes it bold                  |
-| `hint`     | dim     | regular | Secondary text; smaller than body, with a light `hint` stroke |
-| `accent`   | yellow  | inherit | Yellow lines that are not headings                            |
-| `danger`   | red     | bold    | Errors                                                        |
-| `positive` | green   | inherit | Positive states                                               |
-| `heading`  | yellow  | bold    | `Heading` always stamps it; the level adds the size           |
+| Role       | Color   | Weight  | Notes                                                      |
+| ---------- | ------- | ------- | ---------------------------------------------------------- |
+| `body`     | inherit | inherit | The default; the light surface makes it bold               |
+| `hint`     | dim     | inherit | Secondary text: 0.9em and dim; the ink follows the surface |
+| `accent`   | yellow  | inherit | Yellow lines that are not headings                         |
+| `danger`   | red     | bold    | Errors                                                     |
+| `positive` | green   | inherit | Positive states                                            |
+| `heading`  | yellow  | bold    | `Heading` always stamps it; the level adds the size        |
 
 `Text` props split into two mutually exclusive variants: the role variant (`role`, default
 `body`, always stamped) and the content variant (`tone` with optional `weight="bold"`), which
@@ -81,8 +82,8 @@ is always `heading` — and its levels read the scale tokens (`--dos-text-h1-siz
 `--dos-text-heading-tracking`. Body text uses the subtle `--dos-text-body-tracking`; headings
 keep their wider tracking. Weights are `--dos-weight-regular` / `--dos-weight-bold`; both map to
 the real regular and bold files of Greybeard, and `font-synthesis: none` prevents a browser from
-inventing another weight. The `hint` role retains its light `--dos-text-hint-stroke` as part of
-the role's established visual hierarchy.
+inventing another weight. The `hint` role has no weight or stroke of its own: it is dim and
+0.9em, and it rides the surface ink (bold with the smear on the light family).
 
 The kit preserves the case authored by the caller: mixed-case prose and labels stay mixed case,
 while DOS commands and canonical identifiers remain uppercase because their source strings are
@@ -111,10 +112,11 @@ smears at chip sizes.
   not read on light, so accents use their darker, AA-readable relatives and vivid color
   comes back as blocks (tag fills, title bars, selection); a lighter ground raises the AA
   luminance budget, so `paper` carries the brighter accents (still ≥4.5:1 on white). The
-  light family carries bold body with a touch of stroke (`--dos-text-light-stroke`):
-  Greybeard's regular cut reads too light on the bright ground, and bold without it still
-  reads a bit thin. Roles override the weight where they differ (`hint` is regular, with
-  its own stroke), controls may override it too. Panel and Window
+  light family carries bold body plus the DOS bold smear (`--dos-text-light-shadow`, a
+  `text-shadow` copy half a CSS pixel right — one whole device pixel at dpr2): Greybeard's
+  regular cut reads too light on the bright ground, and the smear adds the step without a
+  sub-pixel stroke, whose weight flips with the layout phase. `hint` rides the same ink
+  (it differs by size and dim color); controls may override the weight too. Panel and Window
   repeat background/color in a compound rule, so the surface owns them against a consumer's
   single-class background; a focused body marks the whole window frame. Disabled buttons
   get their own body color per surface, so they stay visible. The dark palette remains the

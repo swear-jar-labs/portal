@@ -4,7 +4,7 @@
   font-weight: var(--dos-text-weight, inherit);
   line-height: var(--dos-text-line-height, inherit);
   letter-spacing: var(--dos-text-tracking, inherit);
-  -webkit-text-stroke: var(--dos-text-stroke, inherit);
+  text-shadow: var(--dos-text-shadow, inherit);
 }
 
 .bold {

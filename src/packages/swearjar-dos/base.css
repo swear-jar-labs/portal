@@ -47,6 +47,9 @@ select,
 textarea {
   font: inherit;
   color: inherit;
+  /* UA styles reset text-shadow on controls, dropping the surface ink (the
+     light family's bold smear); the rest of the text keeps it. */
+  text-shadow: inherit;
 }
 
 @media (max-width: 720px) {

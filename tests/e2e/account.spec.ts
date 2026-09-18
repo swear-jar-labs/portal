@@ -46,7 +46,7 @@ test.describe("guest account chrome", () => {
     await expect(files.getByRole("link", { name: "PROFILE" })).toHaveCount(0);
     await expect(files.getByRole("link", { name: "SETTINGS" })).toHaveCount(0);
     await expect(files.getByRole("button", { name: "LOGOFF" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Apply" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
@@ -82,7 +82,7 @@ test.describe("member session", () => {
     await expect(files.getByRole("link", { name: "SETTINGS" })).toBeVisible();
     await expect(files.getByRole("button", { name: "LOGOFF" })).toBeVisible();
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Profile" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
@@ -141,7 +141,7 @@ test.describe("member session", () => {
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
     const files = page.getByRole("region", { name: FILES_REGION });
-    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     // The cursor lands on the displayed document (ABOUT), not on the first row:
     // one ArrowDown step from ABOUT reaches MANIFESTO.

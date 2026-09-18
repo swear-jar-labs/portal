@@ -130,31 +130,6 @@ export const sprites = {
       "................",
     ],
   },
-  errata: {
-    palette: {
-      K: "#000000",
-      W: "#FFFFFF",
-      r: "#FF5555",
-    },
-    map: [
-      "................",
-      "...KKKKKKK......",
-      "...KWWWWWK......",
-      "...KWWWWWWK.....",
-      "...KWWWWWWWK....",
-      "...KWWWrrWWWK...",
-      "...KWWWrrWWWK...",
-      "...KWWWrrWWWK...",
-      "...KWWWrrWWWK...",
-      "...KWWWrrWWWK...",
-      "...KWWWWWWWWK...",
-      "...KWWWrrWWWK...",
-      "...KWWWWWWWWK...",
-      "...KKKKKKKKKK...",
-      "................",
-      "................",
-    ],
-  },
   book: {
     palette: {
       K: "#000000",

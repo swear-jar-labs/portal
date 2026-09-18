@@ -127,14 +127,14 @@ describe("commands content", () => {
     }
   });
 
-  it("keeps the expected file summary (3 DIRS, 12 FILES as guest, 13 as member)", () => {
+  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 12 as member)", () => {
     const count = (signedIn: boolean) => {
       const groups = fileGroupsFor(signedIn);
       expect(groups).toHaveLength(3);
       return groups.reduce((total, group) => total + group.items.length, 0);
     };
-    expect(count(false)).toBe(12);
-    expect(count(true)).toBe(13);
+    expect(count(false)).toBe(11);
+    expect(count(true)).toBe(12);
   });
 
   it("shows the account files of one session only", () => {
@@ -197,7 +197,8 @@ describe("commands content", () => {
 
   it("maps routes to their section command", () => {
     expect(commandIdForPath("/discussions")).toBe("DISCUSSIONS");
-    expect(commandIdForPath("/errata")).toBe("ERRATA");
+    // ERRATA is a board of the feed, not a route of its own.
+    expect(commandIdForPath("/errata")).toBeUndefined();
     expect(commandIdForPath("/readroom")).toBe("READROOM");
     expect(commandIdForPath("/products")).toBe("PRODUCTS");
     expect(commandIdForPath("/tickets")).toBe("TICKETS");
@@ -213,7 +214,7 @@ describe("commands content", () => {
     expect(commandIdForPath("/discussions/3f2a1c")).toBe("DISCUSSIONS");
     expect(commandIdForPath("/discussions/3f2a1c/")).toBe("DISCUSSIONS");
     expect(commandIdForPath("/discussions-archive")).toBeUndefined();
-    expect(commandIdForPath("/errata/2019/05")).toBe("ERRATA");
+    expect(commandIdForPath("/readroom/2026/05")).toBe("READROOM");
   });
 
   it("keeps every route owned by a single command", () => {

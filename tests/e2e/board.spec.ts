@@ -26,8 +26,8 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   const feed = page.getByRole("region", { name: FEED_REGION });
   const cards = feed.getByRole("article");
 
-  await expect(cards).toHaveCount(8);
-  await expect(feed.getByText("8 THREADS")).toBeVisible();
+  await expect(cards).toHaveCount(9);
+  await expect(feed.getByText("9 THREADS")).toBeVisible();
   await expect(cards.first()).toContainText("[PINNED]");
   // Hot ends with the quietest thread; new ends with the oldest activity.
   await expect(cards.last()).toContainText("Withdrawn: the weekly call");

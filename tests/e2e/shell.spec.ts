@@ -8,7 +8,7 @@ import {
 } from "@swearjar/dos/contracts";
 import { enterShell, expectMinimumContrast } from "./helpers";
 
-// A section without a page yet: the RSC 404 falls back to a full load.
+// A route with no page and none planned: the RSC 404 falls back to a full load.
 const STUB_ROUTE = "/errata";
 
 test("does not boot on inner routes and keeps the shell chrome", async ({ page }) => {
@@ -156,7 +156,7 @@ test("keeps the panel keyboard when a route takes a slow reply", async ({ page }
   await files.getByRole("link", { name: "DISCUSSIONS" }).click();
 
   const feed = page.getByRole("region", { name: "DISCUSSIONS.EXE" });
-  await expect(feed.getByRole("article")).toHaveCount(8);
+  await expect(feed.getByRole("article")).toHaveCount(9);
   await expect(feed.locator(`[${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();

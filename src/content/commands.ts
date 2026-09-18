@@ -64,12 +64,6 @@ const commandDefs = [
     file: { group: "board", name: "DISCUSSIONS", ext: "EXE", size: 2048, icon: "speech" },
   },
   {
-    id: "ERRATA",
-    description: messages.shell.registry.descriptions.ERRATA,
-    href: "/errata",
-    file: { group: "board", name: "ERRATA", ext: "EXE", size: 4096, icon: "errata" },
-  },
-  {
     id: "READROOM",
     description: messages.shell.registry.descriptions.READROOM,
     href: "/readroom",
@@ -267,7 +261,6 @@ const menuDefs: MenuDef[] = [
         command: "DISCUSSIONS",
         label: messages.shell.menuBar.labels.DISCUSSIONS,
       },
-      { kind: "command", command: "ERRATA", label: messages.shell.menuBar.labels.ERRATA },
       { kind: "command", command: "READROOM", label: messages.shell.menuBar.labels.READROOM },
       { kind: "command", command: "PRODUCTS", label: messages.shell.menuBar.labels.PRODUCTS },
       { kind: "command", command: "TICKETS", label: messages.shell.menuBar.labels.TICKETS },

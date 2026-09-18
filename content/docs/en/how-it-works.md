@@ -13,4 +13,4 @@ title: HOW-IT-WORKS.TXT
 
 :cyan[**Errata**] — our mistakes, written down. Public. That is the jar, but in prose.
 
-:dim[Type DISCUSSIONS, ERRATA, READROOM, PRODUCTS or TICKETS to open the board.]
+:dim[Type DISCUSSIONS, READROOM, PRODUCTS or TICKETS to open the board; errata is one of its boards.]

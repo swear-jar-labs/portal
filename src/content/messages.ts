@@ -21,7 +21,6 @@ export const messages = {
         HOW: "How it works",
         RULES: "Rules",
         DISCUSSIONS: "Discussions",
-        ERRATA: "Errata",
         READROOM: "Readroom",
         PRODUCTS: "Products",
         TICKETS: "Tickets",
@@ -129,7 +128,6 @@ export const messages = {
         RULES: "the rules",
         STATUS: "who we need now",
         DISCUSSIONS: "open the board",
-        ERRATA: "the jar, written down",
         READROOM: "the reading cycle",
         PRODUCTS: "what we build",
         TICKETS: "the work queue",
@@ -266,6 +264,7 @@ export const messages = {
     },
     boards: {
       general: "GENERAL",
+      errata: "ERRATA",
       compiler: "COMPILER",
       tooling: "TOOLING",
     },

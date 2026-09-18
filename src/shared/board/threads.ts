@@ -7,9 +7,9 @@ import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { avatarFor } from "@/shared/members";
 
-// Boards: the general one plus the project boards (placeholders until the
-// products slice lands).
-export const boardIds = ["general", "compiler", "tooling"] as const;
+// Boards: the general one, errata (its own vocabulary, same machinery) and the
+// project boards (placeholders until the products slice lands).
+export const boardIds = ["general", "errata", "compiler", "tooling"] as const;
 export type BoardId = (typeof boardIds)[number];
 
 // Tags are the board's vocabulary: status tags carry a tone and read as chips,
@@ -387,6 +387,37 @@ const threads: readonly Thread[] = [
         createdAt: "2026-09-13T19:20:00.000Z",
         votes: 10,
         body: "Adding it to the review checklist: the reviewer asks the author to explain the diff out loud.",
+      },
+    ],
+  },
+  {
+    id: "staging-dump-errata",
+    board: "errata",
+    title: 'Errata: I dropped a table to "clean up" a staging dump',
+    author: grace,
+    tags: ["craft"],
+    pinned: false,
+    locked: false,
+    createdAt: "2026-09-12T09:15:00.000Z",
+    votes: 7,
+    posts: [
+      {
+        id: "staging-dump-errata-1",
+        author: grace,
+        createdAt: "2026-09-12T09:15:00.000Z",
+        votes: 7,
+        body: [
+          'I restored a staging dump over the wrong database and dropped the table I had just spent a week filling. No backup, of course — staging is "disposable".',
+          "",
+          "What it taught me: **staging is production with a lying label.** The restore now goes through a script that refuses any database whose name does not end in `_scratch`.",
+        ].join("\n"),
+      },
+      {
+        id: "staging-dump-errata-2",
+        author: ken,
+        createdAt: "2026-09-13T18:40:00.000Z",
+        votes: 4,
+        body: "The name check is a one-line guard, and it already saved me once this week.",
       },
     ],
   },

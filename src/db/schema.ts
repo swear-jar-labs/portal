@@ -12,7 +12,6 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const sectionKind = pgEnum("section_kind", ["discussion", "errata"]);
 export const productStatus = pgEnum("product_status", ["planned", "active", "archived"]);
 export const ticketStatus = pgEnum("ticket_status", [
   "open",
@@ -103,7 +102,6 @@ export const sections = pgTable("sections", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   description: text("description"),
-  kind: sectionKind("kind").notNull().default("discussion"),
   position: integer("position").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

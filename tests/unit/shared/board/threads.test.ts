@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { messages } from "@/content/messages";
 import {
@@ -97,6 +99,22 @@ describe("board fixtures", () => {
 
     // ada (the Google demo user) authors threads: the profile section needs them.
     expect(threads.some((thread) => thread.author.user === "ada")).toBe(true);
+  });
+
+  it("keeps every bundled post image on disk", async () => {
+    for (const id of (await listThreads()).map((thread) => thread.id)) {
+      const thread = await getThread(id);
+      if (!thread) continue;
+      for (const post of thread.posts) {
+        for (const match of post.body.matchAll(/!\[[^\]]*\]\((\/[^)]+)\)/g)) {
+          const src = match[1];
+          if (!src) continue;
+          expect(existsSync(path.join(process.cwd(), "public", src)), `${post.id}: ${src}`).toBe(
+            true,
+          );
+        }
+      }
+    }
   });
 });
 

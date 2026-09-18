@@ -16,8 +16,8 @@ describe("Avatar", () => {
   });
 
   it("renders the picture when the user has one", () => {
-    const html = renderToStaticMarkup(<Avatar user="ada" src="/avatars/ada.svg" />);
-    expect(html).toContain('<img class="image" src="/avatars/ada.svg" alt=""/>');
+    const html = renderToStaticMarkup(<Avatar user="ada" src="/avatars/ada.png" />);
+    expect(html).toContain('<img class="image" src="/avatars/ada.png" alt=""/>');
     expect(html).not.toContain(">A</span>");
   });
 

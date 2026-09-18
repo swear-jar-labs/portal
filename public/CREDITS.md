@@ -1,0 +1,11 @@
+# Bundled media
+
+Demo assets shipped with the UI-first fixtures. All originals are in the public
+domain; files were cropped and resized (ImageMagick) for the small UI sizes.
+
+| File                          | Source                                                                                                                                                                                        | Author / credit                                                           | License                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------- |
+| `avatars/ada.png`             | [Ada Lovelace daguerreotype, 1843](https://commons.wikimedia.org/wiki/File:Ada_Lovelace_daguerreotype_by_Antoine_Claudet_1843_-_cropped.png)                                                  | Antoine Claudet                                                           | Public domain                                |
+| `avatars/grace.png`           | [Commodore Grace M. Hopper, USN](<https://commons.wikimedia.org/wiki/File:Commodore_Grace_M._Hopper,_USN_(covered)_head_and_shoulders_crop.jpg>)                                              | U.S. Navy                                                                 | Public domain (U.S. federal government work) |
+| `media/bug-1947.jpg`          | [First Computer Bug, 1947](https://commons.wikimedia.org/wiki/File:First_Computer_Bug,_1947.jpg)                                                                                              | Naval Surface Warfare Center, Dahlgren, VA (U.S. Naval Historical Center) | Public domain (U.S. federal government work) |
+| `media/eniac-programmers.jpg` | [Glen Beck and Betty Snyder program the ENIAC](https://commons.wikimedia.org/wiki/File:Glen_Beck_and_Betty_Snyder_program_the_ENIAC_in_building_328_at_the_Ballistic_Research_Laboratory.jpg) | U.S. Army                                                                 | Public domain (U.S. federal government work) |

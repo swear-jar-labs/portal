@@ -14,3 +14,36 @@
 .right {
   text-align: right;
 }
+
+/* The code well: black on the paper surface, one step deeper than the post. */
+.codeBlock {
+  overflow-x: auto;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border: var(--dos-border-width) solid var(--dos-dark-gray);
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
+}
+
+/* The well already frames the block; the inner code only carries the language
+   class of the fence. */
+.codeBlock code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+/* Inline code reads as a key cap on the light surface. */
+.code {
+  padding: 0 3px;
+  border: 1px solid var(--dos-dark-gray);
+  background: var(--dos-silver);
+  color: var(--dos-black);
+}
+
+/* Images sit in their own paragraph, whose margin does the spacing. */
+.image {
+  margin: 0;
+  border: var(--dos-border-width) solid var(--dos-dark-gray);
+}

@@ -5,6 +5,7 @@
 
 import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { avatarFor } from "@/shared/members";
 
 // Boards: the general one plus the project boards (placeholders until the
 // products slice lands).
@@ -78,8 +79,8 @@ export type ThreadSummary = Omit<Thread, "posts"> & {
   lastActivityAt: string;
 };
 
-const ada: BoardMember = { user: "ada", role: "maintainer", avatar: "/avatars/ada.svg" };
-const grace: BoardMember = { user: "grace", role: "contributor" };
+const ada: BoardMember = { user: "ada", role: "maintainer", avatar: avatarFor("ada") };
+const grace: BoardMember = { user: "grace", role: "contributor", avatar: avatarFor("grace") };
 const ken: BoardMember = { user: "ken", role: "member" };
 const lin: BoardMember = { user: "lin", role: "member" };
 
@@ -162,6 +163,19 @@ const threads: readonly Thread[] = [
         votes: 4,
         body: "My first patch to the readroom parser went in this week. Hands still shaking.",
       },
+      {
+        id: "by-hand-ritual-4",
+        author: ken,
+        createdAt: "2026-09-17T18:20:00.000Z",
+        votes: 7,
+        body: [
+          "This week's proof: the whole rig mid-refactor, two people and one cable at a time.",
+          "",
+          "![Glen Beck and Betty Snyder programming the ENIAC by hand, 1946](/media/eniac-programmers.jpg)",
+          "",
+          "The screens changed. The hands did not.",
+        ].join("\n"),
+      },
     ],
   },
   {
@@ -200,6 +214,27 @@ const threads: readonly Thread[] = [
         votes: 5,
         body: "The stack traces alone are worth it. A generator error message is a fortune cookie.",
       },
+      {
+        id: "handwritten-parsers-4",
+        author: lin,
+        createdAt: "2026-09-17T08:20:00.000Z",
+        votes: 6,
+        body: [
+          "My parser, boiled down to the one loop that matters:",
+          "",
+          "```ts",
+          "function term(input: Cursor): Node {",
+          "  let node = atom(input);",
+          '  while (input.peek() === "*" || input.peek() === "/") {',
+          "    node = binary(input.next(), node, atom(input));",
+          "  }",
+          "  return node;",
+          "}",
+          "```",
+          "",
+          "Forty lines like this and the grammar stops being a black box. The `while` is where precedence lives — you can point at it.",
+        ].join("\n"),
+      },
     ],
   },
   {
@@ -230,6 +265,32 @@ const threads: readonly Thread[] = [
         createdAt: "2026-09-15T20:45:00.000Z",
         votes: 7,
         body: "Canaries first, always. Instrument the allocator before you instrument your assumptions.",
+      },
+      {
+        id: "heap-postmortem-3",
+        author: ken,
+        createdAt: "2026-09-16T21:40:00.000Z",
+        votes: 4,
+        body: [
+          "Here is the crime scene, trimmed to the bones. The pointer outlived its buffer by exactly one `realloc()`:",
+          "",
+          "```c",
+          "buf = realloc(buf, len + extra);   /* may move */",
+          "write_thing(old_buf);              /* old_buf is now stale */",
+          "```",
+          "",
+          "Valgrind found it in the coffee queue:",
+          "",
+          "```text",
+          "==531== Invalid write of size 8",
+          "==531==    at 0x4012A3: write_thing",
+          "==531==  Address 0x5a1c0a0 is 0 bytes after a block of size 64 alloc'd",
+          "```",
+          "",
+          "A bug older than my keyboard, by the way:",
+          "",
+          "![The first computer bug: a moth taped into the Harvard Mark II logbook, 1947](/media/bug-1947.jpg)",
+        ].join("\n"),
       },
     ],
   },

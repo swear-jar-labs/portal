@@ -55,4 +55,26 @@ describe("Markdown pipeline", () => {
     const html = render("[x](javascript:alert(1))");
     expect(html).not.toContain("javascript:");
   });
+
+  it("renders a fenced block in the code well with its language class", () => {
+    const html = render("```c\nfree(ptr);\n```");
+    expect(html).toContain('class="codeBlock"');
+    expect(html).toContain('class="code language-c"');
+    expect(html).toContain("free(ptr);");
+  });
+
+  it("marks inline code", () => {
+    expect(render("call `realloc()` first")).toContain('class="code"');
+  });
+
+  it("renders a bundled image with its alt text", () => {
+    const html = render("![The first computer bug](/media/bug-1947.jpg)");
+    expect(html).toContain('src="/media/bug-1947.jpg"');
+    expect(html).toContain('alt="The first computer bug"');
+  });
+
+  it("drops unsafe image protocols", () => {
+    expect(render("![x](javascript:alert(1))")).not.toContain("javascript:");
+    expect(render("![x](data:image/svg+xml,<svg/>)")).not.toContain("data:image");
+  });
 });

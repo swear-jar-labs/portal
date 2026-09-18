@@ -72,7 +72,7 @@ test.describe("member session", () => {
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
 
     // The Google demo user carries a picture; the letter square stays the fallback.
-    await expect(page.locator('img[src="/avatars/ada.svg"]')).toBeVisible();
+    await expect(page.locator('img[src="/avatars/ada.png"]')).toBeVisible();
 
     await page.goto("/");
     await page.keyboard.press("Enter");

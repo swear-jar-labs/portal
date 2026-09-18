@@ -13,6 +13,7 @@ const FEED_REGION = "DISCUSSIONS.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
 const READ_FIRST = "READ FIRST: how this board works";
 const CI_CACHE = "CI cache poisoning: how we lost a day";
+const HEAP_POSTMORTEM = "Postmortem: heap corruption at 3am";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
 // The PanelStack effect focuses the top layer's body and attaches the Esc
 // listener; the focus is the sync point for keyboard tests, as the island
@@ -412,6 +413,17 @@ test("stacks the layers flush on mobile", async ({ page }) => {
   expect(margin).toBe("0px");
 });
 
+test("renders post code blocks and bundled images", async ({ page }) => {
+  await page.goto(threadPath("heap-postmortem"));
+
+  const thread = page.getByRole("region", { name: HEAP_POSTMORTEM });
+  await expect(thread.locator("code.language-c")).toBeVisible();
+  await expect(thread.locator("pre").getByText("write_thing(old_buf)")).toBeVisible();
+  await expect(
+    thread.getByRole("img", { name: /moth taped into the Harvard Mark II logbook/ }),
+  ).toBeVisible();
+});
+
 test("answers an unknown thread with the shell 404", async ({ page }) => {
   await page.goto(threadPath("no-such-thread"));
 
@@ -430,4 +442,9 @@ test("has no accessibility violations", async ({ page }) => {
     .click();
   await expect(page.getByRole("region", { name: READ_FIRST })).toBeVisible();
   await expectNoViolations(page, "thread");
+
+  // The media post: code well and a content image with alt text.
+  await page.goto(threadPath("heap-postmortem"));
+  await expect(page.getByRole("region", { name: HEAP_POSTMORTEM })).toBeVisible();
+  await expectNoViolations(page, "thread with code and image");
 });

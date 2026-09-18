@@ -71,6 +71,18 @@ const components: Components = {
   ul: ({ children }) => <List items={listItems(children)} className={styles.paragraph} />,
   ol: ({ children }) => <List ordered items={listItems(children)} className={styles.paragraph} />,
   li: ({ children }) => <>{children}</>,
+  pre: ({ children }) => <pre className={styles.codeBlock}>{children}</pre>,
+  code: ({ children, className }) => <code className={cx(styles.code, className)}>{children}</code>,
+  img: ({ src, alt }) => (
+    // eslint-disable-next-line @next/next/no-img-element -- markdown images carry no dimensions, and next/image would need width/height (or a loader config) per image.
+    <img
+      className={styles.image}
+      src={typeof src === "string" ? src : undefined}
+      alt={alt ?? ""}
+      loading="lazy"
+      decoding="async"
+    />
+  ),
 };
 
 export type MarkdownProps = {

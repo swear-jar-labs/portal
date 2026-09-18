@@ -4,6 +4,7 @@
 // which a non-bundler runtime (the Playwright e2e transform) cannot load. Tests
 // and other DOM-level consumers import this entry instead of the internals.
 export {
+  DOS_CRT_ATTR,
   DOS_ROW_ATTR,
   DOS_SCROLL_ATTR,
   DOS_SURFACE_ATTR,

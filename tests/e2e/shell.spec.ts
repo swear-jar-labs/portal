@@ -1,6 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR, DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
+import {
+  DOS_CRT_ATTR,
+  DOS_SCROLL_ATTR,
+  DOS_SURFACE_ATTR,
+  DOS_WINDOW_BODY_ATTR,
+} from "@swearjar/dos/contracts";
 import { enterShell, expectMinimumContrast } from "./helpers";
 
 // A section without a page yet: the RSC 404 falls back to a full load.
@@ -50,6 +55,44 @@ test("keeps the menu dropdown above the file list on a cold inner route", async 
     return menu.contains(top) ? "" : (top?.textContent ?? "unknown").slice(0, 20);
   });
   expect(coveredBy).toBe("");
+});
+
+test("draws the CRT filter above the boot screen and portaled surfaces", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
+
+  // The screen's pseudo-elements are the filter: click-through, above every
+  // portaled surface (welcome dialog, menu); the screensaver keeps its layer.
+  const screen = page.locator(`[${DOS_CRT_ATTR}]`);
+  await expect(screen).toBeVisible();
+  const filter = await screen.evaluate((element) => {
+    const scanlines = getComputedStyle(element, "::before");
+    const vignette = getComputedStyle(element, "::after");
+    return {
+      position: scanlines.position,
+      pointerEvents: scanlines.pointerEvents,
+      scanlines: scanlines.backgroundImage,
+      vignette: vignette.backgroundImage,
+      zIndex: Number(scanlines.zIndex),
+    };
+  });
+  expect(filter.position).toBe("absolute");
+  expect(filter.pointerEvents).toBe("none");
+  expect(filter.scanlines).toContain("repeating-linear-gradient");
+  expect(filter.vignette).toContain("radial-gradient");
+
+  await page.keyboard.press("Enter");
+  const welcome = page.getByRole("dialog");
+  await expect(welcome).toBeVisible();
+  const dialogZ = Number(await welcome.evaluate((element) => getComputedStyle(element).zIndex));
+  expect(filter.zIndex).toBeGreaterThan(dialogZ);
+  await welcome.getByRole("button", { name: "Close" }).click();
+
+  await page.getByRole("menuitem", { name: "Help" }).click();
+  const menu = page.getByRole("menu");
+  await expect(menu).toBeVisible();
+  const menuZ = Number(await menu.evaluate((element) => getComputedStyle(element).zIndex));
+  expect(filter.zIndex).toBeGreaterThan(menuZ);
 });
 
 test("navigates from the board file to the route without a reload", async ({ page }) => {

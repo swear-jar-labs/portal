@@ -12,7 +12,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import {
   CmdLine,
-  Crt,
+  cx,
   Dialog,
   KeyBar,
   MenuBar,
@@ -227,7 +227,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
   return (
     <Stack as="main" align="center" justify="center" className={styles.stage}>
       {/* The CRT switch-on belongs to the boot: routes without it open plainly. */}
-      <Crt boot={bootFired} className={styles.shell}>
+      <div className={cx(styles.shell, bootFired && styles.boot)}>
         <MenuBar
           menus={menus}
           brand={
@@ -278,7 +278,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
             </>
           }
         />
-      </Crt>
+      </div>
 
       <Dialog
         open={dialog !== null}

@@ -51,7 +51,9 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - Layout/type: `Stack`, `Heading`, `Text`, `List`, `Link`
 - Controls: `Button`, `Field`, `Form`, `Textarea`, `Select`, `Checkbox`
 - Surfaces: `Panel`, `Window`, `Dialog` (Radix), `MenuBar` (Radix), `FileTable`
-- Effects: `Crt`, `Sprite`, `Screensaver`
+- Effects: `Crt` (the global screen the app lives in: its pseudo-elements paint
+  the scanline/vignette filter over the shell and its portaled surfaces),
+  `Sprite`, `Screensaver`
 - Chrome: `CloseButton` (the title-bar `[X]`, shared by `Window` and app panels)
 
 ## Typography roles

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Crt } from "@swearjar/dos";
 import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
@@ -40,9 +41,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${greybeard18.variable} ${greybeard16.variable}`}>
       <body>
-        <DosShell session={session} logoff={mockLogoff}>
-          {children}
-        </DosShell>
+        <Crt>
+          <DosShell session={session} logoff={mockLogoff}>
+            {children}
+          </DosShell>
+        </Crt>
       </body>
     </html>
   );

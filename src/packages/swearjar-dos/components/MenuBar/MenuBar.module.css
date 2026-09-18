@@ -69,4 +69,7 @@
   align-items: center;
   gap: 4px;
   padding: 0 10px;
+  /* The brand is a mark, not a menu label: it carries its own stroke, one
+     visible step over the body. */
+  -webkit-text-stroke: var(--dos-text-brand-stroke);
 }

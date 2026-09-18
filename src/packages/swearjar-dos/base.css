@@ -17,8 +17,8 @@ body {
   color: var(--dos-light-gray);
   font-family: var(--dos-font);
   font-size: var(--dos-font-size);
-  /* VT323 lacks Cyrillic; normalize the IBM Plex Mono fallback to its metrics. */
-  font-size-adjust: from-font;
+  /* Greybeard ships the two weights the UI uses: never rasterize a fake third one. */
+  font-synthesis: none;
   line-height: var(--dos-line-height);
   letter-spacing: var(--dos-text-body-tracking);
   -webkit-font-smoothing: none;
@@ -51,7 +51,9 @@ textarea {
 
 @media (max-width: 720px) {
   body {
+    font-family: var(--dos-font-narrow);
     font-size: var(--dos-font-size-narrow);
+    line-height: var(--dos-line-height-narrow);
   }
 }
 

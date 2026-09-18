@@ -16,7 +16,7 @@
   background: repeating-linear-gradient(
     to bottom,
     rgba(0, 0, 0, 0) 0 2px,
-    rgba(0, 0, 0, 0.16) 3px,
+    var(--dos-scanline) 3px,
     rgba(0, 0, 0, 0) 4px
   );
 }

@@ -21,7 +21,7 @@ test("keeps hints regular, stroked and smaller than the text they annotate", asy
   const hint = dialog.getByText("Try HELP.");
 
   await expect(hint).toHaveCSS("font-weight", "400");
-  // VT323 has no intermediate weight; a light stroke carries the "a bit bolder".
+  // Greybeard ships real 400/700 only; a light stroke carries the "a bit bolder".
   const stroke = await hint.evaluate((element) =>
     Number.parseFloat(getComputedStyle(element).getPropertyValue("-webkit-text-stroke-width")),
   );

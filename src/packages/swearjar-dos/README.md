@@ -77,9 +77,10 @@ rides on the default `body` role. Mixing them is a type error. `Heading` has no 
 is always `heading` — and its levels read the scale tokens (`--dos-text-h1-size` …
 `--dos-text-h4-size`, one size for h4–h6), `--dos-text-heading-line-height` and
 `--dos-text-heading-tracking`. Body text uses the subtle `--dos-text-body-tracking`; headings
-keep their wider tracking. Weights are `--dos-weight-regular` / `--dos-weight-bold`; VT323 has
-no intermediate weight (600/700 render the same synthetic bold), so `hint` gets its slight
-boldness from `--dos-text-hint-stroke`, the only in-between knob.
+keep their wider tracking. Weights are `--dos-weight-regular` / `--dos-weight-bold`; both map to
+the real regular and bold files of Greybeard, and `font-synthesis: none` prevents a browser from
+inventing another weight. The `hint` role retains its light `--dos-text-hint-stroke` as part of
+the role's established visual hierarchy.
 
 The kit preserves the case authored by the caller: mixed-case prose and labels stay mixed case,
 while DOS commands and canonical identifiers remain uppercase because their source strings are
@@ -87,9 +88,15 @@ uppercase. Components do not apply `text-transform`; command matching may normal
 internally without changing what the user sees. The command line, menu bar and F-key bar are the
 deliberate chrome exceptions: they display their content in uppercase.
 
-VT323 has no Cyrillic glyphs, so the browser uses IBM Plex Mono for them. The
-`font-size-adjust` property matches that fallback's metrics to VT323 without changing the base
-font size or Latin text.
+Greybeard v1.0.0 ([flowchartsman/greybeard](https://github.com/flowchartsman/greybeard), MIT —
+the license ships next to the font files) includes Cyrillic, Greek and extensive technical glyph
+coverage, so the UI uses one local font family rather than a metric-matched script fallback. Its 18px outlines are used on
+desktop and its 16px outlines at the narrow breakpoint, matching the pixel sizes supplied by the
+font; body line-heights are whole pixels (22px and 20px) so baselines land on the grid too. Body
+text and headings carry no extra letter-spacing, so their characters stay on the font's native
+grid. Small text — tags — uses the 16px design at its native 16px on both breakpoints
+(`--dos-font-small`, `--dos-font-size-small`, `--dos-line-height-small`): a scaled body outline
+smears at chip sizes.
 
 ## Surfaces and keys
 
@@ -102,8 +109,10 @@ font size or Latin text.
   not read on light, so accents use their darker, AA-readable relatives and vivid color
   comes back as blocks (tag fills, title bars, selection); a lighter ground raises the AA
   luminance budget, so `paper` carries the brighter accents (still ≥4.5:1 on white). The
-  surfaces are bold: VT323's 400 strokes read too thin there, and roles override the weight
-  where they differ (`hint` is regular), controls may override it too. Panel and Window
+  light family carries bold body with a touch of stroke (`--dos-text-light-stroke`):
+  Greybeard's regular cut reads too light on the bright ground, and bold without it still
+  reads a bit thin. Roles override the weight where they differ (`hint` is regular, with
+  its own stroke), controls may override it too. Panel and Window
   repeat background/color in a compound rule, so the surface owns them against a consumer's
   single-class background; a focused body marks the whole window frame. Disabled buttons
   get their own body color per surface, so they stay visible. The dark palette remains the

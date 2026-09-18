@@ -3,8 +3,10 @@
   padding: 0 1ch;
   border: 1px solid currentColor;
   color: var(--dos-tag-tone, inherit);
-  font-size: 0.85em;
-  line-height: 1.3;
+  /* A native small design at its own size, not a scaled body outline. */
+  font-family: var(--dos-font-small);
+  font-size: var(--dos-font-size-small);
+  line-height: var(--dos-line-height-small);
   white-space: nowrap;
 }
 

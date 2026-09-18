@@ -132,7 +132,6 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
       {thread ? (
         <ShellPanel
           title={thread.title}
-          titleTone="blue"
           actions={<CloseButton onClose={closeThread} label={messages.shell.window.closeLabel} />}
         >
           {thread.layer}

@@ -350,22 +350,22 @@ test.describe("file manager", () => {
       "true",
     );
 
-    const cyan = await page.evaluate(() => {
+    const selected = await page.evaluate(() => {
       const sample = document.createElement("span");
-      sample.style.color = "var(--dos-light-cyan)";
+      sample.style.color = "var(--dos-blue)";
       document.body.append(sample);
       const value = getComputedStyle(sample).color;
       sample.remove();
       return value;
     });
-    const cyanRows = await files
+    const selectedRows = await files
       .locator("tbody tr")
       .evaluateAll(
         (rows, color) =>
           rows.filter((row) => getComputedStyle(row).backgroundColor === color).length,
-        cyan,
+        selected,
       );
-    expect(cyanRows).toBe(1);
+    expect(selectedRows).toBe(1);
   });
 
   test("opens the selection with ArrowRight", async ({ page }) => {

@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { DOS_ROW_ATTR, DOS_SCROLL_ATTR, FOCUSABLE_SELECTOR } from "@swearjar/dos/contracts";
+import {
+  DOS_ROW_ATTR,
+  DOS_SCROLL_ATTR,
+  DOS_SURFACE_ATTR,
+  FOCUSABLE_SELECTOR,
+} from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { FEED_PATH, threadPath } from "../../src/shared/board/threads";
 import { expectNoViolations, repeatKey, waitForHydration } from "./helpers";
@@ -94,9 +99,14 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   const cards = feed.getByRole("article");
 
   // From the panel surface, ▲ enters the first row; ▼ steps to the next row.
-  await focusedBody(page).focus();
-  await page.keyboard.press("ArrowDown");
-  await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
+  // The walk lives in the island, which hydrates behind Suspense after the
+  // shell clock: retry the first step until the listeners answer, or the press
+  // lands before the walk exists (a full run under parallel load).
+  await expect(async () => {
+    await focusedBody(page).focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused({ timeout: 1_000 });
+  }).toPass();
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
   await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toHaveCSS(
@@ -134,10 +144,13 @@ test("keeps walking while an arrow is held (system auto-repeat)", async ({ page 
   const feed = page.getByRole("region", { name: FEED_REGION });
 
   // Enter the feed, then hold ▼: each auto-repeat event is a step, so the walk
-  // follows the held key instead of ignoring it.
-  await focusedBody(page).focus();
-  await page.keyboard.press("ArrowDown");
-  await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
+  // follows the held key instead of ignoring it. The first step retries until
+  // the island's listeners answer (see the walk test above).
+  await expect(async () => {
+    await focusedBody(page).focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused({ timeout: 1_000 });
+  }).toPass();
   await repeatKey(page, "ArrowDown");
   await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
 });
@@ -234,11 +247,10 @@ test("opens a thread over the feed and pops back to the focused card", async ({ 
   const thread = page.getByRole("region", { name: CI_CACHE });
   await expect(page).toHaveURL(threadPath("ci-cache-poisoning"));
   await expect(thread).toBeVisible();
-  await expect(thread).toHaveCSS("background-color", "rgb(0, 0, 0)");
-  await expect(thread.getByRole("heading", { name: CI_CACHE }).locator("..")).toHaveCSS(
-    "background-color",
-    "rgb(0, 0, 170)",
-  );
+  // The thread opens as a light window over the feed (the titleTone prop is gone;
+  // the surface contract is what the kit guarantees now).
+  await expect(thread).toHaveAttribute(DOS_SURFACE_ATTR, "light");
+  await expect(thread.getByRole("heading", { name: CI_CACHE })).toBeVisible();
   // The thread body takes the keyboard; the feed layer below goes inert.
   await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await expect(layers(page)).toHaveCount(2);

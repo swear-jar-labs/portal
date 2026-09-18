@@ -3,7 +3,7 @@ id: ABOUT
 title: ABOUT.TXT
 hero:
   title: SWEAR JAR LABS
-  tagline: AN ENGINEERING COMMUNITY · SWEARJAR.DOS
+  tagline: AN ENGINEERING COMMUNITY
 ---
 
 We are a small community of engineers :cyan[**keeping the craft of building software systems alive**] — judgment is grown by writing, and by getting things wrong in public.

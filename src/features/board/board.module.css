@@ -7,6 +7,10 @@
   border-bottom: 2px solid var(--dos-dark-gray);
 }
 
+.cardTitle {
+  --dos-link: var(--dos-black);
+}
+
 .post {
   padding: 6px 8px;
   border-bottom: 2px solid var(--dos-dark-gray);

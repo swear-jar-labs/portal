@@ -1,7 +1,7 @@
 import { cx } from "../tone";
 import styles from "./Avatar.module.css";
 
-export type AvatarSize = "sm" | "lg";
+export type AvatarSize = "sm" | "md" | "lg";
 
 export type AvatarProps = {
   user: string;

@@ -47,7 +47,7 @@ export function ThreadPanel({ thread, now }: ThreadPanelProps) {
           // between posts, ←/→ walks the links inside one.
           <Stack key={post.id} as="article" gap={4} className={styles.post} navRow tabIndex={0}>
             <Stack direction="row" gap={6} align="center" wrap>
-              <Avatar user={post.author.user} src={post.author.avatar} />
+              <Avatar user={post.author.user} src={post.author.avatar} size="md" />
               <Text as="span">{post.author.user}</Text>
               <Text as="span" role="hint">
                 {[

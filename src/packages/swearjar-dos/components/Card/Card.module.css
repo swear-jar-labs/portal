@@ -63,6 +63,10 @@
   margin-top: 2px;
 }
 
+.metaBefore {
+  margin: 0 0 2px;
+}
+
 .actions {
   position: relative;
   z-index: 1;

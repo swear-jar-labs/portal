@@ -11,6 +11,7 @@ describe("Card", () => {
     expect(html).toContain("<h3");
     expect(html).toContain('href="/discussions/1"');
     expect(html).toContain(">Hello</a>");
+    expect(html).toContain('class="link"');
   });
 
   it("carries the focus-return id and marks the open card as current", () => {
@@ -34,5 +35,20 @@ describe("Card", () => {
     expect(html).toContain("ada");
     expect(html).toContain("actions");
     expect(html).toContain("tags");
+  });
+
+  it("can place metadata before the title for a feed byline", () => {
+    const html = render({
+      title: "Topic",
+      href: "/discussions/1",
+      meta: "ada",
+      metaPosition: "before",
+    });
+    expect(html).toMatch(/ada[\s\S]*Topic/);
+  });
+
+  it("keeps metadata after the title by default", () => {
+    const html = render({ title: "Topic", href: "/discussions/1", meta: "ada" });
+    expect(html).toMatch(/Topic[\s\S]*ada/);
   });
 });

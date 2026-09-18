@@ -28,6 +28,7 @@ describe("Avatar", () => {
 
   it("carries the size variant", () => {
     expect(renderToStaticMarkup(<Avatar user="ada" />)).toContain('class="avatar sm"');
+    expect(renderToStaticMarkup(<Avatar user="ada" size="md" />)).toContain('class="avatar md"');
     expect(renderToStaticMarkup(<Avatar user="ada" size="lg" />)).toContain('class="avatar lg"');
   });
 });

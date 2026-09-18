@@ -11,6 +11,7 @@ import {
   type TagId,
   type ThreadSummary,
 } from "@/shared/board/threads";
+import styles from "./board.module.css";
 
 export const threadCardId = (id: string) => `thread-card-${id}`;
 
@@ -35,6 +36,7 @@ export function ThreadCard({
     <Card
       id={threadCardId(thread.id)}
       title={thread.title}
+      className={styles.cardTitle}
       href={threadPath(thread.id)}
       current={current}
       onActivate={onActivate}
@@ -56,7 +58,7 @@ export function ThreadCard({
       }
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <Avatar user={thread.author.user} src={thread.author.avatar} />
+          <Avatar user={thread.author.user} src={thread.author.avatar} size="md" />
           <Text as="span">{thread.author.user}</Text>
           <Text as="span" role="hint">
             {[
@@ -67,6 +69,7 @@ export function ThreadCard({
           </Text>
         </Stack>
       }
+      metaPosition="before"
       // The tags land as direct children of the card's actions row: its own
       // flex gap stays click-through, so the stretched link owns every gap
       // between them (a wrapper would raise its whole box over the link).

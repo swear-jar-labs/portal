@@ -13,8 +13,10 @@ export type CardProps = {
   current?: boolean;
   // Markers before the title (pinned, locked), composed by the slice.
   leading?: ReactNode;
-  // The non-interactive line under the title (author, counts, activity).
+  // The non-interactive line around the title (author, counts, activity).
   meta?: ReactNode;
+  // The default keeps metadata under the title; a feed can put its byline first.
+  metaPosition?: "before" | "after";
   // Interactive extras raised over the stretched link (tags, vote buttons).
   actions?: ReactNode;
   onActivate?: (event?: MouseEvent<HTMLElement>) => void;
@@ -33,12 +35,18 @@ export function Card({
   current = false,
   leading,
   meta,
+  metaPosition = "after",
   actions,
   onActivate,
   className,
 }: CardProps) {
+  const metaSlot = meta ? (
+    <div className={cx(styles.meta, metaPosition === "before" && styles.metaBefore)}>{meta}</div>
+  ) : null;
+
   return (
     <article className={cx(styles.card, current && styles.current, className)}>
+      {metaPosition === "before" ? metaSlot : null}
       <div className={styles.titleRow}>
         {leading ? <span className={styles.leading}>{leading}</span> : null}
         <Heading level={3} className={styles.heading}>
@@ -62,7 +70,7 @@ export function Card({
           </a>
         </Heading>
       </div>
-      {meta ? <div className={styles.meta}>{meta}</div> : null}
+      {metaPosition === "after" ? metaSlot : null}
       {actions ? <div className={styles.actions}>{actions}</div> : null}
     </article>
   );

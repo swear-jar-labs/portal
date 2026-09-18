@@ -43,6 +43,8 @@ test("keeps the board secondary text on the surface ink", async ({ page }) => {
   const cardMeta = page.getByText(/VOTES/).first();
   await expect(cardMeta).toHaveCSS("font-weight", "700");
   await expect(cardMeta).toHaveCSS("-webkit-text-stroke-width", "0px");
+
+  await expect(page.locator("#thread-card-ci-cache-poisoning")).toHaveCSS("color", "rgb(0, 0, 0)");
 });
 
 test("keeps light surfaces on the real bold with the smear, not a stroke", async ({ page }) => {

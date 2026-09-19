@@ -37,7 +37,13 @@
   display: inline-flex;
 }
 
-.note {
+/* The open task reads like a thread: the description, each note and the
+   report are white cards on the silver panel (board's .post rules; the
+   fallback is white, not board's black — the cards never sit on dark). */
+.task,
+.note,
+.report {
   padding: 6px 8px;
   border-bottom: 2px solid var(--dos-dark-gray);
+  background: var(--dos-post-bg, var(--dos-white));
 }

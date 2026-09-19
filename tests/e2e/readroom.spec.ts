@@ -1,7 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
-import { READROOM_PATH, readroomPath, ticketPath } from "../../src/features/readroom/readrooms";
+import {
+  READROOM_CARD_ATTR,
+  READROOM_PATH,
+  readroomPath,
+  ticketPath,
+} from "../../src/features/readroom/readrooms";
 import {
   enterShell,
   expectAbove,
@@ -85,8 +90,8 @@ test("opens a task over the feed and pops back to the focused card", async ({ pa
   const task = page.getByRole("region", { name: RECURSIVE });
   await expect(page).toHaveURL(readroomPath("recursive-descent"));
   await expect(task).toBeVisible();
-  // The task reads on paper; the feed behind it stays silver.
-  await expect(task).toHaveAttribute(DOS_SURFACE_ATTR, "paper");
+  // The task reads like a thread: white cards on silver.
+  await expect(task).toHaveAttribute(DOS_SURFACE_ATTR, "light");
   await expect(focusedBody(page)).toBeFocused();
   await expect(layers(page)).toHaveCount(2);
   await expect(layers(page).first()).toHaveAttribute("inert", "");
@@ -247,15 +252,24 @@ test("shows the report of a published task and the review hint otherwise", async
   await expect(
     page
       .getByRole("region", { name: RECURSIVE })
-      .getByText("Notes are closed. The lead is writing the dissection report."),
+      .getByText("Notes are closed. The lead is writing the write-up."),
   ).toBeVisible();
 
   await page.goto(readroomPath("retry-loop"));
   const task = page.getByRole("region", { name: RETRY });
-  await expect(task.getByRole("heading", { name: "DISSECTION REPORT" })).toBeVisible();
+  await expect(task.getByRole("heading", { name: "WRITE-UP" })).toBeVisible();
   await expect(task.getByRole("heading", { name: "What the code does" })).toBeVisible();
   await expect(task.getByText(/Two lines, one night/)).toBeVisible();
   await expect(task.getByText(/PUBLISHED \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
+
+  // Every card of the open task reads white on the silver panel: on
+  // retry-loop a guest sees all five (the description, three notes, the
+  // write-up) — a card that loses its stamp drops the count.
+  const cards = task.locator(`[${READROOM_CARD_ATTR}]`);
+  await expect(cards).toHaveCount(5);
+  for (const card of await cards.all()) {
+    await expect(card).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  }
 });
 
 test("walks the feed and the task by rows", async ({ page }) => {
@@ -306,7 +320,7 @@ test("keeps the feed and the task legible", async ({ page }) => {
   await feed.getByRole("link", { name: RETRY }).click();
   const task = page.getByRole("region", { name: RETRY });
   await expectMinimumContrast(task.getByText(/DEADLINE \d{4}/));
-  await expectMinimumContrast(task.getByRole("heading", { name: "DISSECTION REPORT" }));
+  await expectMinimumContrast(task.getByRole("heading", { name: "WRITE-UP" }));
 });
 
 test("answers an unknown task with the shell 404", async ({ page }) => {

@@ -6,7 +6,7 @@ import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { useShellSession } from "@/features/shell";
 import { formatAge } from "@/shared/age";
-import { phaseOf, visibleNotes, type Readroom } from "./readrooms";
+import { phaseOf, READROOM_CARD_ATTR, visibleNotes, type Readroom } from "./readrooms";
 import styles from "./readroom.module.css";
 
 export type ReadroomViewProps = {
@@ -35,21 +35,23 @@ export function ReadroomView({ readroom, now, noteBodies, report }: ReadroomView
           ) : null
         ) : (
           notes.map((note) => (
-            <Stack key={note.id} gap={4} className={styles.note}>
-              <Stack direction="row" gap={6} align="center" wrap>
-                <Avatar user={note.author.user} src={note.author.avatar} size="sm" />
-                <Text as="span">{note.author.user}</Text>
-                {session?.user === note.author.user ? (
-                  <Text as="span" role="accent">
-                    {messages.readroom.notes.yours}
+            <div key={note.id} className={styles.note} {...{ [READROOM_CARD_ATTR]: "" }}>
+              <Stack gap={4}>
+                <Stack direction="row" gap={6} align="center" wrap>
+                  <Avatar user={note.author.user} src={note.author.avatar} size="sm" />
+                  <Text as="span">{note.author.user}</Text>
+                  {session?.user === note.author.user ? (
+                    <Text as="span" role="accent">
+                      {messages.readroom.notes.yours}
+                    </Text>
+                  ) : null}
+                  <Text as="span" role="hint">
+                    {formatAge(note.createdAt, now, messages.readroom.age)}
                   </Text>
-                ) : null}
-                <Text as="span" role="hint">
-                  {formatAge(note.createdAt, now, messages.readroom.age)}
-                </Text>
+                </Stack>
+                {noteBodies[note.id]}
               </Stack>
-              {noteBodies[note.id]}
-            </Stack>
+            </div>
           ))
         )}
 
@@ -69,7 +71,9 @@ export function ReadroomView({ readroom, now, noteBodies, report }: ReadroomView
       ) : (
         <Stack gap={6}>
           <Heading level={2}>{messages.readroom.report.heading}</Heading>
-          {report}
+          <div className={styles.report} {...{ [READROOM_CARD_ATTR]: "" }}>
+            {report}
+          </div>
         </Stack>
       )}
     </Stack>

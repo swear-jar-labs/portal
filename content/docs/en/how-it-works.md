@@ -9,7 +9,7 @@ title: HOW-IT-WORKS.TXT
 
 :cyan[**Products**] — real projects, not training exercises: the platform itself, a flagship project, and the projects members bring — each with a public journal. Every product has its own maintainers with review and merge rights, and every change is read by a human before it lands.
 
-:cyan[**Readroom**] — we read code together — human or machine — on a deadline, then publish a report.
+:cyan[**Readroom**] — we read code together — human or machine — on a deadline, then publish a write-up.
 
 :cyan[**Errata**] — our mistakes, written down. Public. That is the jar, but in prose.
 

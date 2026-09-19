@@ -128,7 +128,7 @@ const readrooms: readonly Readroom[] = [
     description: [
       "A queue worker with exponential backoff — except the exponent was an `int` and the jitter was added *after* the cap.",
       "",
-      "The report reconstructs the night: how the herd formed, why the metrics stayed green, and the two lines that fixed it.",
+      "The write-up reconstructs the night: how the herd formed, why the metrics stayed green, and the two lines that fixed it.",
     ].join("\n"),
     sourceUrl:
       "https://github.com/swear-jar-labs/queue-lab/blob/c41d0aa7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3/internal/queue/retry.go",
@@ -183,7 +183,7 @@ const readrooms: readonly Readroom[] = [
     id: "token-cache",
     title: "Archived: the token cache that remembered everything",
     description: [
-      "A cache with a TTL — and a map that never forgot the keys. We read it once, published the report, and archived the task when the service was retired.",
+      "A cache with a TTL — and a map that never forgot the keys. We read it once, published the write-up, and archived the task when the service was retired.",
     ].join("\n"),
     sourceUrl:
       "https://github.com/swear-jar-labs/auth-lab/blob/d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4/cache/tokens.go",
@@ -217,7 +217,7 @@ const readrooms: readonly Readroom[] = [
       "",
       "## Resolution",
       "",
-      "The service is retired; the module is deleted with it. This report stays as the pattern to recognise.",
+      "The service is retired; the module is deleted with it. This write-up stays as the pattern to recognise.",
     ].join("\n"),
     reportAt: daysFromNow(-38),
     archivedAt: daysFromNow(-35),

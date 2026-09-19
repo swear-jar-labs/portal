@@ -30,7 +30,7 @@ export type ReadroomNote = {
 export type Readroom = {
   id: string;
   title: string;
-  // The opening description: rendered as a paragraph under the source block.
+  // The opening description: rendered as a white card under the source block.
   description: string;
   // The source is link-first: `sourceUrl` is a revision-pinned permalink, the
   // viewer is the forge. A snippet without a repository has no URL and no
@@ -49,6 +49,11 @@ export type Readroom = {
   archivedAt?: string;
   notes: readonly ReadroomNote[];
 };
+
+// The white cards of the open task (the description, each note, the report
+// body) stamp this attribute: the e2e whiteness check keys on it instead of
+// the hashed CSS-module classes.
+export const READROOM_CARD_ATTR = "data-readroom-card";
 
 // The readroom's URL canon.
 export const READROOM_PATH = "/readroom";

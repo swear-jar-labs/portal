@@ -369,7 +369,7 @@ export const messages = {
     metadata: {
       title: "Readroom — Swear Jar Labs",
       description:
-        "The reading tasks: code read by hand, notes until the deadline, a dissection report at the end.",
+        "The reading tasks: code read by hand, notes until the deadline, a write-up at the end.",
     },
     phases: {
       collecting: "COLLECTING",
@@ -395,9 +395,9 @@ export const messages = {
       sealed: "SEALED",
     },
     report: {
-      heading: "DISSECTION REPORT",
-      inProgress: "Notes are closed. The lead is writing the dissection report.",
-      stopped: "This task was stopped before a report.",
+      heading: "WRITE-UP",
+      inProgress: "Notes are closed. The lead is writing the write-up.",
+      stopped: "This task was stopped before a write-up.",
     },
     age: {
       now: "JUST NOW",

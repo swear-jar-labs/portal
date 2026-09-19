@@ -2,7 +2,13 @@ import type { ReactNode } from "react";
 import { Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { Markdown } from "@/shared/Markdown/Markdown";
-import { formatDeadlineDate, phaseOf, ticketPath, type Readroom } from "./readrooms";
+import {
+  formatDeadlineDate,
+  phaseOf,
+  READROOM_CARD_ATTR,
+  ticketPath,
+  type Readroom,
+} from "./readrooms";
 import { ReadroomView } from "./ReadroomView";
 import styles from "./readroom.module.css";
 
@@ -62,7 +68,9 @@ export function ReadroomPanel({ readroom, now }: ReadroomPanelProps) {
         ) : null}
       </Stack>
 
-      <Markdown>{readroom.description}</Markdown>
+      <div className={styles.task} {...{ [READROOM_CARD_ATTR]: "" }}>
+        <Markdown>{readroom.description}</Markdown>
+      </div>
 
       <ReadroomView readroom={readroom} now={now} noteBodies={noteBodies} report={report} />
     </Stack>

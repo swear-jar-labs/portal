@@ -83,7 +83,6 @@ export function ReadroomStack({ readrooms, now, task }: ReadroomStackProps) {
       {task ? (
         <ShellPanel
           title={task.title}
-          surface="paper"
           actions={<CloseButton onClose={closeTask} label={messages.shell.window.closeLabel} />}
         >
           {task.layer}

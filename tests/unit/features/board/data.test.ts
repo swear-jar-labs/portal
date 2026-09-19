@@ -1,7 +1,12 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { getThread, listThreadSummariesByAuthor, listThreads } from "@/features/board/data";
+import {
+  getBoardMember,
+  getThread,
+  listThreadSummariesByAuthor,
+  listThreads,
+} from "@/features/board/data";
 import { boardIds, tagIds } from "@/features/board/threads";
 
 describe("board fixtures", () => {
@@ -79,6 +84,28 @@ describe("board fixtures", () => {
         }
       }
     }
+  });
+
+  it("resolves public members from posts and keeps each author's role consistent", async () => {
+    const firstAuthors = new Map<string, { user: string; role: string; avatar?: string }>();
+
+    for (const summary of await listThreads()) {
+      const thread = await getThread(summary.id);
+      if (!thread) throw new Error(`${summary.id} disappeared`);
+      for (const post of thread.posts) {
+        const first = firstAuthors.get(post.author.user);
+        if (first) {
+          expect(post.author.role, `${post.id} changes ${post.author.user}'s role`).toBe(
+            first.role,
+          );
+        } else {
+          firstAuthors.set(post.author.user, post.author);
+        }
+      }
+    }
+
+    expect(await getBoardMember("ada")).toEqual(firstAuthors.get("ada"));
+    expect(await getBoardMember("nobody")).toBeNull();
   });
 });
 

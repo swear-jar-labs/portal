@@ -15,11 +15,18 @@ export type StackMemory = {
   wasPushedFrom: (route: string) => boolean;
   requestCardFocus: (threadId: string) => void;
   takePendingCardFocus: () => string | null;
+  rememberMemberPush: (route: string, originId: string) => void;
+  wasMemberPushedFrom: (route: string) => boolean;
+  takePendingMemberFocus: () => string | null;
 };
 
 export function createStackMemory(): StackMemory {
   let pushedRoute: string | null = null;
   let focusReturnId: string | null = null;
+  // A profile intercepted above a route keeps the thread mounted, so the
+  // known id that opened it remains a valid focus target when the layer pops.
+  let memberPushedRoute: string | null = null;
+  let memberFocusOriginId: string | null = null;
 
   return {
     rememberPush(route) {
@@ -35,6 +42,19 @@ export function createStackMemory(): StackMemory {
       const id = focusReturnId;
       focusReturnId = null;
       return id;
+    },
+    rememberMemberPush(route, originId) {
+      memberPushedRoute = route;
+      memberFocusOriginId = originId;
+    },
+    wasMemberPushedFrom(route) {
+      return memberPushedRoute === route;
+    },
+    takePendingMemberFocus() {
+      const originId = memberFocusOriginId;
+      memberPushedRoute = null;
+      memberFocusOriginId = null;
+      return originId;
     },
   };
 }

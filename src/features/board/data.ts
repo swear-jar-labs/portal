@@ -380,7 +380,17 @@ export async function getThread(id: string): Promise<Thread | null> {
   return threads.find((thread) => thread.id === id) ?? null;
 }
 
-/** The member's threads, freshest activity first (the profile's MY THREADS). */
+/** A public board member: the first authored post is the fixture source of
+ * truth until the member registry arrives with the backend. */
+export async function getBoardMember(user: string): Promise<BoardMember | null> {
+  for (const thread of threads) {
+    const post = thread.posts.find((candidate) => candidate.author.user === user);
+    if (post) return post.author;
+  }
+  return null;
+}
+
+/** A member's threads, freshest activity first (for account and public profiles). */
 export async function listThreadSummariesByAuthor(user: string): Promise<ThreadSummary[]> {
   return threads
     .filter((thread) => thread.author.user === user)

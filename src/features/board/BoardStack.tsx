@@ -27,6 +27,7 @@ import { ThreadActionsProvider, type ThreadActions } from "./thread-actions";
 import { threadCardId } from "./ThreadCard";
 import { ThreadView } from "./ThreadView";
 import { useBoardSession } from "./useBoardSession";
+import { useMemberLayer } from "./MemberLayerContext";
 
 export type BoardThreadLayer = {
   id: string;
@@ -52,6 +53,7 @@ export function BoardFallback() {
 export function BoardStack({ threads, now, thread }: BoardStackProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const routedMemberLayer = useMemberLayer();
   const searchParams = useSearchParams();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
@@ -63,6 +65,8 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   // A close owns the navigation until the route changes: a second Esc (or [X])
   // landing in that window must not pop another layer.
   const closingRef = useRef(false);
+  const memberLayerOpen = routedMemberLayer !== null;
+  const wasMemberLayerOpen = useRef(memberLayerOpen);
 
   const activeThreadId = thread?.id ?? localThreadId ?? undefined;
 
@@ -88,10 +92,10 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
     [state.addedThreads],
   );
 
-  // A new thread (or the feed) ends the close that was in flight.
+  // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
     closingRef.current = false;
-  }, [thread?.id]);
+  }, [memberLayerOpen, thread?.id]);
 
   // Filters are client state; the URL keeps the feed deep-linkable without an
   // RSC refetch — replaceState rewrites the address only.
@@ -124,6 +128,17 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
     post?.focus();
     post?.scrollIntoView({ block: "center" });
   }, [localThreadId]);
+
+  // Unlike a thread route, an intercepted profile keeps this BoardStack and
+  // its author link mounted. The known id can therefore receive focus as soon
+  // as the profile slot disappears.
+  useEffect(() => {
+    const closed = !memberLayerOpen && wasMemberLayerOpen.current;
+    wasMemberLayerOpen.current = memberLayerOpen;
+    if (!closed) return;
+    const id = stackMemory.takePendingMemberFocus();
+    if (id) document.getElementById(id)?.focus();
+  }, [memberLayerOpen]);
 
   // The compose layer hands focus back to the control that opened it (or to the
   // card it just created). A card hidden by the active filters falls back to
@@ -237,6 +252,16 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
     setLocalThreadId(null);
   }, [openedLocalThread]);
 
+  const closeMember = useCallback(() => {
+    if (!memberLayerOpen) return;
+    if (closingRef.current) return;
+    closingRef.current = true;
+    // An intercepted profile is only reached from a plain in-app activation.
+    // A fallback preserves the thread when an unusual router history omits it.
+    if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
+    else router.push(thread ? threadPath(thread.id) : FEED_PATH);
+  }, [memberLayerOpen, router, thread]);
+
   const openCompose = useCallback(() => {
     gate(() => setComposing(true));
   }, [gate]);
@@ -259,6 +284,10 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   );
 
   const closeTop = useCallback(() => {
+    if (memberLayerOpen) {
+      closeMember();
+      return;
+    }
     if (composing) {
       closeCompose();
       return;
@@ -268,7 +297,15 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
       return;
     }
     closeThread();
-  }, [closeCompose, closeLocalThread, closeThread, composing, openedLocalThread]);
+  }, [
+    closeCompose,
+    closeLocalThread,
+    closeMember,
+    closeThread,
+    composing,
+    memberLayerOpen,
+    openedLocalThread,
+  ]);
 
   return (
     <ThreadActionsProvider actions={threadActions}>
@@ -317,6 +354,14 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
             }
           >
             <ComposePanel onSubmit={submitCompose} onCancel={() => closeCompose()} />
+          </ShellPanel>
+        ) : null}
+        {memberLayerOpen ? (
+          <ShellPanel
+            title={messages.members.panelTitle}
+            actions={<CloseButton onClose={closeMember} label={messages.shell.window.closeLabel} />}
+          >
+            {routedMemberLayer}
           </ShellPanel>
         ) : null}
       </PanelStack>

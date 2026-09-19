@@ -9,6 +9,7 @@ export type LinkProps = {
   external?: boolean;
   underline?: boolean;
   className?: string;
+  id?: string;
 };
 
 export function Link({
@@ -18,11 +19,13 @@ export function Link({
   external = false,
   underline = false,
   className,
+  id,
 }: LinkProps) {
   const externalProps = external ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
   return (
     <a
+      id={id}
       href={href}
       className={cx(styles.link, underline && styles.underline, className)}
       style={toneStyle(tone)}

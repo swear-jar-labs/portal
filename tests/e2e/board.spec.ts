@@ -126,17 +126,19 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await expect(feed.getByRole("button", { name: "DECISION" }).first()).toBeFocused();
 
   // ▼ leaves the row for the compose control (an unmarked row of its own),
-  // then for the first card; ▶ enters its actions (the vote chip first).
+  // then for the first card's author; ▶ walks through title and vote.
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: NEW_THREAD })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(cards.first().getByRole("link")).toBeFocused();
+  await expect(cards.first().getByRole("link").first()).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(cards.first().getByRole("link").nth(1)).toBeFocused();
   await page.keyboard.press("ArrowRight");
   await expect(cards.first().getByRole("button").first()).toBeFocused();
 
   // ▼ steps to the next card; ▲ returns to the control left in the first one.
   await page.keyboard.press("ArrowDown");
-  await expect(cards.nth(1).getByRole("link")).toBeFocused();
+  await expect(cards.nth(1).getByRole("link").first()).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(cards.first().getByRole("button").first()).toBeFocused();
 
@@ -145,7 +147,7 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await expect(cards.last().getByRole("link")).toBeFocused();
+  await expect(cards.last().getByRole("link").first()).toBeFocused();
 });
 
 test("keeps walking while an arrow is held (system auto-repeat)", async ({ page }) => {
@@ -174,6 +176,7 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
     surface.evaluate(
       (el, { selector, rowAttr, edge }) => {
         const box = el.getBoundingClientRect();
+        const controls = Array.from(el.querySelectorAll<HTMLElement>(selector));
         const row = Array.from(el.querySelectorAll<HTMLElement>(`[${rowAttr}]`))
           .filter((candidate) => {
             const control = candidate.querySelector<HTMLElement>(selector);
@@ -182,7 +185,8 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
             return rect.bottom > box.top && rect.top < box.bottom;
           })
           .at(edge === "first" ? 0 : -1);
-        return row?.querySelector<HTMLElement>(selector)?.id ?? null;
+        const control = row?.querySelector<HTMLElement>(selector);
+        return control ? controls.indexOf(control) : null;
       },
       { selector: FOCUSABLE_SELECTOR, rowAttr: DOS_ROW_ATTR, edge },
     );
@@ -197,7 +201,8 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
   // The walk enters where the user is looking — the first row in sight — and
   // the view keeps the user's scroll instead of snapping back to the top.
   await page.keyboard.press("ArrowDown");
-  await expect(page.locator(`#${expected}`)).toBeFocused();
+  if (expected === null) throw new Error("no focusable row is visible");
+  await expect(surface.locator(FOCUSABLE_SELECTOR).nth(expected)).toBeFocused();
   const entered = await surface.evaluate((el) => {
     const box = el.getBoundingClientRect();
     const rect = document.activeElement?.getBoundingClientRect();
@@ -219,7 +224,8 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
   const mirroredExpected = await rowInSight("last");
 
   await page.keyboard.press("ArrowUp");
-  await expect(page.locator(`#${mirroredExpected}`)).toBeFocused();
+  if (mirroredExpected === null) throw new Error("no focusable row is visible");
+  await expect(surface.locator(FOCUSABLE_SELECTOR).nth(mirroredExpected)).toBeFocused();
   const mirrored = await surface.evaluate((el) => ({
     scrollTop: el.scrollTop,
     max: el.scrollHeight - el.clientHeight,
@@ -530,8 +536,9 @@ test("composes a thread that lives in the session", async ({ page }) => {
   await expect(form).toHaveCount(0);
   const cardTitle = card.getByRole("button", { name: title });
   await expect(cardTitle).toBeFocused();
-  // A composed thread has no route: the card must not pretend to be a link.
-  await expect(card.getByRole("link")).toHaveCount(0);
+  // A composed thread has no route: its title must not pretend to be a link.
+  // Its author is still a real public-profile link.
+  await expect(card.getByRole("link", { name: title })).toHaveCount(0);
 
   // The composed thread opens in place and survives the return to the feed.
   await cardTitle.click();

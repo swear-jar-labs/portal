@@ -264,6 +264,17 @@ export const messages = {
       hint: "These preferences live in this browser until accounts arrive.",
     },
   },
+  members: {
+    metadata: {
+      title: "Members — Swear Jar Labs",
+      description: "Public member profiles and their board threads.",
+    },
+    panelTitle: "MEMBERS.EXE",
+    threads: {
+      heading: "THREADS",
+      empty: "No threads yet.",
+    },
+  },
   board: {
     metadata: {
       title: "Discussions — Swear Jar Labs",

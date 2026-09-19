@@ -78,6 +78,20 @@
   margin: 0 0 2px;
 }
 
+/* A metadata control (for example a card byline) needs to win over the
+   stretched title link. The wrapper and passive text stay click-through. */
+.metaInteractive {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.metaInteractive a,
+.metaInteractive button,
+.metaInteractive [tabindex]:not([tabindex="-1"]) {
+  pointer-events: auto;
+}
+
 .actions {
   position: relative;
   z-index: 1;

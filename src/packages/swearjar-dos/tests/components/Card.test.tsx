@@ -67,4 +67,15 @@ describe("Card", () => {
     const html = render({ title: "Topic", href: "/discussions/1", meta: "ada" });
     expect(html).toMatch(/Topic[\s\S]*ada/);
   });
+
+  it("can raise a metadata control above the stretched title link", () => {
+    const html = render({
+      title: "Topic",
+      href: "/discussions/1",
+      meta: <button type="button">ada</button>,
+      metaInteractive: true,
+    });
+    expect(html).toContain("metaInteractive");
+    expect(html).toContain('<button type="button">ada</button>');
+  });
 });

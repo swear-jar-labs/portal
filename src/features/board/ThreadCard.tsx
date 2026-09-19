@@ -1,10 +1,11 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Avatar, Card, Stack, Tag, Text } from "@swearjar/dos";
+import { Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "./threads";
+import { MemberLink } from "./MemberLink";
 import { VoteButton } from "./VoteButton";
 import styles from "./board.module.css";
 
@@ -63,8 +64,7 @@ export function ThreadCard({
       }
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <Avatar user={thread.author.user} src={thread.author.avatar} size="md" />
-          <Text as="span">{thread.author.user}</Text>
+          <MemberLink member={thread.author} />
           <Text as="span" role="hint">
             {[
               formatAge(thread.lastActivityAt, now),
@@ -74,6 +74,7 @@ export function ThreadCard({
         </Stack>
       }
       metaPosition="before"
+      metaInteractive
       // The tags land as direct children of the card's actions row: its own
       // flex gap stays click-through, so the stretched link owns every gap
       // between them (a wrapper would raise its whole box over the link).

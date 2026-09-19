@@ -29,6 +29,9 @@ export type CardProps = {
   meta?: ReactNode;
   // The default keeps metadata under the title; a feed can put its byline first.
   metaPosition?: "before" | "after";
+  // A consumer with controls in metadata raises only its focusable children
+  // above the stretched title link; byline gaps still activate the card.
+  metaInteractive?: boolean;
   // Interactive extras raised over the stretched link (tags, vote buttons).
   actions?: ReactNode;
   className?: string;
@@ -47,12 +50,21 @@ export function Card({
   leading,
   meta,
   metaPosition = "after",
+  metaInteractive = false,
   actions,
   onActivate,
   className,
 }: CardProps) {
   const metaSlot = meta ? (
-    <div className={cx(styles.meta, metaPosition === "before" && styles.metaBefore)}>{meta}</div>
+    <div
+      className={cx(
+        styles.meta,
+        metaPosition === "before" && styles.metaBefore,
+        metaInteractive && styles.metaInteractive,
+      )}
+    >
+      {meta}
+    </div>
   ) : null;
 
   return (

@@ -2,6 +2,7 @@
 // manifest, not an implementation: explicit re-exports of the slice's
 // internals, nothing else. The contract test pins the published list.
 
-export type { ThreadSummary } from "../threads";
-export { listThreadSummariesByAuthor } from "../data";
+export type { BoardMember, ThreadSummary } from "../threads";
+export { getBoardMember, listThreadSummariesByAuthor } from "../data";
+export { MemberLayerOutlet } from "../MemberLayerContext";
 export { ThreadRows } from "../ThreadRows";

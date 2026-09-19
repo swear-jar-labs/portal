@@ -7,6 +7,14 @@ export const memberAvatars = {
   grace: "/avatars/grace.png",
 } as const satisfies Partial<Record<string, string>>;
 
+// The public member route is shared by board bylines and the future Members
+// index. User names already have the account schema's path-safe canon.
+export const MEMBER_PATH = "/members";
+
+export function memberPath(user: string): string {
+  return `${MEMBER_PATH}/${user}`;
+}
+
 export function avatarFor(user: string): string | undefined {
   return Object.hasOwn(memberAvatars, user)
     ? memberAvatars[user as keyof typeof memberAvatars]

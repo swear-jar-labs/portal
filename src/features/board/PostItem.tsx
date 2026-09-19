@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar, Button, Form, Stack, Text, Textarea } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
+import { MemberLink } from "./MemberLink";
 import { formatAge, type ThreadPost } from "./threads";
 import { postElementId, postHash } from "./post-anchor";
 import { replySchema } from "./schema";
@@ -176,8 +177,7 @@ export function PostItem({
       tabIndex={0}
     >
       <Stack direction="row" gap={6} align="center" wrap>
-        <Avatar user={post.author.user} src={post.author.avatar} size="md" />
-        <Text as="span">{post.author.user}</Text>
+        <MemberLink member={post.author} />
         <Text as="span" role="hint">
           {meta.join(" · ")}
         </Text>

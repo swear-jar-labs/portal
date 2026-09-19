@@ -14,7 +14,7 @@ type ThreadRowsProps = {
   now: string;
 };
 
-/** The member's own threads: read-only rows that open the board's thread panel
+/** A member's threads: read-only rows that open the board's thread panel
  * through a plain SPA push (modified clicks keep the native tab behavior). */
 export function ThreadRows({ threads, now }: ThreadRowsProps) {
   const router = useRouter();

@@ -70,6 +70,23 @@ export async function expectNoViolations(page: Page, context: string) {
   expect(results.violations, context).toEqual([]);
 }
 
+// Cards read the byline above the title on screen through the CSS slot order
+// (the DOM keeps the title first), so the placement is asserted geometrically.
+export async function expectAbove(first: Locator, second: Locator) {
+  const [firstBox, secondBox] = await Promise.all([first.boundingBox(), second.boundingBox()]);
+  if (!firstBox || !secondBox) throw new Error("the compared card parts are not rendered");
+  expect(firstBox.y + firstBox.height).toBeLessThanOrEqual(secondBox.y);
+}
+
+// The byline shares one row: the lead link and the hint stay centered.
+export async function expectSameVerticalCenter(first: Locator, second: Locator) {
+  const [firstBox, secondBox] = await Promise.all([first.boundingBox(), second.boundingBox()]);
+  if (!firstBox || !secondBox) throw new Error("the compared card parts are not rendered");
+  const firstCenter = firstBox.y + firstBox.height / 2;
+  const secondCenter = secondBox.y + secondBox.height / 2;
+  expect(Math.abs(firstCenter - secondCenter)).toBeLessThanOrEqual(1);
+}
+
 type Rgb = { r: number; g: number; b: number };
 
 const COLOR_PATTERN = /rgba?\((\d+),\s*(\d+),\s*(\d+)/;

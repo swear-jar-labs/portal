@@ -53,19 +53,23 @@ describe("Card", () => {
     expect(html).toContain("tags");
   });
 
-  it("can place metadata before the title for a feed byline", () => {
+  it("keeps the title first in the DOM and lifts the byline with its own class", () => {
     const html = render({
       title: "Topic",
       href: "/discussions/1",
       meta: "ada",
       metaPosition: "before",
     });
-    expect(html).toMatch(/ada[\s\S]*Topic/);
+    // The walk enters the card on its title; the CSS slot order lifts the
+    // byline above it on screen (asserted geometrically in e2e).
+    expect(html).toContain("metaBefore");
+    expect(html).toMatch(/Topic[\s\S]*ada/);
   });
 
   it("keeps metadata after the title by default", () => {
     const html = render({ title: "Topic", href: "/discussions/1", meta: "ada" });
     expect(html).toMatch(/Topic[\s\S]*ada/);
+    expect(html).not.toContain("metaBefore");
   });
 
   it("can raise a metadata control above the stretched title link", () => {

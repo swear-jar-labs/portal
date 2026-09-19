@@ -1,0 +1,341 @@
+import { expect, test, type Page } from "@playwright/test";
+import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
+import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
+import { READROOM_PATH, readroomPath, ticketPath } from "../../src/features/readroom/readrooms";
+import {
+  enterShell,
+  expectAbove,
+  expectMinimumContrast,
+  expectNoViolations,
+  expectSameVerticalCenter,
+  logon,
+  waitForHydration,
+} from "./helpers";
+
+const FEED_REGION = "READROOM.EXE";
+const FILES_REGION = "C:\\SWEARJAR";
+const BUMP = "Dissect the allocator that hides a free list behind a bump pointer";
+const RECURSIVE = "The hand-written parser: where the precedence table lies";
+const RETRY = "Postmortem read: the retry loop that never slept";
+const ARCHIVED = "Archived: the token cache that remembered everything";
+const TICKET_CHIP = "TICKET #17";
+const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
+// The PanelStack effect focuses the top layer's body; the focus is the sync
+// point for keyboard tests behind the Suspense-less RSC render.
+const focusedBody = (page: Page) => page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`);
+
+test("opens the readroom from the file manager and keeps its file current", async ({ page }) => {
+  await enterShell(page);
+  const files = page.getByRole("region", { name: FILES_REGION });
+  await files.locator("#file-READROOM").click();
+
+  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(page.getByRole("region", { name: FEED_REGION })).toBeVisible();
+  await expect(files.locator("#file-READROOM")).toHaveAttribute("aria-current", "true");
+});
+
+test("ranks the feed with every phase and the archive section", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  const cards = feed.getByRole("article");
+
+  await expect(cards).toHaveCount(5);
+  await expect(feed.getByText("5 TASKS")).toBeVisible();
+
+  // Collecting (closest deadline first), reviewing, published, archive last.
+  await expect(cards.nth(0)).toContainText(BUMP);
+  await expect(cards.nth(0)).toContainText("2D AGO");
+  await expect(cards.nth(0)).toContainText("COLLECTING");
+  await expect(cards.nth(0)).not.toContainText(/IN \d+[DWM]/);
+  await expect(cards.nth(0)).toContainText("3 NOTES");
+  await expect(cards.nth(0).getByRole("link", { name: TICKET_CHIP })).toBeVisible();
+  await expectSameVerticalCenter(
+    cards.nth(0).getByRole("link", { name: "grace" }),
+    cards.nth(0).getByText("2D AGO · 3 NOTES", { exact: true }),
+  );
+  // The byline reads above the title on screen through the CSS slot order,
+  // while the title leads the DOM: the walk enters the row on it.
+  await expectAbove(
+    cards.nth(0).getByRole("link", { name: "grace" }),
+    cards.nth(0).getByRole("link").first(),
+  );
+  await expect(cards.nth(1)).toContainText("snippet: ll1-table.txt");
+  await expect(cards.nth(1)).toContainText("0 NOTES");
+  await expect(cards.nth(2)).toContainText("REVIEWING");
+  await expect(cards.nth(2)).toContainText("1W AGO");
+  await expect(cards.nth(2)).not.toContainText("CLOSED");
+  await expect(cards.nth(3)).toContainText("PUBLISHED");
+  await expect(cards.nth(3)).toContainText("4W AGO");
+
+  await expect(feed.getByRole("heading", { name: "ARCHIVE", exact: true })).toBeVisible();
+  await expect(cards.nth(4)).toContainText(ARCHIVED);
+  await expect(cards.nth(4)).toContainText("ARCHIVED");
+  await expect(cards.nth(4)).toContainText("7W AGO");
+});
+
+test("opens a task over the feed and pops back to the focused card", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("link", { name: RECURSIVE })
+    .click();
+
+  const task = page.getByRole("region", { name: RECURSIVE });
+  await expect(page).toHaveURL(readroomPath("recursive-descent"));
+  await expect(task).toBeVisible();
+  // The task reads on paper; the feed behind it stays silver.
+  await expect(task).toHaveAttribute(DOS_SURFACE_ATTR, "paper");
+  await expect(focusedBody(page)).toBeFocused();
+  await expect(layers(page)).toHaveCount(2);
+  await expect(layers(page).first()).toHaveAttribute("inert", "");
+  await expect(layers(page).last()).not.toHaveAttribute("inert", "");
+
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(page.locator("#readroom-card-recursive-descent")).toBeFocused();
+});
+
+test("a deep link opens the stack and closes by pushing the feed", async ({ page }) => {
+  await page.goto(readroomPath("recursive-descent"));
+  await waitForHydration(page);
+  await expect(page).toHaveTitle(`${RECURSIVE} — Swear Jar Labs`);
+  await expect(focusedBody(page)).toBeFocused();
+  await expect(layers(page)).toHaveCount(2);
+
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(page.getByRole("region", { name: FEED_REGION })).toBeVisible();
+});
+
+test("a second Esc does not pop another layer while the close is in flight", async ({ page }) => {
+  await page.goto(readroomPath("recursive-descent"));
+  await waitForHydration(page);
+  await expect(focusedBody(page)).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(READROOM_PATH);
+
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("link", { name: RECURSIVE })
+    .click();
+  await expect(page).toHaveURL(readroomPath("recursive-descent"));
+  await expect(focusedBody(page)).toBeFocused();
+
+  // Both presses go out back to back: one close owns the pop.
+  await Promise.all([page.keyboard.press("Escape"), page.keyboard.press("Escape")]);
+  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(page.getByRole("region", { name: FEED_REGION })).toBeVisible();
+});
+
+test("the task [X] closes back to the feed", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("link", { name: RECURSIVE })
+    .click();
+
+  const task = page.getByRole("region", { name: RECURSIVE });
+  await task.getByRole("button", { name: "Close" }).click();
+  await expect(page).toHaveURL(READROOM_PATH);
+});
+
+test("lays a lone panel flush and steps the stacked task down", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  const margins = (target: Page) =>
+    layers(target).evaluateAll((elements) =>
+      elements.map((element) => {
+        const style = getComputedStyle(element);
+        return { left: style.marginLeft, top: style.marginTop };
+      }),
+    );
+
+  expect(await margins(page)).toEqual([{ left: "0px", top: "0px" }]);
+
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("link", { name: RECURSIVE })
+    .click();
+  await expect(layers(page)).toHaveCount(2);
+  const stacked = await margins(page);
+  expect(stacked[0]).toEqual({ left: "0px", top: "0px" });
+  expect(stacked[1]?.left).toBe("0px");
+  expect(stacked[1]?.top).not.toBe("0px");
+});
+
+test("stacks the layers flush on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.goto(readroomPath("recursive-descent"));
+  await expect(page.getByRole("region", { name: RECURSIVE })).toBeVisible();
+
+  const margin = await page
+    .locator(`[${DOC_TOP_ATTR}]`)
+    .evaluate((element) => getComputedStyle(element).marginTop);
+  expect(margin).toBe("0px");
+});
+
+test("shows the source block, the revision, the ticket chip and the Markdown pipeline", async ({
+  page,
+}) => {
+  await page.goto(readroomPath("bump-allocator"));
+  const task = page.getByRole("region", { name: BUMP });
+
+  await expect(task.getByText("SOURCE")).toBeVisible();
+  await expect(task.getByRole("link", { name: "lib/std/heap/SmpAllocator.zig" })).toHaveAttribute(
+    "href",
+    /8f9d6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f/,
+  );
+  await expect(task.getByText("REV 8f9d6a1")).toBeVisible();
+  await expect(task.getByText(/DEADLINE \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
+  // The tone directive renders as its content, not as literal markers.
+  await expect(task.getByText("O(1) worst case")).toBeVisible();
+  await expect(task.getByText(/:cyan\[/)).toHaveCount(0);
+
+  // The snippet has no repository: the code reference alone labels the source.
+  await page.goto(readroomPath("lookahead-table"));
+  const snippet = page.getByRole("region", { name: /Read the lookahead table/ });
+  await expect(snippet.getByText("snippet: ll1-table.txt")).toBeVisible();
+  await expect(snippet.getByText("REV")).toHaveCount(0);
+
+  // A code block survives the pipeline into the description.
+  await page.goto(readroomPath("recursive-descent"));
+  const parser = page.getByRole("region", { name: RECURSIVE });
+  await expect(parser.locator("pre")).toContainText("static Node *term");
+});
+
+test("links the ticket chip to Tickets and lands on the shell 404", async ({ page }) => {
+  await page.goto(readroomPath("bump-allocator"));
+  const chip = page.getByRole("region", { name: BUMP }).getByRole("link", { name: TICKET_CHIP });
+  await expect(chip).toHaveAttribute("href", ticketPath("17"));
+
+  await chip.click();
+  await expect(page).toHaveURL(ticketPath("17"));
+  await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
+  await expect(page.getByRole("menubar")).toBeVisible();
+});
+
+test("seals notes from a guest until the deadline", async ({ page }) => {
+  await page.goto(readroomPath("bump-allocator"));
+  const task = page.getByRole("region", { name: BUMP });
+  await expect(task.getByText("3 NOTES SEALED")).toBeVisible();
+  await expect(task.getByText(/max_free_chunks/)).toHaveCount(0);
+  await expect(task.getByText(/pushes the chunk back/)).toHaveCount(0);
+
+  // Past the deadline the frozen notes are public, guests included.
+  await page.goto(readroomPath("recursive-descent"));
+  await expect(
+    page.getByRole("region", { name: RECURSIVE }).getByText(/instrumenting/),
+  ).toBeVisible();
+});
+
+test("shows a member their own notes and seals the rest before the deadline", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(readroomPath("bump-allocator"));
+  const task = page.getByRole("region", { name: BUMP });
+
+  await expect(task.getByText("[YOURS]")).toBeVisible();
+  await expect(task.getByText(/max_free_chunks/)).toBeVisible();
+  await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
+  await expect(task.getByText(/pushes the chunk back/)).toHaveCount(0);
+});
+
+test("shows the report of a published task and the review hint otherwise", async ({ page }) => {
+  await page.goto(readroomPath("recursive-descent"));
+  await expect(
+    page
+      .getByRole("region", { name: RECURSIVE })
+      .getByText("Notes are closed. The lead is writing the dissection report."),
+  ).toBeVisible();
+
+  await page.goto(readroomPath("retry-loop"));
+  const task = page.getByRole("region", { name: RETRY });
+  await expect(task.getByRole("heading", { name: "DISSECTION REPORT" })).toBeVisible();
+  await expect(task.getByRole("heading", { name: "What the code does" })).toBeVisible();
+  await expect(task.getByText(/Two lines, one night/)).toBeVisible();
+  await expect(task.getByText(/PUBLISHED \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
+});
+
+test("walks the feed and the task by rows", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  const first = feed.getByRole("article").first();
+
+  // ▲/▼ enter the card rows on the card title (it leads the DOM while the
+  // byline reads above it on screen); the first step retries until the
+  // island's listeners answer (the feed hydrates after the shell clock).
+  await expect(async () => {
+    await focusedBody(page).focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(first.getByRole("link").first()).toBeFocused({ timeout: 1_000 });
+  }).toPass();
+
+  // ▶ walks from the card title to the lead link and the ticket chip, ◀ back;
+  // Space on the title opens the task.
+  await page.keyboard.press("ArrowRight");
+  await expect(first.getByRole("link").nth(1)).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(first.getByRole("link", { name: TICKET_CHIP })).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(first.getByRole("link").nth(1)).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(first.getByRole("link").first()).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(page).toHaveURL(readroomPath("bump-allocator"));
+
+  // The task's source row: ▼ enters it, ▶ walks to the ticket chip.
+  await expect(focusedBody(page)).toBeFocused();
+  const task = page.getByRole("region", { name: BUMP });
+  await page.keyboard.press("ArrowDown");
+  await expect(task.getByRole("link", { name: "lib/std/heap/SmpAllocator.zig" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(task.getByRole("link", { name: TICKET_CHIP })).toBeFocused();
+});
+
+test("keeps the feed and the task legible", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  await expectMinimumContrast(feed.getByRole("link", { name: BUMP }));
+  await expectMinimumContrast(feed.getByText("COLLECTING").first());
+  await expectMinimumContrast(feed.getByText("2D AGO · 3 NOTES", { exact: true }));
+
+  await feed.getByRole("link", { name: RETRY }).click();
+  const task = page.getByRole("region", { name: RETRY });
+  await expectMinimumContrast(task.getByText(/DEADLINE \d{4}/));
+  await expectMinimumContrast(task.getByRole("heading", { name: "DISSECTION REPORT" }));
+});
+
+test("answers an unknown task with the shell 404", async ({ page }) => {
+  await page.goto(readroomPath("no-such-task"));
+
+  await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
+  await expect(page.getByRole("menubar")).toBeVisible();
+});
+
+test("has no accessibility violations", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  await expectNoViolations(page, READROOM_PATH);
+
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("link", { name: RECURSIVE })
+    .click();
+  await expect(page.getByRole("region", { name: RECURSIVE })).toBeVisible();
+  await expectNoViolations(page, "task with sealed notes");
+
+  await page.goto(readroomPath("retry-loop"));
+  await expect(page.getByRole("region", { name: RETRY })).toBeVisible();
+  await expectNoViolations(page, "published task with the report");
+});
+
+test("has no accessibility violations as a member", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(readroomPath("bump-allocator"));
+  await expect(page.getByRole("region", { name: BUMP })).toBeVisible();
+  await expectNoViolations(page, "member task with own notes");
+});

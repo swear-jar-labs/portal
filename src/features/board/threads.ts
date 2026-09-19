@@ -4,6 +4,7 @@
 
 import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { formatAge as formatRelativeAge } from "@/shared/age";
 
 // Boards: the general one, errata (its own vocabulary, same machinery) and the
 // project boards (placeholders until the products slice lands).
@@ -93,18 +94,7 @@ export function summarizeThread(thread: Thread): ThreadSummary {
   };
 }
 
-const MINUTE_MS = 60_000;
-const HOUR_MS = 60 * MINUTE_MS;
-const DAY_MS = 24 * HOUR_MS;
-const WEEK_MS = 7 * DAY_MS;
-
 /** Compact relative age: `5M AGO`, `3H AGO`, `2D AGO`, `JUST NOW`. */
 export function formatAge(iso: string, nowIso: string): string {
-  const age = messages.board.age;
-  const ms = Date.parse(nowIso) - Date.parse(iso);
-  if (!Number.isFinite(ms) || ms < MINUTE_MS) return age.now;
-  if (ms < HOUR_MS) return `${Math.floor(ms / MINUTE_MS)}${age.minute} ${age.suffix}`;
-  if (ms < DAY_MS) return `${Math.floor(ms / HOUR_MS)}${age.hour} ${age.suffix}`;
-  if (ms < WEEK_MS) return `${Math.floor(ms / DAY_MS)}${age.day} ${age.suffix}`;
-  return `${Math.floor(ms / WEEK_MS)}${age.week} ${age.suffix}`;
+  return formatRelativeAge(iso, nowIso, messages.board.age);
 }

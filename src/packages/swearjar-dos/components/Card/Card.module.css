@@ -1,5 +1,10 @@
 .card {
   position: relative;
+  /* The slots carry an explicit visual order (byline 0 < title 1 < meta 2 <
+     actions 3) while the DOM keeps the title first: the walk enters the card
+     on its title, and the byline reads above it when a feed asks for that. */
+  display: flex;
+  flex-direction: column;
   padding: 4px 8px 6px;
   border: var(--dos-border-width) solid var(--dos-card-border, var(--dos-dark-gray));
   background: var(--dos-card-bg, var(--dos-black));
@@ -17,6 +22,7 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
+  order: 1;
 }
 
 .leading {
@@ -72,10 +78,12 @@
 
 .meta {
   margin-top: 2px;
+  order: 2;
 }
 
 .metaBefore {
   margin: 0 0 2px;
+  order: 0;
 }
 
 /* A metadata control (for example a card byline) needs to win over the
@@ -99,6 +107,7 @@
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 4px;
+  order: 3;
   /* The gaps stay click-through: only the controls themselves sit above the
      stretched link. */
   pointer-events: none;

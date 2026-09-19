@@ -14,8 +14,13 @@ import { CloseButton } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
-import { PanelStack, ShellPanel, useLoginPrompt, useShellSession } from "@/features/shell";
-import { stackMemory } from "./stack-memory";
+import {
+  PanelStack,
+  ShellPanel,
+  stackMemory,
+  useLoginPrompt,
+  useShellSession,
+} from "@/features/shell";
 import { FEED_PATH, threadPath, type BoardMember, type ThreadSummary } from "./threads";
 import { avatarFor } from "@/shared/members";
 import { ComposePanel } from "./ComposePanel";

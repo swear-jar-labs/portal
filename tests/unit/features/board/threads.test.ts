@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { messages } from "@/content/messages";
 import {
   boardIds,
-  formatAge,
   isBoardId,
   isTagId,
   tagIds,
@@ -32,21 +31,5 @@ describe("board taxonomy", () => {
 
   it("owns the thread URL canon", () => {
     expect(threadPath("read-first")).toBe("/discussions/read-first");
-  });
-});
-
-describe("formatAge", () => {
-  const now = "2026-09-16T12:00:00.000Z";
-
-  it("reads young ages as JUST NOW", () => {
-    expect(formatAge("2026-09-16T11:59:30.000Z", now)).toBe("JUST NOW");
-    expect(formatAge("not-a-date", now)).toBe("JUST NOW");
-  });
-
-  it("formats minutes, hours, days and weeks", () => {
-    expect(formatAge("2026-09-16T11:30:00.000Z", now)).toBe("30M AGO");
-    expect(formatAge("2026-09-16T09:00:00.000Z", now)).toBe("3H AGO");
-    expect(formatAge("2026-09-13T12:00:00.000Z", now)).toBe("3D AGO");
-    expect(formatAge("2026-09-01T12:00:00.000Z", now)).toBe("2W AGO");
   });
 });

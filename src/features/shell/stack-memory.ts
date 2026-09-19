@@ -1,11 +1,11 @@
-// How the board's stack was opened is only knowable from the document's own
-// session: a thread pushed from the feed or the member's rows closes with
-// browser back (the origin route returns), a deep-linked thread closes by
+// How a panel stack was opened is only knowable from the document's own
+// session: a detail pushed from a feed or the member's rows closes with
+// browser back (the origin route returns), a deep-linked detail closes by
 // pushing the feed. The memory keeps the exact route of the last push, not a
 // flag: history can walk back to an entry that was never pushed (a deep-linked
-// thread), and closing there must push the feed instead of going back off the
-// page. Every in-app push of a thread route records itself here — the board's
-// cards and the profile's rows share the memory, so a forgotten push reads as
+// detail), and closing there must push the feed instead of going back off the
+// page. Every in-app push of a detail route records itself here — the board's
+// cards and the readroom's share the memory, so a forgotten push reads as
 // a deep link on close. Module state lives exactly as long as the SPA session —
 // a full load, which is every deep link, resets it — and survives the page
 // remount a push performs.

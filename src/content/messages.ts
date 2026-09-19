@@ -135,7 +135,7 @@ export const messages = {
         RULES: "the rules",
         STATUS: "who we need now",
         DISCUSSIONS: "open the board",
-        READROOM: "the reading cycle",
+        READROOM: "the reading tasks",
         PRODUCTS: "what we build",
         TICKETS: "the work queue",
         APPLY: "join the team",
@@ -358,7 +358,50 @@ export const messages = {
     },
     age: {
       now: "JUST NOW",
-      suffix: "AGO",
+      ago: "AGO",
+      minute: "M",
+      hour: "H",
+      day: "D",
+      week: "W",
+    },
+  },
+  readroom: {
+    metadata: {
+      title: "Readroom — Swear Jar Labs",
+      description:
+        "The reading tasks: code read by hand, notes until the deadline, a dissection report at the end.",
+    },
+    phases: {
+      collecting: "COLLECTING",
+      reviewing: "REVIEWING",
+      published: "PUBLISHED",
+      archived: "ARCHIVED",
+    },
+    feed: {
+      heading: "READROOM",
+      empty: "No tasks yet. The room is quiet.",
+      archiveHeading: "ARCHIVE",
+    },
+    task: {
+      source: "SOURCE",
+      rev: "REV",
+      ticket: "TICKET",
+      deadline: "DEADLINE",
+    },
+    notes: {
+      heading: "NOTES",
+      empty: "No notes yet.",
+      yours: "[YOURS]",
+      sealed: "SEALED",
+    },
+    report: {
+      heading: "DISSECTION REPORT",
+      inProgress: "Notes are closed. The lead is writing the dissection report.",
+      stopped: "This task was stopped before a report.",
+    },
+    age: {
+      now: "JUST NOW",
+      ago: "AGO",
       minute: "M",
       hour: "H",
       day: "D",
@@ -373,6 +416,8 @@ export const pluralForms = {
   file: { one: "FILE", other: "FILES" },
   minute: { one: "MINUTE", other: "MINUTES" },
   thread: { one: "THREAD", other: "THREADS" },
+  note: { one: "NOTE", other: "NOTES" },
+  task: { one: "TASK", other: "TASKS" },
   vote: { one: "VOTE", other: "VOTES" },
   reply: { one: "REPLY", other: "REPLIES" },
 } as const satisfies Record<string, PluralForms>;

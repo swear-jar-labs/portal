@@ -29,12 +29,6 @@ export const applicationStatus = pgEnum("application_status", [
   "accepted",
   "rejected",
 ]);
-export const readroomStatus = pgEnum("readroom_status", [
-  "collecting",
-  "synthesizing",
-  "published",
-  "archived",
-]);
 
 export const user = pgTable("user", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -166,48 +160,6 @@ export const posts = pgTable(
   ],
 );
 
-export const readrooms = pgTable(
-  "readrooms",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    title: text("title").notNull(),
-    description: text("description"),
-    sourceUrl: text("source_url"),
-    codeRef: text("code_ref"),
-    deadlineAt: timestamp("deadline_at").notNull(),
-    status: readroomStatus("status").notNull().default("collecting"),
-    leadId: uuid("lead_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "restrict" }),
-    report: text("report"),
-    reportAt: timestamp("report_at"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  },
-  (table) => [
-    index("readrooms_status_idx").on(table.status),
-    index("readrooms_deadline_at_idx").on(table.deadlineAt),
-  ],
-);
-
-export const readroomNotes = pgTable(
-  "readroom_notes",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    readroomId: uuid("readroom_id")
-      .notNull()
-      .references(() => readrooms.id, { onDelete: "cascade" }),
-    authorId: uuid("author_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    body: text("body").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    editedAt: timestamp("edited_at"),
-    deletedAt: timestamp("deleted_at"),
-  },
-  (table) => [index("readroom_notes_readroom_id_idx").on(table.readroomId)],
-);
-
 export const tickets = pgTable(
   "tickets",
   {
@@ -249,6 +201,47 @@ export const ticketComments = pgTable(
     deletedAt: timestamp("deleted_at"),
   },
   (table) => [index("ticket_comments_ticket_id_idx").on(table.ticketId)],
+);
+
+export const readrooms = pgTable(
+  "readrooms",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    sourceUrl: text("source_url"),
+    codeRef: text("code_ref"),
+    sourceRevision: text("source_revision"),
+    deadlineAt: timestamp("deadline_at").notNull(),
+    archivedAt: timestamp("archived_at"),
+    leadId: uuid("lead_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    ticketId: uuid("ticket_id").references(() => tickets.id, { onDelete: "set null" }),
+    report: text("report"),
+    reportAt: timestamp("report_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("readrooms_deadline_at_idx").on(table.deadlineAt)],
+);
+
+export const readroomNotes = pgTable(
+  "readroom_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    readroomId: uuid("readroom_id")
+      .notNull()
+      .references(() => readrooms.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    editedAt: timestamp("edited_at"),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [index("readroom_notes_readroom_id_idx").on(table.readroomId)],
 );
 
 export const tags = pgTable("tags", {
@@ -369,6 +362,7 @@ export const postRelations = relations(posts, ({ one }) => ({
 
 export const readroomRelations = relations(readrooms, ({ one, many }) => ({
   lead: one(user, { fields: [readrooms.leadId], references: [user.id] }),
+  ticket: one(tickets, { fields: [readrooms.ticketId], references: [tickets.id] }),
   notes: many(readroomNotes),
 }));
 

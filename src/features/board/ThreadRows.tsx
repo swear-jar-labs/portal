@@ -6,7 +6,7 @@ import { Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { formatCount } from "@/lib/format";
-import { stackMemory } from "./stack-memory";
+import { stackMemory } from "@/features/shell";
 import { formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
 
 type ThreadRowsProps = {

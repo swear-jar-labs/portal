@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createStackMemory } from "@/features/board/stack-memory";
+import { createStackMemory } from "@/features/shell/stack-memory";
 import { FEED_PATH, threadPath } from "@/features/board/threads";
 import { memberPath } from "@/shared/members";
 

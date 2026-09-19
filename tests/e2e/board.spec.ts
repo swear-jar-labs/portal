@@ -7,7 +7,14 @@ import {
 } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { FEED_PATH, threadPath } from "../../src/features/board/threads";
-import { expectNoViolations, logon, repeatKey, waitForHydration } from "./helpers";
+import {
+  expectAbove,
+  expectNoViolations,
+  expectSameVerticalCenter,
+  logon,
+  repeatKey,
+  waitForHydration,
+} from "./helpers";
 
 const FEED_REGION = "DISCUSSIONS.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
@@ -42,6 +49,16 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
     "true",
   );
   await expect(cards.last()).toContainText("Bikeshed closed: tabs, and here is why");
+
+  const firstCard = cards.first();
+  // The byline reads above the title on screen through the CSS slot order,
+  // while the title leads the DOM: the walk enters the row on it, not on the
+  // author.
+  await expectSameVerticalCenter(
+    firstCard.getByRole("link").nth(1),
+    firstCard.locator('[data-dos-role="hint"]').first(),
+  );
+  await expectAbove(firstCard.getByRole("link").nth(1), firstCard.getByRole("link").first());
 });
 
 test("filters by tag and board and keeps the state in the URL", async ({ page }) => {
@@ -126,7 +143,8 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await expect(feed.getByRole("button", { name: "DECISION" }).first()).toBeFocused();
 
   // ▼ leaves the row for the compose control (an unmarked row of its own),
-  // then for the first card's author; ▶ walks through title and vote.
+  // then for the first card's title (it leads the DOM while the byline reads
+  // above it on screen); ▶ walks author and vote.
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: NEW_THREAD })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -136,13 +154,13 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await page.keyboard.press("ArrowRight");
   await expect(cards.first().getByRole("button").first()).toBeFocused();
 
-  // ▼ steps to the next card; ▲ returns to the control left in the first one.
+  // ▼ steps to the next card's title; ▲ returns to the control left in the first one.
   await page.keyboard.press("ArrowDown");
   await expect(cards.nth(1).getByRole("link").first()).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(cards.first().getByRole("button").first()).toBeFocused();
 
-  // The walk wraps: ▲ from the first row lands on the last card.
+  // The walk wraps: ▲ from the first row lands on the last card's title.
   await focusedBody(page).focus();
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();

@@ -1,0 +1,43 @@
+.feed {
+  min-height: 100%;
+}
+
+.cardTitle {
+  --dos-link: var(--dos-black);
+}
+
+/* The lead link is a compact control in a byline: its ring lands on the edge
+   rather than leaving the base Link's transparent outer offset. */
+.memberLinkHost {
+  display: inline-flex;
+}
+
+.memberLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memberLink:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Passive card details let the stretched title link own their gaps and text;
+   only the optional ticket link rises above it as its own target. */
+.cardTitle .cardDetails {
+  pointer-events: none;
+}
+
+.cardTitle .cardDetails a {
+  pointer-events: auto;
+}
+
+/* The ticket chip is a link: the Tag inside keeps its chip look. */
+.ticket {
+  display: inline-flex;
+}
+
+.note {
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--dos-dark-gray);
+}

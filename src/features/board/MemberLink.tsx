@@ -3,10 +3,10 @@
 import { useId, type KeyboardEvent, type MouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar, Link, Text } from "@swearjar/dos";
+import { stackMemory } from "@/features/shell";
 import { isPlainActivation } from "@/lib/activation";
 import { memberPath } from "@/shared/members";
 import { FEED_PATH } from "./threads";
-import { stackMemory } from "./stack-memory";
 import type { BoardMember } from "./threads";
 import styles from "./board.module.css";
 
@@ -41,7 +41,7 @@ export function MemberLink({ member }: MemberLinkProps) {
   // The kit Link stays an RSC leaf: the routed activation lives on this client
   // wrapper and reaches the anchor by bubbling.
   return (
-    <span onClick={openMember} onKeyDown={activateOnSpace}>
+    <span className={styles.memberLinkHost} onClick={openMember} onKeyDown={activateOnSpace}>
       <Link id={id} href={memberPath(member.user)} className={styles.memberLink}>
         <Avatar user={member.user} src={member.avatar} size="md" />
         <Text as="span">{member.user}</Text>

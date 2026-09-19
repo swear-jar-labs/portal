@@ -27,7 +27,10 @@ export type CardProps = {
   leading?: ReactNode;
   // The non-interactive line around the title (author, counts, activity).
   meta?: ReactNode;
-  // The default keeps metadata under the title; a feed can put its byline first.
+  // The byline slot: the default reads under the title, a feed reads it first.
+  // The DOM keeps the title first either way (the CSS slot order lifts the
+  // byline on screen), so the panel walk enters the card on its title and
+  // reaches the byline with →.
   metaPosition?: "before" | "after";
   // A consumer with controls in metadata raises only its focusable children
   // above the stretched title link; byline gaps still activate the card.
@@ -69,7 +72,6 @@ export function Card({
 
   return (
     <article className={cx(styles.card, current && styles.current, className)}>
-      {metaPosition === "before" ? metaSlot : null}
       <div className={styles.titleRow}>
         {leading ? <span className={styles.leading}>{leading}</span> : null}
         <Heading level={3} className={styles.heading}>
@@ -104,7 +106,7 @@ export function Card({
           )}
         </Heading>
       </div>
-      {metaPosition === "after" ? metaSlot : null}
+      {metaSlot}
       {actions ? <div className={styles.actions}>{actions}</div> : null}
     </article>
   );

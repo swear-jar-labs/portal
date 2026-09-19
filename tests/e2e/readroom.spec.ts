@@ -182,6 +182,25 @@ test("stacks the layers flush on mobile", async ({ page }) => {
   expect(margin).toBe("0px");
 });
 
+test("stacks the member layer flush on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("article")
+    .first()
+    .getByRole("link", { name: "grace" })
+    .click();
+
+  await expect(page).toHaveURL("/members/grace");
+  await expect(page.getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
+  const margin = await page
+    .locator(`[${DOC_TOP_ATTR}]`)
+    .evaluate((element) => getComputedStyle(element).marginTop);
+  expect(margin).toBe("0px");
+});
+
 test("shows the source block, the revision, the ticket chip and the Markdown pipeline", async ({
   page,
 }) => {
@@ -352,4 +371,68 @@ test("has no accessibility violations as a member", async ({ page }) => {
   await page.goto(readroomPath("bump-allocator"));
   await expect(page.getByRole("region", { name: BUMP })).toBeVisible();
   await expectNoViolations(page, "member task with own notes");
+});
+
+test("opens a lead profile over the feed and closes back to the card", async ({ page }) => {
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  const lead = feed.getByRole("article").first().getByRole("link", { name: "grace" });
+  await expect(lead).toHaveAttribute("href", "/members/grace");
+
+  // The profile link uses a client navigation instead of reloading the shell.
+  await page.evaluate(() => {
+    (window as unknown as { sjSpaMarker?: number }).sjSpaMarker = 1;
+  });
+  await lead.click();
+  await expect(page).toHaveURL("/members/grace");
+  await expect(layers(page)).toHaveCount(2);
+  const layerTops = await layers(page).evaluateAll((elements) =>
+    elements.map((element) => element.getBoundingClientRect().top),
+  );
+  expect(layerTops[0]).toBeLessThan(layerTops[1] ?? 0);
+  await expect(page.getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "grace" })).toBeVisible();
+  expect(
+    await page.evaluate(() => (window as unknown as { sjSpaMarker?: number }).sjSpaMarker),
+  ).toBe(1);
+
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(layers(page)).toHaveCount(1);
+  await expect(
+    feed.getByRole("article").first().getByRole("link", { name: "grace" }),
+  ).toBeFocused();
+
+  // The [X] button closes the same way.
+  await feed.getByRole("article").first().getByRole("link", { name: "grace" }).click();
+  await expect(page).toHaveURL("/members/grace");
+  await layers(page).last().getByRole("button", { name: "Close" }).click();
+  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(layers(page)).toHaveCount(1);
+  await expect(
+    feed.getByRole("article").first().getByRole("link", { name: "grace" }),
+  ).toBeFocused();
+});
+
+test("opens a note author profile over the task and returns to the note", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(readroomPath("bump-allocator"));
+  await waitForHydration(page);
+  const task = page.getByRole("region", { name: BUMP });
+  const author = task.getByRole("link", { name: "ada" });
+  await expect(author).toHaveAttribute("href", "/members/ada");
+
+  await author.focus();
+  await page.keyboard.press(" ");
+  await expect(page).toHaveURL("/members/ada");
+  await expect(layers(page)).toHaveCount(3);
+  await expect(page.getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
+  await expectNoViolations(page, "member layer over a task");
+
+  await page.goBack();
+  await expect(page).toHaveURL(readroomPath("bump-allocator"));
+  await expect(layers(page)).toHaveCount(2);
+  await expect(task.getByRole("link", { name: "ada" })).toBeFocused();
 });

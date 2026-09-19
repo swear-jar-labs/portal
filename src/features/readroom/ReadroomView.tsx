@@ -1,12 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Avatar, Heading, Stack, Text } from "@swearjar/dos";
+import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { useShellSession } from "@/features/shell";
 import { formatAge } from "@/shared/age";
 import { phaseOf, READROOM_CARD_ATTR, visibleNotes, type Readroom } from "./readrooms";
+import { ReadroomMemberLink } from "./ReadroomMemberLink";
 import styles from "./readroom.module.css";
 
 export type ReadroomViewProps = {
@@ -38,8 +39,7 @@ export function ReadroomView({ readroom, now, noteBodies, report }: ReadroomView
             <div key={note.id} className={styles.note} {...{ [READROOM_CARD_ATTR]: "" }}>
               <Stack gap={4}>
                 <Stack direction="row" gap={6} align="center" wrap>
-                  <Avatar user={note.author.user} src={note.author.avatar} size="sm" />
-                  <Text as="span">{note.author.user}</Text>
+                  <ReadroomMemberLink person={note.author} avatarSize="sm" />
                   {session?.user === note.author.user ? (
                     <Text as="span" role="accent">
                       {messages.readroom.notes.yours}

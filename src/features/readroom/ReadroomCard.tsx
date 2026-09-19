@@ -5,7 +5,7 @@ import { Card, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
-import { LeadLink } from "./LeadLink";
+import { ReadroomMemberLink } from "./ReadroomMemberLink";
 import { phaseOf, phaseTones, readroomPath, ticketPath, type Readroom } from "./readrooms";
 import styles from "./readroom.module.css";
 
@@ -33,7 +33,7 @@ export function ReadroomCard({ readroom, now, current = false, onActivate }: Rea
       metaInteractive
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <LeadLink lead={readroom.lead} />
+          <ReadroomMemberLink person={readroom.lead} />
           <Text as="span" role="hint">
             {[
               formatAge(readroom.createdAt, now, messages.readroom.age),

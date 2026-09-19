@@ -1,11 +1,16 @@
 import type { Element } from "hast";
 import { Children, isValidElement, type ComponentProps, type ReactNode } from "react";
-import ReactMarkdown, { type Components, type ExtraProps } from "react-markdown";
+import ReactMarkdown, {
+  defaultUrlTransform,
+  type Components,
+  type ExtraProps,
+} from "react-markdown";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import { Heading, Link, List, Text, cx, type Tone } from "@swearjar/dos";
 import { ALIGN_ATTRIBUTE, TONE_ATTRIBUTE, isTone, remarkToneDirectives } from "@/lib/markdown/tone";
+import { MARKDOWN_SRC_PROTOCOLS } from "@/lib/markdown/protocols";
 import { markdownSchema } from "@/lib/markdown/sanitize";
 import styles from "./Markdown.module.css";
 
@@ -81,6 +86,9 @@ const components: Components = {
       alt={alt ?? ""}
       loading="lazy"
       decoding="async"
+      // Anti-hotlink hosts 403 foreign Referers but serve an empty one (and it
+      // keeps our URLs private): the browser sends no Referer for these images.
+      referrerPolicy="no-referrer"
     />
   ),
 };
@@ -89,6 +97,15 @@ export type MarkdownProps = {
   children: string;
 };
 
+function markdownUrlTransform(value: string): string {
+  // react-markdown drops unknown protocols before sanitize runs; the extra
+  // protocols live in protocols.ts — anything else keeps the default verdict
+  // (schemes compare case-insensitively, like the default does).
+  const scheme = value.slice(0, value.indexOf(":")).toLowerCase();
+  if (MARKDOWN_SRC_PROTOCOLS.some((protocol) => protocol === scheme)) return value;
+  return defaultUrlTransform(value);
+}
+
 /** Shared Markdown pipeline for docs and posts: GFM + tone directives, sanitized. */
 export function Markdown({ children }: MarkdownProps) {
   return (
@@ -96,6 +113,7 @@ export function Markdown({ children }: MarkdownProps) {
       remarkPlugins={[remarkGfm, remarkDirective, remarkToneDirectives]}
       rehypePlugins={[[rehypeSanitize, markdownSchema]]}
       components={components}
+      urlTransform={markdownUrlTransform}
     >
       {children}
     </ReactMarkdown>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Avatar, Button, Form, Stack, Text, Textarea } from "@swearjar/dos";
+import { Avatar, Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
+import { Markdown } from "@/shared/Markdown/Markdown";
+import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { MemberLink } from "./MemberLink";
 import { formatAge, type ThreadPost } from "./threads";
 import { postElementId, postHash } from "./post-anchor";
@@ -18,11 +20,11 @@ const REPLY_MARKER_GLYPH = "↪";
 export type PostItemProps = {
   post: ThreadPost;
   now: string;
-  // The Markdown body rendered in RSC (fixture posts); session posts have none
-  // and read as plain text until the backend can re-render them.
+  // The Markdown body rendered in RSC (fixture posts); session posts render
+  // through the same pipeline on the client.
   body?: ReactNode;
   voted: boolean;
-  // Set once the post was edited in this session: the body becomes plain text.
+  // Set once the post was edited in this session: the body re-renders from it.
   editedBody?: string;
   deleted: boolean;
   canEdit: boolean;
@@ -138,7 +140,7 @@ export function PostItem({
   ) : editing ? (
     <Form onSubmit={saveEdit} ariaLabel={messages.board.post.editLabel}>
       <Stack gap={6}>
-        <Textarea
+        <MarkdownEditor
           label={messages.board.post.editLabel}
           name={`post-${post.id}`}
           value={draft}
@@ -156,15 +158,9 @@ export function PostItem({
       </Stack>
     </Form>
   ) : editedBody !== undefined ? (
-    <Text as="div" className={styles.plain}>
-      {editedBody}
-    </Text>
+    <Markdown>{editedBody}</Markdown>
   ) : (
-    (body ?? (
-      <Text as="div" className={styles.plain}>
-        {post.body}
-      </Text>
-    ))
+    (body ?? <Markdown>{post.body}</Markdown>)
   );
 
   return (

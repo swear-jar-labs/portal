@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button, Form, Stack, Text, Textarea } from "@swearjar/dos";
+import { Avatar, Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
+import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { replySchema } from "./schema";
 import type { ReplyTarget } from "./thread-actions";
 
-const REPLY_ROWS = 3;
+const REPLY_ROWS = 2;
 const CLEAR_TARGET_GLYPH = "[×]";
 
 export type ReplyFormProps = {
@@ -18,8 +19,8 @@ export type ReplyFormProps = {
 };
 
 /** The thread's inline reply composer: rows of the post walk (the target chip
- * has one of its own, so ▲ from the field lands on its clear control), so ▲/▼
- * leave the post list naturally. */
+ * has one of its own above the editor rows), so ▲/▼ leave the post list
+ * naturally. */
 export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
@@ -57,8 +58,8 @@ export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
     <Form onSubmit={handleSubmit} ariaLabel={messages.board.reply.formLabel}>
       <Stack gap={6} navRow>
         {target ? (
-          // The chip is a walk row of its own: ▲ from the field climbs into it
-          // and lands on the clear control.
+          // The chip is a walk row of its own above the editor: ▲ from the
+          // field climbs the toolbar and the tabs before its clear control.
           <Stack direction="row" gap={6} align="center" wrap navRow>
             <Text as="span" role="hint">
               {messages.board.reply.target}
@@ -76,7 +77,7 @@ export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
             </Button>
           </Stack>
         ) : null}
-        <Textarea
+        <MarkdownEditor
           ref={fieldRef}
           label={messages.board.reply.label}
           name="reply"

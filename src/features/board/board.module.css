@@ -37,11 +37,6 @@
   padding-bottom: 6px;
 }
 
-/* Session posts have no Markdown pass: the text keeps its line breaks. */
-.plain {
-  white-space: pre-wrap;
-}
-
 /* The post is a focusable navigation row: the ring marks which post the
    arrows are on. */
 .post:focus-visible {

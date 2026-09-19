@@ -257,10 +257,10 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   const thread = page.getByRole("region", { name: READ_FIRST });
   await expect(focusedBody(page)).toBeFocused();
 
-  // Three posts and the reply composer as the last row; the thread vote above
-  // them is an unmarked row of its own.
+  // Three posts, the reply composer as four rows (tabs, toolbar, field,
+  // submit) and the thread vote above them as an unmarked row of its own.
   const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
-  await expect(rows).toHaveCount(4);
+  await expect(rows).toHaveCount(7);
 
   await page.keyboard.press("ArrowDown");
   await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
@@ -270,14 +270,20 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await expect(rows.nth(1)).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(rows.nth(2)).toBeFocused();
-  // The reply row's first cell is its textarea.
+  // The composer walks top-down like the eyes: tabs, toolbar, field, submit.
+  await page.keyboard.press("ArrowDown");
+  await expect(thread.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(thread.getByRole("button", { name: "Code", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(thread.getByRole("button", { name: "[ POST REPLY ]" })).toBeFocused();
   // The post walk wraps at both ends.
   await page.keyboard.press("ArrowDown");
   await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "[ POST REPLY ]" })).toBeFocused();
 });
 
 test("opens a thread at the top and scrolls to the composer on reply", async ({ page }) => {
@@ -713,8 +719,12 @@ test("reaches the reply target clear control with the arrows", async ({ page }) 
     .click();
   await expect(reply).toBeFocused();
 
-  // ▲ from the empty caret climbs into the target row: the chip is a row of
-  // its own above the field.
+  // ▲ from the empty caret climbs past the toolbar and the tabs into the
+  // target row: the chip is three rows above the field.
+  await page.keyboard.press("ArrowUp");
+  await expect(thread.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(thread.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   const clear = thread.getByRole("button", { name: "Cancel reply target" });
   await expect(clear).toBeFocused();
@@ -813,13 +823,26 @@ test("walks the compose layer and returns focus to its button", async ({ page })
   const form = page.getByRole("form", { name: "NEW THREAD" });
   await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
 
-  // The form is a flat walk: any arrow steps to the next control.
+  // The form walks two axes: rows step down to the editor's field, tabs and
+  // toolbar rows, cells step across the tags and the submit pair.
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("combobox", { name: "BOARD" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("button", { name: "PROPOSAL" })).toBeFocused();
   await page.keyboard.press("ArrowRight");
   await expect(form.getByRole("button", { name: "DECISION" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("textbox", { name: "TITLE" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("textbox", { name: "BODY" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(form.getByRole("button", { name: "[ POST THREAD ]" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(form.getByRole("button", { name: "[ CANCEL ]" })).toBeFocused();
 
   await page.keyboard.press("Escape");
   await expect(form).toHaveCount(0);
@@ -834,12 +857,17 @@ test("keeps the caret in the reply textarea inside its row", async ({ page }) =>
   await reply.fill("first");
   await reply.focus();
 
-  // ◀ keeps the caret in the text; ▲ leaves the row only from its start.
+  // ◀ keeps the caret in the text; ▲ leaves the row only from its start,
+  // climbing the toolbar and the tabs before the posts.
   await page.keyboard.press("ArrowLeft");
   await expect(reply).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(reply).toBeFocused();
   await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowUp");
+  await expect(page.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(page.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
   await expect(rows.nth(2)).toBeFocused();

@@ -8,8 +8,8 @@ import type { ComposeInput } from "./schema";
 
 export type ThreadState = {
   votedPosts: ReadonlySet<string>;
-  // Edited bodies are plain text for now: the mock cannot re-run the Markdown
-  // pipeline on the client (fixture posts keep their RSC-rendered body).
+  // Edited bodies re-render through the client Markdown pipeline (session
+  // posts keep no RSC-rendered body).
   edits: ReadonlyMap<string, string>;
   deletedPosts: ReadonlySet<string>;
   addedPosts: readonly ThreadPost[];

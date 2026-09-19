@@ -73,8 +73,23 @@ describe("Markdown pipeline", () => {
     expect(html).toContain('alt="The first computer bug"');
   });
 
+  it("sends no referrer with images (anti-hotlink hosts serve an empty one)", () => {
+    expect(render("![x](https://example.com/y.jpg)")).toContain('referrerPolicy="no-referrer"');
+  });
+
   it("drops unsafe image protocols", () => {
     expect(render("![x](javascript:alert(1))")).not.toContain("javascript:");
     expect(render("![x](data:image/svg+xml,<svg/>)")).not.toContain("data:image");
+  });
+
+  it("keeps blob image sources for the editor upload imitation", () => {
+    const html = render("![picked](blob:mock-object-url)");
+    expect(html).toContain('src="blob:mock-object-url"');
+    expect(html).toContain('alt="picked"');
+  });
+
+  it("renders angle-bracketed image destinations with spaces", () => {
+    const html = render("![](<https://example.com/a b.jpg>)");
+    expect(html).toContain('src="https://example.com/a%20b.jpg"');
   });
 });

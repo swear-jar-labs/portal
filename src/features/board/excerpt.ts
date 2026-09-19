@@ -1,7 +1,7 @@
 // The reply context in one line: the parent's first line that carries text,
-// with Markdown reduced to plain words. It reads fixture bodies (raw Markdown)
-// and session posts (plain text) alike; Phase 5 keeps the signature when the
-// bodies come from the database.
+// with Markdown reduced to plain words. It reads raw Markdown bodies alike
+// (fixtures and session posts); Phase 5 keeps the signature when the bodies
+// come from the database.
 
 const FENCE_PATTERN = /^(```|~~~)/;
 const HEADING_PATTERN = /^#{1,6}\s+/;

@@ -10,10 +10,10 @@ import {
   Stack,
   Tag,
   Text,
-  Textarea,
   type SelectOption,
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { boardIds, tagIds, tagTones, type BoardId, type TagId } from "./threads";
 import { composeSchema, type ComposeInput } from "./schema";
 
@@ -89,7 +89,8 @@ export function ComposePanel({ onSubmit, onCancel }: ComposePanelProps) {
           <Text as="span" role="hint">
             {messages.board.compose.fields.tags}
           </Text>
-          <Stack direction="row" gap={4} wrap>
+          {/* One walk row: ←/→ moves between tags, ↑/↓ leaves for the fields. */}
+          <Stack direction="row" gap={4} wrap navRow>
             {tagIds.map((tag) => (
               <Tag
                 key={tag}
@@ -116,7 +117,7 @@ export function ComposePanel({ onSubmit, onCancel }: ComposePanelProps) {
           required
           error={errors.title}
         />
-        <Textarea
+        <MarkdownEditor
           label={messages.board.compose.fields.body}
           name="body"
           value={values.body}
@@ -126,7 +127,8 @@ export function ComposePanel({ onSubmit, onCancel }: ComposePanelProps) {
           error={errors.body}
         />
 
-        <Stack direction="row" gap={10} wrap>
+        {/* The submit pair walks as one row, like the reply composer's. */}
+        <Stack direction="row" gap={10} wrap navRow>
           <Button type="submit" variant="primary">
             {messages.board.compose.submit}
           </Button>

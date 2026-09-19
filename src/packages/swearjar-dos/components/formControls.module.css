@@ -21,6 +21,14 @@
   color: var(--dos-dark-gray);
 }
 
+/* A growing field follows its text instead of scrolling from the start:
+   field-sizing is progressive enhancement (without support the rows height
+   stays), the cap keeps a paste from blowing the panel. */
+.grow {
+  field-sizing: content;
+  max-height: 240px;
+}
+
 /* The field ring sits on the control edge: no transparent pixels between the
    control and the ring (same fix as the tag chip). */
 .control:focus-visible {

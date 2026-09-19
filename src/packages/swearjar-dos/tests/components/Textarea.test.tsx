@@ -42,4 +42,12 @@ describe("Textarea", () => {
     );
     expect(html).toContain("autofocus");
   });
+
+  it("grows with its text when asked", () => {
+    const html = renderToStaticMarkup(
+      <Textarea label="Body" name="body" value="text" onChange={() => {}} rows={3} autoGrow />,
+    );
+    expect(html).toMatch(/class="[^"]*\bgrow\b/);
+    expect(html).toContain("min-height:calc(3lh)");
+  });
 });

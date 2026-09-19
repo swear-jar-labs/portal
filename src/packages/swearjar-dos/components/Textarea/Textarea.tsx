@@ -17,6 +17,9 @@ export type TextareaProps = {
   error?: string;
   // An inline editor: opening it hands the caret to the text right away.
   autoFocus?: boolean;
+  // The field grows with its text (CSS field-sizing under the rows height,
+  // capped by CSS) instead of scrolling from the start.
+  autoGrow?: boolean;
   // The control itself, for a consumer that moves the caret on its own (the
   // reply target changes hand it back to the field).
   ref?: Ref<HTMLTextAreaElement>;
@@ -33,9 +36,13 @@ export function Textarea({
   required = false,
   error,
   autoFocus = false,
+  autoGrow = false,
   ref,
   className,
 }: TextareaProps) {
+  // field-sizing sizes to content from zero, ignoring rows: the minimum comes
+  // from the rows count in line units, so each consumer keeps its own base.
+  const growStyle = autoGrow ? { minHeight: `calc(${rows}lh)` } : undefined;
   const id = useId();
   const errorId = `${id}-error`;
 
@@ -60,7 +67,8 @@ export function Textarea({
         autoFocus={autoFocus}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={styles.control}
+        className={cx(styles.control, autoGrow && styles.grow)}
+        style={growStyle}
       />
       {error ? (
         <span id={errorId} className={styles.error}>

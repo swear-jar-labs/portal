@@ -408,6 +408,25 @@ export const messages = {
       week: "W",
     },
   },
+  editor: {
+    writeTab: "[ WRITE ]",
+    previewTab: "[ PREVIEW ]",
+    previewEmpty: "Nothing to preview yet.",
+    tools: {
+      code: "Code",
+      block: "Code block",
+      link: "Link",
+    },
+    image: {
+      label: "Image",
+      urlLabel: "URL",
+      insert: "[ INSERT ]",
+      badUrl: "Paste an http(s) image URL.",
+      fileButton: "[ PICK FILE ]",
+      fileOr: "OR",
+      temp: "Picked files preview until reload — nothing is uploaded yet.",
+    },
+  },
 } as const;
 
 export const pluralForms = {

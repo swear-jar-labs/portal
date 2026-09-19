@@ -13,6 +13,8 @@ export type ButtonProps = {
   variant?: "default" | "primary" | "danger" | "ghost";
   disabled?: boolean;
   ariaLabel?: string;
+  // A toggle button (the editor's write/preview tabs) exposes its state.
+  ariaPressed?: boolean;
   className?: string;
   style?: CSSProperties;
 };
@@ -25,6 +27,7 @@ export function Button({
   variant = "default",
   disabled = false,
   ariaLabel,
+  ariaPressed,
   className,
   style,
 }: ButtonProps) {
@@ -35,6 +38,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
       className={cx(styles.button, styles[variant], className)}
       style={style}
     >

@@ -18,7 +18,7 @@ export type ThreadViewProps = {
   thread: Thread;
   now: string;
   // Markdown bodies of the fixture posts, rendered in RSC and keyed by post id;
-  // a locally composed thread has none (plain text until the backend lands).
+  // session posts render through the same pipeline on the client.
   bodies?: Record<string, ReactNode>;
 };
 

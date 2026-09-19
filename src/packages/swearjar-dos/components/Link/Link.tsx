@@ -8,6 +8,9 @@ export type LinkProps = {
   tone?: Tone;
   external?: boolean;
   underline?: boolean;
+  // A download target (a same-origin blob): the browser saves the file instead
+  // of navigating away from the shell.
+  download?: string;
   className?: string;
   id?: string;
 };
@@ -18,6 +21,7 @@ export function Link({
   tone,
   external = false,
   underline = false,
+  download,
   className,
   id,
 }: LinkProps) {
@@ -30,6 +34,7 @@ export function Link({
       className={cx(styles.link, underline && styles.underline, className)}
       style={toneStyle(tone)}
       {...externalProps}
+      {...(download === undefined ? {} : { download })}
     >
       {children}
     </a>

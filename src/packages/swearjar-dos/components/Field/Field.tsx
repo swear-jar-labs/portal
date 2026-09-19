@@ -9,7 +9,7 @@ export type FieldProps = {
   name: string;
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "email" | "password" | "search";
+  type?: "text" | "email" | "password" | "search" | "datetime-local";
   placeholder?: string;
   autoComplete?: string;
   required?: boolean;

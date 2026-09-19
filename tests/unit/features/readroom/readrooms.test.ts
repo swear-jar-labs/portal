@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { messages } from "@/content/messages";
 import {
   formatDeadlineDate,
+  hasNoteBy,
+  isLead,
   phaseOf,
   phaseTones,
   rankReadrooms,
   readroomPath,
   readroomPhases,
+  readroomTagIds,
   ticketPath,
   visibleNotes,
   type Readroom,
@@ -22,8 +26,8 @@ function readroom(overrides: Partial<Readroom> = {}): Readroom {
   return {
     id: "task",
     title: "Task",
+    tags: [],
     description: "Description",
-    codeRef: "src/file.ts",
     lead: { user: "ada" },
     createdAt: "2026-09-15T12:00:00.000Z",
     deadlineAt: DEADLINE,
@@ -179,5 +183,26 @@ describe("stamps", () => {
   it("owns the URL canon", () => {
     expect(readroomPath("retry-loop")).toBe("/readroom/retry-loop");
     expect(ticketPath("17")).toBe("/tickets/17");
+  });
+
+  it("gives every tag id a label and no stranger", () => {
+    expect(Object.keys(messages.readroom.tags).sort()).toEqual([...readroomTagIds].sort());
+  });
+
+  it("reads the lead by authorship", () => {
+    const task = readroom({ lead: { user: "ada" } });
+    expect(isLead(task, "ada")).toBe(true);
+    expect(isLead(task, "ken")).toBe(false);
+    expect(isLead(task, null)).toBe(false);
+  });
+
+  it("sees one note per reader as the posting gate", () => {
+    const notes = [
+      note("n1", "ada", "2026-09-15T12:00:00.000Z"),
+      note("n2", "ken", "2026-09-15T13:00:00.000Z"),
+    ];
+    expect(hasNoteBy(notes, "ada")).toBe(true);
+    expect(hasNoteBy(notes, "grace")).toBe(false);
+    expect(hasNoteBy(notes, null)).toBe(false);
   });
 });

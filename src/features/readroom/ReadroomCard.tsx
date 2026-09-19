@@ -15,11 +15,23 @@ export type ReadroomCardProps = {
   readroom: Readroom;
   now: string;
   current?: boolean;
+  // A task composed in this session has no route: its card activates in place
+  // instead of linking to a page that does not exist.
+  local?: boolean;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
 };
 
-export function ReadroomCard({ readroom, now, current = false, onActivate }: ReadroomCardProps) {
+export function ReadroomCard({
+  readroom,
+  now,
+  current = false,
+  local = false,
+  onActivate,
+}: ReadroomCardProps) {
   const phase = phaseOf(readroom, now);
+  // A composed task has no route: the card activates in place (the title is a
+  // button, so a context menu or drag cannot open a page that does not exist).
+  const activation = local ? { onActivate } : { href: readroomPath(readroom.id), onActivate };
 
   return (
     <Card
@@ -27,8 +39,7 @@ export function ReadroomCard({ readroom, now, current = false, onActivate }: Rea
       title={readroom.title}
       className={styles.cardTitle}
       current={current}
-      href={readroomPath(readroom.id)}
-      onActivate={onActivate}
+      {...activation}
       metaPosition="before"
       metaInteractive
       meta={
@@ -50,9 +61,9 @@ export function ReadroomCard({ readroom, now, current = false, onActivate }: Rea
               <Tag>{`${messages.readroom.task.ticket} #${readroom.ticket}`}</Tag>
             </Link>
           )}
-          <Text as="span" role="hint">
-            {readroom.codeRef}
-          </Text>
+          {readroom.tags.map((tag) => (
+            <Tag key={tag}>{messages.readroom.tags[tag]}</Tag>
+          ))}
         </Stack>
       }
     />

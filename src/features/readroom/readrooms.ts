@@ -15,6 +15,32 @@ export const phaseTones: Partial<Record<ReadroomPhase, Tone>> = {
   published: "cyan",
 };
 
+// The cycle tags: the readroom's own taxonomy of what interests a programmer
+// (languages, SQL and the adjacent platforms). Labels live in messages; the
+// seed list is fixed until the taxonomy grows a consumer (a feed filter).
+export const readroomTagIds = [
+  "c",
+  "cpp",
+  "rust",
+  "go",
+  "python",
+  "typescript",
+  "sql",
+  "js",
+  "java",
+  "kotlin",
+  "dotnet",
+  "php",
+  "ruby",
+  "ios",
+  "android",
+  "linux",
+  "windows",
+  "macos",
+] as const;
+
+export type ReadroomTagId = (typeof readroomTagIds)[number];
+
 export type ReadroomPerson = {
   user: string;
   avatar?: string;
@@ -27,17 +53,29 @@ export type ReadroomNote = {
   createdAt: string;
 };
 
+// An attached file of a task. The UI-first mock points `url` at a blob that
+// lives one SPA session; Phase 5 swaps it for a storage key (attachments-viewer)
+// and the field set stays.
+export type ReadroomAttachment = {
+  id: string;
+  name: string;
+  size: number;
+  url: string;
+};
+
 export type Readroom = {
   id: string;
   title: string;
+  // The curiosity tags of the cycle: what the reading exercises. Empty is a
+  // valid answer — the taxonomy lives beside the tags, not in the title.
+  tags: readonly ReadroomTagId[];
   // The opening description: rendered as a white card under the source block.
   description: string;
-  // The source is link-first: `sourceUrl` is a revision-pinned permalink, the
-  // viewer is the forge. A snippet without a repository has no URL and no
-  // revision — `codeRef` alone labels it.
+  // The source is link-first: `sourceUrl` is a revision-pinned permalink and
+  // the viewer is the forge. The link is all the source there is — what to read
+  // and on which revision lives in the description (a snippet has no URL at
+  // all and needs none).
   sourceUrl?: string;
-  codeRef: string;
-  revision?: string;
   lead: ReadroomPerson;
   createdAt: string;
   deadlineAt: string;
@@ -54,6 +92,9 @@ export type Readroom = {
 // body) stamp this attribute: the e2e whiteness check keys on it instead of
 // the hashed CSS-module classes.
 export const READROOM_CARD_ATTR = "data-readroom-card";
+
+// The note anchor: the closed inline editor hands the keyboard back to it.
+export const noteElementId = (id: string) => `readroom-note-${id}`;
 
 // The readroom's URL canon.
 export const READROOM_PATH = "/readroom";
@@ -74,6 +115,20 @@ export function phaseOf(
   if (readroom.archivedAt !== undefined) return "archived";
   if (readroom.report !== undefined) return "published";
   return Date.parse(nowIso) < Date.parse(readroom.deadlineAt) ? "collecting" : "reviewing";
+}
+
+/** The lead owns the cycle: the write-up, the deadline moves and the stop.
+ * UI-first slices have no roles yet — the mock reads the lead by authorship;
+ * Phase 5 keeps the check and adds the reviewer+ rule on top. */
+export function isLead(readroom: Pick<Readroom, "lead">, user: string | null): boolean {
+  return user !== null && readroom.lead.user === user;
+}
+
+/** READROOM.md §4: a participant posts one note per cycle — the note is edited
+ * until the deadline, never duplicated. */
+export function hasNoteBy(notes: readonly ReadroomNote[], user: string | null): boolean {
+  if (user === null) return false;
+  return notes.some((note) => note.author.user === user);
 }
 
 export type VisibleNotes = {

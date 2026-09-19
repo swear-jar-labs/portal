@@ -22,7 +22,7 @@ describe("readroom fixtures", () => {
     expect([...phases].sort()).toEqual(["archived", "collecting", "published", "reviewing"]);
   });
 
-  it("keeps the fact invariants: report, archive and revision come with their stamps", async () => {
+  it("keeps the fact invariants: report and archive come with their stamps", async () => {
     for (const readroom of await listReadrooms()) {
       expect(
         Date.parse(readroom.createdAt),
@@ -34,9 +34,6 @@ describe("readroom fixtures", () => {
       if (readroom.reportAt !== undefined) {
         expect(readroom.report, `${readroom.id} has reportAt without a report`).toBeDefined();
       }
-      if (readroom.sourceUrl !== undefined) {
-        expect(readroom.revision, `${readroom.id} has a source but no revision`).toBeDefined();
-      }
       if (readroom.archivedAt !== undefined) {
         expect(readroom.report, `${readroom.id} is archived without a report`).toBeDefined();
         expect(
@@ -44,6 +41,14 @@ describe("readroom fixtures", () => {
           `${readroom.id} is archived before the report`,
         ).toBeGreaterThanOrEqual(Date.parse(readroom.reportAt ?? readroom.deadlineAt));
       }
+    }
+  });
+
+  it("keeps the tags of a task unique and known", async () => {
+    for (const readroom of await listReadrooms()) {
+      expect(new Set(readroom.tags).size, `${readroom.id} repeats a tag`).toBe(
+        readroom.tags.length,
+      );
     }
   });
 
@@ -62,6 +67,8 @@ describe("readroom fixtures", () => {
 
       const noteIds = readroom.notes.map((note) => note.id);
       expect(new Set(noteIds).size, `${readroom.id} repeats a note id`).toBe(noteIds.length);
+      const authors = readroom.notes.map((note) => note.author.user);
+      expect(new Set(authors).size, `${readroom.id} repeats a note author`).toBe(authors.length);
       let previous = Number.NEGATIVE_INFINITY;
       for (const note of readroom.notes) {
         expect(KNOWN_USERS, `${note.id} has an unknown author`).toContain(note.author.user);

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
+import { messages } from "../../src/content/messages";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import {
   READROOM_CARD_ATTR,
@@ -65,7 +66,6 @@ test("ranks the feed with every phase and the archive section", async ({ page })
     cards.nth(0).getByRole("link", { name: "grace" }),
     cards.nth(0).getByRole("link").first(),
   );
-  await expect(cards.nth(1)).toContainText("snippet: ll1-table.txt");
   await expect(cards.nth(1)).toContainText("0 NOTES");
   await expect(cards.nth(2)).toContainText("REVIEWING");
   await expect(cards.nth(2)).toContainText("1W AGO");
@@ -201,28 +201,25 @@ test("stacks the member layer flush on mobile", async ({ page }) => {
   expect(margin).toBe("0px");
 });
 
-test("shows the source block, the revision, the ticket chip and the Markdown pipeline", async ({
-  page,
-}) => {
+test("shows the source link, the ticket chip and the Markdown pipeline", async ({ page }) => {
   await page.goto(readroomPath("bump-allocator"));
   const task = page.getByRole("region", { name: BUMP });
 
   await expect(task.getByText("SOURCE")).toBeVisible();
-  await expect(task.getByRole("link", { name: "lib/std/heap/SmpAllocator.zig" })).toHaveAttribute(
+  await expect(task.getByRole("link", { name: /SmpAllocator\.zig$/ })).toHaveAttribute(
     "href",
     /8f9d6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f/,
   );
-  await expect(task.getByText("REV 8f9d6a1")).toBeVisible();
   await expect(task.getByText(/DEADLINE \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
   // The tone directive renders as its content, not as literal markers.
   await expect(task.getByText("O(1) worst case")).toBeVisible();
   await expect(task.getByText(/:cyan\[/)).toHaveCount(0);
 
-  // The snippet has no repository: the code reference alone labels the source.
+  // The snippet has no repository: no source row at all, only its tag.
   await page.goto(readroomPath("lookahead-table"));
   const snippet = page.getByRole("region", { name: /Read the lookahead table/ });
-  await expect(snippet.getByText("snippet: ll1-table.txt")).toBeVisible();
-  await expect(snippet.getByText("REV")).toHaveCount(0);
+  await expect(snippet.getByText("SOURCE")).toHaveCount(0);
+  await expect(snippet.getByText("C", { exact: true })).toBeVisible();
 
   // A code block survives the pipeline into the description.
   await page.goto(readroomPath("recursive-descent"));
@@ -264,6 +261,19 @@ test("shows a member their own notes and seals the rest before the deadline", as
   await expect(task.getByText(/max_free_chunks/)).toBeVisible();
   await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
   await expect(task.getByText(/pushes the chunk back/)).toHaveCount(0);
+  // One note per reader: the composer stays closed while her note stands.
+  await expect(task.getByRole("textbox", { name: "NOTE" })).toHaveCount(0);
+  await expect(task.getByText(messages.readroom.notes.posted)).toBeVisible();
+
+  // The author deletes her note: the seal keeps the others, the composer returns.
+  await task.getByRole("button", { name: "[ DELETE ]" }).click();
+  await page
+    .getByRole("dialog", { name: "DELETE NOTE" })
+    .getByRole("button", { name: "[ DELETE ]" })
+    .click();
+  await expect(task.getByText(/max_free_chunks/)).toHaveCount(0);
+  await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
+  await expect(task.getByRole("textbox", { name: "NOTE" })).toBeFocused();
 });
 
 test("shows the report of a published task and the review hint otherwise", async ({ page }) => {
@@ -299,9 +309,14 @@ test("walks the feed and the task by rows", async ({ page }) => {
 
   // ▲/▼ enter the card rows on the card title (it leads the DOM while the
   // byline reads above it on screen); the first step retries until the
-  // island's listeners answer (the feed hydrates after the shell clock).
+  // island's listeners answer (the feed hydrates after the shell clock). The
+  // compose row leads the feed, the cards follow.
   await expect(async () => {
     await focusedBody(page).focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("button", { name: "[ NEW TASK ]" })).toBeFocused({
+      timeout: 1_000,
+    });
     await page.keyboard.press("ArrowDown");
     await expect(first.getByRole("link").first()).toBeFocused({ timeout: 1_000 });
   }).toPass();
@@ -323,7 +338,7 @@ test("walks the feed and the task by rows", async ({ page }) => {
   await expect(focusedBody(page)).toBeFocused();
   const task = page.getByRole("region", { name: BUMP });
   await page.keyboard.press("ArrowDown");
-  await expect(task.getByRole("link", { name: "lib/std/heap/SmpAllocator.zig" })).toBeFocused();
+  await expect(task.getByRole("link", { name: /SmpAllocator\.zig$/ })).toBeFocused();
   await page.keyboard.press("ArrowRight");
   await expect(task.getByRole("link", { name: TICKET_CHIP })).toBeFocused();
 });

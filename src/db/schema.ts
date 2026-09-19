@@ -210,8 +210,6 @@ export const readrooms = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     sourceUrl: text("source_url"),
-    codeRef: text("code_ref"),
-    sourceRevision: text("source_revision"),
     deadlineAt: timestamp("deadline_at").notNull(),
     archivedAt: timestamp("archived_at"),
     leadId: uuid("lead_id")

@@ -28,6 +28,7 @@ const readrooms: readonly Readroom[] = [
   {
     id: "bump-allocator",
     title: "Dissect the allocator that hides a free list behind a bump pointer",
+    tags: [],
     description: [
       "The surface is a textbook bump allocator: one pointer, one bound, no free.",
       "",
@@ -35,8 +36,6 @@ const readrooms: readonly Readroom[] = [
     ].join("\n"),
     sourceUrl:
       "https://github.com/ziglang/zig/blob/8f9d6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f/lib/std/heap/SmpAllocator.zig",
-    codeRef: "lib/std/heap/SmpAllocator.zig",
-    revision: "8f9d6a1",
     lead: grace,
     createdAt: daysFromNow(-2),
     deadlineAt: daysFromNow(4),
@@ -65,12 +64,21 @@ const readrooms: readonly Readroom[] = [
   {
     id: "lookahead-table",
     title: "Read the lookahead table a generator wrote: 4,096 states, no comments",
+    tags: ["c"],
     description: [
-      "This one is machine-written: an LL(1) table emitted by a parser generator, provenance left at the grammar file.",
+      "This one is machine-written: an LL(1) table emitted by a parser generator, provenance left at the grammar file. An excerpt is pasted below — 4,096 rows in the full table, no comments.",
+      "",
+      "```text",
+      "state   '+'    '-'    '*'    '/'    NUM    '('    ')'",
+      "E        -      -      -      -     T1      -      -",
+      "E'      +E'    -E'     -      -      -      -     eps",
+      "T        -      -      -      -     F1      -      -",
+      "T'       -      -     *T'    /T'     -      -     eps",
+      "F        -      -      -      -      n     (E)     -",
+      "```",
       "",
       "Find the rows that can never fire. Say whether each is a bug or a mercy — a generator is allowed to be clever, but we are the ones who defend this table at 3am.",
     ].join("\n"),
-    codeRef: "snippet: ll1-table.txt",
     lead: ken,
     createdAt: daysFromNow(-1),
     deadlineAt: daysFromNow(6),
@@ -79,6 +87,7 @@ const readrooms: readonly Readroom[] = [
   {
     id: "recursive-descent",
     title: "The hand-written parser: where the precedence table lies",
+    tags: ["c"],
     description: [
       "Four hundred lines, no generator, and one table that disagrees with the `switch` beside it. The function below is the whole grammar — the table it consults is not.",
       "",
@@ -96,8 +105,6 @@ const readrooms: readonly Readroom[] = [
     ].join("\n"),
     sourceUrl:
       "https://github.com/swear-jar-labs/parser-lab/blob/3b1f9c2d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b/src/parser.c",
-    codeRef: "src/parser.c",
-    revision: "3b1f9c2",
     lead: ada,
     createdAt: daysFromNow(-7),
     deadlineAt: daysFromNow(-4),
@@ -125,6 +132,7 @@ const readrooms: readonly Readroom[] = [
   {
     id: "retry-loop",
     title: "Postmortem read: the retry loop that never slept",
+    tags: ["go", "linux"],
     description: [
       "A queue worker with exponential backoff — except the exponent was an `int` and the jitter was added *after* the cap.",
       "",
@@ -132,8 +140,6 @@ const readrooms: readonly Readroom[] = [
     ].join("\n"),
     sourceUrl:
       "https://github.com/swear-jar-labs/queue-lab/blob/c41d0aa7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3/internal/queue/retry.go",
-    codeRef: "internal/queue/retry.go",
-    revision: "c41d0aa",
     lead: ken,
     createdAt: daysFromNow(-28),
     deadlineAt: daysFromNow(-21),
@@ -182,13 +188,12 @@ const readrooms: readonly Readroom[] = [
   {
     id: "token-cache",
     title: "Archived: the token cache that remembered everything",
+    tags: ["go"],
     description: [
       "A cache with a TTL — and a map that never forgot the keys. We read it once, published the write-up, and archived the task when the service was retired.",
     ].join("\n"),
     sourceUrl:
       "https://github.com/swear-jar-labs/auth-lab/blob/d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4/cache/tokens.go",
-    codeRef: "cache/tokens.go",
-    revision: "d5e6f7a",
     lead: grace,
     createdAt: daysFromNow(-49),
     deadlineAt: daysFromNow(-42),

@@ -7,10 +7,11 @@ import { Stack } from "@swearjar/dos";
 import { isPlainActivation } from "@/lib/activation";
 import { stackMemory, useLoginPrompt, useShellSession } from "@/features/shell";
 import * as boardStore from "./board-store";
-import { FEED_PATH, threadPath, type TagId, type ThreadSummary } from "./threads";
+import { FEED_PATH, threadPath, type BoardId, type TagId, type ThreadSummary } from "./threads";
 import { ThreadCard } from "./ThreadCard";
 
 export type JournalRowsProps = {
+  board: BoardId;
   // The board's fixture summaries (preview-sized by the caller).
   threads: readonly ThreadSummary[];
   now: string;
@@ -25,7 +26,7 @@ export type JournalRowsProps = {
  * reads. Threads composed in this session have no route yet, so the journal
  * skips them (the board opens them in place); tag filtering stays global, as
  * on the board. */
-export function JournalRows({ threads, now, sectionPath = FEED_PATH }: JournalRowsProps) {
+export function JournalRows({ board, threads, now, sectionPath = FEED_PATH }: JournalRowsProps) {
   const router = useRouter();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
@@ -62,7 +63,8 @@ export function JournalRows({ threads, now, sectionPath = FEED_PATH }: JournalRo
   };
 
   const filterTag = (tag: TagId) => {
-    router.push(`${FEED_PATH}?tag=${tag}`);
+    // Tag filtering keeps the project scope: the board opens on this journal.
+    router.push(`${FEED_PATH}?board=${board}&tag=${tag}`);
   };
 
   return (

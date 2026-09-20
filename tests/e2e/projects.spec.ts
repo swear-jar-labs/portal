@@ -128,6 +128,19 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await expect(page).toHaveURL("/discussions?board=swearjar-dos");
 });
 
+test("filters the board by tag inside the project scope", async ({ page }) => {
+  await page.goto(projectPath("swearjar-dos"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+
+  await panel
+    .getByRole("article")
+    .filter({ hasText: "Palette check: CGA against the CRT glow" })
+    .getByRole("button", { name: "QUESTION" })
+    .click();
+  await expect(page).toHaveURL("/discussions?board=swearjar-dos&tag=question");
+});
+
 test("votes in the journal", async ({ page }) => {
   await logon(page);
   await page.goto(projectPath("swearjar-dos"));

@@ -118,7 +118,12 @@ export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
         {journal.length === 0 ? (
           <Text role="hint">{messages.projects.journal.empty}</Text>
         ) : (
-          <JournalRows threads={journal} now={now} sectionPath={PROJECTS_PATH} />
+          <JournalRows
+            board={project.slug}
+            threads={journal}
+            now={now}
+            sectionPath={PROJECTS_PATH}
+          />
         )}
         <Stack navRow>
           <Link href={journalHref}>{messages.projects.journal.allThreads}</Link>

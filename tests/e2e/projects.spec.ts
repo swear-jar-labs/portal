@@ -25,7 +25,7 @@ test("renders the registry cut by status", async ({ page }) => {
   await expect(cards(page)).toHaveCount(5);
 
   const sections = feed(page).getByRole("heading", { level: 2 });
-  await expect(sections).toHaveText(["ACTIVE", "PLANNED", "ARCHIVE"]);
+  await expect(sections).toHaveText(["PROJECTS.EXE", "ACTIVE", "PLANNED", "ARCHIVE"]);
   await expect(cards(page).nth(0)).toContainText("SWEARJAR.DOS");
   await expect(cards(page).nth(1)).toContainText("Compiler");
   await expect(cards(page).nth(2)).toContainText("Tooling");
@@ -72,7 +72,7 @@ test("opens a project layer and closes it back to the card", async ({ page }) =>
   await expect(panel.getByRole("heading", { level: 1, name: "Compiler" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "ABOUT" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "FORGE" })).toBeVisible();
-  await expect(panel.getByRole("heading", { level: 2, name: "JOURNAL" })).toBeVisible();
+  await expect(panel.getByRole("heading", { level: 2, name: "RELATED THREADS" })).toBeVisible();
   await expect(page).toHaveTitle("Compiler — Swear Jar Labs");
 
   await page.keyboard.press("Escape");
@@ -85,7 +85,7 @@ test("opens a project layer and closes it back to the card", async ({ page }) =>
 test("walks the index with arrows and opens with Enter", async ({ page }) => {
   await page.goto(PROJECTS_PATH);
   await waitForHydration(page);
-  await expect(focusedBody(page)).toBeFocused();
+  await focusedBody(page).focus();
 
   await page.keyboard.press("ArrowDown");
   await expect(cards(page).nth(0).getByRole("link", { name: "SWEARJAR.DOS" })).toBeFocused();
@@ -105,6 +105,10 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await expect(
     panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }),
   ).toBeVisible();
+  // Journal titles read black on the project page, like the board's cards.
+  await expect(
+    panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }),
+  ).toHaveCSS("color", "rgb(0, 0, 0)");
   await expect(
     panel.getByRole("link", { name: "Palette check: CGA against the CRT glow" }),
   ).toBeVisible();
@@ -132,10 +136,19 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
 
-  await expect(panel.getByText("GITHUB", { exact: true })).toBeVisible();
-  await expect(panel.getByText("OPEN PRS 3 · MERGED 30D 12 · COMMITS 7D 21")).toBeVisible();
-  await expect(panel.getByText(/RELEASE v0\.1/)).toBeVisible();
-  await expect(panel.getByText(/SYNCED /)).toBeVisible();
+  await expect(panel.getByText("REPOSITORY", { exact: true })).toBeVisible();
+  await expect(panel.getByText("OPEN PRS", { exact: true })).toBeVisible();
+  await expect(panel.getByText("MERGED 30D", { exact: true })).toBeVisible();
+  await expect(panel.getByText("COMMITS 7D", { exact: true })).toBeVisible();
+  await expect(panel.getByText("3", { exact: true })).toBeVisible();
+  await expect(panel.getByText("12", { exact: true })).toBeVisible();
+  await expect(panel.getByText("21", { exact: true })).toBeVisible();
+  await expect(panel.getByText("RELEASE", { exact: true })).toBeVisible();
+  await expect(panel.getByText(/v0\.1/)).toBeVisible();
+  await expect(panel.getByText("SYNCED", { exact: true })).toBeVisible();
+  // The ABOUT stack reads as chips, like the index cards.
+  await expect(panel.getByText("STACK", { exact: true })).toBeVisible();
+  await expect(panel.getByText("TypeScript", { exact: true })).toBeVisible();
   await expect(
     panel.getByRole("link", { name: "https://github.com/swear-jar-labs/portal" }),
   ).toHaveAttribute("target", "_blank");

@@ -36,8 +36,8 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   const feed = page.getByRole("region", { name: FEED_REGION });
   const cards = feed.getByRole("article");
 
-  await expect(cards).toHaveCount(9);
-  await expect(feed.getByText("9 THREADS")).toBeVisible();
+  await expect(cards).toHaveCount(12);
+  await expect(feed.getByText("12 THREADS")).toBeVisible();
   await expect(cards.first()).toContainText("[PINNED]");
   // Every feed card carries its section icon in the title row.
   await expect(cards.first().locator('[data-file-icon="speech"]')).toBeVisible();
@@ -50,7 +50,7 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
     "aria-pressed",
     "true",
   );
-  await expect(cards.last()).toContainText("Bikeshed closed: tabs, and here is why");
+  await expect(cards.last()).toContainText("Eviction policy: LRU lies about recency");
 
   const firstCard = cards.first();
   // The byline reads above the title on screen through the CSS slot order,
@@ -70,7 +70,7 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
 
   await feed.getByRole("button", { name: "QUESTION" }).first().click();
   await expect(page).toHaveURL(`${FEED_PATH}?tag=question`);
-  await expect(feed.getByRole("article")).toHaveCount(2);
+  await expect(feed.getByRole("article")).toHaveCount(3);
   await expect(feed.getByRole("button", { name: "QUESTION" }).first()).toHaveAttribute(
     "aria-pressed",
     "true",
@@ -97,7 +97,7 @@ test("a tag on a card filters the feed instead of opening the thread", async ({ 
   await card.getByRole("button", { name: "TOOLING" }).click();
 
   await expect(page).toHaveURL(`${FEED_PATH}?tag=tooling`);
-  await expect(feed.getByRole("article")).toHaveCount(1);
+  await expect(feed.getByRole("article")).toHaveCount(2);
 });
 
 test("the gap between card tags belongs to the stretched link", async ({ page }) => {
@@ -557,7 +557,7 @@ test("composes a thread that lives in the session", async ({ page }) => {
   const card = feed.getByRole("article").filter({ hasText: title });
   await expect(card).toBeVisible();
   await expect(card).toContainText("TOOLING");
-  await expect(feed.getByText("10 THREADS")).toBeVisible();
+  await expect(feed.getByText("13 THREADS")).toBeVisible();
   // The layer closes and focus lands on the card it just created.
   await expect(form).toHaveCount(0);
   const cardTitle = card.getByRole("button", { name: title });

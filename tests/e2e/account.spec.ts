@@ -65,7 +65,8 @@ test.describe("member session", () => {
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
 
     // The Google demo user carries a picture; the letter square stays the fallback.
-    await expect(page.locator('img[src="/avatars/ada.png"]')).toBeVisible();
+    // Rows repeat the picture per thread, so the header owns the assertion.
+    await expect(page.locator('img[src="/avatars/ada.png"]').first()).toBeVisible();
 
     await page.goto("/");
     await page.keyboard.press("Enter");

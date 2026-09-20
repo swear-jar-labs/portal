@@ -528,10 +528,7 @@ export const messages = {
     },
     forge: {
       heading: "FORGE",
-      forges: {
-        github: "GITHUB",
-        gitlab: "GITLAB",
-      },
+      repository: "REPOSITORY",
       openPrs: "OPEN PRS",
       merged: "MERGED 30D",
       commits: "COMMITS 7D",
@@ -542,7 +539,7 @@ export const messages = {
       empty: "No repository yet. The forge wakes when the code lands.",
     },
     journal: {
-      heading: "JOURNAL",
+      heading: "RELATED THREADS",
       empty: "No entries yet. The journal opens with the first thread.",
       allThreads: "ALL THREADS →",
     },

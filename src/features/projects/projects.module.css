@@ -7,6 +7,14 @@
   pointer-events: none;
 }
 
+/* The forge counters: label/value rows instead of a separator-joined line. */
+.specs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  align-items: baseline;
+}
+
 /* The below-title block: the excerpt and the chips read as one passive column
    under the stretched link (clicks pass through like other cards' details). */
 .below {

@@ -2,12 +2,14 @@
 
 import type { MouseEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Stack, Tag, Text } from "@swearjar/dos";
+import { Avatar, Card, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { formatCount } from "@/lib/format";
 import { stackMemory } from "@/features/shell";
+import { memberPath } from "@/shared/members";
 import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
+import styles from "./board.module.css";
 
 type ThreadRowsProps = {
   threads: readonly ThreadSummary[];
@@ -15,7 +17,11 @@ type ThreadRowsProps = {
 };
 
 /** A member's threads: read-only rows that open the board's thread panel
- * through a plain SPA push (modified clicks keep the native tab behavior). */
+ * through a plain SPA push (modified clicks keep the native tab behavior).
+ * Rows read like the feed's cards (byline first, black titles): the vote
+ * button stays where the board's session store lives, and author links are
+ * ordinary routes (no layer intercept — that memory belongs to the section
+ * stacks). */
 export function ThreadRows({ threads, now }: ThreadRowsProps) {
   const router = useRouter();
 
@@ -37,6 +43,7 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
           title={thread.title}
           href={threadPath(thread.id)}
           onActivate={activate(thread)}
+          className={styles.cardTitle}
           leading={
             thread.pinned || thread.locked ? (
               <Stack direction="row" gap={6}>
@@ -53,8 +60,14 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
               </Stack>
             ) : undefined
           }
+          metaPosition="before"
+          metaInteractive
           meta={
-            <Stack gap={4}>
+            <Stack direction="row" gap={6} align="center" wrap>
+              <Link href={memberPath(thread.author.user)}>
+                <Avatar user={thread.author.user} src={thread.author.avatar} size="md" />
+                <Text as="span">{thread.author.user}</Text>
+              </Link>
               <Text as="span" role="hint">
                 {[
                   boardTitle(thread.board),
@@ -63,16 +76,18 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
                   formatCount(thread.replies, pluralForms.reply),
                 ].join(" · ")}
               </Text>
-              {thread.tags.length > 0 ? (
-                <Stack direction="row" gap={4} wrap>
-                  {thread.tags.map((tag) => (
-                    <Tag key={tag} tone={tagTones[tag]}>
-                      {messages.board.tags[tag]}
-                    </Tag>
-                  ))}
-                </Stack>
-              ) : null}
             </Stack>
+          }
+          actions={
+            thread.tags.length === 0 ? null : (
+              <Stack direction="row" gap={4} wrap>
+                {thread.tags.map((tag) => (
+                  <Tag key={tag} tone={tagTones[tag]}>
+                    {messages.board.tags[tag]}
+                  </Tag>
+                ))}
+              </Stack>
+            )
           }
         />
       ))}

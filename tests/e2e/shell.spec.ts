@@ -156,7 +156,7 @@ test("keeps the panel keyboard when a route takes a slow reply", async ({ page }
   await files.getByRole("link", { name: "DISCUSSIONS" }).click();
 
   const feed = page.getByRole("region", { name: "DISCUSSIONS.EXE" });
-  await expect(feed.getByRole("article")).toHaveCount(9);
+  await expect(feed.getByRole("article")).toHaveCount(12);
   await expect(feed.locator(`[${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();

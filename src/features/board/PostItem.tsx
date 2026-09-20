@@ -6,8 +6,8 @@ import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { MemberLink } from "./MemberLink";
-import { formatAge, type ThreadPost } from "./threads";
+import { MemberLink } from "@/features/members/contracts";
+import { formatAge, FEED_PATH, type ThreadPost } from "./threads";
 import { postElementId, postHash } from "./post-anchor";
 import { replySchema } from "./schema";
 import type { ReplyTarget } from "./thread-actions";
@@ -173,7 +173,7 @@ export function PostItem({
       tabIndex={0}
     >
       <Stack direction="row" gap={6} align="center" wrap>
-        <MemberLink member={post.author} />
+        <MemberLink person={post.author} sectionPath={FEED_PATH} />
         <Text as="span" role="hint">
           {meta.join(" · ")}
         </Text>

@@ -1,1 +1,1 @@
-export { DiscussionsLayout as default } from "@/features/board";
+export { MemberLayerLayout as default } from "@/features/members";

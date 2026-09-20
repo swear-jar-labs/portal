@@ -4,5 +4,4 @@
 
 export type { BoardMember, ThreadSummary } from "../threads";
 export { getBoardMember, listThreadSummariesByAuthor } from "../data";
-export { MemberLayerOutlet } from "../MemberLayerContext";
 export { ThreadRows } from "../ThreadRows";

@@ -4,8 +4,15 @@ import type { MouseEvent } from "react";
 import { Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "./threads";
-import { MemberLink } from "./MemberLink";
+import { MemberLink } from "@/features/members/contracts";
+import {
+  formatAge,
+  tagTones,
+  threadPath,
+  FEED_PATH,
+  type TagId,
+  type ThreadSummary,
+} from "./threads";
 import { VoteButton } from "./VoteButton";
 import styles from "./board.module.css";
 
@@ -64,7 +71,7 @@ export function ThreadCard({
       }
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <MemberLink member={thread.author} />
+          <MemberLink person={thread.author} sectionPath={FEED_PATH} />
           <Text as="span" role="hint">
             {[
               formatAge(thread.lastActivityAt, now),

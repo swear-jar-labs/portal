@@ -21,6 +21,7 @@ import {
   useLoginPrompt,
   useShellSession,
 } from "@/features/shell";
+import { useMemberLayer } from "@/features/members/contracts";
 import { FEED_PATH, threadPath, type BoardMember, type ThreadSummary } from "./threads";
 import { avatarFor } from "@/shared/members";
 import { ComposePanel } from "./ComposePanel";
@@ -32,7 +33,6 @@ import { ThreadActionsProvider, type ThreadActions } from "./thread-actions";
 import { threadCardId } from "./ThreadCard";
 import { ThreadView } from "./ThreadView";
 import { useBoardSession } from "./useBoardSession";
-import { useMemberLayer } from "./MemberLayerContext";
 
 export type BoardThreadLayer = {
   id: string;

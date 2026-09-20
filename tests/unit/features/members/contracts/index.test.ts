@@ -4,7 +4,15 @@ import type { MemberPageProps } from "@/features/members/contracts";
 
 describe("members contract", () => {
   it("publishes exactly the agreed surface", () => {
-    expect(Object.keys(membersContract).sort()).toEqual(["MemberBody"]);
+    expect(Object.keys(membersContract).sort()).toEqual([
+      "EmptyMemberLayer",
+      "MemberBody",
+      "MemberLayerLayout",
+      "MemberLayerOutlet",
+      "MemberLayerProvider",
+      "MemberLink",
+      "useMemberLayer",
+    ]);
   });
 
   it("keeps the published page props type importable", () => {

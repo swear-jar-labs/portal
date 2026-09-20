@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, DOS_ROW_ATTR, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { MemberLink } from "@/features/members/contracts";
 import { useShellDialogs } from "@/features/shell";
 import { formatAge } from "@/shared/age";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { noteElementId, READROOM_CARD_ATTR, type ReadroomNote } from "./readrooms";
-import { ReadroomMemberLink } from "./ReadroomMemberLink";
+import { noteElementId, READROOM_CARD_ATTR, READROOM_PATH, type ReadroomNote } from "./readrooms";
 import { noteSchema } from "./schema";
 import styles from "./readroom.module.css";
 
@@ -138,7 +138,7 @@ export function ReadroomNoteItem({
     >
       <Stack gap={4}>
         <Stack direction="row" gap={6} align="center" wrap>
-          <ReadroomMemberLink person={note.author} avatarSize="sm" />
+          <MemberLink person={note.author} avatarSize="sm" sectionPath={READROOM_PATH} />
           {own ? (
             <Text as="span" role="accent">
               {messages.readroom.notes.yours}

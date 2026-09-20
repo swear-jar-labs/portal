@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
-import {
-  getBoardMember,
-  listThreadSummariesByAuthor,
-  MemberLayerOutlet,
-} from "@/features/board/contracts";
+import { getBoardMember, listThreadSummariesByAuthor } from "@/features/board/contracts";
 import { ShellPanel } from "@/features/shell";
+import { MemberLayerOutlet } from "./MemberLayerContext";
 import { MemberView } from "./MemberView";
 
 export type MemberPageProps = {
@@ -34,7 +31,7 @@ export async function MemberBody({ params }: MemberPageProps) {
   return <MemberView member={member} threads={threads} now={now} />;
 }
 
-/** The same profile body mounted into the Board's intercepted route slot. */
+/** The same profile body mounted into a section's intercepted route slot. */
 export async function InterceptedMemberPage(props: MemberPageProps) {
   return (
     <MemberLayerOutlet>

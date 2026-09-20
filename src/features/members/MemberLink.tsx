@@ -6,16 +6,25 @@ import { Avatar, Link, Text } from "@swearjar/dos";
 import { stackMemory } from "@/features/shell";
 import { isPlainActivation } from "@/lib/activation";
 import { memberPath } from "@/shared/members";
-import { FEED_PATH } from "./threads";
-import type { BoardMember } from "./threads";
-import styles from "./board.module.css";
+import styles from "./members.module.css";
 
-export type MemberLinkProps = {
-  member: BoardMember;
+// The byline identity every section renders: BoardMember and ReadroomPerson
+// both fit (a section role, if any, stays the section's own concern).
+export type MemberPerson = {
+  user: string;
+  avatar?: string;
 };
 
-/** A board byline's one target: avatar and user always navigate together. */
-export function MemberLink({ member }: MemberLinkProps) {
+export type MemberLinkProps = {
+  person: MemberPerson;
+  avatarSize?: "sm" | "md";
+  // The section the link lives in: inside it the profile opens as the top
+  // layer of the existing stack, elsewhere the link stays an ordinary route.
+  sectionPath: string;
+};
+
+/** A byline's one target: avatar and user always navigate together. */
+export function MemberLink({ person, avatarSize = "md", sectionPath }: MemberLinkProps) {
   const id = useId();
   const pathname = usePathname();
   const router = useRouter();
@@ -23,10 +32,8 @@ export function MemberLink({ member }: MemberLinkProps) {
   function openMember(event?: MouseEvent<HTMLElement>) {
     if (!isPlainActivation(event)) return;
     event?.preventDefault();
-    const route = memberPath(member.user);
-    // The Board's shared layout intercepts profiles above either a feed or a
-    // routed thread. Other profile links stay ordinary standalone routes.
-    if (pathname === FEED_PATH || pathname.startsWith(`${FEED_PATH}/`)) {
+    const route = memberPath(person.user);
+    if (pathname === sectionPath || pathname.startsWith(`${sectionPath}/`)) {
       stackMemory.rememberMemberPush(route, id);
     }
     router.push(route);
@@ -42,9 +49,9 @@ export function MemberLink({ member }: MemberLinkProps) {
   // wrapper and reaches the anchor by bubbling.
   return (
     <span className={styles.memberLinkHost} onClick={openMember} onKeyDown={activateOnSpace}>
-      <Link id={id} href={memberPath(member.user)} className={styles.memberLink}>
-        <Avatar user={member.user} src={member.avatar} size="md" />
-        <Text as="span">{member.user}</Text>
+      <Link id={id} href={memberPath(person.user)} className={styles.memberLink}>
+        <Avatar user={person.user} src={person.avatar} size={avatarSize} />
+        <Text as="span">{person.user}</Text>
       </Link>
     </span>
   );

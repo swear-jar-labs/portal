@@ -11,22 +11,6 @@
   --dos-link: var(--dos-black);
 }
 
-/* The author link is a compact control in a byline: its ring lands on the
-   edge rather than leaving the base Link's transparent outer offset. */
-.memberLinkHost {
-  display: inline-flex;
-}
-
-.memberLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.memberLink:focus-visible {
-  outline-offset: -2px;
-}
-
 .post {
   padding: 6px 8px;
   border-bottom: 2px solid var(--dos-dark-gray);

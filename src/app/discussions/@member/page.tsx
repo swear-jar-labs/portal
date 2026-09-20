@@ -1,1 +1,1 @@
-export { EmptyMemberLayer as default } from "@/features/board";
+export { EmptyMemberLayer as default } from "@/features/members";

@@ -37,9 +37,9 @@ export function useMemberLayer(): ReactNode {
   return useMemberLayerContext().layer;
 }
 
-/** A routed RSC body registers itself with the mounted BoardStack and renders
- * nowhere else. This removes the timing dependency between pathname and the
- * parallel slot's streamed payload. */
+/** A routed RSC body registers itself with the mounted section stack and
+ * renders nowhere else. This removes the timing dependency between pathname
+ * and the parallel slot's streamed payload. */
 export function MemberLayerOutlet({ children }: { children: ReactNode }) {
   const { register, unregister } = useMemberLayerContext();
 

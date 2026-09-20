@@ -21,6 +21,7 @@ import {
   useLoginPrompt,
   useShellSession,
 } from "@/features/shell";
+import { useMemberLayer } from "@/features/members/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { avatarFor } from "@/shared/members";
 import type { ReadroomDraft } from "./datetime";
@@ -32,7 +33,6 @@ import { ReadroomFeed, readroomComposeButtonId } from "./ReadroomFeed";
 import { ReadroomSourceRow } from "./ReadroomSourceRow";
 import { ReadroomView } from "./ReadroomView";
 import { readroomCardId } from "./ReadroomCard";
-import { useReadroomLayer } from "./ReadroomLayerContext";
 
 export type ReadroomLayer = {
   id: string;
@@ -52,7 +52,7 @@ export type ReadroomStackProps = {
 
 export function ReadroomStack({ readrooms, now, task }: ReadroomStackProps) {
   const router = useRouter();
-  const routedMemberLayer = useReadroomLayer();
+  const routedMemberLayer = useMemberLayer();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const { state, readrooms: visible } = useReadroomSession(readrooms);

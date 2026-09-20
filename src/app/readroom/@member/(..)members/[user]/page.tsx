@@ -1,1 +1,1 @@
-export { InterceptedReadroomMemberPage as default } from "@/features/readroom";
+export { InterceptedMemberPage as default } from "@/features/members";

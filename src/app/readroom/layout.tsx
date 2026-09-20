@@ -1,1 +1,1 @@
-export { ReadroomLayout as default } from "@/features/readroom";
+export { MemberLayerLayout as default } from "@/features/members";

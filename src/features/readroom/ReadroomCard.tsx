@@ -5,8 +5,15 @@ import { Card, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
-import { ReadroomMemberLink } from "./ReadroomMemberLink";
-import { phaseOf, phaseTones, readroomPath, ticketPath, type Readroom } from "./readrooms";
+import { MemberLink } from "@/features/members/contracts";
+import {
+  phaseOf,
+  phaseTones,
+  readroomPath,
+  READROOM_PATH,
+  ticketPath,
+  type Readroom,
+} from "./readrooms";
 import styles from "./readroom.module.css";
 
 export const readroomCardId = (id: string) => `readroom-card-${id}`;
@@ -44,7 +51,7 @@ export function ReadroomCard({
       metaInteractive
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <ReadroomMemberLink person={readroom.lead} />
+          <MemberLink person={readroom.lead} sectionPath={READROOM_PATH} />
           <Text as="span" role="hint">
             {[
               formatAge(readroom.createdAt, now, messages.readroom.age),

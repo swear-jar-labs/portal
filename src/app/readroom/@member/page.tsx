@@ -1,1 +1,1 @@
-export { EmptyReadroomMemberLayer as default } from "@/features/readroom";
+export { EmptyMemberLayer as default } from "@/features/members";

@@ -105,6 +105,15 @@ describe("projects fixtures", () => {
     }
   });
 
+  it("stamps every project with a creation date", async () => {
+    for (const project of await listProjects()) {
+      expect(
+        Date.parse(project.createdAt),
+        `${project.slug} was created out of time`,
+      ).not.toBeNaN();
+    }
+  });
+
   it("ranks the registry active first, the archive last", async () => {
     const projects = await listProjects();
     const activity: Record<string, string> = {};

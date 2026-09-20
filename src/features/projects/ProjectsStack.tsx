@@ -22,14 +22,13 @@ export type ProjectsProjectLayer = {
 
 export type ProjectsStackProps = {
   projects: readonly Project[];
-  activityBySlug: Readonly<Record<string, string>>;
   // The ranking base captured by the RSC render: server and client agree at
   // hydration (the feed order itself comes ranked from the page).
   now: string;
   project?: ProjectsProjectLayer;
 };
 
-export function ProjectsStack({ projects, activityBySlug, now, project }: ProjectsStackProps) {
+export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
   const router = useRouter();
   const routedMemberLayer = useMemberLayer();
   // A close owns the navigation until the route changes: a second Esc (or [X])
@@ -109,7 +108,6 @@ export function ProjectsStack({ projects, activityBySlug, now, project }: Projec
       <ShellPanel title={fileTitle("PROJECTS")} closable>
         <ProjectsFeed
           projects={projects}
-          activityBySlug={activityBySlug}
           now={now}
           currentSlug={project?.slug}
           onActivate={activateProject}

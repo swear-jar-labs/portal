@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Card, Link, Stack, Tag, Text } from "@swearjar/dos";
+import { Card, FileIcon, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
@@ -47,6 +47,11 @@ export function ReadroomCard({
       className={styles.cardTitle}
       current={current}
       {...activation}
+      leading={
+        <Stack direction="row" gap={6} align="center">
+          <FileIcon kind="exe" icon="book" />
+        </Stack>
+      }
       metaPosition="before"
       metaInteractive
       meta={

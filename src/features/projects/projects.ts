@@ -60,6 +60,7 @@ export type Project = {
   // The stack as shared tech ids (labels in messages.readroom.tags): the card
   // shows chips, ABOUT joins them. A plan so far has none.
   techs: readonly TechId[];
+  createdAt: string;
   repoUrl?: string;
   forge?: ForgeId;
   status: ProjectStatus;

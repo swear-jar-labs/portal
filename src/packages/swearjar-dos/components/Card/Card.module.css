@@ -20,7 +20,7 @@
 
 .titleRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   order: 1;
 }

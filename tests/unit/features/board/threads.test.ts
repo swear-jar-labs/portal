@@ -22,10 +22,10 @@ describe("board taxonomy", () => {
     expect(boardTitle("general")).toBe("GENERAL");
     expect(boardTitle("errata")).toBe("ERRATA");
     expect(boardTitle("swearjar-dos")).toBe("SWEARJAR.DOS");
-    expect(boardTitle("compiler")).toBe("COMPILER");
-    expect(boardTitle("tooling")).toBe("TOOLING");
-    expect(boardTitle("token-cache")).toBe("TOKEN CACHE");
-    expect(boardTitle("flagship")).toBe("FLAGSHIP");
+    expect(boardTitle("compiler")).toBe("Compiler");
+    expect(boardTitle("tooling")).toBe("Tooling");
+    expect(boardTitle("token-cache")).toBe("Token Cache");
+    expect(boardTitle("flagship")).toBe("Flagship");
   });
 
   it("composes everywhere except the archive", () => {

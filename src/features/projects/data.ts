@@ -30,6 +30,7 @@ const projects: readonly Project[] = [
   {
     slug: "swearjar-dos",
     name: "SWEARJAR.DOS",
+    createdAt: "2026-08-01T09:00:00.000Z",
     description:
       "The terminal you are looking at: the public face of the labs, built by hand in the open.",
     techs: ["nextjs", "postgres", "typescript"],
@@ -49,7 +50,8 @@ const projects: readonly Project[] = [
   },
   {
     slug: "compiler",
-    name: "COMPILER",
+    name: "Compiler",
+    createdAt: "2026-09-01T09:00:00.000Z",
     description: "A hand-written recursive descent playground: grammars you can debug at 3am.",
     techs: ["c"],
     repoUrl: "https://github.com/swear-jar-labs/compiler",
@@ -67,7 +69,8 @@ const projects: readonly Project[] = [
   },
   {
     slug: "tooling",
-    name: "TOOLING",
+    name: "Tooling",
+    createdAt: "2026-09-05T09:00:00.000Z",
     description: "Build caches, scripts and CI glue that refuse to poison themselves.",
     techs: ["shell", "ci"],
     repoUrl: "https://gitlab.com/swear-jar-labs/tooling",
@@ -85,7 +88,8 @@ const projects: readonly Project[] = [
   },
   {
     slug: "token-cache",
-    name: "TOKEN CACHE",
+    name: "Token Cache",
+    createdAt: "2026-07-20T09:00:00.000Z",
     description:
       "An LRU cache that learned about recency the hard way. Frozen — read, don't revive.",
     techs: ["typescript"],
@@ -104,7 +108,8 @@ const projects: readonly Project[] = [
   },
   {
     slug: "flagship",
-    name: "FLAGSHIP",
+    name: "Flagship",
+    createdAt: "2026-09-18T09:00:00.000Z",
     description: "The cohort's flagship: one real project, chosen by poll, built by hand.",
     techs: [],
     status: "planned",

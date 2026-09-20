@@ -56,6 +56,8 @@ test("ranks the feed with every phase and the archive section", async ({ page })
   await expect(cards.nth(0)).not.toContainText(/IN \d+[DWM]/);
   await expect(cards.nth(0)).toContainText("3 NOTES");
   await expect(cards.nth(0).getByRole("link", { name: TICKET_CHIP })).toBeVisible();
+  // Every feed card carries its section icon in the title row.
+  await expect(cards.nth(0).locator('[data-file-icon="book"]')).toBeVisible();
   await expectSameVerticalCenter(
     cards.nth(0).getByRole("link", { name: "grace" }),
     cards.nth(0).getByText("2D AGO · 3 NOTES", { exact: true }),

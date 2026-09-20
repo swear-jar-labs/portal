@@ -9,7 +9,6 @@ import { ProjectsCard } from "./ProjectsCard";
 
 export type ProjectsFeedProps = {
   projects: readonly Project[];
-  activityBySlug: Readonly<Record<string, string>>;
   now: string;
   currentSlug?: string;
   onActivate: (slug: Project["slug"], event?: MouseEvent<HTMLElement>) => void;
@@ -18,13 +17,7 @@ export type ProjectsFeedProps = {
 const sectionStatuses: readonly ProjectStatus[] = ["active", "planned", "archived"];
 
 /** The registry index: the ranked projects cut by lifecycle status. */
-export function ProjectsFeed({
-  projects,
-  activityBySlug,
-  now,
-  currentSlug,
-  onActivate,
-}: ProjectsFeedProps) {
+export function ProjectsFeed({ projects, now, currentSlug, onActivate }: ProjectsFeedProps) {
   const sections = sectionStatuses
     .map((status) => ({
       status,
@@ -52,7 +45,6 @@ export function ProjectsFeed({
                   <ProjectsCard
                     project={project}
                     now={now}
-                    activityAt={activityBySlug[project.slug]}
                     current={project.slug === currentSlug}
                     onActivate={(event) => onActivate(project.slug, event)}
                   />

@@ -7,6 +7,16 @@
   pointer-events: none;
 }
 
+/* The below-title block: the excerpt and the chips read as one passive column
+   under the stretched link (clicks pass through like other cards' details). */
+.below {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-basis: 100%;
+  pointer-events: none;
+}
+
 /* The card excerpt: the description clamped to three lines, so a long ABOUT
  * never stretches the index. */
 .excerpt {

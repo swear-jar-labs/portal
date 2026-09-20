@@ -44,7 +44,6 @@ export async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <ProjectsStack
       projects={rankProjects(projects, activityBySlug, now)}
-      activityBySlug={activityBySlug}
       now={now}
       project={{
         slug: project.slug,

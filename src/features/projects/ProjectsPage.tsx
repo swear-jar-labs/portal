@@ -17,11 +17,5 @@ export async function ProjectsPage() {
 
   // The index reads no search params: the stack renders without a Suspense
   // boundary (like the readroom's feed, unlike the board's filtered one).
-  return (
-    <ProjectsStack
-      projects={rankProjects(projects, activityBySlug, now)}
-      activityBySlug={activityBySlug}
-      now={now}
-    />
-  );
+  return <ProjectsStack projects={rankProjects(projects, activityBySlug, now)} now={now} />;
 }

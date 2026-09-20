@@ -39,6 +39,8 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   await expect(cards).toHaveCount(9);
   await expect(feed.getByText("9 THREADS")).toBeVisible();
   await expect(cards.first()).toContainText("[PINNED]");
+  // Every feed card carries its section icon in the title row.
+  await expect(cards.first().locator('[data-file-icon="speech"]')).toBeVisible();
   // Hot ends with the quietest thread; new ends with the oldest activity.
   await expect(cards.last()).toContainText("Withdrawn: the weekly call");
 
@@ -76,7 +78,7 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
 
   // Board and tag combine into the empty-filter state.
   await feed.getByRole("combobox", { name: "BOARD" }).click();
-  await page.getByRole("option", { name: "COMPILER" }).click();
+  await page.getByRole("option", { name: "Compiler" }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=question`);
   await expect(feed.getByText("NO THREADS MATCH THESE FILTERS.")).toBeVisible();
   await expect(feed.getByText("0 THREADS")).toBeVisible();
@@ -546,7 +548,7 @@ test("composes a thread that lives in the session", async ({ page }) => {
   await expect(form.getByText("Write the opening post.")).toBeVisible();
 
   await form.getByRole("combobox", { name: "BOARD" }).click();
-  await page.getByRole("option", { name: "TOOLING" }).click();
+  await page.getByRole("option", { name: "Tooling" }).click();
   await form.getByRole("button", { name: "TOOLING" }).click();
   await form.getByLabel("TITLE").fill(title);
   await form.getByLabel("BODY").fill("A header edit slipped past the cache again.");

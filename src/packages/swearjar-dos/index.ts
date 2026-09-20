@@ -62,6 +62,9 @@ export type {
   FileTableProps,
 } from "./components/FileTable/FileTable";
 
+export { FILE_ICON_ATTR, FileIcon } from "./components/FileTable/FileIcon";
+export type { FileIconKind, FileIconProps } from "./components/FileTable/FileIcon";
+
 export { Window } from "./components/Window/Window";
 export type { WindowProps } from "./components/Window/Window";
 

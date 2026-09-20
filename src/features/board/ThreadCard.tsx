@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Card, Stack, Tag, Text } from "@swearjar/dos";
+import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { MemberLink } from "@/features/members/contracts";
@@ -41,7 +41,6 @@ export function ThreadCard({
   onVote,
   onFilterTag,
 }: ThreadCardProps) {
-  const markers = thread.pinned || thread.locked;
   // A composed thread has no route: the card activates in place (the title is a
   // button, so a context menu or drag cannot open a page that does not exist).
   const activation = local ? { onActivate } : { href: threadPath(thread.id), onActivate };
@@ -54,20 +53,19 @@ export function ThreadCard({
       current={current}
       {...activation}
       leading={
-        markers ? (
-          <Stack direction="row" gap={6}>
-            {thread.pinned ? (
-              <Text as="span" role="accent">
-                {messages.board.card.pinned}
-              </Text>
-            ) : null}
-            {thread.locked ? (
-              <Text as="span" role="danger">
-                {messages.board.card.locked}
-              </Text>
-            ) : null}
-          </Stack>
-        ) : undefined
+        <Stack direction="row" gap={6} align="center">
+          <FileIcon kind="exe" icon="speech" />
+          {thread.pinned ? (
+            <Text as="span" role="accent">
+              {messages.board.card.pinned}
+            </Text>
+          ) : null}
+          {thread.locked ? (
+            <Text as="span" role="danger">
+              {messages.board.card.locked}
+            </Text>
+          ) : null}
+        </Stack>
       }
       meta={
         <Stack direction="row" gap={6} align="center" wrap>

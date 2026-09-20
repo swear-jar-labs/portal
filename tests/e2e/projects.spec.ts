@@ -6,7 +6,7 @@ import {
   PROJECTS_PATH,
   projectPath,
 } from "../../src/features/projects/projects";
-import { expectNoViolations, logon, waitForHydration } from "./helpers";
+import { expectAbove, expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const FEED_REGION = "PROJECTS.EXE";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
@@ -27,10 +27,10 @@ test("renders the registry cut by status", async ({ page }) => {
   const sections = feed(page).getByRole("heading", { level: 2 });
   await expect(sections).toHaveText(["ACTIVE", "PLANNED", "ARCHIVE"]);
   await expect(cards(page).nth(0)).toContainText("SWEARJAR.DOS");
-  await expect(cards(page).nth(1)).toContainText("COMPILER");
-  await expect(cards(page).nth(2)).toContainText("TOOLING");
-  await expect(cards(page).nth(3)).toContainText("FLAGSHIP");
-  await expect(cards(page).nth(4)).toContainText("TOKEN CACHE");
+  await expect(cards(page).nth(1)).toContainText("Compiler");
+  await expect(cards(page).nth(2)).toContainText("Tooling");
+  await expect(cards(page).nth(3)).toContainText("Flagship");
+  await expect(cards(page).nth(4)).toContainText("Token Cache");
 
   await expect(cards(page).nth(0).getByRole("link", { name: "SWEARJAR.DOS" })).toHaveAttribute(
     "href",
@@ -40,6 +40,15 @@ test("renders the registry cut by status", async ({ page }) => {
   await expect(cards(page).nth(0)).toContainText("The terminal you are looking at");
   await expect(cards(page).nth(0).getByText("Next.js", { exact: true })).toBeVisible();
   await expect(cards(page).nth(0).getByText("Postgres", { exact: true })).toBeVisible();
+  // Every feed card carries its section icon in the title row.
+  await expect(cards(page).nth(0).locator('[data-file-icon="box"]')).toBeVisible();
+  // The byline (lead and creation age) reads above the title, like the board.
+  const firstCard = cards(page).nth(0);
+  await expect(firstCard).toContainText(/AGO|JUST NOW/);
+  await expectAbove(
+    firstCard.getByRole("link", { name: "ada" }),
+    firstCard.getByRole("link", { name: "SWEARJAR.DOS" }),
+  );
   await expectNoViolations(page, PROJECTS_PATH);
 });
 
@@ -52,24 +61,24 @@ test("opens a project layer and closes it back to the card", async ({ page }) =>
   await page.evaluate(() => {
     (window as unknown as { sjSpaMarker?: number }).sjSpaMarker = 1;
   });
-  await cards(page).nth(1).getByRole("link", { name: "COMPILER" }).click();
+  await cards(page).nth(1).getByRole("link", { name: "Compiler" }).click();
   await expect(page).toHaveURL(projectPath("compiler"));
   await expect(layers(page)).toHaveCount(2);
   expect(
     await page.evaluate(() => (window as unknown as { sjSpaMarker?: number }).sjSpaMarker),
   ).toBe(1);
 
-  const panel = page.getByRole("region", { name: "COMPILER" });
-  await expect(panel.getByRole("heading", { level: 1, name: "COMPILER" })).toBeVisible();
+  const panel = page.getByRole("region", { name: "Compiler" });
+  await expect(panel.getByRole("heading", { level: 1, name: "Compiler" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "ABOUT" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "FORGE" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "JOURNAL" })).toBeVisible();
-  await expect(page).toHaveTitle("COMPILER — Swear Jar Labs");
+  await expect(page).toHaveTitle("Compiler — Swear Jar Labs");
 
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(PROJECTS_PATH);
   await expect(layers(page)).toHaveCount(1);
-  await expect(cards(page).nth(1).getByRole("link", { name: "COMPILER" })).toBeFocused();
+  await expect(cards(page).nth(1).getByRole("link", { name: "Compiler" })).toBeFocused();
   await expectNoViolations(page, projectPath("compiler"));
 });
 
@@ -81,7 +90,7 @@ test("walks the index with arrows and opens with Enter", async ({ page }) => {
   await page.keyboard.press("ArrowDown");
   await expect(cards(page).nth(0).getByRole("link", { name: "SWEARJAR.DOS" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(cards(page).nth(1).getByRole("link", { name: "COMPILER" })).toBeFocused();
+  await expect(cards(page).nth(1).getByRole("link", { name: "Compiler" })).toBeFocused();
 
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(projectPath("compiler"));
@@ -109,7 +118,7 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
 test("keeps an empty journal readable", async ({ page }) => {
   await page.goto(projectPath("flagship"));
   await waitForHydration(page);
-  const panel = page.getByRole("region", { name: "FLAGSHIP" });
+  const panel = page.getByRole("region", { name: "Flagship" });
   await expect(
     panel.getByText("No entries yet. The journal opens with the first thread."),
   ).toBeVisible();
@@ -138,7 +147,7 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
   await page.goto(projectPath("token-cache"));
   await waitForHydration(page);
   await expect(
-    page.getByRole("region", { name: "TOKEN CACHE" }).getByText("FROZEN", { exact: true }),
+    page.getByRole("region", { name: "Token Cache" }).getByText("FROZEN", { exact: true }),
   ).toBeVisible();
 });
 
@@ -146,7 +155,7 @@ test("opens the journal for a member without an apply prompt", async ({ page }) 
   await logon(page);
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
-  const panel = page.getByRole("region", { name: "TOOLING" });
+  const panel = page.getByRole("region", { name: "Tooling" });
 
   await expect(panel.getByText("Members write here. Want in?")).toHaveCount(0);
   await expect(panel.getByRole("link", { name: "ALL THREADS →" })).toBeVisible();

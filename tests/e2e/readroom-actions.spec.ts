@@ -201,7 +201,7 @@ test("a member opens a task in this session", async ({ page }) => {
   const form = page.getByRole("form", { name: "NEW TASK" });
   await form.getByLabel("TITLE").fill(NEW_TASK);
   await form.getByRole("button", { name: "C", exact: true }).click();
-  await form.getByRole("button", { name: "GO", exact: true }).click();
+  await form.getByRole("button", { name: "Go", exact: true }).click();
   await form
     .getByRole("textbox", { name: "DESCRIPTION" })
     .fill("Find the memory order that is missing.");
@@ -221,7 +221,7 @@ test("a member opens a task in this session", async ({ page }) => {
   ).toBeVisible();
   await expect(task.getByRole("link", { name: "TICKET #17" })).toBeVisible();
   await expect(task.getByText("C", { exact: true })).toBeVisible();
-  await expect(task.getByText("GO", { exact: true })).toBeVisible();
+  await expect(task.getByText("Go", { exact: true })).toBeVisible();
   await expect(task.getByRole("link", { name: "snippet.c" })).toBeVisible();
   await expect(task.getByText(/DEADLINE 2026-12-24 \d{2}:\d{2} UTC/)).toBeVisible();
 

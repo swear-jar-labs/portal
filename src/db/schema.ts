@@ -20,6 +20,8 @@ export const ticketStatus = pgEnum("ticket_status", [
   "done",
   "closed",
 ]);
+export const ticketSize = pgEnum("ticket_size", ["S", "M", "L"]);
+export const ticketPriority = pgEnum("ticket_priority", ["low", "normal", "high"]);
 export const ticketLinkKind = pgEnum("ticket_link_kind", ["pr", "commit", "file", "diff"]);
 export const tagKind = pgEnum("tag_kind", ["topic", "skill"]);
 export const voteTarget = pgEnum("vote_target", ["post", "thread", "ticket", "readroom_note"]);
@@ -179,6 +181,9 @@ export const tickets = pgTable(
     title: text("title").notNull(),
     body: text("body").notNull(),
     status: ticketStatus("status").notNull().default("open"),
+    // The size flag of RULES §15 and the queue order; the app sets both.
+    size: ticketSize("size").notNull().default("S"),
+    priority: ticketPriority("priority").notNull().default("normal"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     closedAt: timestamp("closed_at"),
@@ -228,6 +233,26 @@ export const ticketLinks = pgTable(
     uniqueIndex("ticket_links_ticket_url_unique").on(table.ticketId, table.url),
     index("ticket_links_ticket_id_idx").on(table.ticketId),
     index("ticket_links_added_by_idx").on(table.addedBy),
+  ],
+);
+
+export const ticketBlocks = pgTable(
+  "ticket_blocks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // `blocked_id` waits for `blocker_id` to finish (RULES §15).
+    blockerId: uuid("blocker_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    blockedId: uuid("blocked_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ticket_blocks_pair_unique").on(table.blockerId, table.blockedId),
+    index("ticket_blocks_blocker_id_idx").on(table.blockerId),
+    index("ticket_blocks_blocked_id_idx").on(table.blockedId),
   ],
 );
 
@@ -413,6 +438,8 @@ export const ticketRelations = relations(tickets, ({ one, many }) => ({
   comments: many(ticketComments),
   links: many(ticketLinks),
   ticketTags: many(ticketTags),
+  blocks: many(ticketBlocks, { relationName: "ticket_blocker" }),
+  blockedBy: many(ticketBlocks, { relationName: "ticket_blocked" }),
 }));
 
 export const ticketCommentRelations = relations(ticketComments, ({ one }) => ({
@@ -423,6 +450,19 @@ export const ticketCommentRelations = relations(ticketComments, ({ one }) => ({
 export const ticketLinkRelations = relations(ticketLinks, ({ one }) => ({
   ticket: one(tickets, { fields: [ticketLinks.ticketId], references: [tickets.id] }),
   addedBy: one(user, { fields: [ticketLinks.addedBy], references: [user.id] }),
+}));
+
+export const ticketBlockRelations = relations(ticketBlocks, ({ one }) => ({
+  blocker: one(tickets, {
+    fields: [ticketBlocks.blockerId],
+    references: [tickets.id],
+    relationName: "ticket_blocker",
+  }),
+  blocked: one(tickets, {
+    fields: [ticketBlocks.blockedId],
+    references: [tickets.id],
+    relationName: "ticket_blocked",
+  }),
 }));
 
 export const tagRelations = relations(tags, ({ many }) => ({

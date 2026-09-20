@@ -1,23 +1,28 @@
 import type { MouseEvent } from "react";
-import { Avatar, Table, Tag, type TableColumn } from "@swearjar/dos";
+import { Avatar, Stack, Table, Tag, type TableColumn } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import {
   TICKETS_ROW_ATTR,
+  isBlocked,
   ticketPath,
+  ticketPriorityTones,
   ticketRowId,
   ticketStatusTones,
+  ticketsById,
   type Ticket,
 } from "./tickets";
 import styles from "./tickets.module.css";
 
 // The tight grid: every column is sized by its content (KEY fits the longest
-// key, `CACHE-12345`; SIZE the header plus air; STATUS the `IN PROGRESS` tag).
-// TITLE carries a floor only and stays flexible, so it absorbs the panel's
-// spare width instead of inflating the narrow columns.
+// key, `CACHE-12345`; SIZE the header plus air; PRIORITY the `NORMAL` chip;
+// STATUS the `IN PROGRESS` tag). TITLE carries a floor only and stays flexible,
+// so it absorbs the panel's spare width instead of inflating the narrow
+// columns.
 const ticketColumnWidths = {
   key: 112,
   title: 250,
   size: 48,
+  priority: 96,
   status: 116,
   project: 144,
   assignee: 80,
@@ -48,6 +53,7 @@ export function TicketsTable({
   actionForTicket,
   label = messages.tickets.feed.heading,
 }: TicketsTableProps) {
+  const byId = ticketsById(tickets);
   const columns: TableColumn<Ticket>[] = [
     {
       id: "key",
@@ -78,13 +84,26 @@ export function TicketsTable({
       render: (ticket) => ticket.size,
     },
     {
+      id: "priority",
+      label: messages.tickets.feed.columns.priority,
+      width: pixels(ticketColumnWidths.priority),
+      render: (ticket) => (
+        <Tag tone={ticketPriorityTones[ticket.priority]}>
+          {messages.tickets.priorities[ticket.priority]}
+        </Tag>
+      ),
+    },
+    {
       id: "status",
       label: messages.tickets.feed.columns.status,
       width: pixels(ticketColumnWidths.status),
       render: (ticket) => (
-        <Tag tone={ticketStatusTones[ticket.status]}>
-          {messages.tickets.statuses[ticket.status]}
-        </Tag>
+        <Stack gap={2} align="flex-start">
+          <Tag tone={ticketStatusTones[ticket.status]}>
+            {messages.tickets.statuses[ticket.status]}
+          </Tag>
+          {isBlocked(ticket, byId) ? <Tag tone="red">{messages.tickets.feed.blocked}</Tag> : null}
+        </Stack>
       ),
     },
     {

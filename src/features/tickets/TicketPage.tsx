@@ -43,6 +43,7 @@ export async function TicketPage({ params }: TicketPageProps) {
         layer: (
           <TicketPanel
             ticket={ticket}
+            tickets={tickets}
             projectName={projectName(ticket.project)}
             readrooms={readrooms}
             now={now}

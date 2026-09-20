@@ -16,24 +16,31 @@ export type TicketSessionOptions = {
   query: TicketQuery;
 };
 
+/** The store snapshot for the dossier islands: they subscribe to the same
+ * module memory the tracker island reads. */
+export function useTicketState() {
+  return useSyncExternalStore(
+    ticketStore.subscribeTickets,
+    ticketStore.ticketsSnapshot,
+    ticketStore.ticketsServerSnapshot,
+  );
+}
+
+/** The fixture tickets with the session's edits, plus the composed ones: the
+ * list the blocker chips and markers resolve against. */
+export function useMergedTickets(tickets: readonly Ticket[]): Ticket[] {
+  const state = useTicketState();
+  return useMemo(() => ticketStore.mergedTickets(tickets, state), [state, tickets]);
+}
+
 /** The UI-first tickets' data layer: the fixture tickets plus the session's
  * composed ones, filtered and sorted for the tracker. The island keeps
  * navigation and gating; Phase 5 replaces the store with server actions, the
  * components do not change. */
 export function useTicketSession({ tickets, query }: TicketSessionOptions) {
-  const state = useSyncExternalStore(
-    ticketStore.subscribeTickets,
-    ticketStore.ticketsSnapshot,
-    ticketStore.ticketsServerSnapshot,
-  );
+  const state = useTicketState();
 
-  const all = useMemo(
-    () => [
-      ...state.addedTickets,
-      ...tickets.map((ticket) => ticketStore.withSessionLinks(ticket, state)),
-    ],
-    [state, tickets],
-  );
+  const all = useMemo(() => ticketStore.mergedTickets(tickets, state), [state, tickets]);
 
   const visible = useMemo(() => sortTickets(filterTickets(all, query)), [all, query]);
 

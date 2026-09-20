@@ -12,11 +12,13 @@ const ticket: Ticket = {
   body: "Make the primary action explicit.",
   status: "review",
   size: "M",
+  priority: "normal",
   tags: [],
   author: { user: "ada" },
   assignee: { user: "grace" },
   links: [],
   comments: [],
+  blockedBy: [],
   createdAt: "2026-09-01T00:00:00.000Z",
   updatedAt: "2026-09-02T00:00:00.000Z",
 };
@@ -32,11 +34,13 @@ describe("TicketsTable", () => {
     expect(html).toContain(`id="${ticketRowId(ticket.key)}"`);
     expect(html).toContain(`href="/tickets/${ticket.key}"`);
     expect(html).toContain(`>${ticket.key}</a>`);
-    expect(html).toContain('aria-label="TICKETS" style="min-width:750px"');
+    expect(html).toContain('aria-label="TICKETS" style="min-width:846px"');
     // TITLE carries a floor only: the flexible column absorbs the spare width.
     expect(html).toContain('style="min-width:250px"');
     expect(html).toContain(">M</td>");
+    expect(html).toContain(">NORMAL</span>");
     expect(html).toContain('style="width:48px"');
+    expect(html).toContain('style="width:96px"');
     expect(html).toContain('style="width:116px"');
     expect(html).toContain('style="width:80px"');
     expect(html).toContain('aria-label="grace"');
@@ -67,5 +71,32 @@ describe("TicketsTable", () => {
     expect(html).toContain(`id="${ticketRowId(ticket.key)}"`);
     expect(html).toContain(`>${ticket.key}</button>`);
     expect(html).not.toContain(`href="/tickets/${ticket.key}"`);
+  });
+
+  it("marks a ticket whose blockers have not finished", () => {
+    const blocker: Ticket = {
+      ...ticket,
+      id: "ticket-dos-1",
+      key: "DOS-1",
+      title: "Blocker",
+      status: "open",
+      assignee: undefined,
+    };
+    const blocked: Ticket = { ...ticket, blockedBy: [blocker.id] };
+    const html = renderToStaticMarkup(
+      <TicketsTable
+        tickets={[blocked, blocker]}
+        projectNames={{ "swearjar-dos": "SWEARJAR.DOS" }}
+      />,
+    );
+    expect(html).toContain(">BLOCKED</span>");
+
+    const finished = renderToStaticMarkup(
+      <TicketsTable
+        tickets={[blocked, { ...blocker, status: "done" }]}
+        projectNames={{ "swearjar-dos": "SWEARJAR.DOS" }}
+      />,
+    );
+    expect(finished).not.toContain(">BLOCKED</span>");
   });
 });

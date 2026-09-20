@@ -28,6 +28,20 @@ export function isTicketSize(value: string): value is TicketSize {
   return ticketSizes.some((size) => size === value);
 }
 
+// The queue's order: high first, normal in the middle, low waits. The scale is
+// deliberately short; the tracker sorts by it before freshness.
+export const ticketPriorities = ["low", "normal", "high"] as const;
+export type TicketPriority = (typeof ticketPriorities)[number];
+
+export const ticketPriorityTones: Partial<Record<TicketPriority, Tone>> = {
+  low: "dim",
+  high: "red",
+};
+
+export function isTicketPriority(value: string): value is TicketPriority {
+  return ticketPriorities.some((priority) => priority === value);
+}
+
 // The ticket vocabulary: kinds of work, not board topics. `good-first` marks
 // the simple entries open to contributors without a track record.
 export const ticketTagIds = [
@@ -73,6 +87,10 @@ export type TicketComment = {
   author: TicketPerson;
   body: string;
   createdAt: string;
+  // The author's session edit; the dossier marks the comment as edited.
+  editedAt?: string;
+  // The author's session delete: the comment renders as a tombstone.
+  deletedAt?: string;
 };
 
 export type Ticket = {
@@ -86,11 +104,15 @@ export type Ticket = {
   body: string;
   status: TicketStatus;
   size: TicketSize;
+  priority: TicketPriority;
   tags: readonly TicketTagId[];
   author: TicketPerson;
   assignee?: TicketPerson;
   links: readonly TicketLink[];
   comments: readonly TicketComment[];
+  // The blocker ids: this ticket starts only after they finish. The database
+  // normalizes the edges into ticket_blocks; the UI type carries the list.
+  blockedBy: readonly string[];
   createdAt: string;
   updatedAt: string;
   closedAt?: string;
@@ -146,11 +168,16 @@ export const TICKETS_ROW_ATTR = "data-tickets-row";
 // The row anchor: closing the dossier hands the keyboard back to it.
 export const ticketRowId = (key: string) => `ticket-row-${key}`;
 
+// The comment anchor: closing an inline editor or a tombstone hands the
+// keyboard back to it.
+export const ticketCommentId = (id: string) => `ticket-comment-${id}`;
+
 export const composeButtonId = "tickets-compose-button";
 
 export type TicketQuery = {
   project: ProjectSlug | "all";
   size: TicketSize | "all";
+  priority: TicketPriority | "all";
   status: TicketStatus | "all";
   assignee: "all" | "none";
   tag: TicketTagId | "all";
@@ -160,6 +187,7 @@ export type TicketQuery = {
 export const DEFAULT_TICKET_QUERY: TicketQuery = {
   project: "all",
   size: "all",
+  priority: "all",
   status: "all",
   assignee: "all",
   tag: "all",
@@ -188,6 +216,7 @@ export function parseTicketQuery(
 ): TicketQuery {
   const project = firstParam(source, "project");
   const size = firstParam(source, "size");
+  const priority = firstParam(source, "priority");
   const status = firstParam(source, "status");
   const assignee = firstParam(source, "assignee");
   const tag = firstParam(source, "tag");
@@ -195,6 +224,7 @@ export function parseTicketQuery(
   return {
     project: project !== null && isProject(project) ? project : "all",
     size: size !== null && isTicketSize(size) ? size : "all",
+    priority: priority !== null && isTicketPriority(priority) ? priority : "all",
     status: status !== null && isTicketStatus(status) ? status : "all",
     assignee: assignee === "none" ? "none" : "all",
     tag: tag !== null && isTicketTagId(tag) ? tag : "all",
@@ -207,6 +237,7 @@ export function ticketQueryParams(query: TicketQuery): URLSearchParams {
   const params = new URLSearchParams();
   if (query.project !== "all") params.set("project", query.project);
   if (query.size !== "all") params.set("size", query.size);
+  if (query.priority !== "all") params.set("priority", query.priority);
   if (query.status !== "all") params.set("status", query.status);
   if (query.assignee !== "all") params.set("assignee", query.assignee);
   if (query.tag !== "all") params.set("tag", query.tag);
@@ -240,6 +271,7 @@ export function filterTickets(tickets: readonly Ticket[], query: TicketQuery): T
     (ticket) =>
       (query.project === "all" || ticket.project === query.project) &&
       (query.size === "all" || ticket.size === query.size) &&
+      (query.priority === "all" || ticket.priority === query.priority) &&
       (query.status === "all" || ticket.status === query.status) &&
       matchesAssignee(ticket, query.assignee) &&
       (query.tag === "all" || ticket.tags.includes(query.tag)) &&
@@ -247,12 +279,85 @@ export function filterTickets(tickets: readonly Ticket[], query: TicketQuery): T
   );
 }
 
-/** The tracker order: the freshest update first, the key breaks the tie. */
+// The queue order: high before normal before low, the freshest update first
+// inside a rank, the key breaking the last tie.
+const PRIORITY_RANK: Record<TicketPriority, number> = { high: 0, normal: 1, low: 2 };
+
+/** The tracker order: priority first, then the freshest update, then the key. */
 export function sortTickets(tickets: readonly Ticket[]): Ticket[] {
   return [...tickets].sort((a, b) => {
+    const byPriority = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+    if (byPriority !== 0) return byPriority;
     const fresh = Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
     if (fresh !== 0) return fresh;
     if (a.key === b.key) return 0;
     return a.key < b.key ? -1 : 1;
   });
+}
+
+// The blocked-by edges: `blockedId` waits for `blockerId` to finish. `done`
+// and `closed` both count as finished (the gate does not read the difference
+// between the two — that question is still open).
+export type TicketBlock = { blockerId: string; blockedId: string };
+
+export function isFinishedStatus(status: TicketStatus): boolean {
+  return status === "done" || status === "closed";
+}
+
+export function ticketsById(tickets: readonly Ticket[]): ReadonlyMap<string, Ticket> {
+  return new Map(tickets.map((ticket) => [ticket.id, ticket]));
+}
+
+/** Every dependency edge of the given tickets. */
+export function blockEdges(tickets: readonly Ticket[]): TicketBlock[] {
+  return tickets.flatMap((ticket) =>
+    ticket.blockedBy.map((blockerId) => ({ blockerId, blockedId: ticket.id })),
+  );
+}
+
+/** The tickets that must finish before this one, transitively. */
+export function transitiveBlockers(
+  ticketId: string,
+  blocks: readonly TicketBlock[],
+): ReadonlySet<string> {
+  const seen = new Set<string>();
+  const pending = blocks
+    .filter((edge) => edge.blockedId === ticketId)
+    .map((edge) => edge.blockerId);
+  while (pending.length > 0) {
+    const id = pending.pop();
+    if (id === undefined || seen.has(id)) continue;
+    seen.add(id);
+    for (const edge of blocks) if (edge.blockedId === id) pending.push(edge.blockerId);
+  }
+  return seen;
+}
+
+/** The blockers that have not finished yet: the reason a ticket cannot start. */
+export function openBlockers(ticket: Ticket, byId: ReadonlyMap<string, Ticket>): Ticket[] {
+  return ticket.blockedBy.flatMap((id) => {
+    const blocker = byId.get(id);
+    return blocker === undefined || isFinishedStatus(blocker.status) ? [] : [blocker];
+  });
+}
+
+export function isBlocked(ticket: Ticket, byId: ReadonlyMap<string, Ticket>): boolean {
+  return openBlockers(ticket, byId).length > 0;
+}
+
+/** Only `open → in_progress` is gated: the blockers must have finished. */
+export function canStart(ticket: Ticket, byId: ReadonlyMap<string, Ticket>): boolean {
+  return ticket.status === "open" && !isBlocked(ticket, byId);
+}
+
+/** Adding `blockerId` as a blocker of `blockedId` would make the two wait for
+ * each other (directly or through a chain), so the form refuses it. */
+export function wouldCycle(
+  blockerId: string,
+  blockedId: string,
+  tickets: readonly Ticket[],
+): boolean {
+  return (
+    blockerId === blockedId || transitiveBlockers(blockerId, blockEdges(tickets)).has(blockedId)
+  );
 }

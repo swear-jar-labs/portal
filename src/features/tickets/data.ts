@@ -44,13 +44,15 @@ type FixtureTicketInput = Pick<
   | "createdAt"
   | "updatedAt"
 > &
-  Partial<Pick<Ticket, "assignee" | "closedAt" | "links" | "comments">>;
+  Partial<Pick<Ticket, "assignee" | "closedAt" | "links" | "comments" | "blockedBy" | "priority">>;
 
 function fixtureTicket(input: FixtureTicketInput): Ticket {
   return {
     id: `ticket-${input.key.toLowerCase()}`,
     links: [],
     comments: [],
+    blockedBy: [],
+    priority: "normal",
     ...input,
   };
 }
@@ -63,6 +65,7 @@ const tickets: readonly Ticket[] = [
     body: "The boot flashes white for a frame before the CRT overlay settles. Hold the first paint behind the overlay: the glow is the brand, the flash is a bug.",
     status: "open",
     size: "M",
+    priority: "high",
     tags: ["feature"],
     author: grace,
     assignee: ada,
@@ -171,6 +174,8 @@ const tickets: readonly Ticket[] = [
     size: "S",
     tags: ["good-first"],
     author: grace,
+    // The REPL comes first: the pretty-printer waits for it.
+    blockedBy: ["ticket-cmp-1"],
     createdAt: "2026-09-14T09:00:00.000Z",
     updatedAt: "2026-09-15T09:00:00.000Z",
   }),
@@ -254,6 +259,8 @@ const tickets: readonly Ticket[] = [
     size: "S",
     tags: ["bug"],
     author: ken,
+    // The blocker is still in review: DOS-4 cannot start yet.
+    blockedBy: ["ticket-dos-3"],
     createdAt: "2026-09-13T10:00:00.000Z",
     updatedAt: "2026-09-15T18:00:00.000Z",
   }),
@@ -291,6 +298,7 @@ const tickets: readonly Ticket[] = [
     body: "The parser should report one useful error and resume at a statement boundary instead of turning the rest of the file into noise.",
     status: "in_progress",
     size: "M",
+    priority: "high",
     tags: ["bug"],
     author: grace,
     assignee: ada,
@@ -333,6 +341,8 @@ const tickets: readonly Ticket[] = [
     size: "M",
     tags: ["feature"],
     author: lin,
+    // A finished blocker: the link stays as history, the gate is open.
+    blockedBy: ["ticket-tool-1"],
     createdAt: "2026-09-08T09:00:00.000Z",
     updatedAt: "2026-09-13T08:00:00.000Z",
   }),
@@ -343,6 +353,7 @@ const tickets: readonly Ticket[] = [
     body: "Produce a deterministic license inventory in CI and fail when a dependency arrives without an approved license classification.",
     status: "in_progress",
     size: "S",
+    priority: "low",
     tags: ["docs"],
     author: ada,
     assignee: lin,
@@ -370,6 +381,7 @@ const tickets: readonly Ticket[] = [
     body: "State who can vote, when the roll closes and how ties are handled before the flagship poll opens.",
     status: "open",
     size: "S",
+    priority: "low",
     tags: ["docs"],
     author: grace,
     createdAt: "2026-09-15T09:00:00.000Z",

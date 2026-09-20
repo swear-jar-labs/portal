@@ -248,6 +248,7 @@ export function TicketsStack({
         >
           <TicketPanel
             ticket={localTicket}
+            tickets={tickets}
             projectName={projectNames[localTicket.project] ?? localTicket.project}
             readrooms={[]}
             now={now}

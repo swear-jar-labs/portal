@@ -17,9 +17,11 @@ import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import type { ProjectSlug } from "@/features/projects/contracts";
 import {
   DEFAULT_TICKET_PROJECT,
+  ticketPriorities,
   ticketSizes,
   ticketTagIds,
   ticketTagTones,
+  type TicketPriority,
   type TicketSize,
   type TicketTagId,
 } from "./tickets";
@@ -37,6 +39,11 @@ type ComposeErrors = {
 const sizeOptions: SelectOption<TicketSize>[] = ticketSizes.map((size) => ({
   value: size,
   label: size,
+}));
+
+const priorityOptions: SelectOption<TicketPriority>[] = ticketPriorities.map((priority) => ({
+  value: priority,
+  label: messages.tickets.priorities[priority],
 }));
 
 /** The new-ticket layer: project, title, size, tags and the opening body. A
@@ -59,6 +66,7 @@ export function TicketCompose({
     title: "",
     body: "",
     size: "S",
+    priority: "normal",
     tags: [],
   });
   const [errors, setErrors] = useState<ComposeErrors>({});
@@ -134,6 +142,14 @@ export function TicketCompose({
           value={values.size}
           onChange={(size) => update("size", size)}
           options={sizeOptions}
+        />
+
+        <Select
+          label={messages.tickets.compose.fields.priority}
+          name="priority"
+          value={values.priority}
+          onChange={(priority) => update("priority", priority)}
+          options={priorityOptions}
         />
 
         <Stack gap={4}>

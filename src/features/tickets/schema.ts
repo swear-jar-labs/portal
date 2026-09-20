@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { projectSlugs } from "@/features/projects/contracts";
-import { ticketLinkKinds, ticketSizes, ticketTagIds } from "./tickets";
+import { ticketLinkKinds, ticketPriorities, ticketSizes, ticketTagIds } from "./tickets";
 
 // UI-first slice: input schemas of the tickets' forms. When the backend lands
 // (Phase 5) the same schemas guard the server actions; the forms do not change.
@@ -19,6 +19,7 @@ export const ticketComposeSchema = z.object({
   title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
   body: z.string().trim().min(1).max(MAX_BODY_LENGTH),
   size: z.enum(ticketSizes),
+  priority: z.enum(ticketPriorities),
   tags: z.array(z.enum(ticketTagIds)).max(MAX_TAGS),
 });
 
@@ -31,3 +32,15 @@ export const ticketLinkSchema = z.object({
 });
 
 export type TicketLinkInput = z.infer<typeof ticketLinkSchema>;
+
+const MAX_COMMENT_LENGTH = 2000;
+// The longest fixture key is CACHE-12345 (11); the cap leaves the pattern room.
+const MAX_KEY_LENGTH = 16;
+
+export const ticketCommentSchema = z.object({
+  body: z.string().trim().min(1).max(MAX_COMMENT_LENGTH),
+});
+
+export const ticketBlockSchema = z.object({
+  key: z.string().trim().min(1).max(MAX_KEY_LENGTH),
+});

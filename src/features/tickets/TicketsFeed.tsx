@@ -9,11 +9,13 @@ import {
   composeButtonId,
   isDefaultTicketQuery,
   ticketPath,
+  ticketPriorities,
   ticketSizes,
   ticketStatuses,
   ticketTagIds,
   type Ticket,
   type TicketQuery,
+  type TicketPriority,
   type TicketStatus,
   type TicketSize,
   type TicketTagId,
@@ -39,6 +41,7 @@ export type TicketsFeedProps = {
 
 type ProjectFilter = ProjectSlug | "all";
 type SizeFilter = TicketSize | "all";
+type PriorityFilter = TicketPriority | "all";
 type StatusFilter = TicketStatus | "all";
 type TagFilter = TicketTagId | "all";
 
@@ -60,6 +63,14 @@ const statusOptions: SelectOption<StatusFilter>[] = [
 const sizeOptions: SelectOption<SizeFilter>[] = [
   { value: "all", label: messages.tickets.feed.filters.allSizes },
   ...ticketSizes.map((size) => ({ value: size, label: size })),
+];
+
+const priorityOptions: SelectOption<PriorityFilter>[] = [
+  { value: "all", label: messages.tickets.feed.filters.allPriorities },
+  ...ticketPriorities.map((priority) => ({
+    value: priority,
+    label: messages.tickets.priorities[priority],
+  })),
 ];
 
 const tagOptions: SelectOption<TagFilter>[] = [
@@ -119,6 +130,13 @@ export function TicketsFeed({
           value={query.size}
           onChange={(size: SizeFilter) => onQueryChange({ size })}
           options={sizeOptions}
+        />
+        <Select
+          label={messages.tickets.feed.filters.priority}
+          name="priority"
+          value={query.priority}
+          onChange={(priority: PriorityFilter) => onQueryChange({ priority })}
+          options={priorityOptions}
         />
         <Select
           label={messages.tickets.feed.filters.status}

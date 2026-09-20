@@ -16,8 +16,10 @@
 }
 
 /* The below-title block: the excerpt and the chips read as one passive column
-   under the stretched link (clicks pass through like other cards' details). */
-.below {
+   under the stretched link (clicks pass through like other cards' details).
+   Scoped by the card class: a bare `.below` ties with the kit's
+   `.actions > *` and would depend on the CSS chunk order. */
+.cardTitle .below {
   display: flex;
   flex-direction: column;
   gap: 6px;

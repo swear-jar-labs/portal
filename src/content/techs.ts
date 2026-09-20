@@ -1,7 +1,7 @@
 // The shared tech vocabulary: the tags the readroom reads by and the stack
 // the projects are built with, one list for both (boards come third). Labels
-// live in messages.readroom.tags; the readroom's seed stays its own subset
-// until Phase 5, projects take theirs per fixture.
+// live in messages.readroom.tags; the readroom aliases the list whole
+// (readroomTagIds), projects take their subsets per fixture.
 
 export const techIds = [
   "c",
@@ -28,7 +28,3 @@ export const techIds = [
   "ci",
 ] as const;
 export type TechId = (typeof techIds)[number];
-
-export function isTechId(value: string): value is TechId {
-  return techIds.some((id) => id === value);
-}

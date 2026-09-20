@@ -28,6 +28,11 @@ describe("composeSchema", () => {
     expect(composeSchema.safeParse({ ...validCompose, tags: ["nope"] }).success).toBe(false);
   });
 
+  it("writes to a project journal but not to the archive", () => {
+    expect(composeSchema.safeParse({ ...validCompose, board: "compiler" }).success).toBe(true);
+    expect(composeSchema.safeParse({ ...validCompose, board: "token-cache" }).success).toBe(false);
+  });
+
   it("caps tags at three", () => {
     expect(
       composeSchema.safeParse({ ...validCompose, tags: ["craft", "meta", "question"] }).success,

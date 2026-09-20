@@ -16,7 +16,6 @@ import { formatAge as formatRelativeAge } from "@/shared/age";
 // the project journals (names come from the projects slice; Phase 5 reads
 // them from sections.title).
 export const staticBoardIds = ["general", "errata"] as const;
-export type StaticBoardId = (typeof staticBoardIds)[number];
 
 export const boardIds = [...staticBoardIds, ...projectSlugs] as const;
 export type BoardId = (typeof boardIds)[number];

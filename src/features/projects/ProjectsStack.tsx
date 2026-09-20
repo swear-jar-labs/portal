@@ -81,7 +81,7 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
     stackMemory.requestCardFocus(project.slug);
     // Only the route we pushed has the feed behind it in history; a deep-linked
     // project (or one history walked back to) closes by pushing the feed.
-    if (stackMemory.wasPushedFrom(window.location.pathname)) router.back();
+    if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(PROJECTS_PATH);
   }, [router, project]);
 

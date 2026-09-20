@@ -128,6 +128,27 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await expect(page).toHaveURL("/discussions?board=swearjar-dos");
 });
 
+test("opens a journal thread and closes back to the project", async ({ page }) => {
+  await page.goto(projectPath("swearjar-dos"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+
+  await panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }).click();
+  await expect(page).toHaveURL("/discussions/swearjar-boot");
+  await expect(
+    page.getByRole("region", { name: "Boot sequence: CRT-on before first paint" }),
+  ).toBeVisible();
+
+  // The thread closes with browser back to the project page it was read from,
+  // and the project's own marker survives the nested push: Esc still lands on
+  // the index.
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(projectPath("swearjar-dos"));
+  await expect(page.getByRole("region", { name: "SWEARJAR.DOS" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(PROJECTS_PATH);
+});
+
 test("filters the board by tag inside the project scope", async ({ page }) => {
   await page.goto(projectPath("swearjar-dos"));
   await waitForHydration(page);

@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { PROJECTS_CARD_ATTR, type Project, type ProjectStatus } from "./projects";
+import { PROJECTS_CARD_ATTR, projectStatuses, type Project } from "./projects";
 import { ProjectsCard } from "./ProjectsCard";
 
 export type ProjectsFeedProps = {
@@ -14,11 +14,9 @@ export type ProjectsFeedProps = {
   onActivate: (slug: Project["slug"], event?: MouseEvent<HTMLElement>) => void;
 };
 
-const sectionStatuses: readonly ProjectStatus[] = ["active", "planned", "archived"];
-
 /** The registry index: the ranked projects cut by lifecycle status. */
 export function ProjectsFeed({ projects, now, currentSlug, onActivate }: ProjectsFeedProps) {
-  const sections = sectionStatuses
+  const sections = projectStatuses
     .map((status) => ({
       status,
       entries: projects.filter((project) => project.status === status),

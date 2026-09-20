@@ -238,7 +238,7 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
     stackMemory.requestCardFocus(thread.id);
     // Only the route we pushed has the feed behind it in history; a deep-linked
     // thread (or one history walked back to) closes by pushing the feed.
-    if (stackMemory.wasPushedFrom(window.location.pathname)) router.back();
+    if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(FEED_PATH);
   }, [router, thread]);
 

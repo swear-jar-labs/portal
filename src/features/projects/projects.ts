@@ -56,6 +56,8 @@ export type ProjectStats = {
 export type Project = {
   slug: ProjectSlug;
   name: string;
+  // Markdown on the project page; the index card shows a raw clamped excerpt,
+  // so the fixture text stays plain until the card renders a pipeline.
   description: string;
   // The stack as shared tech ids (labels in messages.readroom.tags): the card
   // shows chips, ABOUT joins them. A plan so far has none.

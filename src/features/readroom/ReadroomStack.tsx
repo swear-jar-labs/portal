@@ -152,7 +152,7 @@ export function ReadroomStack({ readrooms, now, task }: ReadroomStackProps) {
     stackMemory.requestCardFocus(task.id);
     // Only the route we pushed has the feed behind it in history; a deep-linked
     // task closes by pushing the feed.
-    if (stackMemory.wasPushedFrom(window.location.pathname)) router.back();
+    if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(READROOM_PATH);
   }, [router, task]);
 

@@ -23,8 +23,8 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 - `sprites.ts` — 16×16 pixel sprite data (the jar and the file-row glyphs)
 - `attributes.ts` — shared `data-*` contracts (`DOS_SCROLL_ATTR`, `DOS_ZONE_ATTR`,
   `DOS_ROW_ATTR`, `DOS_ROLE_ATTR`) for keyboard-navigation and typography code in consumers;
-  `Stack navRow` stamps the row mark, `useControlWalk` steps between rows with ↑/↓ and
-  between their controls with ←/→; `DOS_SCROLL_ATTR` marks a keyboard scroll region
+  `Stack navRow` and every `Table` row stamp the row mark, `useControlWalk` steps between rows
+  with ↑/↓ and between their controls with ←/→; `DOS_SCROLL_ATTR` marks a keyboard scroll region
   (a panel body, the file list's scroll box) that the walk measures row visibility against
 - `focus.ts` — `FOCUSABLE_SELECTOR` (focusable controls in DOM order for the walk;
   hidden inputs and "smart" controls — native date/time/number pickers, ranges, radios —
@@ -37,8 +37,8 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
   `isComposing`) and `hasCommandModifier` (Ctrl/Alt/Meta; Shift is not a command
   modifier). `repeat` is not a guard — each listener owns that policy.
 - `walk.ts` — `useControlWalk`, the kit's arrow-navigation model. A region with at
-  least one marked row (`Stack navRow`) is two-axis: ↑/↓ walk the rows, ←/→ the cells
-  of the current row (outside a row they stay native). A region without row markup is
+  least one marked row (`Stack navRow`, a `Table` row) is two-axis: ↑/↓ walk the rows, ←/→
+  the cells of the current row (outside a row they stay native). A region without row markup is
   a flat list: all four arrows step through the controls in DOM order. A step out of
   sight (or without a current control) enters from the visible edge; a held arrow
   walks on with the system auto-repeat; Shift+↑/↓ scrolls an overflowing region. The
@@ -50,7 +50,8 @@ The DOS-style UI kit for Swear Jar Labs — **SWEARJAR.DOS**.
 
 - Layout/type: `Stack`, `Heading`, `Text`, `List`, `Link`
 - Controls: `Button`, `Field`, `Form`, `Textarea`, `Select`, `Checkbox`
-- Surfaces: `Panel`, `Window`, `Dialog` (Radix), `MenuBar` (Radix), `FileTable`
+- Surfaces: `Panel`, `Window`, `Dialog` (Radix), `MenuBar` (Radix), `Table`;
+  `FileTable` is the file-manager adapter over `Table`
 - Effects: `Crt` (the global screen the app lives in: its pseudo-elements paint
   the scanline/vignette filter over the shell and its portaled surfaces),
   `Sprite`, `Screensaver`

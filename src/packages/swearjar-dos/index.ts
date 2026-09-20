@@ -40,6 +40,9 @@ export type { SelectOption, SelectProps } from "./components/Select/Select";
 export { Checkbox } from "./components/Checkbox/Checkbox";
 export type { CheckboxProps } from "./components/Checkbox/Checkbox";
 
+export { Table } from "./components/Table/Table";
+export type { TableColumn, TableProps, TableRowAction } from "./components/Table/Table";
+
 export { Panel } from "./components/Panel/Panel";
 export type { PanelProps } from "./components/Panel/Panel";
 

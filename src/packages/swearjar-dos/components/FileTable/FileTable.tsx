@@ -1,7 +1,6 @@
 import { type MouseEvent, type ReactNode } from "react";
-import { DOS_SCROLL_ATTR } from "../../attributes";
 import type { SpriteName } from "../../sprites";
-import { cx } from "../tone";
+import { Table, type TableColumn } from "../Table/Table";
 import { FileIcon } from "./FileIcon";
 import styles from "./FileTable.module.css";
 
@@ -19,16 +18,12 @@ export type FileTableItem = {
   type: string;
   size?: string;
   kind?: "file" | "dir" | "exe";
-  // A row's own sprite (the shell maps program files to their app icon).
   icon?: SpriteName;
   expanded?: boolean;
-  // Files inside an expanded directory: the row shifts right, the dir stays at
-  // the edge, so the list reads as a tree.
   nested?: boolean;
   selected?: boolean;
   current?: boolean;
   href?: string;
-  // Rows without a click (e.g. keyboard activation) pass no event.
   onActivate?: (event?: MouseEvent<HTMLElement>) => void;
 };
 
@@ -42,53 +37,7 @@ export type FileTableProps = {
   className?: string;
 };
 
-function Control({ item }: { item: FileTableItem }) {
-  const content = (
-    <>
-      <FileIcon kind={item.kind ?? "file"} expanded={item.expanded} icon={item.icon} />
-      <span className={styles.name}>{item.name}</span>
-    </>
-  );
-
-  if (item.href) {
-    return (
-      <a
-        id={item.id}
-        className={styles.control}
-        href={item.href}
-        aria-current={item.current ? "true" : undefined}
-        onClick={item.onActivate}
-        onKeyDown={(event) => {
-          // A link activates natively on Enter only; Space is the button idiom
-          // the file list shares, so a row with an in-app handler forwards it
-          // like a click. Without one, Space stays native.
-          if (!item.onActivate) return;
-          if (event.key !== " ") return;
-          event.preventDefault();
-          item.onActivate();
-        }}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <button
-      id={item.id}
-      type="button"
-      className={styles.control}
-      aria-expanded={item.kind === "dir" ? item.expanded : undefined}
-      aria-current={item.current ? "true" : undefined}
-      onClick={item.onActivate}
-    >
-      {content}
-    </button>
-  );
-}
-
 const cellContent: Record<string, ((item: FileTableItem) => ReactNode) | undefined> = {
-  name: (item) => <Control item={item} />,
   type: (item) => item.type,
   size: (item) => item.size,
 };
@@ -97,6 +46,16 @@ const cellClass: Record<string, string | undefined> = {
   type: styles.type,
   size: styles.size,
 };
+
+function fileRowClass(item: FileTableItem): string {
+  return [
+    item.kind === "dir" ? styles.dir : undefined,
+    item.kind === "exe" ? styles.exe : undefined,
+    item.nested ? styles.nested : undefined,
+  ]
+    .filter((value) => value !== undefined)
+    .join(" ");
+}
 
 export function FileTable({
   columns,
@@ -107,73 +66,47 @@ export function FileTable({
   footerActionLabel,
   className,
 }: FileTableProps) {
+  const tableColumns: TableColumn<FileTableItem>[] = columns.map((column) => ({
+    id: column.id,
+    label: column.label,
+    width: column.width,
+    align: column.align,
+    className: cellClass[column.id],
+    ...(column.id === "name"
+      ? {
+          action: (item: FileTableItem) => ({
+            id: item.id,
+            content: (
+              <>
+                <FileIcon kind={item.kind ?? "file"} expanded={item.expanded} icon={item.icon} />
+                <span className={styles.name}>{item.name}</span>
+              </>
+            ),
+            ...(item.href === undefined ? {} : { href: item.href }),
+            ...(item.current === undefined ? {} : { current: item.current }),
+            ...(item.expanded === undefined ? {} : { expanded: item.expanded }),
+            ...(item.onActivate === undefined ? {} : { onActivate: item.onActivate }),
+            className: styles.fileControl,
+            rowActivation: true,
+          }),
+        }
+      : { render: column.render ?? cellContent[column.id] }),
+  }));
+
   return (
-    <div className={cx(styles.wrap, className)}>
-      {/* The row list is a keyboard scroll region: the shell's cursor walk
-          measures visibility against it (see isInScrollView). */}
-      <div className={styles.scroll} {...{ [DOS_SCROLL_ATTR]: "" }}>
-        <table className={styles.table} aria-label={label}>
-          <colgroup>
-            {columns.map((column) => (
-              <col key={column.id} style={column.width ? { width: column.width } : undefined} />
-            ))}
-          </colgroup>
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.id}
-                  scope="col"
-                  className={cx(styles.cell, styles.head, column.align === "right" && styles.right)}
-                >
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                className={cx(
-                  styles.row,
-                  item.kind === "dir" && styles.dir,
-                  item.kind === "exe" && styles.exe,
-                  item.nested && styles.nested,
-                  item.selected && styles.selected,
-                )}
-              >
-                {columns.map((column) => (
-                  <td
-                    key={column.id}
-                    className={cx(
-                      styles.cell,
-                      column.align === "right" && styles.right,
-                      cellClass[column.id],
-                    )}
-                  >
-                    {column.render ? column.render(item) : cellContent[column.id]?.(item)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {footer ? (
-        onFooterActivate ? (
-          <button
-            type="button"
-            className={cx(styles.footer, styles.footerButton)}
-            aria-label={footerActionLabel}
-            onClick={onFooterActivate}
-          >
-            {footer}
-          </button>
-        ) : (
-          <div className={styles.footer}>{footer}</div>
-        )
-      ) : null}
-    </div>
+    <Table
+      columns={tableColumns}
+      items={items}
+      rowKey={(item) => item.id}
+      rowClassName={fileRowClass}
+      selected={(item) => item.selected === true}
+      label={label}
+      footer={footer}
+      onFooterActivate={onFooterActivate}
+      footerActionLabel={footerActionLabel}
+      className={className}
+      fill
+      navigationBoundary
+    />
   );
 }

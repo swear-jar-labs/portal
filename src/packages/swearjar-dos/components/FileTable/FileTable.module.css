@@ -1,150 +1,21 @@
-.wrap {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
+.fileControl {
+  min-width: 0;
 }
 
-.scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  /* The sticky header's height (line height 1.4em + the head padding) is the
-     scrollport inset: it keeps revealed rows below the header and stays out of
-     the visible-row scan. */
-  --dos-filetable-head-height: calc(1.4em + 6px);
-  scroll-padding-top: var(--dos-filetable-head-height);
-}
-
-.scroll::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-.scroll::-webkit-scrollbar-track {
-  background: var(--dos-silver);
-}
-
-.scroll::-webkit-scrollbar-thumb {
-  background: var(--dos-white);
-  border: 2px solid var(--dos-dark-gray);
-}
-
-.table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-}
-
-.table td {
-  line-height: var(--dos-table-row-line-height, inherit);
-}
-
-.cell {
-  padding: 0 4px;
-  text-align: left;
-}
-
-.cell:first-child {
-  padding-left: 8px;
-}
-
-tbody .cell:first-child {
-  padding-left: 6px;
-}
-
-.cell:last-child {
-  padding-right: 8px;
-}
-
-.right {
-  text-align: right;
-}
-
-.head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--dos-silver);
-  color: var(--dos-black);
-  font-weight: 700;
-  padding: 4px 4px 2px;
-  border-bottom: 1px solid var(--dos-dark-gray);
-}
-
-.row {
-  position: relative;
-  /* The list is a white surface now, so the names are black ink, not the
-     shell's light gray body text. */
-  color: var(--dos-black);
-}
-
-.row:hover:not(.selected) {
-  background: var(--dos-silver);
-}
-
-.selected {
-  background: var(--dos-blue);
-  color: var(--dos-white);
-}
-
-.selected .name,
-.selected .type,
-.selected .size {
-  color: var(--dos-white);
-}
-
-.control {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  width: 100%;
-  padding: 0 0 0 2px;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-/* Files under an expanded directory shift right; the dir row stays at the edge. */
-.nested .control {
+.nested .fileControl {
   padding-left: 16px;
-}
-
-.control::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-
-.control:focus-visible {
-  outline: none;
-}
-
-.control:focus-visible::after {
-  box-shadow: inset 0 0 0 2px var(--dos-black);
-}
-
-.selected .control:focus-visible::after {
-  box-shadow: inset 0 0 0 2px var(--dos-white);
 }
 
 .name {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
   padding: 2px 1px;
   margin: -2px -1px;
+  text-overflow: ellipsis;
 }
 
 .icon {
-  /* The silhouette outline does not flip with the row state: the selection
-     keeps the same outline as the white list. */
   --dos-icon-outline: var(--dos-dark-gray);
   flex: 0 0 auto;
   align-self: center;
@@ -154,7 +25,8 @@ tbody .cell:first-child {
   fill: var(--dos-icon-outline);
 }
 
-.type {
+.type,
+.size {
   color: var(--dos-dark-gray);
 }
 
@@ -167,29 +39,5 @@ tbody .cell:first-child {
 }
 
 .size {
-  color: var(--dos-dark-gray);
   text-align: right;
-}
-
-.footer {
-  flex: 0 0 auto;
-  padding: 2px 8px 4px;
-  border-top: 2px solid var(--dos-dark-gray);
-  background: var(--dos-silver);
-  color: var(--dos-black);
-}
-
-.footerButton {
-  display: block;
-  width: 100%;
-  font: inherit;
-  font-weight: inherit;
-  text-align: left;
-  /* The .footer ink owns the color: inheriting would hand the light-gray of a
-     dark window surface to a silver bar. */
-  color: var(--dos-black);
-  background: var(--dos-silver);
-  border: 0;
-  border-top: 2px solid var(--dos-dark-gray);
-  cursor: pointer;
 }

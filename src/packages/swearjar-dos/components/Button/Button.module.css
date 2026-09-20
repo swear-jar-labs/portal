@@ -11,6 +11,7 @@
   min-width: 12ch;
   background: var(--dos-light-gray);
   color: var(--dos-black);
+  text-decoration: none;
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-raised);
 }

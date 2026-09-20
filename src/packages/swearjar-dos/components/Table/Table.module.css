@@ -1,0 +1,184 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--dos-white);
+}
+
+.fill {
+  height: 100%;
+}
+
+.scroll {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  /* A content-height table scrolls horizontally only: the vertical axis belongs
+     to the panel body (the FileTable adapter fills the height and scrolls both
+     ways). No standard `scrollbar-color` here — it would override the
+     ::-webkit-scrollbar styling below, and the kit draws one DOS scrollbar. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* The sticky head's height: its line-height plus its block padding. The
+     line-height token follows the body breakpoint, so the scroll inset tracks
+     the real header. */
+  --dos-table-head-padding-top: 4px;
+  --dos-table-head-padding-bottom: 2px;
+  --dos-table-head-line-height: var(--dos-line-height);
+  --dos-table-head-height: calc(
+    var(--dos-table-head-line-height) + var(--dos-table-head-padding-top) +
+      var(--dos-table-head-padding-bottom)
+  );
+  scroll-padding-top: var(--dos-table-head-height);
+}
+
+@media (max-width: 720px) {
+  .scroll {
+    --dos-table-head-line-height: var(--dos-line-height-narrow);
+  }
+}
+
+.fill .scroll {
+  flex: 1 1 auto;
+  /* The full-height adapter (FileTable) scrolls both ways inside itself. */
+  overflow: auto;
+}
+
+.scroll::-webkit-scrollbar {
+  width: var(--dos-scrollbar-size);
+  height: var(--dos-scrollbar-size);
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: var(--dos-scrollbar-track);
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--dos-scrollbar-thumb);
+  border: 2px solid var(--dos-scrollbar-track);
+}
+
+.scroll::-webkit-scrollbar-corner {
+  background: var(--dos-scrollbar-track);
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.table td {
+  line-height: var(--dos-table-row-line-height, inherit);
+}
+
+.cell {
+  padding: 0 4px;
+  text-align: left;
+}
+
+.cell:first-child {
+  padding-left: 8px;
+}
+
+tbody .cell:first-child {
+  padding-left: 6px;
+}
+
+.cell:last-child {
+  padding-right: 8px;
+}
+
+.right {
+  text-align: right;
+}
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: var(--dos-table-head-padding-top) 4px var(--dos-table-head-padding-bottom);
+  line-height: var(--dos-table-head-line-height);
+  border-bottom: 1px solid var(--dos-dark-gray);
+  background: var(--dos-silver);
+  color: var(--dos-black);
+  font-weight: 700;
+}
+
+.row {
+  position: relative;
+  color: var(--dos-black);
+}
+
+.row:hover:not(.selected):not(.highlightFocused:focus-within) {
+  background: var(--dos-silver);
+}
+
+.selected,
+.highlightFocused:focus-within {
+  background: var(--dos-blue);
+  color: var(--dos-white);
+}
+
+.selected .cell,
+.highlightFocused:focus-within .cell {
+  color: var(--dos-white);
+}
+
+.control {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 0 0 0 2px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rowAction .control::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.control:focus-visible {
+  outline: none;
+}
+
+.control:focus-visible::after {
+  box-shadow: inset 0 0 0 2px var(--dos-black);
+}
+
+.selected .control:focus-visible::after,
+.highlightFocused:focus-within .control:focus-visible::after {
+  box-shadow: inset 0 0 0 2px var(--dos-white);
+}
+
+.footer {
+  flex: 0 0 auto;
+  padding: 2px 8px 4px;
+  border-top: 2px solid var(--dos-dark-gray);
+  background: var(--dos-silver);
+  color: var(--dos-black);
+}
+
+.footerButton {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-top: 2px solid var(--dos-dark-gray);
+  background: var(--dos-silver);
+  color: var(--dos-black);
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}

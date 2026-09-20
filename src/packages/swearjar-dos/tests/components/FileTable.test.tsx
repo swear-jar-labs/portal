@@ -20,7 +20,21 @@ describe("FileTable", () => {
       />,
     );
 
-    expect(html).toContain('<tr class="row dir">');
-    expect(html).toContain('<tr class="row nested">');
+    expect(html).toContain('class="row rowAction dir"');
+    expect(html).toContain('class="row rowAction nested"');
+  });
+
+  it("keeps the file name as the primary row control", () => {
+    const html = renderToStaticMarkup(
+      <FileTable
+        columns={COLUMNS}
+        items={[{ id: "file-about", name: "ABOUT", type: "TXT", href: "/about" }]}
+      />,
+    );
+
+    expect(html).toContain('id="file-about"');
+    expect(html).toContain('href="/about"');
+    expect(html).toContain(">ABOUT</span>");
+    expect(html).toContain('class="wrap fill"');
   });
 });

@@ -90,15 +90,15 @@
 }
 
 .body::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: var(--dos-scrollbar-size);
+  height: var(--dos-scrollbar-size);
 }
 
 .body::-webkit-scrollbar-track {
-  background: var(--dos-dark-gray);
+  background: var(--dos-scrollbar-track);
 }
 
 .body::-webkit-scrollbar-thumb {
-  background: var(--dos-light-gray);
-  border: 2px solid var(--dos-dark-gray);
+  background: var(--dos-scrollbar-thumb);
+  border: 2px solid var(--dos-scrollbar-track);
 }

@@ -86,6 +86,12 @@
   --dos-blink: 1s steps(1) infinite;
   --dos-boot-fade: 450ms;
 
+  /* One DOS scrollbar for every scroll region (panel bodies, tables): the
+     track is the dark chrome, the thumb the light one. */
+  --dos-scrollbar-size: 12px;
+  --dos-scrollbar-track: var(--dos-dark-gray);
+  --dos-scrollbar-thumb: var(--dos-light-gray);
+
   --dos-shell-max-width: 1600px;
 
   /* Windows 3.x silver: the chrome of the light windows (frames, title bars,

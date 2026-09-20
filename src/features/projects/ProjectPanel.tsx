@@ -1,6 +1,6 @@
 import { Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { FEED_PATH, ThreadRows, type ThreadSummary } from "@/features/board/contracts";
+import { FEED_PATH, JournalRows, type ThreadSummary } from "@/features/board/contracts";
 import { MemberLink } from "@/features/members/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
@@ -118,7 +118,7 @@ export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
         {journal.length === 0 ? (
           <Text role="hint">{messages.projects.journal.empty}</Text>
         ) : (
-          <ThreadRows threads={journal} now={now} />
+          <JournalRows threads={journal} now={now} sectionPath={PROJECTS_PATH} />
         )}
         <Stack navRow>
           <Link href={journalHref}>{messages.projects.journal.allThreads}</Link>

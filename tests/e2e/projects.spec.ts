@@ -112,11 +112,33 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await expect(
     panel.getByRole("link", { name: "Palette check: CGA against the CRT glow" }),
   ).toBeVisible();
-
+  // Journal entries are the board's own cards, votes included.
+  await expect(panel.getByRole("button", { name: "▲ 9 VOTES" })).toBeVisible();
+  // The journal walks two axes: ↓ steps between entries, → inside one.
+  await panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }).focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(
+    panel.getByRole("link", { name: "Palette check: CGA against the CRT glow" }),
+  ).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(panel.getByRole("link", { name: "ken" })).toBeFocused();
   const allThreads = panel.getByRole("link", { name: "ALL THREADS →" });
   await expect(allThreads).toHaveAttribute("href", "/discussions?board=swearjar-dos");
   await allThreads.click();
   await expect(page).toHaveURL("/discussions?board=swearjar-dos");
+});
+
+test("votes in the journal", async ({ page }) => {
+  await logon(page);
+  await page.goto(projectPath("swearjar-dos"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+
+  // The journal shares the board's session store: the count grows in place.
+  // (A plain cross-section link reloads and resets session state by design,
+  // so the delta is pinned here, not across the navigation.)
+  await panel.getByRole("button", { name: "▲ 9 VOTES" }).click();
+  await expect(panel.getByRole("button", { name: "▲ 10 VOTES" })).toBeVisible();
 });
 
 test("keeps an empty journal readable", async ({ page }) => {

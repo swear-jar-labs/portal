@@ -1,0 +1,85 @@
+"use client";
+
+import type { MouseEvent } from "react";
+import { useMemo, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { Stack } from "@swearjar/dos";
+import { isPlainActivation } from "@/lib/activation";
+import { stackMemory, useLoginPrompt, useShellSession } from "@/features/shell";
+import * as boardStore from "./board-store";
+import { FEED_PATH, threadPath, type TagId, type ThreadSummary } from "./threads";
+import { ThreadCard } from "./ThreadCard";
+
+export type JournalRowsProps = {
+  // The board's fixture summaries (preview-sized by the caller).
+  threads: readonly ThreadSummary[];
+  now: string;
+  // Where author profiles intercept: the board's feed by default, the hosting
+  // section (a project page) when the journal reads there.
+  sectionPath?: string;
+};
+
+/** One board's journal as the board's own cards: the same ThreadCard the feed
+ * renders, over the session store directly (no feed query to fake) — votes and
+ * session replies overlay the fixtures, so the journal reads what the board
+ * reads. Threads composed in this session have no route yet, so the journal
+ * skips them (the board opens them in place); tag filtering stays global, as
+ * on the board. */
+export function JournalRows({ threads, now, sectionPath = FEED_PATH }: JournalRowsProps) {
+  const router = useRouter();
+  const session = useShellSession();
+  const requestLogin = useLoginPrompt();
+  const state = useSyncExternalStore(
+    boardStore.subscribeBoard,
+    boardStore.boardSnapshot,
+    boardStore.boardServerSnapshot,
+  );
+
+  const gate = (action: () => void) => {
+    if (session === null) {
+      requestLogin();
+      return;
+    }
+    action();
+  };
+
+  const rows = useMemo(
+    () =>
+      boardStore
+        .withLocalActivity([...threads], state.threads)
+        .map((summary) =>
+          state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
+        ),
+    [threads, state.threads, state.votedThreads],
+  );
+
+  const activateThread = (threadId: string, event?: MouseEvent<HTMLElement>) => {
+    if (!isPlainActivation(event)) return;
+    event?.preventDefault();
+    const route = threadPath(threadId);
+    stackMemory.rememberPush(route);
+    router.push(route);
+  };
+
+  const filterTag = (tag: TagId) => {
+    router.push(`${FEED_PATH}?tag=${tag}`);
+  };
+
+  return (
+    <Stack gap={8}>
+      {rows.map((thread) => (
+        <Stack key={thread.id} navRow>
+          <ThreadCard
+            thread={thread}
+            now={now}
+            voted={state.votedThreads.has(thread.id)}
+            sectionPath={sectionPath}
+            onActivate={(event) => activateThread(thread.id, event)}
+            onVote={() => gate(() => boardStore.toggleThreadVote(thread.id))}
+            onFilterTag={filterTag}
+          />
+        </Stack>
+      ))}
+    </Stack>
+  );
+}

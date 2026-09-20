@@ -9,4 +9,5 @@ export {
   listRecentThreadSummariesByBoard,
   listThreadSummariesByAuthor,
 } from "../data";
+export { JournalRows } from "../JournalRows";
 export { ThreadRows } from "../ThreadRows";

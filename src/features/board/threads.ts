@@ -7,7 +7,7 @@ import { messages } from "@/content/messages";
 import { formatAge as formatRelativeAge } from "@/shared/age";
 
 // Boards: the general one, errata (its own vocabulary, same machinery) and the
-// project boards (placeholders until the products slice lands).
+// project boards (placeholders until the projects slice lands).
 export const boardIds = ["general", "errata", "compiler", "tooling"] as const;
 export type BoardId = (typeof boardIds)[number];
 

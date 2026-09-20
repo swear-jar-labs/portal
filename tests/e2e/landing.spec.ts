@@ -252,7 +252,7 @@ test("keeps Enter on the close button a button activation", async ({ page }) => 
 
 test("function keys open their commands", async ({ page }) => {
   const toolbar = page.getByRole("toolbar", { name: "Function keys" });
-  await expect(toolbar.getByRole("button", { name: "F6 Products" })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "F6 Projects" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F8 Apply" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F9 Logon" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F10 Exit" })).toBeVisible();

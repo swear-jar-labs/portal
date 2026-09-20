@@ -200,7 +200,7 @@ describe("commands content", () => {
     // ERRATA is a board of the feed, not a route of its own.
     expect(commandIdForPath("/errata")).toBeUndefined();
     expect(commandIdForPath("/readroom")).toBe("READROOM");
-    expect(commandIdForPath("/products")).toBe("PRODUCTS");
+    expect(commandIdForPath("/projects")).toBe("PROJECTS");
     expect(commandIdForPath("/tickets")).toBe("TICKETS");
     expect(commandIdForPath("/apply")).toBe("APPLY");
     expect(commandIdForPath("/login")).toBe("LOGON");

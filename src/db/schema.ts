@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const productStatus = pgEnum("product_status", ["planned", "active", "archived"]);
+export const projectStatus = pgEnum("project_status", ["planned", "active", "archived"]);
 export const ticketStatus = pgEnum("ticket_status", [
   "open",
   "in_progress",
@@ -100,14 +100,14 @@ export const sections = pgTable("sections", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const products = pgTable("products", {
+export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
   repoUrl: text("repo_url"),
   stack: text("stack"),
-  status: productStatus("status").notNull().default("planned"),
+  status: projectStatus("status").notNull().default("planned"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -118,7 +118,7 @@ export const threads = pgTable(
     sectionId: uuid("section_id")
       .notNull()
       .references(() => sections.id, { onDelete: "cascade" }),
-    productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     authorId: uuid("author_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -132,7 +132,7 @@ export const threads = pgTable(
   },
   (table) => [
     index("threads_section_id_idx").on(table.sectionId),
-    index("threads_product_id_idx").on(table.productId),
+    index("threads_project_id_idx").on(table.projectId),
     index("threads_author_id_idx").on(table.authorId),
     index("threads_last_post_at_idx").on(table.lastPostAt),
   ],
@@ -164,9 +164,9 @@ export const tickets = pgTable(
   "tickets",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    productId: uuid("product_id")
+    projectId: uuid("project_id")
       .notNull()
-      .references(() => products.id, { onDelete: "cascade" }),
+      .references(() => projects.id, { onDelete: "cascade" }),
     authorId: uuid("author_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -179,7 +179,7 @@ export const tickets = pgTable(
     closedAt: timestamp("closed_at"),
   },
   (table) => [
-    index("tickets_product_id_idx").on(table.productId),
+    index("tickets_project_id_idx").on(table.projectId),
     index("tickets_status_idx").on(table.status),
     index("tickets_assignee_id_idx").on(table.assigneeId),
   ],
@@ -340,14 +340,14 @@ export const sectionRelations = relations(sections, ({ many }) => ({
   threads: many(threads),
 }));
 
-export const productRelations = relations(products, ({ many }) => ({
+export const projectRelations = relations(projects, ({ many }) => ({
   threads: many(threads),
   tickets: many(tickets),
 }));
 
 export const threadRelations = relations(threads, ({ one, many }) => ({
   section: one(sections, { fields: [threads.sectionId], references: [sections.id] }),
-  product: one(products, { fields: [threads.productId], references: [products.id] }),
+  project: one(projects, { fields: [threads.projectId], references: [projects.id] }),
   author: one(user, { fields: [threads.authorId], references: [user.id] }),
   posts: many(posts),
   threadTags: many(threadTags),
@@ -370,7 +370,7 @@ export const readroomNoteRelations = relations(readroomNotes, ({ one }) => ({
 }));
 
 export const ticketRelations = relations(tickets, ({ one, many }) => ({
-  product: one(products, { fields: [tickets.productId], references: [products.id] }),
+  project: one(projects, { fields: [tickets.projectId], references: [projects.id] }),
   author: one(user, {
     fields: [tickets.authorId],
     references: [user.id],

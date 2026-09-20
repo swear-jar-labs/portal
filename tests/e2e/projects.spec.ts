@@ -36,6 +36,10 @@ test("renders the registry cut by status", async ({ page }) => {
     "href",
     projectPath("swearjar-dos"),
   );
+  // The card carries the excerpt and the stack chips, not just the name.
+  await expect(cards(page).nth(0)).toContainText("The terminal you are looking at");
+  await expect(cards(page).nth(0).getByText("Next.js", { exact: true })).toBeVisible();
+  await expect(cards(page).nth(0).getByText("Postgres", { exact: true })).toBeVisible();
   await expectNoViolations(page, PROJECTS_PATH);
 });
 
@@ -138,16 +142,14 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
   ).toBeVisible();
 });
 
-test("opens the journal for a member", async ({ page }) => {
+test("opens the journal for a member without an apply prompt", async ({ page }) => {
   await logon(page);
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "TOOLING" });
 
-  const open = panel.getByRole("link", { name: "[ OPEN JOURNAL → ]" });
-  await expect(open).toHaveAttribute("href", "/discussions?board=tooling");
-  await open.click();
-  await expect(page).toHaveURL("/discussions?board=tooling");
+  await expect(panel.getByText("Members write here. Want in?")).toHaveCount(0);
+  await expect(panel.getByRole("link", { name: "ALL THREADS →" })).toBeVisible();
 });
 
 test("opens a maintainer profile above the project and returns", async ({ page }) => {

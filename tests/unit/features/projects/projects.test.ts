@@ -19,6 +19,7 @@ function project(overrides: Partial<Project> & { slug: Project["slug"] }): Proje
   return {
     name: overrides.slug.toUpperCase(),
     description: "A project.",
+    techs: [],
     status: "active",
     lead: person,
     maintainers: [],

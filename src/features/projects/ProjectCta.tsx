@@ -4,26 +4,16 @@ import { Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
 
-export type ProjectCtaProps = {
-  journalHref: string;
-};
-
-/** The project's role-aware call: guests are pointed at APPLY, members at the
- * project's board — composing itself lives in Discussions. */
-export function ProjectCta({ journalHref }: ProjectCtaProps) {
+/** The guest call under the project: members already have ALL THREADS above,
+ * guests are pointed at APPLY — composing itself lives in Discussions. */
+export function ProjectCta() {
   const session = useShellSession();
 
-  if (session === null) {
-    return (
-      <Stack gap={4} navRow>
-        <Text role="hint">{messages.projects.cta.guestText}</Text>
-        <Link href="/apply">{messages.projects.cta.apply}</Link>
-      </Stack>
-    );
-  }
+  if (session !== null) return null;
   return (
     <Stack gap={4} navRow>
-      <Link href={journalHref}>{messages.projects.cta.open}</Link>
+      <Text role="hint">{messages.projects.cta.guestText}</Text>
+      <Link href="/apply">{messages.projects.cta.apply}</Link>
     </Stack>
   );
 }

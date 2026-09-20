@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { messages } from "@/content/messages";
 import { userSchema } from "@/features/account/schema";
 import { listThreads } from "@/features/board/data";
 import {
@@ -85,6 +86,21 @@ describe("projects fixtures", () => {
           userSchema.safeParse(person.user).success,
           `${project.slug} names an unknown person: ${person.user}`,
         ).toBe(true);
+      }
+    }
+  });
+
+  it("stacks shared techs on every repo project", async () => {
+    for (const project of await listProjects()) {
+      expect(new Set(project.techs).size, `${project.slug} repeats a tech`).toBe(
+        project.techs.length,
+      );
+      if (project.repoUrl === undefined) continue;
+      expect(project.techs.length, `${project.slug} has a repo without techs`).toBeGreaterThan(0);
+      for (const tech of project.techs) {
+        expect(messages.readroom.tags[tech], `${project.slug} has an unlabeled tech`).toBeTypeOf(
+          "string",
+        );
       }
     }
   });

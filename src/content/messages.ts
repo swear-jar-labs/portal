@@ -400,6 +400,10 @@ export const messages = {
       linux: "LINUX",
       windows: "WINDOWS",
       macos: "macOS",
+      nextjs: "Next.js",
+      postgres: "Postgres",
+      shell: "Shell",
+      ci: "CI",
     },
     task: {
       source: "SOURCE",
@@ -545,7 +549,6 @@ export const messages = {
     cta: {
       guestText: "Members write here. Want in?",
       apply: "[ APPLY → ]",
-      open: "[ OPEN JOURNAL → ]",
     },
     age: {
       now: "JUST NOW",

@@ -4,6 +4,7 @@
 // projection of the same facts (TECH.md §5).
 
 import type { Tone } from "@swearjar/dos";
+import { techIds, type TechId } from "@/content/techs";
 
 export const readroomPhases = ["collecting", "reviewing", "published", "archived"] as const;
 export type ReadroomPhase = (typeof readroomPhases)[number];
@@ -15,31 +16,12 @@ export const phaseTones: Partial<Record<ReadroomPhase, Tone>> = {
   published: "cyan",
 };
 
-// The cycle tags: the readroom's own taxonomy of what interests a programmer
-// (languages, SQL and the adjacent platforms). Labels live in messages; the
-// seed list is fixed until the taxonomy grows a consumer (a feed filter).
-export const readroomTagIds = [
-  "c",
-  "cpp",
-  "rust",
-  "go",
-  "python",
-  "typescript",
-  "sql",
-  "js",
-  "java",
-  "kotlin",
-  "dotnet",
-  "php",
-  "ruby",
-  "ios",
-  "android",
-  "linux",
-  "windows",
-  "macos",
-] as const;
+// The cycle tags: the shared tech vocabulary (see src/content/techs.ts).
+// Labels live in messages; the seed list is fixed until the taxonomy grows a
+// consumer (a feed filter).
+export const readroomTagIds = techIds;
 
-export type ReadroomTagId = (typeof readroomTagIds)[number];
+export type ReadroomTagId = TechId;
 
 export type ReadroomPerson = {
   user: string;

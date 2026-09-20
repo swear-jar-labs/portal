@@ -3,6 +3,7 @@
 // (contracts/index.ts) re-exports what other features consume.
 
 import type { Tone } from "@swearjar/dos";
+import type { TechId } from "@/content/techs";
 
 // The lifecycle reads as a chip; the archive is neutral.
 export const projectStatuses = ["active", "planned", "archived"] as const;
@@ -56,7 +57,9 @@ export type Project = {
   slug: ProjectSlug;
   name: string;
   description: string;
-  stack?: string;
+  // The stack as shared tech ids (labels in messages.readroom.tags): the card
+  // shows chips, ABOUT joins them. A plan so far has none.
+  techs: readonly TechId[];
   repoUrl?: string;
   forge?: ForgeId;
   status: ProjectStatus;

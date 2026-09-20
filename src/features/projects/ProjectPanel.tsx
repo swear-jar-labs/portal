@@ -74,8 +74,8 @@ export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
         <Heading level={2}>{messages.projects.about.heading}</Heading>
         <Markdown>{project.description}</Markdown>
         <Stack gap={4}>
-          {project.stack === undefined ? null : (
-            <Text role="hint">{`${messages.projects.about.stack} ${project.stack}`}</Text>
+          {project.techs.length === 0 ? null : (
+            <Text role="hint">{`${messages.projects.about.stack} ${project.techs.map((tech) => messages.readroom.tags[tech]).join(" · ")}`}</Text>
           )}
           <Stack direction="row" gap={6} align="center" wrap navRow>
             <Text as="span" role="hint">
@@ -113,7 +113,7 @@ export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
         </Stack>
       </Stack>
 
-      <ProjectCta journalHref={journalHref} />
+      <ProjectCta />
     </Stack>
   );
 }

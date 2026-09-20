@@ -14,7 +14,7 @@ export type ProjectsCardProps = {
   project: Project;
   now: string;
   // The journal's freshest activity, collected from the board: an empty
-  // journal (a plan so far) shows the stack alone.
+  // journal (a plan so far) shows the byline without it.
   activityAt?: string;
   current?: boolean;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
@@ -27,11 +27,6 @@ export function ProjectsCard({
   current = false,
   onActivate,
 }: ProjectsCardProps) {
-  const meta = [
-    ...(project.stack === undefined ? [] : [project.stack]),
-    ...(activityAt === undefined ? [] : [formatAge(activityAt, now, messages.projects.age)]),
-  ];
-
   return (
     <Card
       id={projectCardId(project.slug)}
@@ -40,16 +35,21 @@ export function ProjectsCard({
       current={current}
       href={projectPath(project.slug)}
       onActivate={onActivate}
-      metaPosition="before"
+      metaPosition="after"
       metaInteractive
       meta={
-        <Stack direction="row" gap={6} align="center" wrap>
-          <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
-          {meta.length === 0 ? null : (
-            <Text as="span" role="hint">
-              {meta.join(" · ")}
-            </Text>
-          )}
+        <Stack gap={4}>
+          <Text as="span" className={styles.excerpt}>
+            {project.description}
+          </Text>
+          <Stack direction="row" gap={6} align="center" wrap>
+            <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
+            {activityAt === undefined ? null : (
+              <Text as="span" role="hint">
+                {formatAge(activityAt, now, messages.projects.age)}
+              </Text>
+            )}
+          </Stack>
         </Stack>
       }
       actions={
@@ -57,6 +57,9 @@ export function ProjectsCard({
           <Tag tone={projectStatusTones[project.status]}>
             {messages.projects.statuses[project.status]}
           </Tag>
+          {project.techs.map((tech) => (
+            <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+          ))}
         </Stack>
       }
     />

@@ -7,8 +7,11 @@
   pointer-events: none;
 }
 
-.fact {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
+/* The card excerpt: the description clamped to three lines, so a long ABOUT
+ * never stretches the index. */
+.excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }

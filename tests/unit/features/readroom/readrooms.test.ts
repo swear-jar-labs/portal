@@ -10,11 +10,11 @@ import {
   readroomPath,
   readroomPhases,
   readroomTagIds,
-  ticketPath,
   visibleNotes,
   type Readroom,
   type ReadroomNote,
 } from "@/features/readroom/readrooms";
+import { ticketPath } from "@/features/tickets/contracts";
 
 const DEADLINE = "2026-09-16T12:00:00.000Z";
 
@@ -182,7 +182,7 @@ describe("stamps", () => {
 
   it("owns the URL canon", () => {
     expect(readroomPath("retry-loop")).toBe("/readroom/retry-loop");
-    expect(ticketPath("17")).toBe("/tickets/17");
+    expect(ticketPath("DOS-3")).toBe("/tickets/DOS-3");
   });
 
   it("gives every tag id a label and no stranger", () => {

@@ -1,6 +1,7 @@
 import { Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { ticketPath, type Readroom } from "./readrooms";
+import { ticketPath } from "@/features/tickets/contracts";
+import { type Readroom } from "./readrooms";
 import styles from "./readroom.module.css";
 
 export type ReadroomSourceRowProps = {

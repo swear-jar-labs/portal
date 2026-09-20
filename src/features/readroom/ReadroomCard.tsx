@@ -6,14 +6,8 @@ import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
 import { MemberLink } from "@/features/members/contracts";
-import {
-  phaseOf,
-  phaseTones,
-  readroomPath,
-  READROOM_PATH,
-  ticketPath,
-  type Readroom,
-} from "./readrooms";
+import { ticketPath } from "@/features/tickets/contracts";
+import { phaseOf, phaseTones, readroomPath, READROOM_PATH, type Readroom } from "./readrooms";
 import styles from "./readroom.module.css";
 
 export const readroomCardId = (id: string) => `readroom-card-${id}`;

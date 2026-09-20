@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  countThreadsByBoard,
   getBoardMember,
   getThread,
   listRecentThreadSummariesByBoard,
@@ -147,5 +148,13 @@ describe("listRecentThreadSummariesByBoard", () => {
 
   it("returns an empty journal for a board without threads", async () => {
     expect(await listRecentThreadSummariesByBoard("flagship", 3, now)).toEqual([]);
+  });
+});
+
+describe("countThreadsByBoard", () => {
+  it("counts the full journal independently of its preview", async () => {
+    expect(await countThreadsByBoard("swearjar-dos")).toBe(2);
+    expect(await countThreadsByBoard("compiler")).toBe(1);
+    expect(await countThreadsByBoard("flagship")).toBe(0);
   });
 });

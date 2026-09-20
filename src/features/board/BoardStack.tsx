@@ -22,7 +22,13 @@ import {
   useShellSession,
 } from "@/features/shell";
 import { useMemberLayer } from "@/features/members/contracts";
-import { FEED_PATH, threadPath, type BoardMember, type ThreadSummary } from "./threads";
+import {
+  composableBoardIds,
+  FEED_PATH,
+  threadPath,
+  type BoardMember,
+  type ThreadSummary,
+} from "./threads";
 import { avatarFor } from "@/shared/members";
 import { ComposePanel } from "./ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
@@ -63,7 +69,11 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const [query, setQuery] = useState<FeedQuery>(() => parseFeedQuery(searchParams));
-  const [composing, setComposing] = useState(false);
+  const initialCompose =
+    searchParams.get("new") === "1" &&
+    query.board !== undefined &&
+    composableBoardIds.some((board) => board === query.board);
+  const [composing, setComposing] = useState(initialCompose);
   const [localThreadId, setLocalThreadId] = useState<string | null>(null);
   // The control a closed layer owes focus to (the compose button, a new card).
   const returnFocusRef = useRef<string | null>(null);
@@ -268,7 +278,9 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   }, [memberLayerOpen, router, thread]);
 
   const openCompose = useCallback(() => {
-    gate(() => setComposing(true));
+    gate(() => {
+      setComposing(true);
+    });
   }, [gate]);
 
   const closeCompose = useCallback((focusId: string = composeButtonId) => {
@@ -283,6 +295,7 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
         return;
       }
       const id = addThread(input, author);
+      setQuery({ board: input.board, sort: "new" });
       closeCompose(threadCardId(id));
     },
     [addThread, author, closeCompose, requestLogin],
@@ -358,7 +371,11 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
               />
             }
           >
-            <ComposePanel onSubmit={submitCompose} onCancel={() => closeCompose()} />
+            <ComposePanel
+              defaultBoard={query.board}
+              onSubmit={submitCompose}
+              onCancel={() => closeCompose()}
+            />
           </ShellPanel>
         ) : null}
         {memberLayerOpen ? (

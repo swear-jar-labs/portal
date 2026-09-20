@@ -20,6 +20,7 @@ export const ticketStatus = pgEnum("ticket_status", [
   "done",
   "closed",
 ]);
+export const ticketLinkKind = pgEnum("ticket_link_kind", ["pr", "commit", "file", "diff"]);
 export const tagKind = pgEnum("tag_kind", ["topic", "skill"]);
 export const voteTarget = pgEnum("vote_target", ["post", "thread", "ticket", "readroom_note"]);
 export const applicationRole = pgEnum("application_role", ["op", "learner"]);
@@ -108,6 +109,7 @@ export const projects = pgTable("projects", {
   repoUrl: text("repo_url"),
   stack: text("stack"),
   status: projectStatus("status").notNull().default("planned"),
+  requiredApprovals: integer("required_approvals").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -164,6 +166,9 @@ export const tickets = pgTable(
   "tickets",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    // The human key (DOS-12): the dossier route and the readroom chip read it.
+    // UUID stays the PK; Phase 5 generates the key per project (serial).
+    key: text("key").notNull().unique(),
     projectId: uuid("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
@@ -201,6 +206,29 @@ export const ticketComments = pgTable(
     deletedAt: timestamp("deleted_at"),
   },
   (table) => [index("ticket_comments_ticket_id_idx").on(table.ticketId)],
+);
+
+export const ticketLinks = pgTable(
+  "ticket_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    kind: ticketLinkKind("kind").notNull(),
+    url: text("url").notNull(),
+    label: text("label").notNull(),
+    revision: text("revision"),
+    addedBy: uuid("added_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ticket_links_ticket_url_unique").on(table.ticketId, table.url),
+    index("ticket_links_ticket_id_idx").on(table.ticketId),
+    index("ticket_links_added_by_idx").on(table.addedBy),
+  ],
 );
 
 export const readrooms = pgTable(
@@ -321,6 +349,7 @@ export const userRelations = relations(user, ({ many }) => ({
   threads: many(threads),
   posts: many(posts),
   ticketComments: many(ticketComments),
+  ticketLinks: many(ticketLinks),
   authoredTickets: many(tickets, { relationName: "ticket_author" }),
   assignedTickets: many(tickets, { relationName: "ticket_assignee" }),
   readroomsLed: many(readrooms),
@@ -382,12 +411,18 @@ export const ticketRelations = relations(tickets, ({ one, many }) => ({
     relationName: "ticket_assignee",
   }),
   comments: many(ticketComments),
+  links: many(ticketLinks),
   ticketTags: many(ticketTags),
 }));
 
 export const ticketCommentRelations = relations(ticketComments, ({ one }) => ({
   ticket: one(tickets, { fields: [ticketComments.ticketId], references: [tickets.id] }),
   author: one(user, { fields: [ticketComments.authorId], references: [user.id] }),
+}));
+
+export const ticketLinkRelations = relations(ticketLinks, ({ one }) => ({
+  ticket: one(tickets, { fields: [ticketLinks.ticketId], references: [tickets.id] }),
+  addedBy: one(user, { fields: [ticketLinks.addedBy], references: [user.id] }),
 }));
 
 export const tagRelations = relations(tags, ({ many }) => ({

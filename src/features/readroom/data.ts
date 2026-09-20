@@ -3,7 +3,8 @@
 // change to queries while the signatures stay put (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
-import type { Readroom, ReadroomNote, ReadroomPerson } from "./readrooms";
+import type { Readroom, ReadroomNote, ReadroomPerson, ReadroomRef } from "./readrooms";
+import { readroomPath } from "./readrooms";
 
 const ada: ReadroomPerson = { user: "ada", avatar: avatarFor("ada") };
 const grace: ReadroomPerson = { user: "grace", avatar: avatarFor("grace") };
@@ -39,7 +40,7 @@ const readrooms: readonly Readroom[] = [
     lead: grace,
     createdAt: daysFromNow(-2),
     deadlineAt: daysFromNow(4),
-    ticket: "17",
+    ticket: "DOS-3",
     notes: [
       note(
         "bump-allocator-1",
@@ -235,4 +236,15 @@ export async function listReadrooms(): Promise<Readroom[]> {
 
 export async function getReadroom(id: string): Promise<Readroom | null> {
   return readrooms.find((readroom) => readroom.id === id) ?? null;
+}
+
+/** The ticket dossier's reverse list: the cycles reading one ticket's code. */
+export async function listReadroomsByTicket(ticket: string): Promise<ReadroomRef[]> {
+  return readrooms
+    .filter((readroom) => readroom.ticket === ticket)
+    .map((readroom) => ({
+      id: readroom.id,
+      title: readroom.title,
+      path: readroomPath(readroom.id),
+    }));
 }

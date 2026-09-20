@@ -5,6 +5,7 @@
 export type { BoardMember, ThreadSummary } from "../threads";
 export { FEED_PATH } from "../threads";
 export {
+  countThreadsByBoard,
   getBoardMember,
   listRecentThreadSummariesByBoard,
   listThreadSummariesByAuthor,

@@ -6,8 +6,8 @@ import {
   READROOM_CARD_ATTR,
   READROOM_PATH,
   readroomPath,
-  ticketPath,
 } from "../../src/features/readroom/readrooms";
+import { ticketPath } from "../../src/features/tickets/tickets";
 import {
   enterShell,
   expectAbove,
@@ -24,7 +24,8 @@ const BUMP = "Dissect the allocator that hides a free list behind a bump pointer
 const RECURSIVE = "The hand-written parser: where the precedence table lies";
 const RETRY = "Postmortem read: the retry loop that never slept";
 const ARCHIVED = "Archived: the token cache that remembered everything";
-const TICKET_CHIP = "TICKET #17";
+const TICKET_CHIP = "TICKET #DOS-3";
+const DOS_THREE = "Table contract for the tickets tracker";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
 // The PanelStack effect focuses the top layer's body; the focus is the sync
 // point for keyboard tests behind the Suspense-less RSC render.
@@ -229,15 +230,20 @@ test("shows the source link, the ticket chip and the Markdown pipeline", async (
   await expect(parser.locator("pre")).toContainText("static Node *term");
 });
 
-test("links the ticket chip to Tickets and lands on the shell 404", async ({ page }) => {
+test("links the ticket chip to its live dossier", async ({ page }) => {
   await page.goto(readroomPath("bump-allocator"));
   const chip = page.getByRole("region", { name: BUMP }).getByRole("link", { name: TICKET_CHIP });
-  await expect(chip).toHaveAttribute("href", ticketPath("17"));
+  await expect(chip).toHaveAttribute("href", ticketPath("DOS-3"));
 
   await chip.click();
-  await expect(page).toHaveURL(ticketPath("17"));
-  await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
-  await expect(page.getByRole("menubar")).toBeVisible();
+  await expect(page).toHaveURL(ticketPath("DOS-3"));
+  const dossier = page.getByRole("region", { name: "DOS-3" });
+  await expect(dossier.getByRole("heading", { level: 1, name: DOS_THREE })).toBeVisible();
+  // The dossier's reverse list points back at the cycle that reads its code.
+  await expect(dossier.getByRole("link", { name: BUMP })).toHaveAttribute(
+    "href",
+    readroomPath("bump-allocator"),
+  );
 });
 
 test("seals notes from a guest until the deadline", async ({ page }) => {

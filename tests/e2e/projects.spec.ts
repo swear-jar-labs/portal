@@ -102,6 +102,11 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
 
+  await expect(panel.getByRole("link", { name: "[ NEW THREAD ]" })).toHaveAttribute(
+    "href",
+    "/discussions?board=swearjar-dos&new=1",
+  );
+
   await expect(
     panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }),
   ).toBeVisible();
@@ -122,10 +127,22 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   ).toBeFocused();
   await page.keyboard.press("ArrowRight");
   await expect(panel.getByRole("link", { name: "ken" })).toBeFocused();
-  const allThreads = panel.getByRole("link", { name: "ALL THREADS →" });
+  const allThreads = panel.getByRole("link", { name: "ALL THREADS (2) →" });
   await expect(allThreads).toHaveAttribute("href", "/discussions?board=swearjar-dos");
   await allThreads.click();
   await expect(page).toHaveURL("/discussions?board=swearjar-dos");
+});
+
+test("opens a thread composer with the project preselected", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(projectPath("compiler"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Compiler" });
+
+  await panel.getByRole("link", { name: "[ NEW THREAD ]" }).click();
+  await expect(page).toHaveURL("/discussions?board=compiler");
+  const form = page.getByRole("form", { name: "NEW THREAD" });
+  await expect(form.getByRole("combobox", { name: "BOARD" })).toContainText("Compiler");
 });
 
 test("opens a journal thread and closes back to the project", async ({ page }) => {
@@ -227,7 +244,7 @@ test("opens the journal for a member without an apply prompt", async ({ page }) 
   const panel = page.getByRole("region", { name: "Tooling" });
 
   await expect(panel.getByText("Members write here. Want in?")).toHaveCount(0);
-  await expect(panel.getByRole("link", { name: "ALL THREADS →" })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "ALL THREADS (1) →" })).toBeVisible();
 });
 
 test("opens a maintainer profile above the project and returns", async ({ page }) => {

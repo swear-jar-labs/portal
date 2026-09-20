@@ -492,6 +492,11 @@ export async function listThreadSummariesByAuthor(user: string): Promise<ThreadS
     .sort((a, b) => Date.parse(b.lastActivityAt) - Date.parse(a.lastActivityAt) || byId(a, b));
 }
 
+/** The full size of one project journal, independent of its preview limit. */
+export async function countThreadsByBoard(board: BoardId): Promise<number> {
+  return threads.filter((thread) => thread.board === board).length;
+}
+
 /** One board's newest summaries, pinned first: a project journal reads the
  * board through it, never a copied sort. `now` is a parameter so the ranking
  * is pure and testable. */

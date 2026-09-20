@@ -8,6 +8,7 @@ describe("board contract", () => {
       "FEED_PATH",
       "JournalRows",
       "ThreadRows",
+      "countThreadsByBoard",
       "getBoardMember",
       "listRecentThreadSummariesByBoard",
       "listThreadSummariesByAuthor",

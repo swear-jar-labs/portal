@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
-import { listRecentThreadSummariesByBoard } from "@/features/board/contracts";
+import { countThreadsByBoard, listRecentThreadSummariesByBoard } from "@/features/board/contracts";
+import { listTicketsByProject } from "@/features/tickets/contracts";
 import { collectActivity } from "./activity";
 import { getProject, listProjects } from "./data";
 import { JOURNAL_PREVIEW_COUNT, rankProjects } from "./projects";
@@ -11,6 +12,8 @@ import { ProjectsStack } from "./ProjectsStack";
 export type ProjectPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+const PROJECT_TICKET_UPDATE_COUNT = 5;
 
 export async function generateProjectMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -35,11 +38,11 @@ export async function ProjectPage({ params }: ProjectPageProps) {
     projects.map((entry) => entry.slug),
     nowMs,
   );
-  const journal = await listRecentThreadSummariesByBoard(
-    project.slug,
-    JOURNAL_PREVIEW_COUNT,
-    nowMs,
-  );
+  const [journal, tickets, threadCount] = await Promise.all([
+    listRecentThreadSummariesByBoard(project.slug, JOURNAL_PREVIEW_COUNT, nowMs),
+    listTicketsByProject(project.slug),
+    countThreadsByBoard(project.slug),
+  ]);
 
   return (
     <ProjectsStack
@@ -48,7 +51,16 @@ export async function ProjectPage({ params }: ProjectPageProps) {
       project={{
         slug: project.slug,
         title: project.name,
-        layer: <ProjectPanel project={project} journal={journal} now={now} />,
+        layer: (
+          <ProjectPanel
+            project={project}
+            journal={journal}
+            tickets={tickets.slice(0, PROJECT_TICKET_UPDATE_COUNT)}
+            ticketCount={tickets.length}
+            threadCount={threadCount}
+            now={now}
+          />
+        ),
       }}
     />
   );

@@ -1,0 +1,11 @@
+// The tickets' contract: the only surface other features import. It is a
+// manifest, not an implementation: explicit re-exports of the slice's
+// internals, nothing else. Only leaves without cross-feature imports live
+// here — pages that read other contracts (TicketPanel, ProjectTicketsSection)
+// stay out, or the barrel would loop the slice graph (see AGENTS.md). The
+// contract test pins the published list.
+
+export { ticketPath } from "../tickets";
+export { listTicketsByProject } from "../data";
+export { TicketsTable } from "../TicketsTable";
+export type { Ticket } from "../tickets";

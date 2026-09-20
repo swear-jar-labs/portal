@@ -1,7 +1,8 @@
-import { Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
+import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { FEED_PATH, JournalRows, type ThreadSummary } from "@/features/board/contracts";
 import { MemberLink } from "@/features/members/contracts";
+import { TicketsTable, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
 import { ProjectCta } from "./ProjectCta";
@@ -10,6 +11,9 @@ import styles from "./projects.module.css";
 export type ProjectPanelProps = {
   project: Project;
   journal: readonly ThreadSummary[];
+  tickets: readonly Ticket[];
+  ticketCount: number;
+  threadCount: number;
   now: string;
 };
 
@@ -63,8 +67,18 @@ function ForgeBlock({ project, now }: { project: Project; now: string }) {
 /** The project's RSC half: the header, description, forge counters and the
  * related threads — Markdown and the member links arrive rendered, the CTA
  * reads the session in its own client island. */
-export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
+export function ProjectPanel({
+  project,
+  journal,
+  tickets,
+  ticketCount,
+  threadCount,
+  now,
+}: ProjectPanelProps) {
   const journalHref = `${FEED_PATH}?board=${project.slug}`;
+  const newThreadHref = `${journalHref}&new=1`;
+  const ticketsHref = `/tickets?project=${project.slug}`;
+  const newTicketHref = `${ticketsHref}&new=1`;
 
   return (
     <Stack gap={12}>
@@ -114,7 +128,37 @@ export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
       </Stack>
 
       <Stack gap={6}>
-        <Heading level={2}>{messages.projects.journal.heading}</Heading>
+        <Stack direction="row" gap={8} align="center" wrap navRow>
+          <Heading level={2}>{messages.tickets.project.heading}</Heading>
+          {project.status === "archived" ? null : (
+            <Button href={newTicketHref} variant="primary">
+              {messages.tickets.project.newTicket}
+            </Button>
+          )}
+        </Stack>
+        {tickets.length === 0 ? (
+          <Text role="hint">{messages.tickets.project.empty}</Text>
+        ) : (
+          <TicketsTable
+            tickets={tickets}
+            projectNames={{ [project.slug]: project.name }}
+            label={messages.tickets.project.heading}
+          />
+        )}
+        <Stack navRow>
+          <Link href={ticketsHref}>{`${messages.tickets.project.all} (${ticketCount}) →`}</Link>
+        </Stack>
+      </Stack>
+
+      <Stack gap={6}>
+        <Stack direction="row" gap={8} align="center" wrap navRow>
+          <Heading level={2}>{messages.projects.journal.heading}</Heading>
+          {project.status === "archived" ? null : (
+            <Button href={newThreadHref} variant="primary">
+              {messages.board.feed.newThread}
+            </Button>
+          )}
+        </Stack>
         {journal.length === 0 ? (
           <Text role="hint">{messages.projects.journal.empty}</Text>
         ) : (
@@ -126,7 +170,9 @@ export function ProjectPanel({ project, journal, now }: ProjectPanelProps) {
           />
         )}
         <Stack navRow>
-          <Link href={journalHref}>{messages.projects.journal.allThreads}</Link>
+          <Link href={journalHref}>
+            {`${messages.projects.journal.allThreads} (${threadCount}) →`}
+          </Link>
         </Stack>
       </Stack>
 

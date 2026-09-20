@@ -1,0 +1,43 @@
+/* The table's white ground comes from the kit's Table wrap; the article only
+   carries the row rhythm and keeps the grid free to shrink. */
+.tracker {
+  min-width: 0;
+  --tickets-row-padding-block: 5px;
+}
+
+.ticketRow {
+  border-bottom: 1px solid var(--dos-light-gray);
+}
+
+.ticketRow > td {
+  padding-top: var(--tickets-row-padding-block);
+  padding-bottom: var(--tickets-row-padding-block);
+}
+
+.assigneeCell,
+.sizeCell {
+  text-align: center;
+}
+
+.assigneeCell {
+  vertical-align: middle;
+}
+
+.body,
+.comment {
+  padding: 8px;
+  border: var(--dos-border-width) solid var(--dos-border-dark);
+  background: var(--dos-paper);
+}
+
+.comment {
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 720px) {
+  .body,
+  .comment {
+    padding: 4px;
+  }
+}

@@ -40,14 +40,18 @@ const boardOptions = composableBoardIds.map((id): SelectOption<BoardId> => ({
 }));
 
 export type ComposePanelProps = {
+  defaultBoard?: BoardId;
   onSubmit: (input: ComposeInput) => void;
   onCancel: () => void;
 };
 
 /** The new-thread layer: board, tags, title and the opening post. A mock submit
  * until the board has a backend (the thread lives in the session). */
-export function ComposePanel({ onSubmit, onCancel }: ComposePanelProps) {
-  const [values, setValues] = useState<ComposeInput>(INITIAL_VALUES);
+export function ComposePanel({ defaultBoard, onSubmit, onCancel }: ComposePanelProps) {
+  const [values, setValues] = useState<ComposeInput>(() => ({
+    ...INITIAL_VALUES,
+    board: defaultBoard ?? INITIAL_VALUES.board,
+  }));
   const [errors, setErrors] = useState<ComposeErrors>({});
 
   function update<K extends keyof ComposeInput>(key: K, value: ComposeInput[K]) {

@@ -6,7 +6,9 @@ describe("projects contract", () => {
     expect(Object.keys(projectsContract).sort()).toEqual([
       "archivedProjectSlugs",
       "isProjectSlug",
+      "listProjects",
       "projectName",
+      "projectPath",
       "projectSlugs",
     ]);
   });

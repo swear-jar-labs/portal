@@ -557,7 +557,9 @@ test("composes a thread that lives in the session", async ({ page }) => {
   const card = feed.getByRole("article").filter({ hasText: title });
   await expect(card).toBeVisible();
   await expect(card).toContainText("TOOLING");
-  await expect(feed.getByText("13 THREADS")).toBeVisible();
+  // The submit switched the feed to the composed thread's board: the count is
+  // the board's own (one fixture thread plus the new one).
+  await expect(feed.getByText("2 THREADS")).toBeVisible();
   // The layer closes and focus lands on the card it just created.
   await expect(form).toHaveCount(0);
   const cardTitle = card.getByRole("button", { name: title });
@@ -582,7 +584,7 @@ test("composes a thread that lives in the session", async ({ page }) => {
 
   await page.keyboard.press("Escape");
   await expect(feed.getByRole("article").filter({ hasText: title })).toBeVisible();
-  await expect(page).toHaveURL(FEED_PATH);
+  await expect(page).toHaveURL(`${FEED_PATH}?board=tooling&sort=new`);
 });
 
 test("replies, edits and tombstones a post", async ({ page }) => {

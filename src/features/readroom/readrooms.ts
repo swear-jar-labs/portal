@@ -82,9 +82,14 @@ export const noteElementId = (id: string) => `readroom-note-${id}`;
 export const READROOM_PATH = "/readroom";
 export const readroomPath = (id: string) => `${READROOM_PATH}/${id}`;
 
-// The ticket route canon lives with its first consumer until the Tickets slice
-// takes it over.
-export const ticketPath = (id: string) => `/tickets/${id}`;
+// The ticket dossier's reverse list (readroom-ticket-links): the cycles
+// reading one ticket's code. The full manifest arrives with that slice;
+// this ref is all the dossier needs.
+export type ReadroomRef = {
+  id: string;
+  title: string;
+  path: string;
+};
 
 /** The phase is a projection of facts, never a stored column: the archive wins
  * over the report, the report over the clock, and the deadline boundary

@@ -164,7 +164,6 @@ export const sprites = {
     map: [
       "................",
       "................",
-      "................",
       "..KKKKKKKKKKKK..",
       "..KbbbbccbbbbK..",
       "..KKKKKccKKKKK..",
@@ -176,6 +175,7 @@ export const sprites = {
       "..KbbbbccbbbbK..",
       "..KbbbbccbbbbK..",
       "..KKKKKKKKKKKK..",
+      "................",
       "................",
       "................",
     ],

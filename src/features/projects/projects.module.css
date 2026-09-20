@@ -1,0 +1,14 @@
+.cardTitle {
+  --dos-link: var(--dos-black);
+}
+
+/* Passive card details let the stretched title link own their gaps and text. */
+.cardTitle .cardDetails {
+  pointer-events: none;
+}
+
+.fact {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}

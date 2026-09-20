@@ -3,6 +3,7 @@
 // internals, nothing else. The contract test pins the published list.
 
 export type { BoardMember, ThreadSummary } from "../threads";
+export { FEED_PATH } from "../threads";
 export {
   getBoardMember,
   listRecentThreadSummariesByBoard,

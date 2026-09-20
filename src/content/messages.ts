@@ -496,6 +496,66 @@ export const messages = {
       week: "W",
     },
   },
+  projects: {
+    metadata: {
+      title: "Projects — Swear Jar Labs",
+      description:
+        "The Swear Jar Labs projects: a public registry with forge counters and journals.",
+    },
+    statuses: {
+      active: "ACTIVE",
+      planned: "PLANNED",
+      archived: "ARCHIVED",
+    },
+    feed: {
+      heading: "PROJECTS",
+      empty: "No projects yet. The lab is quiet.",
+      sections: {
+        active: "ACTIVE",
+        planned: "PLANNED",
+        archived: "ARCHIVE",
+      },
+    },
+    about: {
+      heading: "ABOUT",
+      stack: "STACK",
+      lead: "LEAD",
+      maintainers: "MAINTAINERS",
+    },
+    forge: {
+      heading: "FORGE",
+      forges: {
+        github: "GITHUB",
+        gitlab: "GITLAB",
+      },
+      openPrs: "OPEN PRS",
+      merged: "MERGED 30D",
+      commits: "COMMITS 7D",
+      release: "RELEASE",
+      activity: "ACTIVITY",
+      synced: "SYNCED",
+      frozen: "FROZEN",
+      empty: "No repository yet. The forge wakes when the code lands.",
+    },
+    journal: {
+      heading: "JOURNAL",
+      empty: "No entries yet. The journal opens with the first thread.",
+      allThreads: "ALL THREADS →",
+    },
+    cta: {
+      guestText: "Members write here. Want in?",
+      apply: "[ APPLY → ]",
+      open: "[ OPEN JOURNAL → ]",
+    },
+    age: {
+      now: "JUST NOW",
+      ago: "AGO",
+      minute: "M",
+      hour: "H",
+      day: "D",
+      week: "W",
+    },
+  },
   editor: {
     writeTab: "[ WRITE ]",
     previewTab: "[ PREVIEW ]",
@@ -525,6 +585,7 @@ export const pluralForms = {
   thread: { one: "THREAD", other: "THREADS" },
   note: { one: "NOTE", other: "NOTES" },
   task: { one: "TASK", other: "TASKS" },
+  project: { one: "PROJECT", other: "PROJECTS" },
   vote: { one: "VOTE", other: "VOTES" },
   reply: { one: "REPLY", other: "REPLIES" },
 } as const satisfies Record<string, PluralForms>;

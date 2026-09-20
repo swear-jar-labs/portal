@@ -3,5 +3,9 @@
 // internals, nothing else. The contract test pins the published list.
 
 export type { BoardMember, ThreadSummary } from "../threads";
-export { getBoardMember, listThreadSummariesByAuthor } from "../data";
+export {
+  getBoardMember,
+  listRecentThreadSummariesByBoard,
+  listThreadSummariesByAuthor,
+} from "../data";
 export { ThreadRows } from "../ThreadRows";

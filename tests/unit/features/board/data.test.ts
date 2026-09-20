@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   getBoardMember,
   getThread,
+  listRecentThreadSummariesByBoard,
   listThreadSummariesByAuthor,
   listThreads,
 } from "@/features/board/data";
@@ -124,5 +125,27 @@ describe("listThreadSummariesByAuthor", () => {
 
   it("returns an empty list for a member without threads", async () => {
     expect(await listThreadSummariesByAuthor("nobody")).toEqual([]);
+  });
+});
+
+describe("listRecentThreadSummariesByBoard", () => {
+  const now = Date.parse("2026-09-20T00:00:00.000Z");
+
+  it("returns pinned first, then the freshest, within the limit", async () => {
+    const summaries = await listRecentThreadSummariesByBoard("general", 3, now);
+    expect(summaries.map((thread) => thread.id)).toEqual([
+      "by-hand-ritual",
+      "read-first",
+      "heap-postmortem",
+    ]);
+  });
+
+  it("reads a project journal in freshness order", async () => {
+    const summaries = await listRecentThreadSummariesByBoard("swearjar-dos", 3, now);
+    expect(summaries.map((thread) => thread.id)).toEqual(["swearjar-boot", "swearjar-palette"]);
+  });
+
+  it("returns an empty journal for a board without threads", async () => {
+    expect(await listRecentThreadSummariesByBoard("flagship", 3, now)).toEqual([]);
   });
 });

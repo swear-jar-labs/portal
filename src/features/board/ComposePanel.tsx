@@ -14,7 +14,14 @@ import {
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { boardIds, tagIds, tagTones, type BoardId, type TagId } from "./threads";
+import {
+  boardTitle,
+  composableBoardIds,
+  tagIds,
+  tagTones,
+  type BoardId,
+  type TagId,
+} from "./threads";
 import { composeSchema, type ComposeInput } from "./schema";
 
 const BODY_ROWS = 6;
@@ -27,9 +34,9 @@ type ComposeErrors = {
   body?: string;
 };
 
-const boardOptions = boardIds.map((id): SelectOption<BoardId> => ({
+const boardOptions = composableBoardIds.map((id): SelectOption<BoardId> => ({
   value: id,
-  label: messages.board.boards[id],
+  label: boardTitle(id),
 }));
 
 export type ComposePanelProps = {

@@ -4,12 +4,35 @@
 
 import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import {
+  archivedProjectSlugs,
+  isProjectSlug,
+  projectName,
+  projectSlugs,
+} from "@/features/projects/contracts";
 import { formatAge as formatRelativeAge } from "@/shared/age";
 
-// Boards: the general one, errata (its own vocabulary, same machinery) and the
-// project boards (placeholders until the projects slice lands).
-export const boardIds = ["general", "errata", "compiler", "tooling"] as const;
+// Boards: the general one, errata (its own vocabulary, same machinery) and
+// the project journals (names come from the projects slice; Phase 5 reads
+// them from sections.title).
+export const staticBoardIds = ["general", "errata"] as const;
+export type StaticBoardId = (typeof staticBoardIds)[number];
+
+export const boardIds = [...staticBoardIds, ...projectSlugs] as const;
 export type BoardId = (typeof boardIds)[number];
+
+// Archived journals stay readable but closed: the feed filters the full
+// taxonomy, the composer offers everything else.
+const archivedBoards: ReadonlySet<string> = new Set(archivedProjectSlugs);
+
+export const composableBoardIds = boardIds.filter((id) => !archivedBoards.has(id));
+
+/** The board's display name: chrome labels for the static boards, the project
+ * registry's name for the journals. */
+export function boardTitle(id: BoardId): string {
+  if (isProjectSlug(id)) return projectName(id);
+  return messages.board.boards[id];
+}
 
 // Tags are the board's vocabulary: status tags carry a tone and read as chips,
 // topical tags stay neutral.

@@ -7,7 +7,7 @@ import { messages, pluralForms } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { formatCount } from "@/lib/format";
 import { stackMemory } from "@/features/shell";
-import { formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
+import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
 
 type ThreadRowsProps = {
   threads: readonly ThreadSummary[];
@@ -57,7 +57,7 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
             <Stack gap={4}>
               <Text as="span" role="hint">
                 {[
-                  messages.board.boards[thread.board],
+                  boardTitle(thread.board),
                   formatAge(thread.lastActivityAt, now),
                   formatCount(thread.votes, pluralForms.vote),
                   formatCount(thread.replies, pluralForms.reply),

@@ -7,6 +7,7 @@ describe("board contract", () => {
     expect(Object.keys(boardContract).sort()).toEqual([
       "ThreadRows",
       "getBoardMember",
+      "listRecentThreadSummariesByBoard",
       "listThreadSummariesByAuthor",
     ]);
   });

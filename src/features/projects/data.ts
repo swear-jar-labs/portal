@@ -1,0 +1,135 @@
+// UI-first projects data: fixtures and the async getters over them. The
+// projects pages consume them; when the backend lands (Phase 5), the bodies
+// change to queries while the signatures stay put (TECH.md §5).
+
+import { avatarFor } from "@/shared/members";
+import type { Project, ProjectPerson, ProjectSlug, ProjectStats } from "./projects";
+
+const ada: ProjectPerson = { user: "ada", avatar: avatarFor("ada") };
+const grace: ProjectPerson = { user: "grace", avatar: avatarFor("grace") };
+const ken: ProjectPerson = { user: "ken" };
+const lin: ProjectPerson = { user: "lin" };
+
+// Only the sync clock is relative: last activity mirrors the board journal's
+// freshest post (a test pins the match), the sync age counts from load.
+const HOUR_MS = 3_600_000;
+const BASE_MS = Date.now();
+
+function hoursAgo(hours: number): string {
+  return new Date(BASE_MS - hours * HOUR_MS).toISOString();
+}
+
+function stats(
+  overrides: Omit<ProjectStats, "syncedAt"> & { syncedHoursAgo: number },
+): ProjectStats {
+  const { syncedHoursAgo, ...rest } = overrides;
+  return { ...rest, syncedAt: hoursAgo(syncedHoursAgo) };
+}
+
+const projects: readonly Project[] = [
+  {
+    slug: "swearjar-dos",
+    name: "SWEARJAR.DOS",
+    description:
+      "The terminal you are looking at: the public face of the labs, built by hand in the open.",
+    stack: "Next.js · Postgres · Drizzle",
+    repoUrl: "https://github.com/swear-jar-labs/portal",
+    forge: "github",
+    status: "active",
+    lead: ada,
+    maintainers: [ada, grace],
+    stats: stats({
+      openPrs: 3,
+      merged30d: 12,
+      commits7d: 21,
+      release: { tag: "v0.1", at: "2026-09-10T09:00:00.000Z" },
+      lastActivityAt: "2026-09-18T09:00:00.000Z",
+      syncedHoursAgo: 2,
+    }),
+  },
+  {
+    slug: "compiler",
+    name: "COMPILER",
+    description: "A hand-written recursive descent playground: grammars you can debug at 3am.",
+    stack: "C · recursive descent",
+    repoUrl: "https://github.com/swear-jar-labs/compiler",
+    forge: "github",
+    status: "active",
+    lead: grace,
+    maintainers: [grace, ken],
+    stats: stats({
+      openPrs: 1,
+      merged30d: 5,
+      commits7d: 8,
+      lastActivityAt: "2026-09-17T08:20:00.000Z",
+      syncedHoursAgo: 3,
+    }),
+  },
+  {
+    slug: "tooling",
+    name: "TOOLING",
+    description: "Build caches, scripts and CI glue that refuse to poison themselves.",
+    stack: "Shell · CI",
+    repoUrl: "https://gitlab.com/swear-jar-labs/tooling",
+    forge: "gitlab",
+    status: "active",
+    lead: ada,
+    maintainers: [ada, lin],
+    stats: stats({
+      openPrs: 2,
+      merged30d: 7,
+      commits7d: 4,
+      lastActivityAt: "2026-09-16T06:05:00.000Z",
+      syncedHoursAgo: 5,
+    }),
+  },
+  {
+    slug: "token-cache",
+    name: "TOKEN CACHE",
+    description:
+      "An LRU cache that learned about recency the hard way. Frozen — read, don't revive.",
+    stack: "TypeScript",
+    repoUrl: "https://github.com/swear-jar-labs/token-cache",
+    forge: "github",
+    status: "archived",
+    lead: ken,
+    maintainers: [lin],
+    stats: stats({
+      openPrs: 0,
+      merged30d: 0,
+      commits7d: 0,
+      lastActivityAt: "2026-08-30T14:00:00.000Z",
+      syncedHoursAgo: 24 * 90,
+    }),
+  },
+  {
+    slug: "flagship",
+    name: "FLAGSHIP",
+    description: "The cohort's flagship: one real project, chosen by poll, built by hand.",
+    status: "planned",
+    lead: grace,
+    maintainers: [],
+  },
+];
+
+const bySlug = new Map<ProjectSlug, Project>(projects.map((project) => [project.slug, project]));
+
+export const archivedProjectSlugs: readonly ProjectSlug[] = projects
+  .filter((project) => project.status === "archived")
+  .map((project) => project.slug);
+
+/** The display name behind a project slug (and behind the project boards). */
+export function projectName(slug: ProjectSlug): string {
+  const project = bySlug.get(slug);
+  if (!project) throw new Error(`unknown project slug: ${slug}`);
+  return project.name;
+}
+
+export async function listProjects(): Promise<Project[]> {
+  return [...projects];
+}
+
+export async function getProject(slug: string): Promise<Project | null> {
+  const project = bySlug.get(slug as ProjectSlug);
+  return project ?? null;
+}

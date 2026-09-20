@@ -2,17 +2,37 @@ import { describe, expect, it } from "vitest";
 import { messages } from "@/content/messages";
 import {
   boardIds,
+  boardTitle,
+  composableBoardIds,
   isBoardId,
   isTagId,
+  staticBoardIds,
   tagIds,
   tagTones,
   threadPath,
 } from "@/features/board/threads";
 
 describe("board taxonomy", () => {
-  it("keeps a label for every board and tag", () => {
-    expect(Object.keys(messages.board.boards).sort()).toEqual([...boardIds].sort());
+  it("keeps chrome labels for the static boards only", () => {
+    expect(Object.keys(messages.board.boards).sort()).toEqual([...staticBoardIds].sort());
     expect(Object.keys(messages.board.tags).sort()).toEqual([...tagIds].sort());
+  });
+
+  it("titles every board, journals by project name", () => {
+    expect(boardTitle("general")).toBe("GENERAL");
+    expect(boardTitle("errata")).toBe("ERRATA");
+    expect(boardTitle("swearjar-dos")).toBe("SWEARJAR.DOS");
+    expect(boardTitle("compiler")).toBe("COMPILER");
+    expect(boardTitle("tooling")).toBe("TOOLING");
+    expect(boardTitle("token-cache")).toBe("TOKEN CACHE");
+    expect(boardTitle("flagship")).toBe("FLAGSHIP");
+  });
+
+  it("composes everywhere except the archive", () => {
+    expect(composableBoardIds).not.toContain("token-cache");
+    expect([...composableBoardIds].sort()).toEqual(
+      boardIds.filter((id) => id !== "token-cache").sort(),
+    );
   });
 
   it("gives every tone to a known tag", () => {

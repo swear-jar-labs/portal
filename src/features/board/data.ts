@@ -3,7 +3,14 @@
 // the bodies change to queries while the signatures stay put (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
-import { summarizeThread, type BoardMember, type Thread, type ThreadSummary } from "./threads";
+import { filterThreads, rankThreads } from "./feed";
+import {
+  summarizeThread,
+  type BoardId,
+  type BoardMember,
+  type Thread,
+  type ThreadSummary,
+} from "./threads";
 
 const ada: BoardMember = { user: "ada", role: "maintainer", avatar: avatarFor("ada") };
 const grace: BoardMember = { user: "grace", role: "contributor", avatar: avatarFor("grace") };
@@ -162,6 +169,93 @@ const threads: readonly Thread[] = [
           "",
           "Forty lines like this and the grammar stops being a black box. The `while` is where precedence lives — you can point at it.",
         ].join("\n"),
+      },
+    ],
+  },
+  {
+    id: "swearjar-boot",
+    board: "swearjar-dos",
+    title: "Boot sequence: CRT-on before first paint",
+    author: grace,
+    tags: ["craft"],
+    pinned: false,
+    locked: false,
+    createdAt: "2026-09-15T10:00:00.000Z",
+    votes: 9,
+    posts: [
+      {
+        id: "swearjar-boot-1",
+        author: grace,
+        createdAt: "2026-09-15T10:00:00.000Z",
+        votes: 9,
+        body: [
+          "The shell must feel like a power-on, not a page load: scanlines, then the prompt.",
+          "",
+          "Rule: no content paints before the CRT-on finishes. A terminal that flashes white is a broken promise.",
+        ].join("\n"),
+      },
+      {
+        id: "swearjar-boot-2",
+        author: ken,
+        createdAt: "2026-09-18T09:00:00.000Z",
+        votes: 3,
+        body: "Timed it on a cold cache: 250ms per line, two pauses, safety at 8s. Feels like hardware.",
+      },
+    ],
+  },
+  {
+    id: "swearjar-palette",
+    board: "swearjar-dos",
+    title: "Palette check: CGA against the CRT glow",
+    author: ken,
+    tags: ["question"],
+    pinned: false,
+    locked: false,
+    createdAt: "2026-09-16T12:00:00.000Z",
+    votes: 5,
+    posts: [
+      {
+        id: "swearjar-palette-1",
+        author: ken,
+        createdAt: "2026-09-16T12:00:00.000Z",
+        votes: 5,
+        body: [
+          "Dark cyan won the primary-button coin toss, but under the scanline overlay it reads darker than the spec.",
+          "",
+          "Question: do we calibrate the palette under the overlay, or trust the hex and move on?",
+        ].join("\n"),
+      },
+    ],
+  },
+  {
+    id: "token-cache-evict",
+    board: "token-cache",
+    title: "Eviction policy: LRU lies about recency",
+    author: lin,
+    tags: ["tooling"],
+    pinned: false,
+    locked: false,
+    createdAt: "2026-08-28T10:00:00.000Z",
+    votes: 4,
+    posts: [
+      {
+        id: "token-cache-evict-1",
+        author: lin,
+        createdAt: "2026-08-28T10:00:00.000Z",
+        votes: 4,
+        body: [
+          "The cache evicted the hottest token first. The access counter updated on read, but the sweep ran on a stale snapshot.",
+          "",
+          "Lesson filed: a cache that cannot say what it holds is a jar with a hole.",
+        ].join("\n"),
+      },
+      {
+        id: "token-cache-evict-2",
+        author: ken,
+        replyTo: "token-cache-evict-1",
+        createdAt: "2026-08-30T14:00:00.000Z",
+        votes: 2,
+        body: "Same class of bug as the staging dump: two sources of truth, one of them lying. Freeze it and move on.",
       },
     ],
   },
@@ -396,4 +490,16 @@ export async function listThreadSummariesByAuthor(user: string): Promise<ThreadS
     .filter((thread) => thread.author.user === user)
     .map(summarizeThread)
     .sort((a, b) => Date.parse(b.lastActivityAt) - Date.parse(a.lastActivityAt) || byId(a, b));
+}
+
+/** One board's newest summaries, pinned first: a project journal reads the
+ * board through it, never a copied sort. `now` is a parameter so the ranking
+ * is pure and testable. */
+export async function listRecentThreadSummariesByBoard(
+  board: BoardId,
+  limit: number,
+  now: number = Date.now(),
+): Promise<ThreadSummary[]> {
+  const summaries = await listThreads();
+  return rankThreads(filterThreads(summaries, { board }), "new", now).slice(0, Math.max(0, limit));
 }

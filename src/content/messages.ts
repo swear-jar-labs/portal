@@ -283,8 +283,6 @@ export const messages = {
     boards: {
       general: "GENERAL",
       errata: "ERRATA",
-      compiler: "COMPILER",
-      tooling: "TOOLING",
     },
     tags: {
       proposal: "PROPOSAL",

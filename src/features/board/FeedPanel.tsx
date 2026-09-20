@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 import { Button, Heading, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { boardIds, tagIds, tagTones, type TagId, type ThreadSummary } from "./threads";
+import { boardIds, boardTitle, tagIds, tagTones, type TagId, type ThreadSummary } from "./threads";
 import { threadSorts, type FeedQuery } from "./feed";
 import { ThreadCard } from "./ThreadCard";
 import styles from "./board.module.css";
@@ -45,7 +45,7 @@ export function FeedPanel({
     { value: BOARD_FILTER_ALL, label: messages.board.feed.allBoards },
     ...boardIds.map((id): SelectOption<BoardFilter> => ({
       value: id,
-      label: messages.board.boards[id],
+      label: boardTitle(id),
     })),
   ];
 

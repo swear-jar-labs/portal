@@ -3,5 +3,20 @@
 // internals, nothing else. The contract test pins the published list.
 
 export { archivedProjectSlugs, listProjects, projectName } from "../data";
-export { isProjectSlug, projectPath, projectSlugs } from "../projects";
-export type { ProjectSlug } from "../projects";
+export {
+  DEFAULT_CLAIM_POLICY,
+  MAX_POLICY_NEED,
+  MIN_POLICY_NEED,
+  isProjectSlug,
+  projectPath,
+  projectSlugs,
+} from "../projects";
+export {
+  livePoliciesByProject,
+  policyForProject,
+  projectStoreServerSnapshot,
+  projectStoreSnapshot,
+  subscribeProjectStore,
+} from "../project-store";
+export type { ClaimPolicy, ProjectSlug } from "../projects";
+export type { ProjectPolicyBase } from "../project-store";

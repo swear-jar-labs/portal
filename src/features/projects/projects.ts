@@ -68,9 +68,27 @@ export type Project = {
   status: ProjectStatus;
   lead: ProjectPerson;
   maintainers: readonly ProjectPerson[];
+  // The claim ladder of this project (RULES §15): the fixtures carry the
+  // default, the maintainers tune it per project.
+  claimPolicy: ClaimPolicy;
   // Absent while the project has no repository (a plan so far).
   stats?: ProjectStats;
 };
+
+// The per-project claim ladder (RULES §15): how many done tickets of the
+// junior size open the next one. S is always free. Phase 5 stores the policy
+// next to requiredApprovals; the shape stays.
+export type ClaimPolicy = {
+  minSForM: number;
+  minMForL: number;
+};
+
+// The defaults the maintainers start from: two done S open M, one done M opens L.
+export const DEFAULT_CLAIM_POLICY: ClaimPolicy = { minSForM: 2, minMForL: 1 };
+
+// The rung bounds the ABOUT form offers: 0 opens the rung to everyone.
+export const MIN_POLICY_NEED = 0;
+export const MAX_POLICY_NEED = 10;
 
 // The projects' URL canon: the index and the project page build links from it.
 export const PROJECTS_PATH = "/projects";

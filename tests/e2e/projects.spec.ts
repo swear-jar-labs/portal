@@ -269,3 +269,66 @@ test("shows PATH NOT FOUND for an unknown project", async ({ page }) => {
   await page.goto("/projects/nope");
   await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
 });
+
+test("shows the claim ladder and lets a maintainer tune it", async ({ page }) => {
+  // ada maintains tooling: the ladder reads as full sentences per rung.
+  await logon(page, "ada");
+  await page.goto(projectPath("tooling"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Tooling" });
+  await expect(
+    panel.getByRole("heading", { level: 2, name: "ASSIGNEE REQUIREMENTS" }),
+  ).toBeVisible();
+  await expect(panel.getByText("Who may take tickets of each size.")).toBeVisible();
+  await expect(panel.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
+  await expect(panel.getByText("EVERYONE")).toBeVisible();
+  await expect(panel.getByText("TASKS NEED")).toHaveCount(2);
+  await expect(panel.getByText("2 DONE")).toBeVisible();
+  await expect(panel.getByText("1 DONE")).toBeVisible();
+
+  await panel.getByRole("button", { name: "[ EDIT ]" }).click();
+  const save = panel.getByRole("button", { name: "[ SAVE ]" });
+  // The opened form hands input focus to its first control.
+  await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
+  await expect(save).toBeDisabled();
+  await panel.getByRole("combobox", { name: "M NEEDS" }).click();
+  await page.getByRole("option", { name: "3", exact: true }).click();
+  await expect(save).toBeEnabled();
+  // CANCEL drops the draft: the fixture rungs are back, the form is gone.
+  await panel.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(panel.getByText("2 DONE")).toBeVisible();
+  await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
+
+  // SAVE lands the tune in the session: the rungs and the dossier gate
+  // read it (cross-page it dies with the reload, like the tickets' store —
+  // Phase 5 keeps it server-side).
+  await panel.getByRole("button", { name: "[ EDIT ]" }).click();
+  await panel.getByRole("combobox", { name: "M NEEDS" }).click();
+  await page.getByRole("option", { name: "3", exact: true }).click();
+  await panel.getByRole("button", { name: "[ SAVE ]" }).click();
+  await expect(panel.getByText("3 DONE")).toBeVisible();
+  await expect(panel.getByText("2 DONE")).toHaveCount(0);
+  await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
+  await expectNoViolations(page, "tuned claim ladder");
+});
+
+test("shows the ladder read-only without a maintainer seat", async ({ page }) => {
+  // ken maintains nothing on tooling: the sentences read, but offer no edit.
+  await logon(page, "ken");
+  await page.goto(projectPath("tooling"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Tooling" });
+  await expect(panel.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
+  await expect(panel.getByText("EVERYONE")).toBeVisible();
+  await expect(panel.getByText("TASKS NEED")).toHaveCount(2);
+  await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+});
+
+test("shows the ladder to a guest", async ({ page }) => {
+  await page.goto(projectPath("tooling"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Tooling" });
+  await expect(panel.getByText("EVERYONE")).toBeVisible();
+  await expect(panel.getByText("1 DONE")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+});

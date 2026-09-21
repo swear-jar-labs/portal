@@ -44,6 +44,9 @@ export type TicketFieldsProps = {
   values: TicketFieldValues;
   errors: TicketFieldsErrors;
   onChange: (patch: Partial<TicketFieldValues>) => void;
+  // The author's layer hides the queue fields (size and priority belong to
+  // the maintainers); the composer and the maintainer's layer show them.
+  hideQueueFields?: boolean;
   // A field only some forms have (the edit layer's status): it sits between the
   // priority select and the tags.
   children?: ReactNode;
@@ -51,7 +54,13 @@ export type TicketFieldsProps = {
 
 /** The ticket form fields shared by the composer and the edit layer: title,
  * body, size, priority and tags with their errors. */
-export function TicketFields({ values, errors, onChange, children }: TicketFieldsProps) {
+export function TicketFields({
+  values,
+  errors,
+  onChange,
+  hideQueueFields = false,
+  children,
+}: TicketFieldsProps) {
   function toggleTag(tag: TicketTagId) {
     onChange({
       tags: values.tags.includes(tag)
@@ -80,21 +89,25 @@ export function TicketFields({ values, errors, onChange, children }: TicketField
         error={errors.body}
       />
 
-      <Select
-        label={messages.tickets.compose.fields.size}
-        name="size"
-        value={values.size}
-        onChange={(size) => onChange({ size })}
-        options={sizeOptions}
-      />
+      {hideQueueFields ? null : (
+        <>
+          <Select
+            label={messages.tickets.compose.fields.size}
+            name="size"
+            value={values.size}
+            onChange={(size) => onChange({ size })}
+            options={sizeOptions}
+          />
 
-      <Select
-        label={messages.tickets.compose.fields.priority}
-        name="priority"
-        value={values.priority}
-        onChange={(priority) => onChange({ priority })}
-        options={priorityOptions}
-      />
+          <Select
+            label={messages.tickets.compose.fields.priority}
+            name="priority"
+            value={values.priority}
+            onChange={(priority) => onChange({ priority })}
+            options={priorityOptions}
+          />
+        </>
+      )}
 
       {children}
 

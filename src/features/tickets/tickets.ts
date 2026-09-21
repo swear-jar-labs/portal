@@ -28,6 +28,15 @@ export function isTicketSize(value: string): value is TicketSize {
   return ticketSizes.some((size) => size === value);
 }
 
+// The ladder chips: free reads green, the tracked rungs yellow and cyan —
+// the open/review/in_progress rhyme, so the queue and the ladder share one
+// color language.
+export const ticketSizeTones: Record<TicketSize, Tone> = {
+  S: "green",
+  M: "yellow",
+  L: "cyan",
+};
+
 // The queue's order: high first, normal in the middle, low waits. The scale is
 // deliberately short; the tracker sorts by it before freshness.
 export const ticketPriorities = ["low", "normal", "high"] as const;

@@ -528,6 +528,23 @@ export const messages = {
       stack: "STACK",
       lead: "LEAD",
       maintainers: "MAINTAINERS",
+      claim: {
+        heading: "ASSIGNEE REQUIREMENTS",
+        explainer: "Who may take tickets of each size.",
+        // The rung rows name the rung; the numbers land from the policy.
+        // EVERYONE and N DONE read in magenta (a documented exception to the
+        // tone rule: every role hue is taken by the rung chips or lies).
+        available: "ARE AVAILABLE FOR",
+        everyone: "EVERYONE",
+        needs: "NEED",
+        done: "DONE",
+        mNeeds: "M NEEDS",
+        lNeeds: "L NEEDS",
+        edit: "[ EDIT ]",
+        save: "[ SAVE ]",
+        cancel: "[ CANCEL ]",
+        hint: "The ladder lives in this session until the projects have a backend.",
+      },
     },
     forge: {
       heading: "FORGE",
@@ -649,6 +666,22 @@ export const messages = {
       closed: "CLOSED",
       tags: "TAGS",
       edit: "[ EDIT ]",
+      claim: {
+        assign: "[ ASSIGN TO ME ]",
+        leave: "[ LEAVE ]",
+        // The ladder rows name the rung; the numbers land from the policy.
+        // EVERYONE and N DONE read in magenta (a documented exception to the
+        // tone rule: every role hue is taken by the rung chips or lies).
+        available: "ARE AVAILABLE FOR",
+        everyone: "EVERYONE",
+        needs: "NEED",
+        done: "DONE",
+        have: "YOU HAVE",
+        // Taking a ticket is a promise, not a booking (RULES §15): the timers
+        // stay a hint until the tracker has a backend (Phase 5).
+        timers:
+          "Taking it means the first commit within 3 days; silence ends in STALLED on the maintainer call.",
+      },
       blocked: {
         heading: "BLOCKED BY",
         empty: "Nothing blocks this ticket.",
@@ -706,6 +739,10 @@ export const messages = {
       cancel: "[ CANCEL ]",
       hint: "Changes live in this session until the tracker has a backend.",
       blocked: "The blockers must finish first:",
+      assignee: "ASSIGNEE",
+      assigneeHint: "Maintainers only: name a member, or clear the field to unassign.",
+      badAssignee: "Name a member: 2-32 letters, digits, _ or -.",
+      statusRefused: "This status is not yours to set.",
     },
     project: {
       heading: "LAST UPDATES",

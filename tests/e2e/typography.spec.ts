@@ -1,7 +1,8 @@
 import { expect, test, type Locator } from "@playwright/test";
 import { DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
 import { FEED_PATH } from "../../src/features/board/threads";
-import { enterShell, waitForHydration } from "./helpers";
+import { projectPath } from "../../src/features/projects/projects";
+import { enterShell, expectMinimumContrast, waitForHydration } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await enterShell(page);
@@ -77,4 +78,14 @@ test("keeps light surfaces on the real bold with the smear, not a stroke", async
   await page.keyboard.press("F1");
   const help = page.getByRole("dialog").locator(`[${DOS_WINDOW_BODY_ATTR}] > div`);
   await expect(help).toHaveCSS("font-weight", "700");
+});
+
+test("keeps the ladder keywords readable in magenta", async ({ page }) => {
+  // The N DONE / EVERYONE keywords wear a content tone on UI text — a
+  // documented exception (no role hue is free) — so their contrast is pinned.
+  await page.goto(projectPath("tooling"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Tooling" });
+  await expectMinimumContrast(panel.getByText("2 DONE"));
+  await expectMinimumContrast(panel.getByText("EVERYONE"));
 });

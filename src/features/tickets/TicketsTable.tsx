@@ -7,6 +7,7 @@ import {
   ticketPath,
   ticketPriorityTones,
   ticketRowId,
+  ticketSizeTones,
   ticketStatusTones,
   ticketsById,
   type Ticket,
@@ -81,7 +82,7 @@ export function TicketsTable({
       label: messages.tickets.feed.columns.size,
       width: pixels(ticketColumnWidths.size),
       className: styles.sizeCell,
-      render: (ticket) => ticket.size,
+      render: (ticket) => <Tag tone={ticketSizeTones[ticket.size]}>{ticket.size}</Tag>,
     },
     {
       id: "priority",

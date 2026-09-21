@@ -152,18 +152,21 @@ export function removeTicketLink(ticketId: string, linkId: string): void {
 }
 
 /** The side effects of an edit the store cannot read off the base ticket: the
- * claim of a started ticket and the closing stamp it had before. */
+ * maintainer's reassignment and the closing stamp the ticket had before. */
 export type TicketEditOptions = {
-  // Set when the edit starts an unassigned ticket: the editor takes it.
-  assignee?: TicketPerson;
+  // The maintainer's reassignment: a person sets it, null clears it,
+  // undefined leaves it alone.
+  assignee?: TicketPerson | null;
   // The stamp the ticket carried before the edit: entering a terminal status
   // stamps the closing time, staying terminal keeps the original, leaving
   // terminal clears it.
   previousClosedAt?: string;
 };
 
-/** The editor's form (the author or a project maintainer): the fields and the
- * status land as one patch and the update stamp moves the row up the queue. */
+/** The editor's form: the fields and the status land as one patch and the
+ * update stamp moves the row up the queue. The assignee option carries the
+ * maintainer's reassignment; the claim ladder never gates it. Role checks
+ * live in the edit layer — the store only lands the patch. */
 export function editTicket(
   ticketId: string,
   input: TicketEditInput,
@@ -173,10 +176,21 @@ export function editTicket(
   patchTicket(ticketId, {
     ...input,
     tags: [...input.tags],
-    ...(options.assignee === undefined ? {} : { assignee: options.assignee }),
+    ...(options.assignee === undefined ? {} : { assignee: options.assignee ?? undefined }),
     closedAt: terminal ? (options.previousClosedAt ?? new Date().toISOString()) : undefined,
     updatedAt: new Date().toISOString(),
   });
+}
+
+/** Taking an open ticket from its dossier: the member becomes the assignee.
+ * The ladder gate lives in the panel — the store only lands the patch. */
+export function assignTicket(ticketId: string, assignee: TicketPerson): void {
+  patchTicket(ticketId, { assignee, updatedAt: new Date().toISOString() });
+}
+
+/** Leaving a ticket from its dossier: always allowed, no questions asked. */
+export function leaveTicket(ticketId: string): void {
+  patchTicket(ticketId, { assignee: undefined, updatedAt: new Date().toISOString() });
 }
 
 /** A comment posted in this session, appended to the fixture ones. */

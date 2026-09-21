@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_CLAIM_POLICY,
   JOURNAL_PREVIEW_COUNT,
   PROJECTS_CARD_ATTR,
   PROJECTS_PATH,
@@ -24,6 +25,7 @@ function project(overrides: Partial<Project> & { slug: Project["slug"] }): Proje
     status: "active",
     lead: person,
     maintainers: [],
+    claimPolicy: DEFAULT_CLAIM_POLICY,
     ...overrides,
   };
 }

@@ -21,6 +21,9 @@ export type SelectProps<T extends string> = {
   options: readonly SelectOption<T>[];
   error?: string;
   className?: string;
+  // Puts input focus on the trigger on mount (an opening form hands over
+  // focus to its first control); the list itself stays closed.
+  autoFocus?: boolean;
 };
 
 export function Select<T extends string>({
@@ -31,6 +34,7 @@ export function Select<T extends string>({
   options,
   error,
   className,
+  autoFocus = false,
 }: SelectProps<T>) {
   const baseId = useId();
   const labelId = `${baseId}-label`;
@@ -52,6 +56,10 @@ export function Select<T extends string>({
     if (!open) return;
     optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, open]);
+
+  useEffect(() => {
+    if (autoFocus) triggerRef.current?.focus();
+  }, [autoFocus]);
 
   function openList(index = Math.max(selectedIndex, 0)) {
     setActiveIndex(index);

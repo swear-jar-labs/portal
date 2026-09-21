@@ -133,6 +133,19 @@ describe("ticket store", () => {
     expect(live().assignee).toBeUndefined();
   });
 
+  it("clears the assignee on null and assigns from the dossier", () => {
+    const taken: Ticket = { ...base, assignee: ada };
+    store.editTicket(taken.id, { ...draft, status: "open" }, { assignee: null });
+    expect(live(taken).assignee).toBeUndefined();
+
+    store.assignTicket(base.id, ada);
+    expect(live().assignee).toEqual(ada);
+    expect(Date.parse(live().updatedAt)).toBeGreaterThan(Date.parse(base.updatedAt));
+
+    store.leaveTicket(base.id);
+    expect(live().assignee).toBeUndefined();
+  });
+
   it("appends session comments without touching the base ticket", () => {
     const entry = store.addTicketComment(base.id, {
       author: ada,

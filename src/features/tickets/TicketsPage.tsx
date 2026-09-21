@@ -23,6 +23,7 @@ export async function TicketsPage({ searchParams }: TicketsPageProps) {
     slug: project.slug,
     name: project.name,
     maintainers: project.maintainers.map((person) => person.user),
+    claimPolicy: project.claimPolicy,
   }));
 
   return (

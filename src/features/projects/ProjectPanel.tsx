@@ -5,6 +5,7 @@ import { MemberLink } from "@/features/members/contracts";
 import { TicketsTable, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
+import { ProjectClaimSection } from "./ProjectClaimSection";
 import { ProjectCta } from "./ProjectCta";
 import { PROJECTS_PATH, projectStatusTones, type Project } from "./projects";
 import styles from "./projects.module.css";
@@ -126,6 +127,12 @@ export function ProjectPanel({
         <Heading level={2}>{messages.projects.forge.heading}</Heading>
         <ForgeBlock project={project} now={now} />
       </Stack>
+
+      <ProjectClaimSection
+        slug={project.slug}
+        base={project.claimPolicy}
+        maintainers={project.maintainers.map((person) => person.user)}
+      />
 
       <Stack gap={6}>
         <Stack direction="row" gap={8} align="center" wrap navRow>

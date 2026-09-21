@@ -37,7 +37,8 @@ describe("TicketsTable", () => {
     expect(html).toContain('aria-label="TICKETS" style="min-width:846px"');
     // TITLE carries a floor only: the flexible column absorbs the spare width.
     expect(html).toContain('style="min-width:250px"');
-    expect(html).toContain(">M</td>");
+    // SIZE reads as a ladder chip, like the ABOUT rows and the dossier claim.
+    expect(html).toContain(">M</span>");
     expect(html).toContain(">NORMAL</span>");
     expect(html).toContain('style="width:48px"');
     expect(html).toContain('style="width:96px"');

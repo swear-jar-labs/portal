@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ticketComposeSchema, ticketEditSchema } from "@/features/tickets/schema";
+import {
+  ticketAssigneeSchema,
+  ticketComposeSchema,
+  ticketEditSchema,
+} from "@/features/tickets/schema";
 
 const draft = {
   title: "A title",
@@ -27,5 +31,11 @@ describe("ticket edit schema", () => {
     const parsed = ticketEditSchema.parse({ ...draft, project: "compiler" });
     expect(parsed).not.toHaveProperty("project");
     expect(ticketComposeSchema.safeParse({ ...draft, project: "compiler" }).success).toBe(true);
+  });
+
+  it("names the new assignee by user, lowercased", () => {
+    expect(ticketAssigneeSchema.safeParse("Ken").data).toBe("ken");
+    expect(ticketAssigneeSchema.safeParse("x").success).toBe(false);
+    expect(ticketAssigneeSchema.safeParse("not a user!").success).toBe(false);
   });
 });

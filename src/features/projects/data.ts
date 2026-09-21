@@ -3,6 +3,7 @@
 // change to queries while the signatures stay put (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
+import { DEFAULT_CLAIM_POLICY } from "./projects";
 import type { Project, ProjectPerson, ProjectSlug, ProjectStats } from "./projects";
 
 const ada: ProjectPerson = { user: "ada", avatar: avatarFor("ada") };
@@ -39,6 +40,7 @@ const projects: readonly Project[] = [
     status: "active",
     lead: ada,
     maintainers: [ada, grace],
+    claimPolicy: DEFAULT_CLAIM_POLICY,
     stats: stats({
       openPrs: 3,
       merged30d: 12,
@@ -59,6 +61,7 @@ const projects: readonly Project[] = [
     status: "active",
     lead: grace,
     maintainers: [grace, ken],
+    claimPolicy: DEFAULT_CLAIM_POLICY,
     stats: stats({
       openPrs: 1,
       merged30d: 5,
@@ -78,6 +81,7 @@ const projects: readonly Project[] = [
     status: "active",
     lead: ada,
     maintainers: [ada, lin],
+    claimPolicy: DEFAULT_CLAIM_POLICY,
     stats: stats({
       openPrs: 2,
       merged30d: 7,
@@ -98,6 +102,7 @@ const projects: readonly Project[] = [
     status: "archived",
     lead: ken,
     maintainers: [lin],
+    claimPolicy: DEFAULT_CLAIM_POLICY,
     stats: stats({
       openPrs: 0,
       merged30d: 0,
@@ -115,6 +120,7 @@ const projects: readonly Project[] = [
     status: "planned",
     lead: grace,
     maintainers: [],
+    claimPolicy: DEFAULT_CLAIM_POLICY,
   },
 ];
 

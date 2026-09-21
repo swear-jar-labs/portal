@@ -31,9 +31,19 @@ export const ticketComposeSchema = z.object({
 
 export type TicketComposeInput = z.infer<typeof ticketComposeSchema>;
 
+// The maintainer names the new assignee by user. The account slice owns the
+// canon (USER_PATTERN); this mirrors it because cross-feature internals stay
+// unreachable — the backend resolves the name in Phase 5.
+const ASSIGNEE_PATTERN = /^[A-Za-z0-9_-]{2,32}$/;
+
+export const ticketAssigneeSchema = z
+  .string()
+  .trim()
+  .regex(ASSIGNEE_PATTERN)
+  .transform((value) => value.toLowerCase());
+
 // The editor's form: the same fields minus the project (the ticket key is bound
-// to its project, so a ticket never moves between projects) plus the status
-// (the author or a project maintainer moves it from the edit layer).
+// to its project, so a ticket never moves between projects) plus the status.
 export const ticketEditSchema = ticketComposeSchema
   .omit({ project: true })
   .extend({ status: z.enum(ticketStatuses) });

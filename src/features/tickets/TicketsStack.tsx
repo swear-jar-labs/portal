@@ -1,12 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type MouseEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { CloseButton } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { useMemberLayer } from "@/features/members/contracts";
+import {
+  DEFAULT_CLAIM_POLICY,
+  livePoliciesByProject,
+  projectStoreServerSnapshot,
+  projectStoreSnapshot,
+  subscribeProjectStore,
+} from "@/features/projects/contracts";
 import { type ReadroomRef } from "@/features/readroom/contracts";
 import {
   PanelStack,
@@ -75,6 +90,12 @@ export function TicketsStack({
   const memberLayerOpen = routedMemberLayer !== null;
   const wasMemberLayerOpen = useRef(memberLayerOpen);
   const { state, visible, localKeys, addTicket } = useTicketSession({ tickets, query });
+  // The maintainers' tuned ladders: the dossier gates ASSIGN on the live one.
+  const projectPolicies = useSyncExternalStore(
+    subscribeProjectStore,
+    projectStoreSnapshot,
+    projectStoreServerSnapshot,
+  );
   const localTicket = useMemo(
     () => state.addedTickets.find((entry) => entry.key === localKey) ?? null,
     [localKey, state.addedTickets],
@@ -86,6 +107,10 @@ export function TicketsStack({
   const maintainersByProject = useMemo(
     () => Object.fromEntries(projects.map((project) => [project.slug, project.maintainers])),
     [projects],
+  );
+  const policyByProject = useMemo(
+    () => livePoliciesByProject(projects, projectPolicies),
+    [projects, projectPolicies],
   );
 
   useEffect(() => {
@@ -206,15 +231,17 @@ export function TicketsStack({
   }, []);
 
   const submitEdit = useCallback(
-    (input: TicketEditInput) => {
+    (input: TicketEditInput, assignee: string | null | undefined) => {
       if (editing === null || session === null) return;
-      // Starting an unassigned ticket claims it for the editor.
-      const claims =
-        input.status === "in_progress" &&
-        editing.status === "open" &&
-        editing.assignee === undefined;
+      // Taking a ticket happens on its dossier (ASSIGN TO ME, gated by the
+      // ladder); the edit layer never claims. The assignee here is the
+      // maintainer's reassignment, ungated by design.
       ticketStore.editTicket(editing.id, input, {
-        ...(claims ? { assignee: { user: session.user, avatar: avatarFor(session.user) } } : {}),
+        ...(assignee === undefined
+          ? {}
+          : {
+              assignee: assignee === null ? null : { user: assignee, avatar: avatarFor(assignee) },
+            }),
         previousClosedAt: editing.closedAt,
       });
       returnFocusRef.current = ticketEditButtonId;
@@ -279,6 +306,7 @@ export function TicketsStack({
             tickets={tickets}
             projectName={ticket.projectName}
             maintainers={maintainersByProject[ticket.ticket.project] ?? []}
+            claimPolicy={policyByProject[ticket.ticket.project] ?? DEFAULT_CLAIM_POLICY}
             readrooms={ticket.readrooms}
             now={now}
             onEdit={openEdit}
@@ -297,6 +325,7 @@ export function TicketsStack({
             tickets={tickets}
             projectName={projectNames[localTicket.project] ?? localTicket.project}
             maintainers={maintainersByProject[localTicket.project] ?? []}
+            claimPolicy={policyByProject[localTicket.project] ?? DEFAULT_CLAIM_POLICY}
             readrooms={[]}
             now={now}
             onEdit={openEdit}
@@ -326,6 +355,7 @@ export function TicketsStack({
           <TicketEdit
             ticket={editing}
             tickets={tickets}
+            maintainers={maintainersByProject[editing.project] ?? []}
             onSubmit={submitEdit}
             onCancel={closeEdit}
           />

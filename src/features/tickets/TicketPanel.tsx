@@ -2,19 +2,22 @@
 
 import { useMemo, useState } from "react";
 import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
-import { messages } from "@/content/messages";
+import { messages, pluralForms } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
-import { projectPath } from "@/features/projects/contracts";
+import { projectPath, type ClaimPolicy } from "@/features/projects/contracts";
 import { type ReadroomRef } from "@/features/readroom/contracts";
-import { useShellSession } from "@/features/shell";
+import { useLoginPrompt, useShellSession } from "@/features/shell";
+import { plural } from "@/lib/plural";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
+import { avatarFor } from "@/shared/members";
 import { TicketBlockedSection } from "./TicketBlockedSection";
 import { TicketCommentForm } from "./TicketCommentForm";
 import { TicketCommentItem } from "./TicketCommentItem";
 import { TicketLinksSection } from "./TicketLinksSection";
 import * as ticketStore from "./ticket-store";
 import { useMergedTickets, useTicketState } from "./useTicketSession";
+import { claimRefusal, countDoneBySize, ladderNeed } from "./claim";
 import {
   TICKETS_PATH,
   isBlocked,
@@ -23,6 +26,7 @@ import {
   ticketEditButtonId,
   ticketLinksSectionId,
   ticketPriorityTones,
+  ticketSizeTones,
   ticketStatusTones,
   ticketTagTones,
   ticketsById,
@@ -36,8 +40,11 @@ export type TicketPanelProps = {
   // walks it. The fixture list; session edits are merged inside.
   tickets: readonly Ticket[];
   projectName: string;
-  // The project's maintainers: they edit the ticket together with its author.
+  // The project's maintainers: they open the edit layer together with the
+  // author and the assignee; the layer narrows the fields by seat.
   maintainers: readonly string[];
+  // The project's claim ladder (RULES §15): ASSIGN TO ME gates on it.
+  claimPolicy: ClaimPolicy;
   // The reverse list: readrooms reading this ticket's code (readroom-ticket-links).
   readrooms: readonly ReadroomRef[];
   now: string;
@@ -60,21 +67,27 @@ export function TicketPanel({
   tickets,
   projectName,
   maintainers,
+  claimPolicy,
   readrooms,
   now,
   onEdit,
 }: TicketPanelProps) {
   const session = useShellSession();
+  const requestLogin = useLoginPrompt();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
   const all = useMergedTickets(tickets);
   const byId = useMemo(() => ticketsById(all), [all]);
   const blocked = isBlocked(live, byId);
   const openKeys = openBlockers(live, byId).map((blocker) => blocker.key);
-  // The author and the project's maintainers edit the ticket (Phase 5 keeps the
-  // rule server-side and narrows the maintainer's fields).
+  // The author, the assignee and the project's maintainers open the edit layer
+  // (Phase 5 keeps the rule server-side); the layer itself narrows the fields
+  // by seat.
   const canEdit =
-    session !== null && (session.user === live.author.user || maintainers.includes(session.user));
+    session !== null &&
+    (session.user === live.author.user ||
+      session.user === live.assignee?.user ||
+      maintainers.includes(session.user));
   // Links and blockers take the wider crew: the author, the assignee and the
   // maintainers. Commenting stays open to every member.
   const canManageLinks =
@@ -85,6 +98,64 @@ export function TicketPanel({
 
   const [blockerComposing, setBlockerComposing] = useState(false);
   const [linkComposing, setLinkComposing] = useState(false);
+  // A refused ASSIGN stays explained: the first failed click turns the hint red.
+  const [refused, setRefused] = useState(false);
+
+  const isMine = session !== null && session.user === live.assignee?.user;
+  // Taking finished work is nonsense: the claim row lives only on open work.
+  const claimable =
+    live.assignee === undefined &&
+    (live.status === "open" || live.status === "in_progress" || live.status === "review");
+  const record = session === null ? null : countDoneBySize(all, session.user);
+  const refusal = record === null ? null : claimRefusal(claimPolicy, record, live.size);
+
+  // The rung as a chip-led row: the size chip replaces the size word, N DONE
+  // and EVERYONE read in magenta, the have-tail closes the sentence. The words
+  // match the ABOUT ladder of the project.
+  function claimRow() {
+    const claim = messages.tickets.dossier.claim;
+    const rung = ladderNeed(claimPolicy, live.size);
+    const role = refused && refusal !== null ? "danger" : "hint";
+    if (rung === null)
+      return (
+        <>
+          <Tag tone={ticketSizeTones[live.size]}>{live.size}</Tag>
+          <Text as="span" role={role}>{`${pluralForms.task.other} ${claim.available}`}</Text>
+          <Text as="span" tone="magenta">
+            {claim.everyone}
+          </Text>
+        </>
+      );
+    return (
+      <>
+        <Tag tone={ticketSizeTones[live.size]}>{live.size}</Tag>
+        <Text as="span" role={role}>{`${pluralForms.task.other} ${claim.needs}`}</Text>
+        <Text as="span" tone="magenta">{`${rung.need} ${claim.done}`}</Text>
+        <Tag tone={ticketSizeTones[rung.needSize]}>{rung.needSize}</Tag>
+        <Text as="span" role={role}>
+          {record === null
+            ? plural(rung.need, pluralForms.task)
+            : `${plural(rung.need, pluralForms.task)} (${claim.have} ${record[rung.needSize]})`}
+        </Text>
+      </>
+    );
+  }
+
+  function handleAssign() {
+    if (session === null) {
+      requestLogin();
+      return;
+    }
+    if (refusal !== null) {
+      setRefused(true);
+      return;
+    }
+    ticketStore.assignTicket(live.id, { user: session.user, avatar: avatarFor(session.user) });
+  }
+
+  function handleLeave() {
+    ticketStore.leaveTicket(live.id);
+  }
 
   return (
     <Stack gap={12}>
@@ -116,6 +187,12 @@ export function TicketPanel({
             </Text>
           )}
         </Stack>
+        {claimable ? (
+          <Stack direction="row" gap={6} align="center" wrap navRow>
+            {claimRow()}
+          </Stack>
+        ) : null}
+        {claimable ? <Text role="hint">{messages.tickets.dossier.claim.timers}</Text> : null}
         <Stack direction="row" gap={6} align="center" wrap navRow>
           <Text as="span" role="hint">
             {messages.tickets.dossier.status}
@@ -131,7 +208,7 @@ export function TicketPanel({
           <Text as="span" role="hint">
             {messages.tickets.dossier.size}
           </Text>
-          <Tag>{live.size}</Tag>
+          <Tag tone={ticketSizeTones[live.size]}>{live.size}</Tag>
         </Stack>
         <Stack direction="row" gap={6} align="center" wrap navRow>
           <Text as="span" role="hint">
@@ -172,6 +249,17 @@ export function TicketPanel({
           </Stack>
         )}
       </Stack>
+
+      {claimable || isMine ? (
+        <Stack direction="row" gap={6} align="center" wrap navRow>
+          {claimable ? (
+            <Button onClick={handleAssign}>{messages.tickets.dossier.claim.assign}</Button>
+          ) : null}
+          {isMine ? (
+            <Button onClick={handleLeave}>{messages.tickets.dossier.claim.leave}</Button>
+          ) : null}
+        </Stack>
+      ) : null}
 
       {session !== null ? (
         <Stack direction="row" gap={6} align="center" wrap navRow>

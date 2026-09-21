@@ -261,6 +261,12 @@ test("a member pins a code link in the dossier", async ({ page }) => {
   await expect(
     dossier.getByRole("link", { name: "Fix the clock source", exact: true }),
   ).toHaveCount(1);
+
+  // The author unpins: the link leaves, the empty state returns.
+  await dossier.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await dossier.getByRole("button", { name: "Remove link Fix the clock source" }).click();
+  await expect(dossier.getByRole("link", { name: "Fix the clock source" })).toHaveCount(0);
+  await expect(dossier.getByText("No code links pinned yet.")).toBeVisible();
 });
 
 test("opens an author profile over the dossier and returns focus", async ({ page }) => {
@@ -340,7 +346,8 @@ test("starts a blocked ticket only after its blocker finishes", async ({ page })
 });
 
 test("a member manages blockers and the form refuses bad edges", async ({ page }) => {
-  await logon(page, "ada");
+  // CMP-1 and CMP-2 belong to grace: she pins and unpins their blockers.
+  await logon(page, "grace");
   await page.goto(TICKETS_PATH);
   await waitForHydration(page);
 
@@ -434,7 +441,8 @@ test("searches the project filter from the keyboard", async ({ page }) => {
 });
 
 test("pins a blocker picked from the keyboard", async ({ page }) => {
-  await logon(page, "ada");
+  // CMP-1 belongs to grace: she pins its blockers.
+  await logon(page, "grace");
   await page.goto(TICKETS_PATH);
   await waitForHydration(page);
 
@@ -500,6 +508,10 @@ test("an editor edits a ticket; cancel keeps the draft out", async ({ page }) =>
   const other = page.getByRole("region", { name: "FLAG-1" });
   await expect(other.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(other.locator(`#${ticketEditButtonId}`)).toHaveCount(0);
+  // Ada is neither the author, the assignee nor a maintainer here: no link or
+  // blocker controls either.
+  await expect(other.getByRole("button", { name: "[ ADD LINK ]" })).toHaveCount(0);
+  await expect(other.getByRole("button", { name: "[ ADD BLOCKER ]" })).toHaveCount(0);
   await page.keyboard.press("Escape");
 
   // The author edits title, body, tags and priority: SAVE lands in the dossier.

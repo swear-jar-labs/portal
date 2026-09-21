@@ -31,7 +31,6 @@ export type ComboBoxProps = {
   emptyText: string;
   error?: string;
   required?: boolean;
-  placeholder?: string;
   className?: string;
 };
 
@@ -46,7 +45,6 @@ export function ComboBox({
   emptyText,
   error,
   required = false,
-  placeholder,
   className,
 }: ComboBoxProps) {
   const baseId = useId();
@@ -166,7 +164,11 @@ export function ComboBox({
         return;
       case "Tab":
         if (matches.length > 0) commit(active);
-        else setOpen(false);
+        else {
+          committedRef.current = true;
+          revert();
+          setOpen(false);
+        }
         return;
       case "Escape":
         event.preventDefault();
@@ -207,7 +209,6 @@ export function ComboBox({
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
             required={required}
-            placeholder={placeholder}
             autoComplete="off"
             className={controls.control}
           />

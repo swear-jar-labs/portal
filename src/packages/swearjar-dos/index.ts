@@ -25,6 +25,9 @@ export type { CardProps } from "./components/Card/Card";
 export { Button } from "./components/Button/Button";
 export type { ButtonProps } from "./components/Button/Button";
 
+export { RemoveButton } from "./components/RemoveButton/RemoveButton";
+export type { RemoveButtonProps } from "./components/RemoveButton/RemoveButton";
+
 export { Field } from "./components/Field/Field";
 export type { FieldProps } from "./components/Field/Field";
 

@@ -153,6 +153,36 @@ describe("ticket store", () => {
     expect(live(withBlocker).blockedBy).toEqual([]);
   });
 
+  it("unpins session and fixture links by id, fixtures included", () => {
+    const linked: Ticket = {
+      ...base,
+      links: [
+        {
+          id: "l1",
+          kind: "pr",
+          url: "https://example.com/pr/1",
+          label: "PR 1",
+          addedBy: ada,
+        },
+      ],
+    };
+    const pinned = store.addTicketLink(linked.id, {
+      kind: "commit",
+      url: "https://example.com/c/2",
+      label: "C 2",
+      addedBy: ada,
+    });
+    expect(live(linked).links.map((entry) => entry.id)).toEqual(["l1", pinned.id]);
+
+    store.removeTicketLink(linked.id, pinned.id);
+    expect(live(linked).links.map((entry) => entry.id)).toEqual(["l1"]);
+
+    store.removeTicketLink(linked.id, "l1");
+    expect(live(linked).links).toEqual([]);
+    // The base ticket keeps its links; only the merge changes.
+    expect(linked.links.map((entry) => entry.id)).toEqual(["l1"]);
+  });
+
   it("edits and tombstones comments by id, fixtures included", () => {
     const commented: Ticket = {
       ...base,

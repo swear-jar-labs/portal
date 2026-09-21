@@ -1,8 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, ComboBox, Form, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
+import {
+  Button,
+  ComboBox,
+  Form,
+  Heading,
+  Link,
+  RemoveButton,
+  Stack,
+  Tag,
+  Text,
+} from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { ticketBlockSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
 import {
@@ -15,14 +26,15 @@ import {
   type Ticket,
 } from "./tickets";
 
-const REMOVE_GLYPH = "[×]";
-
 export type TicketBlockedSectionProps = {
   ticket: Ticket;
   // The whole queue: the form resolves a key and the cycle guard walks it.
   tickets: readonly Ticket[];
   composing: boolean;
   onComposeChange: (composing: boolean) => void;
+  // The author, the assignee and the maintainers pin and unpin; the form and
+  // the remove controls stay hidden for everyone else.
+  canManage: boolean;
 };
 
 /** The dossier's BLOCKED BY section: the blockers as status chips with links,
@@ -34,7 +46,10 @@ export function TicketBlockedSection({
   tickets,
   composing,
   onComposeChange: setComposing,
+  canManage,
 }: TicketBlockedSectionProps) {
+  const session = useShellSession();
+  const requestLogin = useLoginPrompt();
   const byId = useMemo(() => ticketsById(tickets), [tickets]);
   const blockers = ticket.blockedBy.flatMap((id) => {
     const blocker = byId.get(id);
@@ -50,6 +65,12 @@ export function TicketBlockedSection({
   const [error, setError] = useState<string | undefined>();
 
   function submit() {
+    if (session === null) {
+      requestLogin();
+      return;
+    }
+    // The trigger hides for outsiders; the guard stays for a forced submit.
+    if (!canManage) return;
     const parsed = ticketBlockSchema.safeParse({ key });
     if (!parsed.success || !isTicketKey(parsed.data.key.toUpperCase())) {
       setError(messages.tickets.dossier.blocked.badKey);
@@ -101,13 +122,12 @@ export function TicketBlockedSection({
               <Text as="span" role="hint">
                 {blocker.title}
               </Text>
-              <Button
-                variant="ghost"
-                ariaLabel={`${messages.tickets.dossier.blocked.remove} ${blocker.key}`}
-                onClick={() => remove(blocker.id)}
-              >
-                {REMOVE_GLYPH}
-              </Button>
+              {canManage ? (
+                <RemoveButton
+                  ariaLabel={`${messages.tickets.dossier.blocked.remove} ${blocker.key}`}
+                  onClick={() => remove(blocker.id)}
+                />
+              ) : null}
             </Stack>
           ))}
         </Stack>

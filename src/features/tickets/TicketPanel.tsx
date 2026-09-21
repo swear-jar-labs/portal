@@ -75,6 +75,13 @@ export function TicketPanel({
   // rule server-side and narrows the maintainer's fields).
   const canEdit =
     session !== null && (session.user === live.author.user || maintainers.includes(session.user));
+  // Links and blockers take the wider crew: the author, the assignee and the
+  // maintainers. Commenting stays open to every member.
+  const canManageLinks =
+    session !== null &&
+    (session.user === live.author.user ||
+      session.user === live.assignee?.user ||
+      maintainers.includes(session.user));
 
   const [blockerComposing, setBlockerComposing] = useState(false);
   const [linkComposing, setLinkComposing] = useState(false);
@@ -173,22 +180,26 @@ export function TicketPanel({
               {messages.tickets.dossier.edit}
             </Button>
           ) : null}
-          <Button
-            onClick={() => {
-              setBlockerComposing(true);
-              revealSection(ticketBlockedSectionId);
-            }}
-          >
-            {messages.tickets.dossier.blocked.add}
-          </Button>
-          <Button
-            onClick={() => {
-              setLinkComposing(true);
-              revealSection(ticketLinksSectionId);
-            }}
-          >
-            {messages.tickets.dossier.links.add}
-          </Button>
+          {canManageLinks ? (
+            <Button
+              onClick={() => {
+                setBlockerComposing(true);
+                revealSection(ticketBlockedSectionId);
+              }}
+            >
+              {messages.tickets.dossier.blocked.add}
+            </Button>
+          ) : null}
+          {canManageLinks ? (
+            <Button
+              onClick={() => {
+                setLinkComposing(true);
+                revealSection(ticketLinksSectionId);
+              }}
+            >
+              {messages.tickets.dossier.links.add}
+            </Button>
+          ) : null}
         </Stack>
       ) : null}
 
@@ -197,6 +208,7 @@ export function TicketPanel({
         tickets={all}
         composing={blockerComposing}
         onComposeChange={setBlockerComposing}
+        canManage={canManageLinks}
       />
 
       <div className={styles.body}>
@@ -210,6 +222,7 @@ export function TicketPanel({
           initialLinks={ticket.links}
           composing={linkComposing}
           onComposeChange={setLinkComposing}
+          canManage={canManageLinks}
         />
       </Stack>
 

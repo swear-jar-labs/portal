@@ -1,12 +1,10 @@
 "use client";
 
 import { useRef, type ChangeEvent } from "react";
-import { Button, Link, Stack, Text } from "@swearjar/dos";
+import { Button, Link, RemoveButton, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { formatSize } from "@/lib/format";
 import type { ReadroomAttachment } from "./readrooms";
-
-const REMOVE_GLYPH = "[×]";
 
 export type ReadroomFilesRowProps = {
   attachments: readonly ReadroomAttachment[];
@@ -55,13 +53,10 @@ export function ReadroomFilesRow({
                 {formatSize(attachment.size)}
               </Text>
               {editable ? (
-                <Button
-                  variant="ghost"
+                <RemoveButton
                   ariaLabel={`${messages.readroom.files.remove} ${attachment.name}`}
                   onClick={() => onRemove(attachment)}
-                >
-                  {REMOVE_GLYPH}
-                </Button>
+                />
               ) : null}
             </Stack>
           ))

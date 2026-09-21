@@ -42,6 +42,8 @@ export type TicketsState = {
   // Links pinned to fixture tickets in this session (composed tickets carry
   // their own, empty, list).
   sessionLinks: Readonly<Record<string, readonly TicketLink[]>>;
+  // Pinned link ids dropped in this session, fixture links included.
+  removedLinks: Readonly<Record<string, readonly string[]>>;
   // The session's edits over any ticket: status, assignee, blockers, comments.
   patches: Readonly<Record<string, TicketPatch>>;
 };
@@ -49,6 +51,7 @@ export type TicketsState = {
 const INITIAL_TICKETS_STATE: TicketsState = {
   addedTickets: [],
   sessionLinks: {},
+  removedLinks: {},
   patches: {},
 };
 
@@ -137,6 +140,17 @@ export function addTicketLink(ticketId: string, link: Omit<TicketLink, "id">): T
   return pinned;
 }
 
+/** A link unpinned in this session: the id lands in the tombstones, fixture
+ * links included. The views filter them out of the merged list. */
+export function removeTicketLink(ticketId: string, linkId: string): void {
+  const current = state.removedLinks[ticketId] ?? [];
+  if (current.includes(linkId)) return;
+  setState({
+    ...state,
+    removedLinks: { ...state.removedLinks, [ticketId]: [...current, linkId] },
+  });
+}
+
 /** The side effects of an edit the store cannot read off the base ticket: the
  * claim of a started ticket and the closing stamp it had before. */
 export type TicketEditOptions = {
@@ -221,19 +235,25 @@ function commentWithSessionState(
  * tombstones) stay out of the merged ticket. */
 export function withSessionState(ticket: Ticket, watched: TicketsState): Ticket {
   const links = watched.sessionLinks[ticket.id];
+  const removed = watched.removedLinks[ticket.id] ?? [];
   const patch = watched.patches[ticket.id];
   const hasLinks = links !== undefined && links.length > 0;
-  if (!hasLinks && patch === undefined) return ticket;
+  if (!hasLinks && removed.length === 0 && patch === undefined) return ticket;
   const {
     comments: addedComments,
     commentEdits = {},
     deletedComments = {},
     ...fields
   } = patch ?? {};
+  const session = links ?? [];
+  const merged =
+    removed.length === 0 && session.length === 0
+      ? ticket.links
+      : [...ticket.links, ...session].filter((entry) => !removed.includes(entry.id));
   return {
     ...ticket,
     ...fields,
-    links: hasLinks ? [...ticket.links, ...links] : ticket.links,
+    links: merged,
     comments: [...ticket.comments, ...(addedComments ?? [])].map((comment) =>
       commentWithSessionState(comment, commentEdits, deletedComments),
     ),

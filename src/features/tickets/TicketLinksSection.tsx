@@ -6,9 +6,9 @@ import {
   Field,
   Form,
   Link,
+  RemoveButton,
   Select,
   Stack,
-  Tag,
   Text,
   type SelectOption,
 } from "@swearjar/dos";
@@ -31,6 +31,9 @@ export type TicketLinksSectionProps = {
   initialLinks: readonly TicketLink[];
   composing: boolean;
   onComposeChange: (composing: boolean) => void;
+  // The author, the assignee and the maintainers pin and unpin; the remove
+  // controls stay hidden for everyone else.
+  canManage: boolean;
 };
 
 export function TicketLinksSection({
@@ -38,6 +41,7 @@ export function TicketLinksSection({
   initialLinks,
   composing,
   onComposeChange: setComposing,
+  canManage,
 }: TicketLinksSectionProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
@@ -46,10 +50,12 @@ export function TicketLinksSection({
     ticketStore.ticketsSnapshot,
     ticketStore.ticketsServerSnapshot,
   );
-  const links = useMemo(
-    () => [...initialLinks, ...(state.sessionLinks[ticketId] ?? [])],
-    [initialLinks, state.sessionLinks, ticketId],
-  );
+  const links = useMemo(() => {
+    const removed = new Set(state.removedLinks[ticketId] ?? []);
+    return [...initialLinks, ...(state.sessionLinks[ticketId] ?? [])].filter(
+      (entry) => !removed.has(entry.id),
+    );
+  }, [initialLinks, state.sessionLinks, state.removedLinks, ticketId]);
   const [values, setValues] = useState<TicketLinkInput>(emptyLinkInput);
   const [errors, setErrors] = useState<{ url?: string; label?: string }>({});
 
@@ -58,6 +64,8 @@ export function TicketLinksSection({
       requestLogin();
       return;
     }
+    // The trigger hides for outsiders; the guard stays for a forced submit.
+    if (!canManage) return;
     const parsed = ticketLinkSchema.safeParse(values);
     if (!parsed.success) {
       setErrors({
@@ -93,10 +101,18 @@ export function TicketLinksSection({
         <Stack gap={4}>
           {links.map((entry) => (
             <Stack key={entry.id} direction="row" gap={6} align="center" wrap navRow>
-              <Tag>{entry.kind.toUpperCase()}</Tag>
+              <Text as="span" role="hint">
+                {entry.kind.toUpperCase()}
+              </Text>
               <Link href={entry.url} external>
                 {entry.label}
               </Link>
+              {canManage ? (
+                <RemoveButton
+                  ariaLabel={`${messages.tickets.dossier.links.remove} ${entry.label}`}
+                  onClick={() => ticketStore.removeTicketLink(ticketId, entry.id)}
+                />
+              ) : null}
             </Stack>
           ))}
         </Stack>

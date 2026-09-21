@@ -177,6 +177,11 @@ export const composeButtonId = "tickets-compose-button";
 // The author's edit control: closing the edit layer hands the keyboard back.
 export const ticketEditButtonId = "tickets-edit-button";
 
+// The compose-form anchors: opening a form from the panel's action row scrolls
+// its section into view (the links form sits below the body).
+export const ticketBlockedSectionId = "ticket-blocked-section";
+export const ticketLinksSectionId = "ticket-links-section";
+
 export type TicketQuery = {
   project: ProjectSlug | "all";
   size: TicketSize | "all";

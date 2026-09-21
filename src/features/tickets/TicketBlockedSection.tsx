@@ -7,6 +7,7 @@ import { ticketBlockSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
 import {
   isTicketKey,
+  ticketBlockedSectionId,
   ticketPath,
   ticketStatusTones,
   ticketsById,
@@ -20,18 +21,25 @@ export type TicketBlockedSectionProps = {
   ticket: Ticket;
   // The whole queue: the form resolves a key and the cycle guard walks it.
   tickets: readonly Ticket[];
+  composing: boolean;
+  onComposeChange: (composing: boolean) => void;
 };
 
 /** The dossier's BLOCKED BY section: the blockers as status chips with links,
  * and the form that pins or removes one. The cycle guard lives in the model;
- * the form only reports its verdict. */
-export function TicketBlockedSection({ ticket, tickets }: TicketBlockedSectionProps) {
+ * the form only reports its verdict. The compose trigger lives in the panel's
+ * action row above, so the section only renders the form. */
+export function TicketBlockedSection({
+  ticket,
+  tickets,
+  composing,
+  onComposeChange: setComposing,
+}: TicketBlockedSectionProps) {
   const byId = useMemo(() => ticketsById(tickets), [tickets]);
   const blockers = ticket.blockedBy.flatMap((id) => {
     const blocker = byId.get(id);
     return blocker === undefined ? [] : [blocker];
   });
-  const [composing, setComposing] = useState(false);
   const [key, setKey] = useState("");
   const [error, setError] = useState<string | undefined>();
 
@@ -72,7 +80,7 @@ export function TicketBlockedSection({ ticket, tickets }: TicketBlockedSectionPr
   }
 
   return (
-    <Stack gap={6}>
+    <Stack gap={6} id={ticketBlockedSectionId}>
       <Heading level={2}>{messages.tickets.dossier.blocked.heading}</Heading>
       {blockers.length === 0 ? (
         <Text role="hint">{messages.tickets.dossier.blocked.empty}</Text>
@@ -126,11 +134,7 @@ export function TicketBlockedSection({ ticket, tickets }: TicketBlockedSectionPr
             <Text role="hint">{messages.tickets.dossier.blocked.hint}</Text>
           </Stack>
         </Form>
-      ) : (
-        <Stack navRow>
-          <Button onClick={() => setComposing(true)}>{messages.tickets.dossier.blocked.add}</Button>
-        </Stack>
-      )}
+      ) : null}
     </Stack>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
@@ -19,7 +19,9 @@ import {
   TICKETS_PATH,
   isBlocked,
   openBlockers,
+  ticketBlockedSectionId,
   ticketEditButtonId,
+  ticketLinksSectionId,
   ticketPriorityTones,
   ticketStatusTones,
   ticketTagTones,
@@ -42,6 +44,13 @@ export type TicketPanelProps = {
   // The edit layer lives in the stack (the panel only asks for it).
   onEdit: (ticket: Ticket) => void;
 };
+
+// The forms open from the action row above their sections (the links form sits
+// below the body): scroll on every click, not on state change — clicking an
+// already-open form must answer too. Nearest keeps the row put when visible.
+function revealSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ block: "nearest" });
+}
 
 /** The live dossier: status, assignee, blockers and comments read the session
  * store, so an action repaints them without a round trip. The static parts
@@ -66,6 +75,9 @@ export function TicketPanel({
   // rule server-side and narrows the maintainer's fields).
   const canEdit =
     session !== null && (session.user === live.author.user || maintainers.includes(session.user));
+
+  const [blockerComposing, setBlockerComposing] = useState(false);
+  const [linkComposing, setLinkComposing] = useState(false);
 
   return (
     <Stack gap={12}>
@@ -154,23 +166,51 @@ export function TicketPanel({
         )}
       </Stack>
 
-      {canEdit ? (
-        <Stack navRow>
-          <Button id={ticketEditButtonId} onClick={() => onEdit(live)}>
-            {messages.tickets.dossier.edit}
+      {session !== null ? (
+        <Stack direction="row" gap={6} align="center" wrap navRow>
+          {canEdit ? (
+            <Button id={ticketEditButtonId} onClick={() => onEdit(live)}>
+              {messages.tickets.dossier.edit}
+            </Button>
+          ) : null}
+          <Button
+            onClick={() => {
+              setBlockerComposing(true);
+              revealSection(ticketBlockedSectionId);
+            }}
+          >
+            {messages.tickets.dossier.blocked.add}
+          </Button>
+          <Button
+            onClick={() => {
+              setLinkComposing(true);
+              revealSection(ticketLinksSectionId);
+            }}
+          >
+            {messages.tickets.dossier.links.add}
           </Button>
         </Stack>
       ) : null}
 
-      <TicketBlockedSection ticket={live} tickets={all} />
+      <TicketBlockedSection
+        ticket={live}
+        tickets={all}
+        composing={blockerComposing}
+        onComposeChange={setBlockerComposing}
+      />
 
       <div className={styles.body}>
         <Markdown>{live.body}</Markdown>
       </div>
 
-      <Stack gap={4}>
+      <Stack gap={4} id={ticketLinksSectionId}>
         <Heading level={2}>{messages.tickets.dossier.links.heading}</Heading>
-        <TicketLinksSection ticketId={ticket.id} initialLinks={ticket.links} />
+        <TicketLinksSection
+          ticketId={ticket.id}
+          initialLinks={ticket.links}
+          composing={linkComposing}
+          onComposeChange={setLinkComposing}
+        />
       </Stack>
 
       <Stack gap={6}>

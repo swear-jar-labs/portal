@@ -24,13 +24,21 @@ const kindOptions: SelectOption<TicketLinkKind>[] = ticketLinkKinds.map((kind) =
   label: kind.toUpperCase(),
 }));
 
+const emptyLinkInput: TicketLinkInput = { kind: "pr", url: "", label: "" };
+
+export type TicketLinksSectionProps = {
+  ticketId: string;
+  initialLinks: readonly TicketLink[];
+  composing: boolean;
+  onComposeChange: (composing: boolean) => void;
+};
+
 export function TicketLinksSection({
   ticketId,
   initialLinks,
-}: {
-  ticketId: string;
-  initialLinks: readonly TicketLink[];
-}) {
+  composing,
+  onComposeChange: setComposing,
+}: TicketLinksSectionProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const state = useSyncExternalStore(
@@ -42,17 +50,8 @@ export function TicketLinksSection({
     () => [...initialLinks, ...(state.sessionLinks[ticketId] ?? [])],
     [initialLinks, state.sessionLinks, ticketId],
   );
-  const [composing, setComposing] = useState(false);
-  const [values, setValues] = useState<TicketLinkInput>({ kind: "pr", url: "", label: "" });
+  const [values, setValues] = useState<TicketLinkInput>(emptyLinkInput);
   const [errors, setErrors] = useState<{ url?: string; label?: string }>({});
-
-  function openCompose() {
-    if (session === null) {
-      requestLogin();
-      return;
-    }
-    setComposing(true);
-  }
 
   function submit() {
     if (session === null) {
@@ -81,7 +80,7 @@ export function TicketLinksSection({
       ...parsed.data,
       addedBy: { user: session.user, avatar: avatarFor(session.user) },
     });
-    setValues({ kind: "pr", url: "", label: "" });
+    setValues(emptyLinkInput);
     setErrors({});
     setComposing(false);
   }
@@ -132,18 +131,20 @@ export function TicketLinksSection({
               <Button type="submit" variant="primary">
                 {messages.tickets.dossier.links.submit}
               </Button>
-              <Button onClick={() => setComposing(false)}>
+              <Button
+                onClick={() => {
+                  setValues(emptyLinkInput);
+                  setErrors({});
+                  setComposing(false);
+                }}
+              >
                 {messages.tickets.dossier.links.cancel}
               </Button>
             </Stack>
             <Text role="hint">{messages.tickets.dossier.links.hint}</Text>
           </Stack>
         </Form>
-      ) : (
-        <Stack navRow>
-          <Button onClick={openCompose}>{messages.tickets.dossier.links.add}</Button>
-        </Stack>
-      )}
+      ) : null}
     </Stack>
   );
 }

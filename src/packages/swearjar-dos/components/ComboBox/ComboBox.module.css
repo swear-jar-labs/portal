@@ -1,0 +1,9 @@
+.hint {
+  opacity: 0.75;
+}
+
+.empty {
+  padding: 1px 14px 1px 24px;
+  opacity: 0.75;
+  white-space: nowrap;
+}

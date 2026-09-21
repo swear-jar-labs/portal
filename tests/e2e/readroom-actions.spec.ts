@@ -208,7 +208,7 @@ test("a member opens a task in this session", async ({ page }) => {
   await form
     .getByLabel("SOURCE URL")
     .fill("https://github.com/swear-jar-labs/queue-lab/blob/abc123/src/queue.rs");
-  await form.getByLabel("TICKET").fill("17");
+  await form.getByLabel("TICKET").fill("DOS-3");
   await form.locator('input[type="file"]').setInputFiles(SNIPPET);
   await form.getByLabel("DEADLINE").fill("2026-12-24T18:00");
   await form.getByRole("button", { name: "[ OPEN TASK ]" }).click();
@@ -219,7 +219,8 @@ test("a member opens a task in this session", async ({ page }) => {
   await expect(
     task.getByRole("link", { name: /queue-lab\/blob\/abc123\/src\/queue\.rs$/ }),
   ).toBeVisible();
-  await expect(task.getByRole("link", { name: "TICKET #17" })).toBeVisible();
+  await expect(task.getByRole("link", { name: "DOS-3" })).toBeVisible();
+  await expect(task.getByText("Table contract for the tickets tracker")).toBeVisible();
   await expect(task.getByText("C", { exact: true })).toBeVisible();
   await expect(task.getByText("Go", { exact: true })).toBeVisible();
   await expect(task.getByRole("link", { name: "snippet.c" })).toBeVisible();
@@ -239,6 +240,27 @@ test("a member opens a task in this session", async ({ page }) => {
   await expect(card.getByText("C", { exact: true })).toBeVisible();
   // The closed layer hands the keyboard back to the card it came from.
   await expect(card.getByRole("button", { name: NEW_TASK })).toBeFocused();
+});
+
+test("refuses an unknown ticket key", async ({ page }) => {
+  await logon(page, "grace");
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+
+  await page.getByRole("button", { name: "[ NEW TASK ]" }).click();
+  const form = page.getByRole("form", { name: "NEW TASK" });
+  await form.getByLabel("TITLE").fill("Read the lock-free queue");
+  await form
+    .getByRole("textbox", { name: "DESCRIPTION" })
+    .fill("Find the memory order that is missing.");
+  const ticket = form.getByLabel("TICKET");
+  await ticket.fill("NOPE-1");
+  await expect(page.getByText("No tickets match.")).toBeVisible();
+  await form.getByLabel("DEADLINE").fill("2026-12-24T18:00");
+  await form.getByRole("button", { name: "[ OPEN TASK ]" }).click();
+  await expect(form.getByText("No ticket with this key.")).toBeVisible();
+  // Nothing was composed: the feed still lists five tasks.
+  await expect(feed(page).getByText("5 TASKS")).toBeVisible();
 });
 
 test("a guest cannot open a task", async ({ page }) => {

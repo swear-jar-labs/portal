@@ -6,6 +6,7 @@
 // contract test pins the published list.
 
 export { ticketPath } from "../tickets";
-export { listTicketsByProject } from "../data";
+export { listTickets, listTicketsByProject } from "../data";
+export { useMergedTickets } from "../useTicketSession";
 export { TicketsTable } from "../TicketsTable";
 export type { Ticket } from "../tickets";

@@ -383,6 +383,77 @@ test("a member manages blockers and the form refuses bad edges", async ({ page }
   await expectNoViolations(page, "ticket dossier with blockers");
 });
 
+test("searches the project filter from the keyboard", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(TICKETS_PATH);
+  await waitForHydration(page);
+
+  // A click opens the whole list; typing narrows it to the match.
+  const project = feed(page).getByRole("combobox", { name: "PROJECT" });
+  await project.click();
+  await expect(page.getByRole("option", { name: /Compiler/ })).toBeVisible();
+  await expectNoViolations(page, "ticket queue with the project search open");
+  await project.fill("zzz");
+  await expect(page.getByText("No projects match.")).toBeVisible();
+
+  // An uncommitted close reverts to the picked project.
+  await page.keyboard.press("Escape");
+  await expect(project).toHaveValue("ALL PROJECTS");
+
+  await project.fill("comp");
+  await expect(page.getByRole("option", { name: /Compiler/ })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL("/tickets?project=compiler");
+  await expect(table(page).getByRole("row")).toHaveCount(6);
+  // A pick writes the label back into the box, not the typed text.
+  await expect(feed(page).getByRole("combobox", { name: "PROJECT" })).toHaveValue("Compiler");
+  // Re-picking the selected project changes no query, yet the full label
+  // still lands back over the edited text.
+  await project.fill("Compil");
+  await page.keyboard.press("Enter");
+  await expect(feed(page).getByRole("combobox", { name: "PROJECT" })).toHaveValue("Compiler");
+  // A pick advances like ArrowRight: the next filter owns the keyboard.
+  await expect(feed(page).getByRole("combobox", { name: "SIZE" })).toBeFocused();
+
+  // A select commits its text the same way: arrows move, Enter picks the
+  // highlighted size into the field and advances again.
+  const size = feed(page).getByRole("combobox", { name: "SIZE" });
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("option", { name: "S", exact: true })).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(size).toContainText("S");
+  await expect(page).toHaveURL("/tickets?project=compiler&size=S");
+  await expect(feed(page).getByRole("combobox", { name: "PRIORITY" })).toBeFocused();
+
+  // The search is the row's last cell: Enter wraps to the first one.
+  const search = feed(page).getByLabel("SEARCH");
+  await search.fill("dos");
+  await page.keyboard.press("Enter");
+  await expect(project).toBeFocused();
+});
+
+test("pins a blocker picked from the keyboard", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(TICKETS_PATH);
+  await waitForHydration(page);
+
+  await table(page).getByRole("link", { name: "CMP-1" }).click();
+  const dossier = page.getByRole("region", { name: "CMP-1" });
+  await dossier.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  const box = dossier.getByRole("combobox", { name: "TICKET KEY" });
+  await box.fill("dos");
+  await expect(page.getByRole("option", { name: /DOS-1/ })).toBeVisible();
+  await box.fill("dos-1");
+  await page.keyboard.press("Enter");
+  await expect(box).toHaveValue("DOS-1");
+  // A pick advances to the submit next to the box.
+  await expect(dossier.getByRole("button", { name: "[ BLOCK ]" })).toBeFocused();
+  await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await expect(dossier.getByRole("link", { name: "DOS-1" })).toBeVisible();
+  await expectNoViolations(page, "ticket dossier with a picked blocker");
+});
+
 test("moves the status from the edit layer and reopens a closed ticket", async ({ page }) => {
   await logon(page, "ada");
   await page.goto(TICKETS_PATH);

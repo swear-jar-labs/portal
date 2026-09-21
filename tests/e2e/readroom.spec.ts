@@ -204,7 +204,7 @@ test("stacks the member layer flush on mobile", async ({ page }) => {
   expect(margin).toBe("0px");
 });
 
-test("shows the source link, the ticket chip and the Markdown pipeline", async ({ page }) => {
+test("shows the source link and the Markdown pipeline", async ({ page }) => {
   await page.goto(readroomPath("bump-allocator"));
   const task = page.getByRole("region", { name: BUMP });
 
@@ -230,12 +230,15 @@ test("shows the source link, the ticket chip and the Markdown pipeline", async (
   await expect(parser.locator("pre")).toContainText("static Node *term");
 });
 
-test("links the ticket chip to its live dossier", async ({ page }) => {
+test("links the ticket row to its live dossier", async ({ page }) => {
   await page.goto(readroomPath("bump-allocator"));
-  const chip = page.getByRole("region", { name: BUMP }).getByRole("link", { name: TICKET_CHIP });
-  await expect(chip).toHaveAttribute("href", ticketPath("DOS-3"));
+  const task = page.getByRole("region", { name: BUMP });
+  // The ticket reads as key plus title under the attached files, not as a chip.
+  const key = task.getByRole("link", { name: "DOS-3" });
+  await expect(key).toHaveAttribute("href", ticketPath("DOS-3"));
+  await expect(task.getByText(DOS_THREE)).toBeVisible();
 
-  await chip.click();
+  await key.click();
   await expect(page).toHaveURL(ticketPath("DOS-3"));
   const dossier = page.getByRole("region", { name: "DOS-3" });
   await expect(dossier.getByRole("heading", { level: 1, name: DOS_THREE })).toBeVisible();
@@ -342,13 +345,16 @@ test("walks the feed and the task by rows", async ({ page }) => {
   await page.keyboard.press("Space");
   await expect(page).toHaveURL(readroomPath("bump-allocator"));
 
-  // The task's source row: ▼ enters it, ▶ walks to the ticket chip.
+  // The task's source row: ▼ enters it, ▶ stays on the source link (the ticket
+  // chip is gone — the ticket row lives under the files). Another ▼ lands on it.
   await expect(focusedBody(page)).toBeFocused();
   const task = page.getByRole("region", { name: BUMP });
   await page.keyboard.press("ArrowDown");
   await expect(task.getByRole("link", { name: /SmpAllocator\.zig$/ })).toBeFocused();
   await page.keyboard.press("ArrowRight");
-  await expect(task.getByRole("link", { name: TICKET_CHIP })).toBeFocused();
+  await expect(task.getByRole("link", { name: /SmpAllocator\.zig$/ })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(task.getByRole("link", { name: "DOS-3" })).toBeFocused();
 });
 
 test("keeps the feed and the task legible", async ({ page }) => {

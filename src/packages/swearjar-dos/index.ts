@@ -37,6 +37,9 @@ export type { TextareaProps } from "./components/Textarea/Textarea";
 export { Select } from "./components/Select/Select";
 export type { SelectOption, SelectProps } from "./components/Select/Select";
 
+export { ComboBox } from "./components/ComboBox/ComboBox";
+export type { ComboBoxOption, ComboBoxProps } from "./components/ComboBox/ComboBox";
+
 export { Checkbox } from "./components/Checkbox/Checkbox";
 export type { CheckboxProps } from "./components/Checkbox/Checkbox";
 
@@ -98,7 +101,7 @@ export {
 } from "./attributes";
 export { FOCUSABLE_SELECTOR, isInScrollView, nextStepIndex } from "./focus";
 export { hasCommandModifier, shouldSkipEvent } from "./keyboard";
-export { useControlWalk } from "./walk";
+export { focusNextControl, useControlWalk } from "./walk";
 export type { ControlWalkOptions } from "./walk";
 
 export { toneColor, toneStyle, cx } from "./components/tone";

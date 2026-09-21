@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ChangeEvent } from "react";
+import { useId, type ChangeEvent, type KeyboardEvent } from "react";
 import { cx } from "../tone";
 import styles from "../formControls.module.css";
 
@@ -14,6 +14,7 @@ export type FieldProps = {
   autoComplete?: string;
   required?: boolean;
   error?: string;
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   className?: string;
 };
 
@@ -27,6 +28,7 @@ export function Field({
   autoComplete,
   required = false,
   error,
+  onKeyDown,
   className,
 }: FieldProps) {
   const id = useId();
@@ -47,6 +49,7 @@ export function Field({
         type={type}
         value={value}
         onChange={handleChange}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}

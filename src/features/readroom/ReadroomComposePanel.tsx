@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Button, Field, Form, Heading, Stack, Tag, Text } from "@swearjar/dos";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button, ComboBox, Field, Form, Heading, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { type Ticket } from "@/features/tickets/contracts";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { defaultDeadlineLocal, fromLocalInput, type ReadroomDraft } from "./datetime";
 import { readroomTagIds, type ReadroomAttachment, type ReadroomTagId } from "./readrooms";
@@ -46,6 +47,9 @@ function initialValues(): ComposeValues {
 }
 
 export type ReadroomComposePanelProps = {
+  // The ticket queue for the ticket picker: the form pins a key from it, free
+  // text that matches no ticket is refused.
+  tickets: readonly Ticket[];
   onSubmit: (draft: ReadroomDraft) => void;
   onCancel: () => void;
 };
@@ -53,9 +57,13 @@ export type ReadroomComposePanelProps = {
 /** The new-task layer: the optional source permalink, the tags, the opening
  * description and the deadline. A mock submit until the readroom has a
  * backend (the task lives in the session). */
-export function ReadroomComposePanel({ onSubmit, onCancel }: ReadroomComposePanelProps) {
+export function ReadroomComposePanel({ tickets, onSubmit, onCancel }: ReadroomComposePanelProps) {
   const [values, setValues] = useState<ComposeValues>(initialValues);
   const [errors, setErrors] = useState<ComposeErrors>({});
+  const ticketOptions = useMemo(
+    () => tickets.map((entry) => ({ value: entry.key, label: entry.key, hint: entry.title })),
+    [tickets],
+  );
   const [files, setFiles] = useState<readonly ReadroomAttachment[]>([]);
   const filesRef = useRef<readonly ReadroomAttachment[]>([]);
   const submittedRef = useRef(false);
@@ -128,12 +136,20 @@ export function ReadroomComposePanel({ onSubmit, onCancel }: ReadroomComposePane
     }
     setErrors({});
     submittedRef.current = true;
+    const ticketKey = parsed.data.ticket?.toUpperCase();
+    const ticket =
+      ticketKey === undefined ? undefined : tickets.find((entry) => entry.key === ticketKey);
+    if (ticketKey !== undefined && ticket === undefined) {
+      setErrors({ ticket: messages.readroom.compose.errors.unknownTicket });
+      submittedRef.current = false;
+      return;
+    }
     onSubmit({
       title: parsed.data.title,
       tags: parsed.data.tags,
       description: parsed.data.description,
       ...(parsed.data.sourceUrl === undefined ? {} : { sourceUrl: parsed.data.sourceUrl }),
-      ...(parsed.data.ticket === undefined ? {} : { ticket: parsed.data.ticket }),
+      ...(ticket === undefined ? {} : { ticket: ticket.key }),
       attachments: filesRef.current,
       deadlineAt,
     });
@@ -189,11 +205,13 @@ export function ReadroomComposePanel({ onSubmit, onCancel }: ReadroomComposePane
           onChange={(sourceUrl) => update("sourceUrl", sourceUrl)}
           error={errors.sourceUrl}
         />
-        <Field
+        <ComboBox
           label={messages.readroom.compose.fields.ticket}
           name="ticket"
           value={values.ticket}
           onChange={(ticket) => update("ticket", ticket)}
+          options={ticketOptions}
+          emptyText={messages.readroom.compose.noTicketMatch}
           error={errors.ticket}
         />
 

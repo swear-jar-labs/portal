@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { cx } from "../tone";
 import controls from "../formControls.module.css";
 import { clampIndex, typeaheadIndex } from "./keyboard";
+import { focusNextControl } from "../../walk";
 import styles from "./Select.module.css";
 
 export type SelectOption<T extends string> = {
@@ -42,6 +43,7 @@ export function Select<T extends string>({
   const [open, setOpen] = useState(false);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [activeIndex, setActiveIndex] = useState(() => Math.max(selectedIndex, 0));
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const current = options.find((option) => option.value === value);
@@ -56,10 +58,12 @@ export function Select<T extends string>({
     setOpen(true);
   }
 
-  function commit(index: number) {
+  function commit(index: number, advance = false) {
     const option = options[index];
     if (option) onChange(option.value);
     setOpen(false);
+    // A keyboard pick advances like ArrowRight, like the ComboBox does.
+    if (advance && triggerRef.current !== null) focusNextControl(triggerRef.current);
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -123,7 +127,7 @@ export function Select<T extends string>({
       case "Enter":
       case " ":
         event.preventDefault();
-        commit(activeIndex);
+        commit(activeIndex, true);
         return;
       case "Tab":
         commit(activeIndex);
@@ -153,6 +157,7 @@ export function Select<T extends string>({
       <RadixPopover.Root open={open} onOpenChange={handleOpenChange}>
         <RadixPopover.Trigger
           id={triggerId}
+          ref={triggerRef}
           role="combobox"
           aria-haspopup="listbox"
           aria-expanded={open}
@@ -170,7 +175,7 @@ export function Select<T extends string>({
         </RadixPopover.Trigger>
         <RadixPopover.Portal>
           <RadixPopover.Content
-            className={styles.content}
+            className={controls.popup}
             align="start"
             sideOffset={2}
             onOpenAutoFocus={(event) => event.preventDefault()}
@@ -180,7 +185,7 @@ export function Select<T extends string>({
             onCloseAutoFocus={(event) => event.preventDefault()}
             onMouseDown={(event) => event.preventDefault()}
           >
-            <div id={listboxId} role="listbox" aria-labelledby={labelId} className={styles.listbox}>
+            <div id={listboxId} role="listbox" aria-labelledby={labelId} className={controls.list}>
               {options.map((option, index) => (
                 <div
                   key={option.value}
@@ -191,11 +196,11 @@ export function Select<T extends string>({
                   role="option"
                   aria-selected={option.value === value}
                   data-active={index === activeIndex}
-                  className={styles.option}
+                  className={controls.item}
                   onClick={() => commit(index)}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <span aria-hidden="true" className={styles.indicator}>
+                  <span aria-hidden="true" className={controls.mark}>
                     X
                   </span>
                   {option.label}

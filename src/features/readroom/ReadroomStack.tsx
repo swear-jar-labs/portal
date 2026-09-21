@@ -22,6 +22,7 @@ import {
   useShellSession,
 } from "@/features/shell";
 import { useMemberLayer } from "@/features/members/contracts";
+import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { avatarFor } from "@/shared/members";
 import type { ReadroomDraft } from "./datetime";
@@ -44,18 +45,22 @@ export type ReadroomLayer = {
 
 export type ReadroomStackProps = {
   readrooms: readonly Readroom[];
+  // The ticket queue for the compose layer's ticket picker: fixtures from the
+  // RSC render, merged with the session's tickets below.
+  tickets: readonly Ticket[];
   // The ranking base captured by the RSC render: server and client rank
   // identically at hydration.
   now: string;
   task?: ReadroomLayer;
 };
 
-export function ReadroomStack({ readrooms, now, task }: ReadroomStackProps) {
+export function ReadroomStack({ readrooms, tickets, now, task }: ReadroomStackProps) {
   const router = useRouter();
   const routedMemberLayer = useMemberLayer();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const { state, readrooms: visible } = useReadroomSession(readrooms);
+  const allTickets = useMergedTickets(tickets);
   const [composing, setComposing] = useState(false);
   const [localTaskId, setLocalTaskId] = useState<string | null>(null);
   // The control a closed layer owes focus to (the compose button, a new card).
@@ -246,6 +251,7 @@ export function ReadroomStack({ readrooms, now, task }: ReadroomStackProps) {
             <ReadroomSourceRow readroom={localTask} />
             <ReadroomView
               readroom={localTask}
+              tickets={allTickets}
               now={now}
               description={<Markdown>{localTask.description}</Markdown>}
               noteBodies={{}}
@@ -261,7 +267,11 @@ export function ReadroomStack({ readrooms, now, task }: ReadroomStackProps) {
             <CloseButton onClose={() => closeCompose()} label={messages.shell.window.closeLabel} />
           }
         >
-          <ReadroomComposePanel onSubmit={submitCompose} onCancel={() => closeCompose()} />
+          <ReadroomComposePanel
+            tickets={allTickets}
+            onSubmit={submitCompose}
+            onCancel={() => closeCompose()}
+          />
         </ShellPanel>
       ) : null}
       {memberLayerOpen ? (

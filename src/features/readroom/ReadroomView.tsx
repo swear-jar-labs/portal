@@ -5,6 +5,7 @@ import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { useShellSession } from "@/features/shell";
+import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import {
   formatDeadlineDate,
@@ -27,6 +28,7 @@ import {
 import { attachmentsFromFiles, releaseAttachments } from "./attachments";
 import { useReadroomStore } from "./useReadroomSession";
 import { ReadroomFilesRow } from "./ReadroomFilesRow";
+import { ReadroomTicketRow } from "./ReadroomTicketRow";
 import { ReadroomLeadControls } from "./ReadroomLeadControls";
 import { ReadroomNoteItem } from "./ReadroomNoteItem";
 import { ReadroomReportForm } from "./ReadroomReportForm";
@@ -36,6 +38,9 @@ import styles from "./readroom.module.css";
 export type ReadroomViewProps = {
   readroom: Readroom;
   now: string;
+  // The ticket queue for the linked-ticket row: fixtures, merged with the
+  // session's tickets below.
+  tickets: readonly Ticket[];
   // The description body, rendered in RSC for a routed task and on the client
   // for a session-composed one.
   description: ReactNode;
@@ -52,6 +57,7 @@ export type ReadroomViewProps = {
  * overlays the fixture facts; the RSC-rendered bodies stay with the fixtures. */
 export function ReadroomView({
   readroom,
+  tickets,
   now,
   description,
   noteBodies,
@@ -65,6 +71,7 @@ export function ReadroomView({
   const { notes, sealed } = visibleNotes(effective, now, session?.user ?? null);
   const lead = isLead(effective, session?.user ?? null);
   const posted = hasNoteBy(effective.notes, session?.user ?? null);
+  const allTickets = useMergedTickets(tickets);
   const filesEditable = lead && (phase === "collecting" || phase === "reviewing");
   // A deleted note reopens the form: the caret follows it there.
   const noteFieldRef = useRef<HTMLTextAreaElement | null>(null);
@@ -99,6 +106,7 @@ export function ReadroomView({
         onAdd={addFiles}
         onRemove={removeFile}
       />
+      <ReadroomTicketRow ticket={effective.ticket} tickets={allTickets} />
 
       <Stack gap={4}>
         <Text role="hint">

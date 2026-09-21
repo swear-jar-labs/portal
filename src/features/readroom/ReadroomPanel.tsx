@@ -1,12 +1,16 @@
 import type { ReactNode } from "react";
 import { Stack } from "@swearjar/dos";
 import { Markdown } from "@/shared/Markdown/Markdown";
+import type { Ticket } from "@/features/tickets/contracts";
 import type { Readroom } from "./readrooms";
 import { ReadroomSourceRow } from "./ReadroomSourceRow";
 import { ReadroomView } from "./ReadroomView";
 
 export type ReadroomPanelProps = {
   readroom: Readroom;
+  // The ticket queue for the linked-ticket row (fixtures; the view merges the
+  // session's tickets).
+  tickets: readonly Ticket[];
   now: string;
 };
 
@@ -14,7 +18,7 @@ export type ReadroomPanelProps = {
  * through the pipeline — the client view receives prepared nodes, so the
  * fixture bodies never ship the pipeline to the client. Session facts layer on
  * top in ReadroomView. */
-export function ReadroomPanel({ readroom, now }: ReadroomPanelProps) {
+export function ReadroomPanel({ readroom, tickets, now }: ReadroomPanelProps) {
   const noteBodies: Record<string, ReactNode> = {};
   for (const note of readroom.notes) {
     noteBodies[note.id] = <Markdown>{note.body}</Markdown>;
@@ -26,6 +30,7 @@ export function ReadroomPanel({ readroom, now }: ReadroomPanelProps) {
       <ReadroomSourceRow readroom={readroom} />
       <ReadroomView
         readroom={readroom}
+        tickets={tickets}
         now={now}
         description={<Markdown>{readroom.description}</Markdown>}
         noteBodies={noteBodies}

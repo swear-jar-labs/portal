@@ -5,8 +5,10 @@ describe("tickets contract", () => {
   it("publishes exactly the agreed surface", () => {
     expect(Object.keys(ticketsContract).sort()).toEqual([
       "TicketsTable",
+      "listTickets",
       "listTicketsByProject",
       "ticketPath",
+      "useMergedTickets",
     ]);
   });
 });

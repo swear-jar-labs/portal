@@ -39,3 +39,45 @@
   color: var(--dos-field-error, var(--dos-light-red));
   font-weight: 700;
 }
+
+/* The popup chrome shared by Select and ComboBox: one DOS list, one place. */
+.popup {
+  z-index: var(--dos-z-popover);
+  min-width: var(--radix-popover-trigger-width);
+  overflow: hidden;
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  font-weight: 700;
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-border-raised);
+  box-shadow: var(--dos-blur-shadow);
+}
+
+.list {
+  max-height: var(--radix-popover-content-available-height);
+  overflow: auto;
+  padding: 2px 0;
+}
+
+.item {
+  position: relative;
+  padding: 1px 14px 1px 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  outline: none;
+}
+
+.item[data-active="true"] {
+  background: var(--dos-blue);
+  color: var(--dos-white);
+}
+
+.mark {
+  position: absolute;
+  left: 8px;
+  visibility: hidden;
+}
+
+.item[aria-selected="true"] .mark {
+  visibility: visible;
+}

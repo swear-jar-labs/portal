@@ -1,7 +1,17 @@
 "use client";
 
-import type { MouseEvent } from "react";
-import { Button, Field, Stack, Text, Heading, Select, type SelectOption } from "@swearjar/dos";
+import { useState, type MouseEvent } from "react";
+import {
+  Button,
+  ComboBox,
+  Field,
+  Stack,
+  Text,
+  Heading,
+  Select,
+  focusNextControl,
+  type SelectOption,
+} from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import type { ProjectSlug } from "@/features/projects/contracts";
@@ -85,6 +95,41 @@ const assigneeOptions: SelectOption<TicketQuery["assignee"]>[] = [
   { value: "none", label: messages.tickets.feed.unassigned },
 ];
 
+/** The project filter's search box: the slug behind it stays the query, the box
+ * shows the label. The text lives here so a key change (a pick, a deep link,
+ * the project entry) remounts the box on the new label. */
+function ProjectFilterBox({
+  projects,
+  selected,
+  onPick,
+}: {
+  projects: readonly TicketProjectOption[];
+  selected: ProjectFilter;
+  onPick: (project: ProjectFilter) => void;
+}) {
+  const options = projectOptions(projects);
+  const [text, setText] = useState(
+    options.find((option) => option.value === selected)?.label ?? selected,
+  );
+  return (
+    <ComboBox
+      label={messages.tickets.feed.filters.project}
+      name="project"
+      value={text}
+      onChange={setText}
+      options={options}
+      // A pick always writes the label back: re-picking the selected project
+      // changes no key (so no remount), yet the typed text must not linger.
+      onPick={(option) => {
+        setText(option.label);
+        onPick(option.value as ProjectFilter);
+      }}
+      committedValue={selected}
+      emptyText={messages.tickets.feed.filters.noProjectMatch}
+    />
+  );
+}
+
 /** The work queue: every ticket as a table row, filterable without
  * leaving the tracker. KEY opens the dossier; the rest of the row is text. */
 export function TicketsFeed({
@@ -119,12 +164,11 @@ export function TicketsFeed({
       </Stack>
 
       <Stack direction="row" gap={8} wrap navRow>
-        <Select
-          label={messages.tickets.feed.filters.project}
-          name="project"
-          value={query.project}
-          onChange={(project: ProjectFilter) => onQueryChange({ project })}
-          options={projectOptions(projects)}
+        <ProjectFilterBox
+          key={query.project}
+          projects={projects}
+          selected={query.project}
+          onPick={(project) => onQueryChange({ project })}
         />
         <Select
           label={messages.tickets.feed.filters.size}
@@ -166,6 +210,19 @@ export function TicketsFeed({
           name="q"
           value={query.q}
           onChange={(q: string) => onQueryChange({ q })}
+          // The filter row owns no submit: Enter walks right like ArrowRight.
+          onKeyDown={(event) => {
+            if (
+              event.key !== "Enter" ||
+              event.shiftKey ||
+              event.ctrlKey ||
+              event.metaKey ||
+              event.altKey ||
+              event.nativeEvent.isComposing
+            )
+              return;
+            if (focusNextControl(event.currentTarget)) event.preventDefault();
+          }}
         />
       </Stack>
 

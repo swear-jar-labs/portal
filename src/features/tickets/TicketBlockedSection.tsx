@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, Field, Form, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
+import { Button, ComboBox, Form, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { ticketBlockSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
@@ -40,6 +40,12 @@ export function TicketBlockedSection({
     const blocker = byId.get(id);
     return blocker === undefined ? [] : [blocker];
   });
+  // The whole queue as pick options: the form still validates the typed key
+  // (unknown, self, duplicate, cycle), the list only suggests.
+  const keyOptions = useMemo(
+    () => tickets.map((entry) => ({ value: entry.key, label: entry.key, hint: entry.title })),
+    [tickets],
+  );
   const [key, setKey] = useState("");
   const [error, setError] = useState<string | undefined>();
 
@@ -109,11 +115,13 @@ export function TicketBlockedSection({
       {composing ? (
         <Form onSubmit={submit} ariaLabel={messages.tickets.dossier.blocked.add}>
           <Stack gap={6}>
-            <Field
+            <ComboBox
               label={messages.tickets.dossier.blocked.key}
               name="key"
               value={key}
               onChange={setKey}
+              options={keyOptions}
+              emptyText={messages.tickets.dossier.blocked.noMatch}
               error={error}
               required
             />

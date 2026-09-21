@@ -89,6 +89,33 @@ function stepRows(
     : (row.cells[0] ?? null);
 }
 
+// Enter in a search box steps to the next control on the right, like ArrowRight:
+// the cells of the enclosing marked row with the same wrap-around, otherwise
+// the next focusable in DOM order without wrapping (a lone field advances to
+// its submit row). Returns whether focus moved; a form keeps its native
+// submit when it did not.
+export function focusNextControl(from: Element): boolean {
+  const next = nextControlFrom(from);
+  if (next === null) return false;
+  next.focus();
+  next.scrollIntoView({ block: "nearest" });
+  return true;
+}
+
+function nextControlFrom(from: Element): HTMLElement | null {
+  const row = from.closest(ROW_SELECTOR);
+  if (row !== null) {
+    const cells = Array.from(row.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    if (cells.length < 2) return null;
+    const current = cells.findIndex((cell) => cell === from);
+    return cells[nextControlIndex(cells.length, current, 1)] ?? null;
+  }
+  const controls = Array.from(from.ownerDocument.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+  const current = controls.findIndex((control) => control === from);
+  if (current < 0) return null;
+  return controls[current + 1] ?? null;
+}
+
 // The control a plain arrow hands focus to, or null when the arrow stays
 // native: a text field's caret, a one-control row, the bare surface of a
 // two-axis region, a region without controls.

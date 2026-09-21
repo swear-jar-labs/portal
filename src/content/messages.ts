@@ -477,6 +477,7 @@ export const messages = {
         description: "DESCRIPTION",
         sourceUrl: "SOURCE URL",
         ticket: "TICKET",
+        fromTicket: "FROM TICKET",
         deadline: "DEADLINE",
       },
       errors: {
@@ -677,6 +678,7 @@ export const messages = {
         badUrl: "Paste an http(s) link.",
         badLabel: "Give the link a label.",
         duplicate: "This link is already pinned.",
+        remove: "Remove link",
         hint: "The link lives in this session until the tracker has a backend.",
       },
       comments: {

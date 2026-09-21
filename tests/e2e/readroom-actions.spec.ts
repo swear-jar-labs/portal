@@ -263,6 +263,34 @@ test("refuses an unknown ticket key", async ({ page }) => {
   await expect(feed(page).getByText("5 TASKS")).toBeVisible();
 });
 
+test("pins a ticket link as the source", async ({ page }) => {
+  await logon(page, "grace");
+  await page.goto(READROOM_PATH);
+  await waitForHydration(page);
+
+  await page.getByRole("button", { name: "[ NEW TASK ]" }).click();
+  const form = page.getByRole("form", { name: "NEW TASK" });
+  await form.getByLabel("TITLE").fill("Read the table contract");
+  await form
+    .getByRole("textbox", { name: "DESCRIPTION" })
+    .fill("Pin the ticket pool, not a pasted link.");
+  await form.getByLabel("TICKET").fill("DOS-3");
+  // The ticket's pool offers its pinned links (and the product repo) while
+  // the source stays empty: a pin, never an overwrite.
+  const suggestion = form.getByRole("button", { name: "PR LINK Tickets tracker on Table" });
+  await expect(suggestion).toBeVisible();
+  await expect(form.getByRole("button", { name: /REPO LINK/ })).toBeVisible();
+  await expectNoViolations(page, "compose form with ticket suggestions");
+  await suggestion.click();
+  await expect(form.getByLabel("SOURCE URL")).toHaveValue(/pull\/51$/);
+  await form.getByLabel("DEADLINE").fill("2026-12-24T18:00");
+  await form.getByRole("button", { name: "[ OPEN TASK ]" }).click();
+
+  const task = page.getByRole("region", { name: "Read the table contract" });
+  await expect(task.getByRole("link", { name: /pull\/51$/ })).toBeVisible();
+  await expectNoViolations(page, "task composed from a ticket link");
+});
+
 test("a guest cannot open a task", async ({ page }) => {
   await page.goto(READROOM_PATH);
   await waitForHydration(page);

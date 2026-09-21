@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
+import { listProjects } from "@/features/projects/contracts";
 import { listTickets } from "@/features/tickets/contracts";
-import { getReadroom, listReadrooms } from "./data";
+import { getReadroom, listReadrooms, projectRepoMap } from "./data";
 import { ReadroomPanel } from "./ReadroomPanel";
 import { ReadroomStack } from "./ReadroomStack";
 
@@ -29,12 +30,14 @@ export async function ReadroomTaskPage({ params }: ReadroomTaskPageProps) {
 
   const readrooms = await listReadrooms();
   const tickets = await listTickets();
+  const projectRepos = projectRepoMap(await listProjects());
   const now = new Date().toISOString();
 
   return (
     <ReadroomStack
       readrooms={readrooms}
       tickets={tickets}
+      projectRepos={projectRepos}
       now={now}
       task={{
         id: readroom.id,

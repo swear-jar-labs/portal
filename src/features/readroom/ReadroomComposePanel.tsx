@@ -50,6 +50,8 @@ export type ReadroomComposePanelProps = {
   // The ticket queue for the ticket picker: the form pins a key from it, free
   // text that matches no ticket is refused.
   tickets: readonly Ticket[];
+  // The product repos by slug for the source suggestions.
+  projectRepos: Readonly<Record<string, string>>;
   onSubmit: (draft: ReadroomDraft) => void;
   onCancel: () => void;
 };
@@ -57,13 +59,45 @@ export type ReadroomComposePanelProps = {
 /** The new-task layer: the optional source permalink, the tags, the opening
  * description and the deadline. A mock submit until the readroom has a
  * backend (the task lives in the session). */
-export function ReadroomComposePanel({ tickets, onSubmit, onCancel }: ReadroomComposePanelProps) {
+export function ReadroomComposePanel({
+  tickets,
+  projectRepos,
+  onSubmit,
+  onCancel,
+}: ReadroomComposePanelProps) {
   const [values, setValues] = useState<ComposeValues>(initialValues);
   const [errors, setErrors] = useState<ComposeErrors>({});
   const ticketOptions = useMemo(
     () => tickets.map((entry) => ({ value: entry.key, label: entry.key, hint: entry.title })),
     [tickets],
   );
+  // The picked ticket's pool for the source: the product repo plus the
+  // ticket's pinned links, deduplicated. Shown while the source stays empty —
+  // a pin, never an overwrite. Buttons read by kind ("PR LINK"); the full
+  // label stays in aria-label, so same-kind links keep distinct names.
+  const sourceSuggestions = useMemo(() => {
+    const key = values.ticket.trim().toUpperCase();
+    const picked = key === "" ? undefined : tickets.find((entry) => entry.key === key);
+    if (picked === undefined || values.sourceUrl.trim() !== "") return [];
+    const repoUrl = projectRepos[picked.project];
+    const seen = new Set<string>();
+    const suggestions: { url: string; text: string; label: string }[] = [];
+    for (const candidate of [
+      ...(repoUrl === undefined
+        ? []
+        : [{ url: repoUrl, text: "REPO LINK", label: `REPO LINK ${repoUrl}` }]),
+      ...picked.links.map((link) => ({
+        url: link.url,
+        text: `${link.kind.toUpperCase()} LINK`,
+        label: `${link.kind.toUpperCase()} LINK ${link.label}`,
+      })),
+    ]) {
+      if (seen.has(candidate.url)) continue;
+      seen.add(candidate.url);
+      suggestions.push(candidate);
+    }
+    return suggestions;
+  }, [tickets, values.ticket, values.sourceUrl, projectRepos]);
   const [files, setFiles] = useState<readonly ReadroomAttachment[]>([]);
   const filesRef = useRef<readonly ReadroomAttachment[]>([]);
   const submittedRef = useRef(false);
@@ -214,6 +248,22 @@ export function ReadroomComposePanel({ tickets, onSubmit, onCancel }: ReadroomCo
           emptyText={messages.readroom.compose.noTicketMatch}
           error={errors.ticket}
         />
+        {sourceSuggestions.length === 0 ? null : (
+          <Stack direction="row" gap={8} align="center" wrap navRow>
+            <Text as="span" role="hint">
+              {messages.readroom.compose.fields.fromTicket}
+            </Text>
+            {sourceSuggestions.map((suggestion) => (
+              <Button
+                key={suggestion.url}
+                ariaLabel={suggestion.label}
+                onClick={() => update("sourceUrl", suggestion.url)}
+              >
+                {suggestion.text}
+              </Button>
+            ))}
+          </Stack>
+        )}
 
         <ReadroomFilesRow attachments={files} editable onAdd={addFiles} onRemove={removeFile} />
 

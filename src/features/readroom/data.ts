@@ -248,3 +248,14 @@ export async function listReadroomsByTicket(ticket: string): Promise<ReadroomRef
       path: readroomPath(readroom.id),
     }));
 }
+
+/** The product repos by slug for the compose layer's source suggestions. */
+export function projectRepoMap(
+  projects: readonly { slug: string; repoUrl?: string }[],
+): Readonly<Record<string, string>> {
+  return Object.fromEntries(
+    projects.flatMap((project) =>
+      project.repoUrl === undefined ? [] : [[project.slug, project.repoUrl]],
+    ),
+  );
+}

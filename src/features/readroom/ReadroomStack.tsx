@@ -48,13 +48,15 @@ export type ReadroomStackProps = {
   // The ticket queue for the compose layer's ticket picker: fixtures from the
   // RSC render, merged with the session's tickets below.
   tickets: readonly Ticket[];
+  // The product repos by slug for the compose layer's source suggestions.
+  projectRepos: Readonly<Record<string, string>>;
   // The ranking base captured by the RSC render: server and client rank
   // identically at hydration.
   now: string;
   task?: ReadroomLayer;
 };
 
-export function ReadroomStack({ readrooms, tickets, now, task }: ReadroomStackProps) {
+export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: ReadroomStackProps) {
   const router = useRouter();
   const routedMemberLayer = useMemberLayer();
   const session = useShellSession();
@@ -269,6 +271,7 @@ export function ReadroomStack({ readrooms, tickets, now, task }: ReadroomStackPr
         >
           <ReadroomComposePanel
             tickets={allTickets}
+            projectRepos={projectRepos}
             onSubmit={submitCompose}
             onCancel={() => closeCompose()}
           />

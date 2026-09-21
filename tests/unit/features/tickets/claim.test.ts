@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CLAIM_POLICY } from "@/features/projects/contracts";
-import {
-  canClaim,
-  claimRefusal,
-  countDoneBySize,
-  EMPTY_TRACK_RECORD,
-} from "@/features/tickets/claim";
-import type { Ticket } from "@/features/tickets/tickets";
+import { DEFAULT_CLAIM_POLICY, type ClaimPolicy } from "@/features/projects/contracts";
+import { claimRefusal, countDoneBySize, type TrackRecord } from "@/features/tickets/claim";
+import type { Ticket, TicketSize } from "@/features/tickets/tickets";
 import { listTickets } from "@/features/tickets/data";
 
 const ada = { user: "ada" };
 const ken = { user: "ken" };
+
+const emptyRecord: TrackRecord = { S: 0, M: 0, L: 0 };
+
+// The readable shorthand for "the ladder is open": claimRefusal is the canon.
+const canClaim = (policy: ClaimPolicy, record: TrackRecord, size: TicketSize): boolean =>
+  claimRefusal(policy, record, size) === null;
 
 function ticket(overrides: Partial<Ticket> & Pick<Ticket, "key" | "project">): Ticket {
   return {
@@ -33,8 +34,8 @@ function ticket(overrides: Partial<Ticket> & Pick<Ticket, "key" | "project">): T
 
 describe("claim ladder", () => {
   it("leaves S free for an empty record", () => {
-    expect(canClaim(DEFAULT_CLAIM_POLICY, EMPTY_TRACK_RECORD, "S")).toBe(true);
-    expect(claimRefusal(DEFAULT_CLAIM_POLICY, EMPTY_TRACK_RECORD, "S")).toBeNull();
+    expect(canClaim(DEFAULT_CLAIM_POLICY, emptyRecord, "S")).toBe(true);
+    expect(claimRefusal(DEFAULT_CLAIM_POLICY, emptyRecord, "S")).toBeNull();
   });
 
   it("opens M after two done S and L after one done M", () => {
@@ -72,7 +73,7 @@ describe("claim ladder", () => {
     ];
     expect(countDoneBySize(queue, "ken")).toEqual({ S: 2, M: 1, L: 0 });
     expect(countDoneBySize(queue, "ada")).toEqual({ S: 1, M: 0, L: 0 });
-    expect(countDoneBySize(queue, "lin")).toEqual(EMPTY_TRACK_RECORD);
+    expect(countDoneBySize(queue, "lin")).toEqual(emptyRecord);
   });
 
   it("keeps a demo record behind every rung of the ladder", async () => {

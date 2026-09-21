@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { USER_PATTERN } from "@/features/account/schema";
 import {
   ticketAssigneeSchema,
   ticketComposeSchema,
@@ -37,5 +38,21 @@ describe("ticket edit schema", () => {
     expect(ticketAssigneeSchema.safeParse("Ken").data).toBe("ken");
     expect(ticketAssigneeSchema.safeParse("x").success).toBe(false);
     expect(ticketAssigneeSchema.safeParse("not a user!").success).toBe(false);
+  });
+
+  it("keeps the assignee canon in step with the account's USER_PATTERN", () => {
+    // The tickets' schema mirrors the account canon (a cross-feature import
+    // would break the slice graph), so this test pins the two together: any
+    // name it accepts is a canonical user, and the known names pass.
+    for (const user of ["ada", "grace", "ken-2", "a_b", "x9"]) {
+      expect(USER_PATTERN.test(user), user).toBe(true);
+      const parsed = ticketAssigneeSchema.safeParse(user);
+      expect(parsed.success, user).toBe(true);
+      expect(parsed.success ? parsed.data : "").toMatch(USER_PATTERN);
+    }
+    for (const bad of ["x", "not a user!", "a".repeat(33)]) {
+      expect(USER_PATTERN.test(bad), bad).toBe(false);
+      expect(ticketAssigneeSchema.safeParse(bad).success, bad).toBe(false);
+    }
   });
 });

@@ -253,7 +253,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
             <ReadroomSourceRow readroom={localTask} />
             <ReadroomView
               readroom={localTask}
-              tickets={allTickets}
+              tickets={tickets}
               now={now}
               description={<Markdown>{localTask.description}</Markdown>}
               noteBodies={{}}

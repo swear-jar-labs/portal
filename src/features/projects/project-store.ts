@@ -59,7 +59,7 @@ export type ProjectPolicyBase = { slug: ProjectSlug; claimPolicy: ClaimPolicy };
 export function livePoliciesByProject(
   projects: readonly ProjectPolicyBase[],
   watched: ProjectPolicyState,
-): Record<string, ClaimPolicy> {
+): Partial<Record<ProjectSlug, ClaimPolicy>> {
   return Object.fromEntries(
     projects.map((project) => [
       project.slug,

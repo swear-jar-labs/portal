@@ -9,21 +9,21 @@ import { focusNextControl } from "../../walk";
 import { filterComboOptions } from "./filter";
 import styles from "./ComboBox.module.css";
 
-export type ComboBoxOption = {
-  value: string;
+export type ComboBoxOption<T extends string = string> = {
+  value: T;
   label: string;
   hint?: string;
 };
 
-export type ComboBoxProps = {
+export type ComboBoxProps<T extends string = string> = {
   label: string;
   name: string;
   // The box text, controlled: every keystroke flows to the form, a pick
   // commits an option (taking its value by default).
   value: string;
   onChange: (value: string) => void;
-  options: readonly ComboBoxOption[];
-  onPick?: (option: ComboBoxOption) => void;
+  options: readonly ComboBoxOption<T>[];
+  onPick?: (option: ComboBoxOption<T>) => void;
   // The committed value behind the text (a filter's slug behind the shown
   // label): Escape and an uncommitted close revert the text to its label.
   // Without it the text stays free and the form validates it.
@@ -34,7 +34,7 @@ export type ComboBoxProps = {
   className?: string;
 };
 
-export function ComboBox({
+export function ComboBox<T extends string = string>({
   label,
   name,
   value,
@@ -46,7 +46,7 @@ export function ComboBox({
   error,
   required = false,
   className,
-}: ComboBoxProps) {
+}: ComboBoxProps<T>) {
   const baseId = useId();
   const labelId = `${baseId}-label`;
   const inputId = `${baseId}-input`;
@@ -163,6 +163,9 @@ export function ComboBox({
         if (inputRef.current !== null) focusNextControl(inputRef.current);
         return;
       case "Tab":
+        // Tab commits like the kit's Select — the highlighted match lands in
+        // the field and focus moves on natively; a no-match box reverts to the
+        // committed label (or keeps its free text).
         if (matches.length > 0) commit(active);
         else {
           committedRef.current = true;

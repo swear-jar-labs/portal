@@ -102,10 +102,13 @@ export function TicketPanel({
   const [refused, setRefused] = useState(false);
 
   const isMine = session !== null && session.user === live.assignee?.user;
-  // Taking finished work is nonsense: the claim row lives only on open work.
-  const claimable =
-    live.assignee === undefined &&
-    (live.status === "open" || live.status === "in_progress" || live.status === "review");
+  // The claim row lives only on open work: taking finished work is nonsense,
+  // and leaving it would strip the assignee's done record (RULES §15 counts
+  // done tickets by assignee).
+  const openWork =
+    live.status === "open" || live.status === "in_progress" || live.status === "review";
+  const claimable = live.assignee === undefined && openWork;
+  const canLeave = isMine && openWork;
   const record = session === null ? null : countDoneBySize(all, session.user);
   const refusal = record === null ? null : claimRefusal(claimPolicy, record, live.size);
 
@@ -250,12 +253,12 @@ export function TicketPanel({
         )}
       </Stack>
 
-      {claimable || isMine ? (
+      {claimable || canLeave ? (
         <Stack direction="row" gap={6} align="center" wrap navRow>
           {claimable ? (
             <Button onClick={handleAssign}>{messages.tickets.dossier.claim.assign}</Button>
           ) : null}
-          {isMine ? (
+          {canLeave ? (
             <Button onClick={handleLeave}>{messages.tickets.dossier.claim.leave}</Button>
           ) : null}
         </Stack>

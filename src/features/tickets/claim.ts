@@ -10,8 +10,6 @@ import type { Ticket, TicketSize } from "./tickets";
 // Done tickets per size for one member, across every project.
 export type TrackRecord = { S: number; M: number; L: number };
 
-export const EMPTY_TRACK_RECORD: TrackRecord = { S: 0, M: 0, L: 0 };
-
 /** How many done tickets of each size the member carries as assignee. */
 export function countDoneBySize(tickets: readonly Ticket[], user: string): TrackRecord {
   const record: TrackRecord = { S: 0, M: 0, L: 0 };
@@ -21,11 +19,6 @@ export function countDoneBySize(tickets: readonly Ticket[], user: string): Track
     record[ticket.size] += 1;
   }
   return record;
-}
-
-/** Whether the record opens the given size under the project's policy. */
-export function canClaim(policy: ClaimPolicy, record: TrackRecord, size: TicketSize): boolean {
-  return claimRefusal(policy, record, size) === null;
 }
 
 export type ClaimRefusal = {

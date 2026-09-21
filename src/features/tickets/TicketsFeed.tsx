@@ -124,7 +124,7 @@ function ProjectFilterBox({
       // changes no key (so no remount), yet the typed text must not linger.
       onPick={(option) => {
         setText(option.label);
-        onPick(option.value as ProjectFilter);
+        onPick(option.value);
       }}
       committedValue={selected}
       emptyText={messages.tickets.feed.filters.noProjectMatch}

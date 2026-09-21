@@ -218,4 +218,46 @@ describe("ticket store", () => {
     expect("commentEdits" in merged).toBe(false);
     expect("deletedComments" in merged).toBe(false);
   });
+
+  it("merges a composed ticket with its session edits", () => {
+    const added = store.addTicket(
+      {
+        project: "compiler",
+        title: "A parser",
+        body: "Build it.",
+        size: "S",
+        priority: "normal",
+        tags: [],
+      },
+      ada,
+      known,
+    );
+    store.editTicket(added.id, { ...draft, title: "Renamed", status: "done" });
+    const [merged] = store.mergedTickets(known, store.ticketsSnapshot());
+    expect(merged).toMatchObject({ id: added.id, title: "Renamed", status: "done" });
+    // The session ticket itself stays untouched; only the merge changes.
+    expect(added.title).toBe("A parser");
+  });
+
+  it("merges idempotently, so an already-merged ticket may be fed back", () => {
+    store.addTicketComment(base.id, {
+      author: ada,
+      body: "First look.",
+      createdAt: "2026-09-20T00:00:00.000Z",
+    });
+    store.addTicketLink(base.id, {
+      kind: "pr",
+      url: "https://example.com/pr/1",
+      label: "PR 1",
+      addedBy: ada,
+    });
+    const once = store.withSessionState(base, store.ticketsSnapshot());
+    const twice = store.withSessionState(once, store.ticketsSnapshot());
+    expect(twice.comments).toEqual(once.comments);
+    expect(twice.links).toEqual(once.links);
+
+    const mergedOnce = store.mergedTickets([base], store.ticketsSnapshot());
+    const mergedTwice = store.mergedTickets(mergedOnce, store.ticketsSnapshot());
+    expect(mergedTwice).toEqual(mergedOnce);
+  });
 });

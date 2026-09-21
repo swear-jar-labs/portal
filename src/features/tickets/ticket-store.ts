@@ -227,6 +227,15 @@ export function setTicketBlockers(ticketId: string, blockedBy: readonly string[]
   patchTicket(ticketId, { blockedBy });
 }
 
+/** Concatenates two id-keyed lists without repeating ids: the session's merge
+ * stays idempotent, so a consumer that already holds a merged ticket may feed
+ * it back through withSessionState. */
+function mergeById<T extends { id: string }>(base: readonly T[], extra: readonly T[]): T[] {
+  if (extra.length === 0) return [...base];
+  const known = new Set(base.map((entry) => entry.id));
+  return [...base, ...extra.filter((entry) => !known.has(entry.id))];
+}
+
 /** A comment with the session's edit or tombstone applied. */
 function commentWithSessionState(
   comment: TicketComment,
@@ -244,9 +253,10 @@ function commentWithSessionState(
 }
 
 /** A ticket with the session's links, status, assignee, blockers and comments
- * applied. The base ticket is never mutated: merging a merged ticket would
- * double its session comments. The store-only keys (comment edits and
- * tombstones) stay out of the merged ticket. */
+ * applied. The base ticket is never mutated and the merge is idempotent (the
+ * ids de-duplicate), so reapplying it to an already-merged ticket is safe. The
+ * store-only keys (comment edits and tombstones) stay out of the merged
+ * ticket. */
 export function withSessionState(ticket: Ticket, watched: TicketsState): Ticket {
   const links = watched.sessionLinks[ticket.id];
   const removed = watched.removedLinks[ticket.id] ?? [];
@@ -260,22 +270,23 @@ export function withSessionState(ticket: Ticket, watched: TicketsState): Ticket 
     ...fields
   } = patch ?? {};
   const session = links ?? [];
-  const merged =
-    removed.length === 0 && session.length === 0
-      ? ticket.links
-      : [...ticket.links, ...session].filter((entry) => !removed.includes(entry.id));
+  const merged = mergeById(ticket.links, session).filter((entry) => !removed.includes(entry.id));
   return {
     ...ticket,
     ...fields,
     links: merged,
-    comments: [...ticket.comments, ...(addedComments ?? [])].map((comment) =>
+    comments: mergeById(ticket.comments, addedComments ?? []).map((comment) =>
       commentWithSessionState(comment, commentEdits, deletedComments),
     ),
   };
 }
 
 /** The whole queue the tracker and the dossier resolve against: the composed
- * tickets plus the fixtures with the session's edits. */
+ * tickets and the fixtures, both with the session's edits. Idempotent, like
+ * withSessionState, so an already-merged list may be fed back in. */
 export function mergedTickets(tickets: readonly Ticket[], watched: TicketsState): Ticket[] {
-  return [...watched.addedTickets, ...tickets.map((ticket) => withSessionState(ticket, watched))];
+  return [
+    ...watched.addedTickets.map((ticket) => withSessionState(ticket, watched)),
+    ...tickets.map((ticket) => withSessionState(ticket, watched)),
+  ];
 }

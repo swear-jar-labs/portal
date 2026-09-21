@@ -6,10 +6,9 @@ import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { projectPath } from "@/features/projects/contracts";
 import { type ReadroomRef } from "@/features/readroom/contracts";
-import { useLoginPrompt, useShellSession, type ShellSession } from "@/features/shell";
+import { useShellSession } from "@/features/shell";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
-import { avatarFor } from "@/shared/members";
 import { TicketBlockedSection } from "./TicketBlockedSection";
 import { TicketCommentForm } from "./TicketCommentForm";
 import { TicketCommentItem } from "./TicketCommentItem";
@@ -18,10 +17,9 @@ import * as ticketStore from "./ticket-store";
 import { useMergedTickets, useTicketState } from "./useTicketSession";
 import {
   TICKETS_PATH,
-  canStart,
   isBlocked,
   openBlockers,
-  ticketPriorities,
+  ticketEditButtonId,
   ticketPriorityTones,
   ticketStatusTones,
   ticketTagTones,
@@ -36,42 +34,42 @@ export type TicketPanelProps = {
   // walks it. The fixture list; session edits are merged inside.
   tickets: readonly Ticket[];
   projectName: string;
+  // The project's maintainers: they edit the ticket together with its author.
+  maintainers: readonly string[];
   // The reverse list: readrooms reading this ticket's code (readroom-ticket-links).
   readrooms: readonly ReadroomRef[];
   now: string;
+  // The edit layer lives in the stack (the panel only asks for it).
+  onEdit: (ticket: Ticket) => void;
 };
 
 /** The live dossier: status, assignee, blockers and comments read the session
  * store, so an action repaints them without a round trip. The static parts
  * (title, body, links, readrooms) come with the RSC payload. */
-export function TicketPanel({ ticket, tickets, projectName, readrooms, now }: TicketPanelProps) {
+export function TicketPanel({
+  ticket,
+  tickets,
+  projectName,
+  maintainers,
+  readrooms,
+  now,
+  onEdit,
+}: TicketPanelProps) {
   const session = useShellSession();
-  const requestLogin = useLoginPrompt();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
   const all = useMergedTickets(tickets);
   const byId = useMemo(() => ticketsById(all), [all]);
   const blocked = isBlocked(live, byId);
   const openKeys = openBlockers(live, byId).map((blocker) => blocker.key);
-
-  // A guest keeps the dossier and gets the login prompt (compose pattern).
-  function run(action: (active: NonNullable<ShellSession>) => void) {
-    if (session === null) {
-      requestLogin();
-      return;
-    }
-    action(session);
-  }
-
-  const terminal = live.status === "done" || live.status === "closed";
+  // The author and the project's maintainers edit the ticket (Phase 5 keeps the
+  // rule server-side and narrows the maintainer's fields).
+  const canEdit =
+    session !== null && (session.user === live.author.user || maintainers.includes(session.user));
 
   return (
     <Stack gap={12}>
-      <Stack direction="row" gap={8} align="center" wrap>
-        <Heading level={1}>{live.title}</Heading>
-        <Tag tone={ticketStatusTones[live.status]}>{messages.tickets.statuses[live.status]}</Tag>
-        <Tag>{live.size}</Tag>
-      </Stack>
+      <Heading level={1}>{live.title}</Heading>
       <Text role="hint">{live.key}</Text>
 
       <Stack gap={4}>
@@ -99,22 +97,30 @@ export function TicketPanel({ ticket, tickets, projectName, readrooms, now }: Ti
             </Text>
           )}
         </Stack>
-        {/* The queue order: the active chip is the current priority (the
-            maintainer's call in Phase 5; the mock lets any member set it). */}
+        <Stack direction="row" gap={6} align="center" wrap navRow>
+          <Text as="span" role="hint">
+            {messages.tickets.dossier.status}
+          </Text>
+          <Tag tone={ticketStatusTones[live.status]}>{messages.tickets.statuses[live.status]}</Tag>
+        </Stack>
+        {blocked ? (
+          <Text role="hint">
+            {messages.tickets.dossier.blocked.startHint} {openKeys.join(", ")}
+          </Text>
+        ) : null}
+        <Stack direction="row" gap={6} align="center" wrap navRow>
+          <Text as="span" role="hint">
+            {messages.tickets.dossier.size}
+          </Text>
+          <Tag>{live.size}</Tag>
+        </Stack>
         <Stack direction="row" gap={6} align="center" wrap navRow>
           <Text as="span" role="hint">
             {messages.tickets.dossier.priority}
           </Text>
-          {ticketPriorities.map((priority) => (
-            <Tag
-              key={priority}
-              tone={ticketPriorityTones[priority]}
-              active={live.priority === priority}
-              onClick={() => run(() => ticketStore.setTicketPriority(live.id, priority))}
-            >
-              {messages.tickets.priorities[priority]}
-            </Tag>
-          ))}
+          <Tag tone={ticketPriorityTones[live.priority]}>
+            {messages.tickets.priorities[live.priority]}
+          </Tag>
         </Stack>
         <Stack direction="row" gap={6} align="center" wrap navRow>
           <Text as="span" role="hint">
@@ -148,49 +154,13 @@ export function TicketPanel({ ticket, tickets, projectName, readrooms, now }: Ti
         )}
       </Stack>
 
-      {terminal ? null : (
-        <Stack gap={4}>
-          <Stack direction="row" gap={6} wrap navRow>
-            {live.status === "open" ? (
-              <Button
-                variant="primary"
-                disabled={!canStart(live, byId)}
-                onClick={() =>
-                  run((active) =>
-                    ticketStore.startTicket(live.id, {
-                      user: active.user,
-                      avatar: avatarFor(active.user),
-                    }),
-                  )
-                }
-              >
-                {messages.tickets.dossier.actions.start}
-              </Button>
-            ) : null}
-            {live.status === "in_progress" ? (
-              <Button onClick={() => run(() => ticketStore.sendTicketToReview(live.id))}>
-                {messages.tickets.dossier.actions.review}
-              </Button>
-            ) : null}
-            {live.status === "review" ? (
-              <Button onClick={() => run(() => ticketStore.finishTicket(live.id))}>
-                {messages.tickets.dossier.actions.done}
-              </Button>
-            ) : null}
-            <Button
-              ariaLabel={messages.tickets.dossier.actions.closeLabel}
-              onClick={() => run(() => ticketStore.closeTicket(live.id))}
-            >
-              {messages.tickets.dossier.actions.close}
-            </Button>
-          </Stack>
-          {blocked && live.status === "open" ? (
-            <Text role="hint">
-              {messages.tickets.dossier.blocked.startHint} {openKeys.join(", ")}
-            </Text>
-          ) : null}
+      {canEdit ? (
+        <Stack navRow>
+          <Button id={ticketEditButtonId} onClick={() => onEdit(live)}>
+            {messages.tickets.dossier.edit}
+          </Button>
         </Stack>
-      )}
+      ) : null}
 
       <TicketBlockedSection ticket={live} tickets={all} />
 

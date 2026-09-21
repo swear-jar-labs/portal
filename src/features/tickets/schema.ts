@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { projectSlugs } from "@/features/projects/contracts";
-import { ticketLinkKinds, ticketPriorities, ticketSizes, ticketTagIds } from "./tickets";
+import {
+  ticketLinkKinds,
+  ticketPriorities,
+  ticketSizes,
+  ticketStatuses,
+  ticketTagIds,
+} from "./tickets";
 
 // UI-first slice: input schemas of the tickets' forms. When the backend lands
 // (Phase 5) the same schemas guard the server actions; the forms do not change.
@@ -24,6 +30,15 @@ export const ticketComposeSchema = z.object({
 });
 
 export type TicketComposeInput = z.infer<typeof ticketComposeSchema>;
+
+// The editor's form: the same fields minus the project (the ticket key is bound
+// to its project, so a ticket never moves between projects) plus the status
+// (the author or a project maintainer moves it from the edit layer).
+export const ticketEditSchema = ticketComposeSchema
+  .omit({ project: true })
+  .extend({ status: z.enum(ticketStatuses) });
+
+export type TicketEditInput = z.infer<typeof ticketEditSchema>;
 
 export const ticketLinkSchema = z.object({
   kind: z.enum(ticketLinkKinds),

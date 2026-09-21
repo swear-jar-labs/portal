@@ -174,6 +174,9 @@ export const ticketCommentId = (id: string) => `ticket-comment-${id}`;
 
 export const composeButtonId = "tickets-compose-button";
 
+// The author's edit control: closing the edit layer hands the keyboard back.
+export const ticketEditButtonId = "tickets-edit-button";
+
 export type TicketQuery = {
   project: ProjectSlug | "all";
   size: TicketSize | "all";
@@ -343,11 +346,6 @@ export function openBlockers(ticket: Ticket, byId: ReadonlyMap<string, Ticket>):
 
 export function isBlocked(ticket: Ticket, byId: ReadonlyMap<string, Ticket>): boolean {
   return openBlockers(ticket, byId).length > 0;
-}
-
-/** Only `open → in_progress` is gated: the blockers must have finished. */
-export function canStart(ticket: Ticket, byId: ReadonlyMap<string, Ticket>): boolean {
-  return ticket.status === "open" && !isBlocked(ticket, byId);
 }
 
 /** Adding `blockerId` as a blocker of `blockedId` would make the two wait for

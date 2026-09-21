@@ -4,9 +4,8 @@ import {
   type TicketComment,
   type TicketLink,
   type TicketPerson,
-  type TicketPriority,
 } from "./tickets";
-import type { TicketComposeInput } from "./schema";
+import type { TicketComposeInput, TicketEditInput } from "./schema";
 
 // The tickets' session memory: the mock state outlives the route remount (the
 // tracker unmounts when a dossier opens) and dies with the page reload. The
@@ -16,7 +15,19 @@ import type { TicketComposeInput } from "./schema";
 // The fields a session action may change on any ticket (fixture or composed);
 // comments are additive and live in their own key.
 export type TicketPatch = Partial<
-  Pick<Ticket, "status" | "assignee" | "closedAt" | "updatedAt" | "blockedBy" | "priority">
+  Pick<
+    Ticket,
+    | "title"
+    | "body"
+    | "size"
+    | "priority"
+    | "tags"
+    | "status"
+    | "assignee"
+    | "closedAt"
+    | "updatedAt"
+    | "blockedBy"
+  >
 > & {
   comments?: readonly TicketComment[];
   // Comment edits by id: the body replaces the stored one (fixture comments
@@ -126,25 +137,32 @@ export function addTicketLink(ticketId: string, link: Omit<TicketLink, "id">): T
   return pinned;
 }
 
-/** START: the ticket goes in progress and the starter takes it (RULES §15:
- * claim is open to everyone; the mock has no roles yet). */
-export function startTicket(ticketId: string, assignee: TicketPerson): void {
-  patchTicket(ticketId, { status: "in_progress", assignee, updatedAt: new Date().toISOString() });
-}
+/** The side effects of an edit the store cannot read off the base ticket: the
+ * claim of a started ticket and the closing stamp it had before. */
+export type TicketEditOptions = {
+  // Set when the edit starts an unassigned ticket: the editor takes it.
+  assignee?: TicketPerson;
+  // The stamp the ticket carried before the edit: entering a terminal status
+  // stamps the closing time, staying terminal keeps the original, leaving
+  // terminal clears it.
+  previousClosedAt?: string;
+};
 
-export function sendTicketToReview(ticketId: string): void {
-  patchTicket(ticketId, { status: "review", updatedAt: new Date().toISOString() });
-}
-
-export function finishTicket(ticketId: string): void {
-  const now = new Date().toISOString();
-  patchTicket(ticketId, { status: "done", closedAt: now, updatedAt: now });
-}
-
-/** CLOSE cancels the work; `closed` is terminal, like `done`. */
-export function closeTicket(ticketId: string): void {
-  const now = new Date().toISOString();
-  patchTicket(ticketId, { status: "closed", closedAt: now, updatedAt: now });
+/** The editor's form (the author or a project maintainer): the fields and the
+ * status land as one patch and the update stamp moves the row up the queue. */
+export function editTicket(
+  ticketId: string,
+  input: TicketEditInput,
+  options: TicketEditOptions = {},
+): void {
+  const terminal = input.status === "done" || input.status === "closed";
+  patchTicket(ticketId, {
+    ...input,
+    tags: [...input.tags],
+    ...(options.assignee === undefined ? {} : { assignee: options.assignee }),
+    closedAt: terminal ? (options.previousClosedAt ?? new Date().toISOString()) : undefined,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 /** A comment posted in this session, appended to the fixture ones. */
@@ -179,12 +197,6 @@ export function deleteTicketComment(ticketId: string, commentId: string): void {
  * from the live ticket, so removals can drop fixture blockers too. */
 export function setTicketBlockers(ticketId: string, blockedBy: readonly string[]): void {
   patchTicket(ticketId, { blockedBy });
-}
-
-/** The queue order is the maintainer's call (Phase 5); the mock lets any
- * member set it. The update stamp stays put: priority is queue metadata. */
-export function setTicketPriority(ticketId: string, priority: TicketPriority): void {
-  patchTicket(ticketId, { priority });
 }
 
 /** A comment with the session's edit or tombstone applied. */

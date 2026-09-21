@@ -1,20 +1,13 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CloseButton } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { useMemberLayer } from "@/features/members/contracts";
+import { type ReadroomRef } from "@/features/readroom/contracts";
 import {
   PanelStack,
   ShellPanel,
@@ -24,14 +17,17 @@ import {
 } from "@/features/shell";
 import { avatarFor } from "@/shared/members";
 import { TicketCompose } from "./TicketCompose";
+import { TicketEdit } from "./TicketEdit";
 import { TicketPanel } from "./TicketPanel";
 import { TicketsFeed, type TicketProjectOption } from "./TicketsFeed";
-import { type TicketComposeInput } from "./schema";
+import * as ticketStore from "./ticket-store";
+import { type TicketComposeInput, type TicketEditInput } from "./schema";
 import {
   composeButtonId,
   DEFAULT_TICKET_QUERY,
   TICKETS_PATH,
   parseTicketQuery,
+  ticketEditButtonId,
   ticketPath,
   ticketQueryParams,
   ticketRowId,
@@ -40,7 +36,13 @@ import {
 } from "./tickets";
 import { useTicketSession } from "./useTicketSession";
 
-export type TicketLayer = { key: string; title: string; layer: ReactNode };
+// The routed dossier arrives as data: the stack owns its layers, so the author's
+// edit layer opens above it without a round trip.
+export type TicketLayer = {
+  ticket: Ticket;
+  projectName: string;
+  readrooms: readonly ReadroomRef[];
+};
 
 export type TicketsStackProps = {
   tickets: readonly Ticket[];
@@ -66,6 +68,8 @@ export function TicketsStack({
   const [query, setQuery] = useState(initialQuery);
   const [composing, setComposing] = useState(initialCompose);
   const [localKey, setLocalKey] = useState<string | null>(null);
+  // The author's edit layer: the live ticket it edits (null when closed).
+  const [editing, setEditing] = useState<Ticket | null>(null);
   const closingRef = useRef(false);
   const returnFocusRef = useRef<string | null>(null);
   const memberLayerOpen = routedMemberLayer !== null;
@@ -79,10 +83,14 @@ export function TicketsStack({
     () => Object.fromEntries(projects.map((project) => [project.slug, project.name])),
     [projects],
   );
+  const maintainersByProject = useMemo(
+    () => Object.fromEntries(projects.map((project) => [project.slug, project.maintainers])),
+    [projects],
+  );
 
   useEffect(() => {
     closingRef.current = false;
-  }, [composing, localKey, memberLayerOpen, ticket?.key]);
+  }, [composing, localKey, memberLayerOpen, ticket?.ticket.key]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -103,7 +111,7 @@ export function TicketsStack({
     const row = document.getElementById(ticketRowId(id));
     row?.focus();
     row?.scrollIntoView({ block: "nearest" });
-  }, [localKey, ticket?.key]);
+  }, [localKey, ticket?.ticket.key]);
 
   useEffect(() => {
     const closed = !memberLayerOpen && wasMemberLayerOpen.current;
@@ -114,11 +122,11 @@ export function TicketsStack({
   }, [memberLayerOpen]);
 
   useEffect(() => {
-    if (composing) return;
+    if (composing || editing) return;
     const id = returnFocusRef.current;
     returnFocusRef.current = null;
     if (id) document.getElementById(id)?.focus();
-  }, [composing]);
+  }, [composing, editing]);
 
   const replaceTrackerUrl = useCallback((current: TicketQuery) => {
     const params = ticketQueryParams(current);
@@ -183,10 +191,37 @@ export function TicketsStack({
   const closeTicket = useCallback(() => {
     if (!ticket || closingRef.current) return;
     closingRef.current = true;
-    stackMemory.requestCardFocus(ticket.key);
+    stackMemory.requestCardFocus(ticket.ticket.key);
     if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(TICKETS_PATH);
   }, [router, ticket]);
+
+  const openEdit = useCallback((entry: Ticket) => {
+    setEditing(entry);
+  }, []);
+
+  const closeEdit = useCallback(() => {
+    returnFocusRef.current = ticketEditButtonId;
+    setEditing(null);
+  }, []);
+
+  const submitEdit = useCallback(
+    (input: TicketEditInput) => {
+      if (editing === null || session === null) return;
+      // Starting an unassigned ticket claims it for the editor.
+      const claims =
+        input.status === "in_progress" &&
+        editing.status === "open" &&
+        editing.assignee === undefined;
+      ticketStore.editTicket(editing.id, input, {
+        ...(claims ? { assignee: { user: session.user, avatar: avatarFor(session.user) } } : {}),
+        previousClosedAt: editing.closedAt,
+      });
+      returnFocusRef.current = ticketEditButtonId;
+      setEditing(null);
+    },
+    [editing, session],
+  );
 
   const closeLocalTicket = useCallback(() => {
     if (localTicket === null) return;
@@ -198,20 +233,23 @@ export function TicketsStack({
     if (!memberLayerOpen || closingRef.current) return;
     closingRef.current = true;
     if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
-    else router.push(ticket ? ticketPath(ticket.key) : TICKETS_PATH);
+    else router.push(ticket ? ticketPath(ticket.ticket.key) : TICKETS_PATH);
   }, [memberLayerOpen, router, ticket]);
 
   const closeTop = useCallback(() => {
     if (memberLayerOpen) closeMember();
+    else if (editing) closeEdit();
     else if (composing) closeCompose();
     else if (localTicket) closeLocalTicket();
     else closeTicket();
   }, [
     closeCompose,
+    closeEdit,
     closeLocalTicket,
     closeMember,
     closeTicket,
     composing,
+    editing,
     localTicket,
     memberLayerOpen,
   ]);
@@ -224,7 +262,7 @@ export function TicketsStack({
           query={query}
           projects={projects}
           projectNames={projectNames}
-          currentKey={ticket?.key ?? localTicket?.key}
+          currentKey={ticket?.ticket.key ?? localTicket?.key}
           localKeys={localKeys}
           onQueryChange={changeQuery}
           onActivate={activateTicket}
@@ -233,10 +271,18 @@ export function TicketsStack({
       </ShellPanel>
       {ticket ? (
         <ShellPanel
-          title={ticket.key}
+          title={ticket.ticket.key}
           actions={<CloseButton onClose={closeTicket} label={messages.shell.window.closeLabel} />}
         >
-          {ticket.layer}
+          <TicketPanel
+            ticket={ticket.ticket}
+            tickets={tickets}
+            projectName={ticket.projectName}
+            maintainers={maintainersByProject[ticket.ticket.project] ?? []}
+            readrooms={ticket.readrooms}
+            now={now}
+            onEdit={openEdit}
+          />
         </ShellPanel>
       ) : null}
       {localTicket ? (
@@ -250,8 +296,10 @@ export function TicketsStack({
             ticket={localTicket}
             tickets={tickets}
             projectName={projectNames[localTicket.project] ?? localTicket.project}
+            maintainers={maintainersByProject[localTicket.project] ?? []}
             readrooms={[]}
             now={now}
+            onEdit={openEdit}
           />
         </ShellPanel>
       ) : null}
@@ -266,6 +314,20 @@ export function TicketsStack({
             defaultProject={query.project === "all" ? undefined : query.project}
             onSubmit={submitCompose}
             onCancel={closeCompose}
+          />
+        </ShellPanel>
+      ) : null}
+      {editing ? (
+        <ShellPanel
+          title={messages.tickets.edit.heading}
+          surface="light"
+          actions={<CloseButton onClose={closeEdit} label={messages.shell.window.closeLabel} />}
+        >
+          <TicketEdit
+            ticket={editing}
+            tickets={tickets}
+            onSubmit={submitEdit}
+            onCancel={closeEdit}
           />
         </ShellPanel>
       ) : null}

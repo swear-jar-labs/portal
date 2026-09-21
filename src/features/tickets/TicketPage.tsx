@@ -4,7 +4,6 @@ import { messages } from "@/content/messages";
 import { listProjects, projectName } from "@/features/projects/contracts";
 import { listReadroomsByTicket } from "@/features/readroom/contracts";
 import { getTicketByKey, listTickets } from "./data";
-import { TicketPanel } from "./TicketPanel";
 import { TicketsStack } from "./TicketsStack";
 
 export type TicketPageProps = { params: Promise<{ key: string }> };
@@ -29,7 +28,11 @@ export async function TicketPage({ params }: TicketPageProps) {
     listProjects(),
     listReadroomsByTicket(ticket.key),
   ]);
-  const options = projects.map((project) => ({ slug: project.slug, name: project.name }));
+  const options = projects.map((project) => ({
+    slug: project.slug,
+    name: project.name,
+    maintainers: project.maintainers.map((person) => person.user),
+  }));
   const now = new Date().toISOString();
 
   return (
@@ -37,19 +40,7 @@ export async function TicketPage({ params }: TicketPageProps) {
       tickets={tickets}
       projects={options}
       now={now}
-      ticket={{
-        key: ticket.key,
-        title: ticket.title,
-        layer: (
-          <TicketPanel
-            ticket={ticket}
-            tickets={tickets}
-            projectName={projectName(ticket.project)}
-            readrooms={readrooms}
-            now={now}
-          />
-        ),
-      }}
+      ticket={{ ticket, projectName: projectName(ticket.project), readrooms }}
     />
   );
 }

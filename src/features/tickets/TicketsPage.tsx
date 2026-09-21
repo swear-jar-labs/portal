@@ -19,7 +19,11 @@ export async function TicketsPage({ searchParams }: TicketsPageProps) {
   ]);
   const query = parseTicketQuery(params, isProjectSlug);
   const initialCompose = params.new === "1" && query.project !== "all";
-  const options = projects.map((project) => ({ slug: project.slug, name: project.name }));
+  const options = projects.map((project) => ({
+    slug: project.slug,
+    name: project.name,
+    maintainers: project.maintainers.map((person) => person.user),
+  }));
 
   return (
     <TicketsStack

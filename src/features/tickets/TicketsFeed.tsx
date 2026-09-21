@@ -25,6 +25,8 @@ import { TicketsTable, type TicketTableAction } from "./TicketsTable";
 export type TicketProjectOption = {
   slug: ProjectSlug;
   name: string;
+  // The project's maintainers: the dossier lets them edit its tickets.
+  maintainers: readonly string[];
 };
 
 export type TicketsFeedProps = {

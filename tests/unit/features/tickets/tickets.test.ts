@@ -3,7 +3,6 @@ import {
   DEFAULT_TICKET_QUERY,
   TICKETS_PATH,
   blockEdges,
-  canStart,
   filterTickets,
   isBlocked,
   isDefaultTicketQuery,
@@ -100,13 +99,6 @@ describe("ticket blockers", () => {
     expect(openBlockers(of("DOS-5"), byId)).toEqual([]);
     expect(isBlocked(of("DOS-2"), byId)).toBe(true);
     expect(isBlocked(of("DOS-5"), byId)).toBe(false);
-  });
-
-  it("gates only the start of an open ticket", () => {
-    expect(canStart(of("DOS-2"), byId)).toBe(false);
-    expect(canStart(of("DOS-5"), byId)).toBe(true);
-    expect(canStart(of("DOS-1"), byId)).toBe(true);
-    expect(canStart({ ...of("DOS-1"), status: "in_progress" }, byId)).toBe(false);
   });
 
   it("walks the blockers transitively", () => {

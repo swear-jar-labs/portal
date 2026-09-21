@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as store from "@/features/tickets/ticket-store";
-import type { TicketComposeInput } from "@/features/tickets/schema";
+import type { TicketComposeInput, TicketEditInput } from "@/features/tickets/schema";
 import type { Ticket } from "@/features/tickets/tickets";
 
 const ada = { user: "ada" };
@@ -22,6 +22,15 @@ const base: Ticket = {
   blockedBy: [],
   createdAt: "2026-09-01T00:00:00.000Z",
   updatedAt: "2026-09-01T00:00:00.000Z",
+};
+
+const draft: TicketEditInput = {
+  title: "A ticket",
+  body: "Do the work.",
+  size: "S",
+  priority: "normal",
+  status: "open",
+  tags: [],
 };
 
 function live(ticket: Ticket = base): Ticket {
@@ -77,27 +86,51 @@ describe("ticket store", () => {
     expect(store.ticketsSnapshot().sessionLinks["ticket-1"]).toEqual([first]);
   });
 
-  it("starts a ticket for the member who pressed START", () => {
-    store.startTicket(base.id, ada);
-    const started = live();
-    expect(started.status).toBe("in_progress");
-    expect(started.assignee).toEqual(ada);
-    expect(Date.parse(started.updatedAt)).toBeGreaterThan(Date.parse(base.updatedAt));
+  it("edits the editor's fields, status and update stamp in one patch", () => {
+    store.editTicket(base.id, {
+      title: "Renamed",
+      body: "A new body.",
+      size: "L",
+      priority: "high",
+      status: "review",
+      tags: ["bug"],
+    });
+    const edited = live();
+    expect(edited.title).toBe("Renamed");
+    expect(edited.body).toBe("A new body.");
+    expect(edited.size).toBe("L");
+    expect(edited.priority).toBe("high");
+    expect(edited.status).toBe("review");
+    expect(edited.tags).toEqual(["bug"]);
+    expect(Date.parse(edited.updatedAt)).toBeGreaterThan(Date.parse(base.updatedAt));
+    // The base ticket keeps its fields; only the merge changes.
+    expect(base.title).toBe("A ticket");
+    expect(base.tags).toEqual([]);
   });
 
-  it("walks review, done and closed with a closedAt stamp", () => {
-    store.sendTicketToReview(base.id);
-    expect(live().status).toBe("review");
-    store.finishTicket(base.id);
+  it("stamps closedAt on terminal statuses and clears it on the way out", () => {
+    store.editTicket(base.id, { ...draft, status: "done" });
     const done = live();
-    expect(done.status).toBe("done");
     expect(done.closedAt).toBeDefined();
 
+    // Staying terminal keeps the original stamp.
+    store.editTicket(base.id, { ...draft, status: "done" }, { previousClosedAt: done.closedAt });
+    expect(live().closedAt).toBe(done.closedAt);
+
+    // Leaving terminal clears it.
+    store.editTicket(base.id, { ...draft, status: "open" }, { previousClosedAt: done.closedAt });
+    const reopened = live();
+    expect(reopened.status).toBe("open");
+    expect(reopened.closedAt).toBeUndefined();
+  });
+
+  it("claims an unassigned ticket only when the editor passes the assignee", () => {
+    store.editTicket(base.id, { ...draft, status: "in_progress" }, { assignee: ada });
+    expect(live().assignee).toEqual(ada);
+
     store.resetTicketsStore();
-    store.closeTicket(base.id);
-    const closed = live();
-    expect(closed.status).toBe("closed");
-    expect(closed.closedAt).toBeDefined();
+    store.editTicket(base.id, { ...draft, status: "in_progress" });
+    expect(live().assignee).toBeUndefined();
   });
 
   it("appends session comments without touching the base ticket", () => {

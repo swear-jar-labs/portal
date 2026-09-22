@@ -75,6 +75,10 @@ export function ReadroomNoteItem({
     setEditing(true);
   }
 
+  function cancelEdit() {
+    setEditing(false);
+  }
+
   function saveEdit() {
     const parsed = noteSchema.safeParse({ body: draft });
     if (!parsed.success) {
@@ -104,7 +108,7 @@ export function ReadroomNoteItem({
   if (!editing && editedBody !== undefined) meta.push(messages.readroom.notes.edited);
 
   const content = editing ? (
-    <Form onSubmit={saveEdit} ariaLabel={messages.readroom.notes.edit.label}>
+    <Form onSubmit={saveEdit} onCancel={cancelEdit} ariaLabel={messages.readroom.notes.edit.label}>
       <Stack gap={6}>
         <MarkdownEditor
           label={messages.readroom.notes.edit.label}
@@ -119,7 +123,7 @@ export function ReadroomNoteItem({
           <Button type="submit" variant="primary">
             {messages.readroom.notes.edit.save}
           </Button>
-          <Button onClick={() => setEditing(false)}>{messages.readroom.notes.edit.cancel}</Button>
+          <Button onClick={cancelEdit}>{messages.readroom.notes.edit.cancel}</Button>
         </Stack>
       </Stack>
     </Form>

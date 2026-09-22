@@ -312,6 +312,28 @@ test("shows the claim ladder and lets a maintainer tune it", async ({ page }) =>
   await expectNoViolations(page, "tuned claim ladder");
 });
 
+test("Escape cancels the claim form first and closes the project next", async ({ page }) => {
+  await logon(page, "ada");
+  await page.goto(projectPath("tooling"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Tooling" });
+
+  await panel.getByRole("button", { name: "[ EDIT ]" }).click();
+  await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
+  // The first Esc drops the draft like CANCEL: the form is gone, the project
+  // stays open, and the keyboard is back on the trigger.
+  await page.keyboard.press("Escape");
+  await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
+  await expect(page).toHaveURL(projectPath("tooling"));
+  await expect(layers(page)).toHaveCount(2);
+  await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toBeFocused();
+  // The second Esc finds no form and closes the project as before.
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(PROJECTS_PATH);
+  await expect(layers(page)).toHaveCount(1);
+  await expectNoViolations(page, "claim form escape");
+});
+
 test("shows the ladder read-only without a maintainer seat", async ({ page }) => {
   // ken maintains nothing on tooling: the sentences read, but offer no edit.
   await logon(page, "ken");

@@ -75,6 +75,10 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
     ticketStore.editTicketComment(ticketId, comment.id, parsed.data.body);
   }
 
+  function cancelEdit() {
+    setEditing(false);
+  }
+
   function askDelete() {
     dialogs.open({
       title: messages.tickets.dossier.comments.deleteTitle,
@@ -100,7 +104,11 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
       {messages.tickets.dossier.comments.deleted}
     </Text>
   ) : editing ? (
-    <Form onSubmit={saveEdit} ariaLabel={messages.tickets.dossier.comments.editLabel}>
+    <Form
+      onSubmit={saveEdit}
+      onCancel={cancelEdit}
+      ariaLabel={messages.tickets.dossier.comments.editLabel}
+    >
       <Stack gap={6}>
         <MarkdownEditor
           label={messages.tickets.dossier.comments.editLabel}
@@ -115,9 +123,7 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
           <Button type="submit" variant="primary">
             {messages.tickets.dossier.comments.save}
           </Button>
-          <Button onClick={() => setEditing(false)}>
-            {messages.tickets.dossier.comments.cancel}
-          </Button>
+          <Button onClick={cancelEdit}>{messages.tickets.dossier.comments.cancel}</Button>
         </Stack>
       </Stack>
     </Form>

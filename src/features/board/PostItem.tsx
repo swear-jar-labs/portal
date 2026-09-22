@@ -105,6 +105,10 @@ export function PostItem({
     setEditing(true);
   }
 
+  function cancelEdit() {
+    setEditing(false);
+  }
+
   function saveEdit() {
     const parsed = replySchema.safeParse({ body: draft });
     if (!parsed.success) {
@@ -138,7 +142,7 @@ export function PostItem({
       {messages.board.post.deleted}
     </Text>
   ) : editing ? (
-    <Form onSubmit={saveEdit} ariaLabel={messages.board.post.editLabel}>
+    <Form onSubmit={saveEdit} onCancel={cancelEdit} ariaLabel={messages.board.post.editLabel}>
       <Stack gap={6}>
         <MarkdownEditor
           label={messages.board.post.editLabel}
@@ -153,7 +157,7 @@ export function PostItem({
           <Button type="submit" variant="primary">
             {messages.board.post.save}
           </Button>
-          <Button onClick={() => setEditing(false)}>{messages.board.post.cancel}</Button>
+          <Button onClick={cancelEdit}>{messages.board.post.cancel}</Button>
         </Stack>
       </Stack>
     </Form>

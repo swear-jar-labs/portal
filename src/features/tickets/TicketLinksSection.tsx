@@ -93,6 +93,12 @@ export function TicketLinksSection({
     setComposing(false);
   }
 
+  function cancel() {
+    setValues(emptyLinkInput);
+    setErrors({});
+    setComposing(false);
+  }
+
   return (
     <Stack gap={6}>
       {links.length === 0 ? (
@@ -118,7 +124,7 @@ export function TicketLinksSection({
         </Stack>
       )}
       {composing ? (
-        <Form onSubmit={submit} ariaLabel={messages.tickets.dossier.links.add}>
+        <Form onSubmit={submit} onCancel={cancel} ariaLabel={messages.tickets.dossier.links.add}>
           <Stack gap={6}>
             <Select
               label={messages.tickets.dossier.links.kind}
@@ -147,15 +153,7 @@ export function TicketLinksSection({
               <Button type="submit" variant="primary">
                 {messages.tickets.dossier.links.submit}
               </Button>
-              <Button
-                onClick={() => {
-                  setValues(emptyLinkInput);
-                  setErrors({});
-                  setComposing(false);
-                }}
-              >
-                {messages.tickets.dossier.links.cancel}
-              </Button>
+              <Button onClick={cancel}>{messages.tickets.dossier.links.cancel}</Button>
             </Stack>
             <Text role="hint">{messages.tickets.dossier.links.hint}</Text>
           </Stack>

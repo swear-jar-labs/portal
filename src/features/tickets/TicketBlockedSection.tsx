@@ -99,6 +99,12 @@ export function TicketBlockedSection({
     setComposing(false);
   }
 
+  function cancel() {
+    setKey("");
+    setError(undefined);
+    setComposing(false);
+  }
+
   function remove(blockerId: string) {
     ticketStore.setTicketBlockers(
       ticket.id,
@@ -133,7 +139,7 @@ export function TicketBlockedSection({
         </Stack>
       )}
       {composing ? (
-        <Form onSubmit={submit} ariaLabel={messages.tickets.dossier.blocked.add}>
+        <Form onSubmit={submit} onCancel={cancel} ariaLabel={messages.tickets.dossier.blocked.add}>
           <Stack gap={6}>
             <ComboBox
               label={messages.tickets.dossier.blocked.key}
@@ -149,15 +155,7 @@ export function TicketBlockedSection({
               <Button type="submit" variant="primary">
                 {messages.tickets.dossier.blocked.submit}
               </Button>
-              <Button
-                onClick={() => {
-                  setKey("");
-                  setError(undefined);
-                  setComposing(false);
-                }}
-              >
-                {messages.tickets.dossier.blocked.cancel}
-              </Button>
+              <Button onClick={cancel}>{messages.tickets.dossier.blocked.cancel}</Button>
             </Stack>
             <Text role="hint">{messages.tickets.dossier.blocked.hint}</Text>
           </Stack>

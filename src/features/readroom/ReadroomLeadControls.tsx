@@ -49,6 +49,11 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
     moveDeadline(readroom.id, iso);
   }
 
+  function cancel() {
+    setError(undefined);
+    setMoving(false);
+  }
+
   function askStop() {
     dialogs.open({
       title: messages.readroom.lead.stopTitle,
@@ -66,7 +71,7 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
 
   if (moving) {
     return (
-      <Form onSubmit={save} ariaLabel={messages.readroom.lead.moveLabel}>
+      <Form onSubmit={save} onCancel={cancel} ariaLabel={messages.readroom.lead.moveLabel}>
         <Stack gap={6}>
           <Field
             label={messages.readroom.lead.deadlineLabel}
@@ -81,14 +86,7 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
             <Button type="submit" variant="primary">
               {messages.readroom.lead.save}
             </Button>
-            <Button
-              onClick={() => {
-                setError(undefined);
-                setMoving(false);
-              }}
-            >
-              {messages.readroom.lead.cancel}
-            </Button>
+            <Button onClick={cancel}>{messages.readroom.lead.cancel}</Button>
           </Stack>
         </Stack>
       </Form>

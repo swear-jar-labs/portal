@@ -14,4 +14,14 @@ describe("Form", () => {
     expect(html.toLowerCase()).toContain("novalidate");
     expect(html).toContain("<span>fields</span>");
   });
+
+  it("keeps the cancel dismissal out of the DOM", () => {
+    const html = renderToStaticMarkup(
+      <Form onSubmit={() => {}} onCancel={() => {}} ariaLabel="Apply">
+        <span>fields</span>
+      </Form>,
+    );
+    expect(html).toContain("<form");
+    expect(html).not.toContain("oncancel");
+  });
 });

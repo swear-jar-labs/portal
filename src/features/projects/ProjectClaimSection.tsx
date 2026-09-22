@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
+  Form,
   Heading,
   Select,
   Stack,
@@ -35,6 +36,10 @@ export type ProjectClaimSectionProps = {
   // The project's maintainers: only they tune the ladder.
   maintainers: readonly string[];
 };
+
+// The trigger the keyboard returns to when the draft closes ( Esc runs the
+// same cancel as the button): focus by known id, like the stack's card focus.
+const CLAIM_EDIT_ID = "project-claim-edit";
 
 type RungSize = "S" | "M" | "L";
 
@@ -81,12 +86,23 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
   const claim = messages.projects.about.claim;
   const dirty =
     draft !== null && (draft.minSForM !== live.minSForM || draft.minMForL !== live.minMForL);
+  // The closed draft hands the keyboard back to its trigger (both the button
+  // and the kit's Esc dismissal land here); the opening mount is not a close.
+  const wasDraft = useRef(false);
+  useEffect(() => {
+    if (wasDraft.current && draft === null) document.getElementById(CLAIM_EDIT_ID)?.focus();
+    wasDraft.current = draft !== null;
+  }, [draft]);
 
   function handleSave() {
-    if (draft === null) return;
+    if (draft === null || !dirty) return;
     const parsed = claimPolicySchema.safeParse(draft);
     if (!parsed.success) return;
     projectStore.setClaimPolicy(slug, parsed.data);
+    setDraft(null);
+  }
+
+  function handleCancel() {
     setDraft(null);
   }
 
@@ -95,7 +111,9 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
       <Stack direction="row" gap={8} align="center" wrap navRow>
         <Heading level={2}>{claim.heading}</Heading>
         {isMaintainer && draft === null ? (
-          <Button onClick={() => setDraft({ ...live })}>{claim.edit}</Button>
+          <Button id={CLAIM_EDIT_ID} onClick={() => setDraft({ ...live })}>
+            {claim.edit}
+          </Button>
         ) : null}
       </Stack>
       <Text role="hint">{claim.explainer}</Text>
@@ -103,31 +121,33 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
       <RungRow size="M" need={live.minSForM} needSize="S" />
       <RungRow size="L" need={live.minMForL} needSize="M" />
       {draft !== null ? (
-        <Stack gap={6}>
-          <Stack direction="row" gap={6} align="center" wrap navRow>
-            <Select
-              label={claim.mNeeds}
-              name="minSForM"
-              value={String(draft.minSForM)}
-              onChange={(need) => setDraft({ ...draft, minSForM: Number(need) })}
-              options={NEED_OPTIONS}
-              autoFocus
-            />
-            <Select
-              label={claim.lNeeds}
-              name="minMForL"
-              value={String(draft.minMForL)}
-              onChange={(need) => setDraft({ ...draft, minMForL: Number(need) })}
-              options={NEED_OPTIONS}
-            />
+        <Form onSubmit={handleSave} onCancel={handleCancel} ariaLabel={claim.heading}>
+          <Stack gap={6}>
+            <Stack direction="row" gap={6} align="center" wrap navRow>
+              <Select
+                label={claim.mNeeds}
+                name="minSForM"
+                value={String(draft.minSForM)}
+                onChange={(need) => setDraft({ ...draft, minSForM: Number(need) })}
+                options={NEED_OPTIONS}
+                autoFocus
+              />
+              <Select
+                label={claim.lNeeds}
+                name="minMForL"
+                value={String(draft.minMForL)}
+                onChange={(need) => setDraft({ ...draft, minMForL: Number(need) })}
+                options={NEED_OPTIONS}
+              />
+            </Stack>
+            <Stack direction="row" gap={6} align="center" wrap navRow>
+              <Button type="submit" variant="primary" disabled={!dirty}>
+                {claim.save}
+              </Button>
+              <Button onClick={handleCancel}>{claim.cancel}</Button>
+            </Stack>
           </Stack>
-          <Stack direction="row" gap={6} align="center" wrap navRow>
-            <Button variant="primary" disabled={!dirty} onClick={handleSave}>
-              {claim.save}
-            </Button>
-            <Button onClick={() => setDraft(null)}>{claim.cancel}</Button>
-          </Stack>
-        </Stack>
+        </Form>
       ) : null}
       {draft !== null ? <Text role="hint">{claim.hint}</Text> : null}
     </Stack>

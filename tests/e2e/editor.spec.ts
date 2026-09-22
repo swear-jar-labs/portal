@@ -73,7 +73,7 @@ test("inserts images by URL and imitates an upload", async ({ page }) => {
   // this session and is never stored.
   await form.locator('input[type="file"]').setInputFiles(PIXEL);
   await expect(body).toHaveValue(/see:.*!\[pixel\]\(<blob:/);
-  await expect(form.getByText(/nothing is uploaded yet/)).toBeVisible();
+  await expect(form.getByText(/Nothing is uploaded/)).toBeVisible();
 
   await form.getByRole("button", { name: "[ PREVIEW ]" }).click();
   await expect(form.locator('img[src="https://example.com/bug.jpg"]')).toBeVisible();

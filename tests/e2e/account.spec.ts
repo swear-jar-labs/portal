@@ -12,7 +12,7 @@ import {
 } from "./helpers";
 
 const FILES_REGION = "C:\\SWEARJAR";
-const USER_LABEL = "User";
+const USER_LABEL = "Username";
 const PASSWORD_LABEL = "Password";
 const SUBMIT_BUTTON = "[ SUBMIT ]";
 const LONG_DELAY_MS = screensaverDelayMs(30);
@@ -39,7 +39,7 @@ test.describe("guest account chrome", () => {
     await expect(files.getByRole("link", { name: "PROFILE" })).toHaveCount(0);
     await expect(files.getByRole("link", { name: "SETTINGS" })).toHaveCount(0);
     await expect(files.getByRole("button", { name: "LOGOFF" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Apply" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
@@ -49,13 +49,13 @@ test.describe("guest account chrome", () => {
   test("gates member routes instead of opening them", async ({ page }) => {
     await page.goto("/profile");
     const gate = page.getByRole("region", { name: "PROFILE.EXE" });
-    await expect(page.getByRole("heading", { level: 1, name: "AUTH REQUIRED" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "LOGON REQUIRED" })).toBeVisible();
     await expect(gate.getByRole("link", { name: "LOGON" })).toBeVisible();
     await expect(gate.getByRole("link", { name: "APPLY" })).toBeVisible();
     await expectNoViolations(page, "/profile gate");
 
     await page.goto("/settings");
-    await expect(page.getByRole("heading", { level: 1, name: "AUTH REQUIRED" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "LOGON REQUIRED" })).toBeVisible();
   });
 });
 
@@ -76,7 +76,7 @@ test.describe("member session", () => {
     await expect(files.getByRole("link", { name: "SETTINGS" })).toBeVisible();
     await expect(files.getByRole("button", { name: "LOGOFF" })).toBeVisible();
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Profile" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
@@ -135,7 +135,7 @@ test.describe("member session", () => {
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
     const files = page.getByRole("region", { name: FILES_REGION });
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
 
     // The cursor lands on the displayed document (ABOUT), not on the first row:
     // one ArrowDown step from ABOUT reaches MANIFESTO.
@@ -240,38 +240,47 @@ test.describe("member threads", () => {
 
   test("shows the empty state for a member without threads", async ({ page }) => {
     await logon(page, "nobody");
-    await expect(page.getByText("No threads yet. Say something by hand.")).toBeVisible();
+    await expect(page.getByText("No threads yet. A question is a good start.")).toBeVisible();
   });
 });
 
 test.describe("apply form", () => {
   test("validates and shows a receipt", async ({ page }) => {
     await page.goto("/apply");
+    await expect(
+      page.getByText("Demo form. Nothing is sent, and no account or project access is created."),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
     await expect(page.getByText("2-32 characters: letters, digits, - or _.")).toBeVisible();
     await expect(page.getByText("An email address is needed.")).toBeVisible();
-    await expect(page.getByText("A few words, at least.")).toBeVisible();
+    await expect(
+      page.getByText("Tell us a little about your plans, up to 2000 characters."),
+    ).toBeVisible();
 
-    await page.getByLabel("Role").click();
-    await page.getByRole("option", { name: "Reviewer" }).click();
+    await page.getByLabel("Interested in").click();
+    await page.getByRole("option", { name: "Reviewing" }).click();
     await page.getByLabel("Hours a week").click();
     await page.getByRole("option", { name: "Over 10" }).click();
 
     await page.getByLabel(USER_LABEL).fill("grace-hopper");
     await page.getByLabel("Email").fill("grace@example.com");
-    await page.getByLabel("Why by hand").fill("A compiler is a conversation.");
+    await page
+      .getByLabel("What would you like to work on or learn?")
+      .fill("A compiler is a conversation.");
     await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
 
+    await expect(page.getByRole("heading", { level: 1, name: "DEMO APPLICATION" })).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 1, name: "APPLICATION RECEIVED" }),
+      page.getByText("Form checked. Your application has not been sent or saved."),
     ).toBeVisible();
     await expect(page.getByText("APPLICANT: grace-hopper")).toBeVisible();
+    await expectNoViolations(page, "demo application receipt");
   });
 
   test("dropdowns work from the keyboard", async ({ page }) => {
     await page.goto("/apply");
-    const role = page.getByLabel("Role");
+    const role = page.getByLabel("Interested in");
     await role.focus();
 
     // Plain ↑/↓ walk controls instead of opening the list.
@@ -281,17 +290,17 @@ test.describe("apply form", () => {
 
     await role.focus();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("option", { name: "Learner" })).toBeVisible();
+    await expect(page.getByRole("option", { name: "Learning" })).toBeVisible();
 
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
-    await expect(role).toContainText("Reviewer");
+    await expect(role).toContainText("Reviewing");
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     await page.keyboard.press("Enter");
     await page.keyboard.press("ArrowUp");
     await page.keyboard.press("Escape");
-    await expect(role).toContainText("Reviewer");
+    await expect(role).toContainText("Reviewing");
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     // Tab from an open list commits the active option and toggles panels.
@@ -299,7 +308,7 @@ test.describe("apply form", () => {
     await page.keyboard.press("ArrowUp");
     await page.keyboard.press("Tab");
     await expect(page.getByRole("listbox")).toHaveCount(0);
-    await expect(role).toContainText("Learner");
+    await expect(role).toContainText("Learning");
     await expect(page.locator("#file-APPLY")).toBeFocused();
   });
 
@@ -307,13 +316,13 @@ test.describe("apply form", () => {
     page,
   }) => {
     await page.goto("/apply");
-    const role = page.getByLabel("Role");
+    const role = page.getByLabel("Interested in");
     await role.focus();
-    await expect(role).toContainText("Learner");
+    await expect(role).toContainText("Learning");
 
     await page.keyboard.type("r");
     await expect(page.getByRole("listbox")).toBeVisible();
-    await expect(page.getByRole("option", { name: "Reviewer" })).toHaveAttribute(
+    await expect(page.getByRole("option", { name: "Reviewing" })).toHaveAttribute(
       "data-active",
       "true",
     );
@@ -321,12 +330,12 @@ test.describe("apply form", () => {
     await expect(page.getByLabel("Command line")).toHaveValue("");
 
     await page.keyboard.press("Enter");
-    await expect(role).toContainText("Reviewer");
+    await expect(role).toContainText("Reviewing");
   });
 
   test("a textarea keeps its caret and only arrows out from its edges", async ({ page }) => {
     await page.goto("/apply");
-    const message = page.getByLabel("Why by hand");
+    const message = page.getByLabel("What would you like to work on or learn?");
     const experience = page.getByLabel("What you have built or broken");
     const submit = page.getByRole("button", { name: SUBMIT_BUTTON });
 
@@ -375,7 +384,7 @@ test.describe("apply form", () => {
 
   test("Enter keeps the newline and Shift+Enter sends the form", async ({ page }) => {
     await page.goto("/apply");
-    const message = page.getByLabel("Why by hand");
+    const message = page.getByLabel("What would you like to work on or learn?");
 
     await message.click();
     await page.keyboard.type("first");
@@ -396,16 +405,16 @@ test.describe("apply form", () => {
     expect(await scrollTop()).toBe(0);
 
     // From a non-text control the arrows scroll instead of walking.
-    await page.getByLabel("Role").focus();
+    await page.getByLabel("Interested in").focus();
     await page.keyboard.press("Shift+ArrowDown");
     const scrolled = await scrollTop();
     expect(scrolled).toBeGreaterThan(0);
     await page.keyboard.press("Shift+ArrowUp");
     expect(await scrollTop()).toBeLessThan(scrolled);
-    await expect(page.getByLabel("Role")).toBeFocused();
+    await expect(page.getByLabel("Interested in")).toBeFocused();
 
     // A textarea keeps Shift+↑ for selection: the window stays put.
-    const message = page.getByLabel("Why by hand");
+    const message = page.getByLabel("What would you like to work on or learn?");
     await message.click();
     const before = await scrollTop();
     await page.keyboard.press("Shift+ArrowUp");
@@ -416,8 +425,8 @@ test.describe("apply form", () => {
     await page.goto("/apply");
     await expectNoViolations(page, "/apply");
 
-    await page.getByLabel("Role").click();
-    await expect(page.getByRole("option", { name: "Learner" })).toBeVisible();
+    await page.getByLabel("Interested in").click();
+    await expect(page.getByRole("option", { name: "Learning" })).toBeVisible();
     await expectNoViolations(page, "/apply with an open dropdown");
     await page.keyboard.press("Escape");
   });
@@ -481,7 +490,12 @@ test.describe("logon window", () => {
 
   test("plain arrows walk the form controls with wrap-around", async ({ page }) => {
     await page.goto("/login");
-    const form = page.getByRole("form", { name: "MEMBER LOGON" });
+    const form = page.getByRole("form", { name: "LOGON" });
+    await expect(
+      form.getByText(
+        "Development demo: use a made-up password. Google and GitHub buttons also simulate sign-in; no real accounts are connected.",
+      ),
+    ).toBeVisible();
     const user = page.getByLabel(USER_LABEL);
     const password = page.getByLabel(PASSWORD_LABEL);
     const apply = form.getByRole("link", { name: "APPLY" });
@@ -503,7 +517,7 @@ test.describe("logon window", () => {
     page,
   }) => {
     await page.goto("/login");
-    const form = page.getByRole("form", { name: "MEMBER LOGON" });
+    const form = page.getByRole("form", { name: "LOGON" });
     const user = page.getByLabel(USER_LABEL);
     const logon = form.getByRole("button", { name: "[ LOG ON ]" });
     const google = form.getByRole("button", { name: "[ GOOGLE ]" });
@@ -546,7 +560,7 @@ test.describe("logon window", () => {
 
   test("secondary text keeps WCAG AA contrast on the light surfaces", async ({ page }) => {
     await page.goto("/login");
-    await expectMinimumContrast(page.getByText("User names are lower-case"));
+    await expectMinimumContrast(page.getByText("Usernames use letters"));
     await expectMinimumContrast(page.getByText("OR LOG ON WITH"));
 
     await page.goto("/no-such-route");
@@ -579,7 +593,7 @@ test.describe("screensaver settings", () => {
     expect(await stored()).toBeNull();
 
     await save.click();
-    await expect(page.getByText("Saved on this terminal.")).toBeVisible();
+    await expect(page.getByText("Saved in this browser.")).toBeVisible();
     await expect(save).toBeDisabled();
     await expect.poll(stored).toBe('{"enabled":false,"delayMinutes":1}');
 
@@ -603,7 +617,7 @@ test.describe("screensaver settings", () => {
     await expect(save).toBeEnabled();
 
     await page.keyboard.press("Shift+Enter");
-    await expect(page.getByText("Saved on this terminal.")).toBeVisible();
+    await expect(page.getByText("Saved in this browser.")).toBeVisible();
     await expect(save).toBeDisabled();
     await expect.poll(stored).toBe('{"enabled":false,"delayMinutes":5}');
 

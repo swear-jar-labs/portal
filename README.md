@@ -1,45 +1,38 @@
 # Swear Jar Labs
 
-The platform of the Swear Jar Labs community: public discussion, code reading, and project work. Open source (MIT), built with Next.js and PostgreSQL.
+A workshop for people who want to understand how software works — and how to build it well.
 
-Most of us learned to program the same way: wrote code, broke it, fixed what we broke. That feedback loop is fading. As AI writes more of the code, the work moves toward reading and judging it. But reading is earned by writing, and juniors get fewer chances to cut their teeth. We're building this space to make that practice deliberate: through real projects, public review, and owning our mistakes.
+We write code, question it, and help each other fix what we were sure would work. The platform brings together DISCUSSIONS, ERRATA, READROOM and project work in **SWEARJAR.DOS**, a keyboard-friendly DOS-style interface. Open source, MIT licensed.
 
-Early, in active development: this repository currently holds the platform skeleton.
+This repository currently runs on demo data. Threads, notes, tickets and project changes live in browser memory and reset on reload. Terminal preferences persist in this browser; demo sign-in uses a cookie. Application forms do not submit applications, and repository counters and demo activity are fixtures, not live integrations.
+
+The next milestone is a complete UI on mocks. Real registration, project permissions and shared storage are not implemented yet. The backend choice is still open; the existing database and auth scaffold is not a commitment to the final stack.
 
 ## Stack
 
 - **Next.js** (App Router, React Server Components) + TypeScript strict
-- **PostgreSQL** + **Drizzle ORM**
-- **Better Auth** (Google, GitHub, and user + password)
 - **SWEARJAR.DOS** — our DOS-style UI kit (in progress)
 - **CSS Modules** for CRT/DOS styling
 - **Vitest** + **Playwright**
-- **Docker Compose**: `web` + `db` + `caddy`
+- Scaffold: **PostgreSQL 17**, **Drizzle ORM**, **Better Auth** and **Docker Compose** (`web` + `db` + `caddy`). Real authentication and database-backed workflows are not wired up.
 
 ## Getting started
 
-Requirements: Node 22 (npm included) and PostgreSQL 17.
-
-Start a local database:
-
-```bash
-docker run --name swearjar-db \
-  -e POSTGRES_USER=swearjar \
-  -e POSTGRES_PASSWORD=swearjar \
-  -e POSTGRES_DB=swearjar \
-  -p 5432:5432 -d postgres:17-alpine
-```
+Requirements: Node 22 and npm. The mock UI does not need a running database or OAuth credentials.
 
 Install and run:
 
 ```bash
 npm install
 cp .env.example .env
-npm run db:push
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+In development, LOGON accepts a valid username and any non-empty demo password. Use made-up credentials, never a real password. The Google and GitHub buttons simulate sign-in as `ada` and `grace`; they do not contact those providers. Demo sessions are disabled in production and are not a security boundary.
+
+The database scripts below belong to the scaffold. Do not run schema pushes or generate migrations for UI-only changes; backend integration is a separate step. Values in `.env.example` are local placeholders, not production secrets.
 
 ## Scripts
 

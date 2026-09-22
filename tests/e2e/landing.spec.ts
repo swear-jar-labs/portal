@@ -64,7 +64,7 @@ test("opens a static doc from the file manager", async ({ page }) => {
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
   await files.getByRole("button", { name: /RULES/ }).click();
   await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
-  await expect(page.getByText("The jar only accepts coins.")).toBeVisible();
+  await expect(page.getByText("Be kind. Be specific.")).toBeVisible();
 });
 
 test("HELP lists commands", async ({ page }) => {
@@ -73,6 +73,29 @@ test("HELP lists commands", async ({ page }) => {
   await page.keyboard.type("HELP");
   await page.keyboard.press("Enter");
   await expect(page.getByText("Available commands:")).toBeVisible();
+});
+
+test("keeps STATUS out of navigation and treats it as an unknown command", async ({ page }) => {
+  const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+  await expect(files.getByRole("button", { name: "STATUS", exact: true })).toHaveCount(0);
+
+  await page.keyboard.press("F1");
+  const help = page.getByRole("dialog");
+  await expect(help.getByText("Available commands:")).toBeVisible();
+  await expect(help.getByText(/\bSTATUS\b/)).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(help).toBeHidden();
+
+  const input = page.getByLabel("Command line");
+  await input.focus();
+  await page.keyboard.type("status");
+  await page.keyboard.press("Enter");
+  const error = page.getByRole("dialog");
+  await expect(error.getByText("Bad command or file name.")).toBeVisible();
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  expect(results.violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(error).toBeHidden();
 });
 
 test("Tab completes a command", async ({ page }) => {
@@ -253,6 +276,7 @@ test("keeps Enter on the close button a button activation", async ({ page }) => 
 test("function keys open their commands", async ({ page }) => {
   const toolbar = page.getByRole("toolbar", { name: "Function keys" });
   await expect(toolbar.getByRole("button", { name: "F6 Projects" })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: /^F7\b/ })).toHaveCount(0);
   await expect(toolbar.getByRole("button", { name: "F8 Apply" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F9 Logon" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F10 Exit" })).toBeVisible();
@@ -264,7 +288,7 @@ test("function keys open their commands", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
 
   await page.keyboard.press("F7");
-  await expect(page.getByRole("heading", { level: 2, name: "STATUS.TXT" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
 
   await page.keyboard.press("F5");
   const doom = page.getByRole("dialog");
@@ -275,7 +299,9 @@ test("function keys open their commands", async ({ page }) => {
   await doom.getByRole("button", { name: "Close" }).click();
 
   await page.keyboard.press("F10");
-  await expect(page.getByText("There is no exit, as there is no logon.")).toBeVisible();
+  await expect(
+    page.getByText("You're already logged out. The browser handles the actual exit."),
+  ).toBeVisible();
 });
 
 test("typing anywhere goes to the command line", async ({ page }) => {
@@ -283,14 +309,14 @@ test("typing anywhere goes to the command line", async ({ page }) => {
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
   await files.getByRole("button", { name: "RULES" }).click();
-  await page.keyboard.type("status");
+  await page.keyboard.type("manifesto");
   await expect(input).toBeFocused();
-  await expect(input).toHaveValue("status");
+  await expect(input).toHaveValue("manifesto");
   const typedWidth = (await input.boundingBox())?.width ?? 0;
   expect(typedWidth).toBeGreaterThan(30);
 
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { level: 2, name: "STATUS.TXT" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
   await expect.poll(async () => (await input.boundingBox())?.width ?? 0).toBeLessThan(10);
 });
 
@@ -330,7 +356,7 @@ test.describe("file manager", () => {
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "TYPE" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "SIZE" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
   });
 
   test("moves the selection with arrows without changing the document", async ({ page }) => {
@@ -444,12 +470,12 @@ test.describe("file manager", () => {
   test("activates the selection from an empty command line", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-    await files.getByRole("button", { name: "RULES" }).click();
+    await files.getByRole("button", { name: "HOW-IT-WORKS" }).click();
     await page.keyboard.press("ArrowDown");
     await page.getByLabel("Command line").focus();
     await page.keyboard.press("Enter");
 
-    await expect(page.getByRole("heading", { level: 2, name: "STATUS.TXT" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
   });
 
   test("opens a file by clicking its size cell", async ({ page }) => {
@@ -470,7 +496,7 @@ test.describe("mobile file manager", () => {
   test("cycles peek, compact and full via the header and footer", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
 
     const scroller = files.locator("table").locator("..");
     const height = () => scroller.evaluate((el) => el.clientHeight);

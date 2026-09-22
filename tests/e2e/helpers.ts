@@ -56,7 +56,7 @@ export async function repeatKey(page: Page, key: keyof typeof ARROW_KEY_CODES): 
 // The mock logon: any spec that needs a member session starts here.
 export async function logon(page: Page, user = "ada") {
   await page.goto("/login");
-  await page.getByLabel("User").fill(user);
+  await page.getByLabel("Username").fill(user);
   await page.getByLabel("Password").fill("secret");
   await page.getByRole("button", { name: "[ LOG ON ]" }).click();
   await expect(page).toHaveURL("/profile");

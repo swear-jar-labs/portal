@@ -5,12 +5,16 @@ title: HOW-IT-WORKS.TXT
 
 ## :yellow[HOW IT WORKS]{align="center"}
 
-:cyan[**Learners**] — this is a learning project first: junior and mid developers grow judgment by working on real code. Claim a task from a real backlog, write a short spec, pass review, then a maintainer reads and merges. Review is a gift: give it, receive it, and write down what you learned.
+Learn to build software by making your own decisions, including the wrong ones.
 
-:cyan[**Projects**] — real projects, not training exercises: the platform itself, a flagship project, and the projects members bring — each with a public journal. Every project has its own maintainers with review and merge rights, and every change is read by a human before it lands.
+:cyan[**DISCUSSIONS & ERRATA**] — ask questions, compare approaches, or share a mistake and what it taught you. Stories from your own practice are welcome.
 
-:cyan[**Readroom**] — we read code together — human or machine — on a deadline, then publish a write-up.
+:cyan[**READROOM**] — bring code and a question. Write your own notes before the deadline, then compare what everyone found. A write-up is welcome, not required.
 
-:cyan[**Errata**] — our mistakes, written down. Public. That is the jar, but in prose.
+:cyan[**PROJECTS**] — take a ticket, explain your approach, and work through review. Ask for help when you get stuck.
 
-:dim[Type DISCUSSIONS, READROOM, PROJECTS or TICKETS to open the board; errata is one of its boards.]
+Register to join DISCUSSIONS and READROOM. Apply to become a Member when you're ready for project work.
+
+:dim[Demo build: registration and Member applications are still in development.]
+
+:dim[Pick a section on the left, or type DISCUSSIONS, READROOM, PROJECTS or TICKETS. Find ERRATA inside DISCUSSIONS.]

@@ -80,6 +80,7 @@ export function ApplyForm() {
       <Stack gap={10}>
         <Heading level={1}>{messages.account.apply.heading}</Heading>
         <Text>{messages.account.apply.intro}</Text>
+        <Text role="hint">{messages.account.apply.hint}</Text>
 
         <Select
           label={messages.account.apply.fields.role}

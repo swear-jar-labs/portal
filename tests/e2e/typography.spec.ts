@@ -49,7 +49,7 @@ test("keeps the board secondary text on the surface ink", async ({ page }) => {
 });
 
 test("keeps light surfaces on the real bold with the smear, not a stroke", async ({ page }) => {
-  const paperBody = page.getByText("keeping the craft of building software systems alive");
+  const paperBody = page.getByText("A small software workshop", { exact: true });
   await expect(paperBody).toHaveCSS("font-weight", "700");
   // The extra weight is a phase-stable text-shadow smear, never a sub-pixel
   // text-stroke, whose rendering flips with the layout phase.

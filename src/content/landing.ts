@@ -18,7 +18,7 @@ export const bootLines: BootLine[] = [
   {
     id: "ai",
     text: "Checking for AI dependencies..........",
-    status: { text: "REFERENCE ONLY", tone: "yellow" },
+    status: { text: "NOT REQUIRED", tone: "yellow" },
   },
   {
     id: "coffee",
@@ -43,11 +43,13 @@ export const welcome = {
   title: "WELCOME.TXT",
   heading: "WELCOME TO SWEARJAR.DOS",
   intro:
-    "The public terminal of Swear Jar Labs — a community keeping the craft of software engineering alive.",
+    "A workshop for people who want to understand how software works — and how to build it well.",
   lines: [
-    "Pick a file on the left to read.",
+    "We write code, question it, and help each other fix what we were sure would work.",
+    "Bring a question to DISCUSSIONS, a mistake to ERRATA, or some code to READROOM.",
+    "Open HOW-IT-WORKS.TXT to learn about participation and project work.",
+    "Pick a file on the left to get started.",
     "Type HELP for commands. Tab completes.",
-    "APPLY to join. LOGON if you are a member.",
   ],
-  footer: "The jar is empty. Let's keep it that way.",
+  footer: "Mistakes happen. Keep the lessons.",
 };

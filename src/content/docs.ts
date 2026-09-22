@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { z } from "zod";
 
-export const docIds = ["ABOUT", "MANIFESTO", "HOW", "RULES", "STATUS"] as const;
+export const docIds = ["ABOUT", "MANIFESTO", "HOW", "RULES"] as const;
 
 export type DocId = (typeof docIds)[number];
 

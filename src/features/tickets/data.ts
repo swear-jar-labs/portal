@@ -242,7 +242,7 @@ const tickets: readonly Ticket[] = [
     key: "FLAG-1",
     project: "flagship",
     title: "Flagship charter and poll",
-    body: "One real project, chosen by poll, built by hand. This ticket tracks the charter: scope, stack options and the poll itself. No repository yet.",
+    body: "A demo proposal for a shared project. This ticket tracks the charter: the problem, scope, stack options and a proposed poll. No repository yet.",
     status: "open",
     size: "M",
     tags: ["good-first"],

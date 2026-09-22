@@ -69,6 +69,7 @@ export function LogonForm() {
     <Form onSubmit={handleSubmit} ariaLabel={messages.account.login.heading}>
       <Stack gap={10}>
         <Heading level={1}>{messages.account.login.heading}</Heading>
+        <Text role="hint">{messages.account.login.demoHint}</Text>
 
         <Field
           label={messages.account.login.fields.user}

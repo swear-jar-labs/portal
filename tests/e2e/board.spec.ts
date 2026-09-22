@@ -80,12 +80,12 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
   await feed.getByRole("combobox", { name: "BOARD" }).click();
   await page.getByRole("option", { name: "Compiler" }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=question`);
-  await expect(feed.getByText("NO THREADS MATCH THESE FILTERS.")).toBeVisible();
+  await expect(feed.getByText("NO MATCHES. TRY CHANGING THE FILTERS.")).toBeVisible();
   await expect(feed.getByText("0 THREADS")).toBeVisible();
 
   // The state is deep-linkable.
   await page.reload();
-  await expect(feed.getByText("NO THREADS MATCH THESE FILTERS.")).toBeVisible();
+  await expect(feed.getByText("NO MATCHES. TRY CHANGING THE FILTERS.")).toBeVisible();
 });
 
 test("a tag on a card filters the feed instead of opening the thread", async ({ page }) => {
@@ -438,7 +438,7 @@ test("renders posts, the empty thread and the locked thread", async ({ page }) =
   const thread = page.getByRole("region", { name: READ_FIRST });
   // The reply marker quotes the same opening line: read the root post's body.
   await expect(
-    thread.getByRole("article").first().getByText("THREE RULES, AND THE JAR WATCHES ALL OF THEM."),
+    thread.getByRole("article").first().getByText("BRING QUESTIONS, SHOW YOUR REASONING"),
   ).toBeVisible();
   await expect(thread.getByRole("listitem")).toHaveCount(3);
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
@@ -654,7 +654,7 @@ test("shows the parent of a published reply and jumps to it", async ({ page }) =
   const marker = thread.getByRole("button", { name: "In reply to ada" });
 
   await expect(marker).toContainText("↪");
-  await expect(marker).toContainText('ada: "Three rules, and the jar watches all of them."');
+  await expect(marker).toContainText('ada: "Bring questions, show your reasoning');
   // The answered member's face travels with the quote.
   await expect(marker.locator("img")).toHaveAttribute("src", "/avatars/ada.png");
 

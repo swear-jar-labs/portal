@@ -52,12 +52,6 @@ const commandDefs = [
     file: { group: "read", name: "RULES", ext: "TXT", size: 640 },
   },
   {
-    id: "STATUS",
-    description: messages.shell.registry.descriptions.STATUS,
-    doc: "STATUS",
-    file: { group: "read", name: "STATUS", ext: "TXT", size: 384 },
-  },
-  {
     id: "DISCUSSIONS",
     description: messages.shell.registry.descriptions.DISCUSSIONS,
     href: "/discussions",
@@ -325,7 +319,6 @@ const keyDefs: KeyDef[] = [
   { key: "F4", label: messages.shell.keyBar.labels.RULES, command: "RULES" },
   { key: "F5", label: messages.shell.keyBar.labels.DOOM, command: "DOOM" },
   { key: "F6", label: messages.shell.keyBar.labels.PROJECTS, command: "PROJECTS" },
-  { key: "F7", label: messages.shell.keyBar.labels.STATUS, command: "STATUS" },
   { key: "F8", label: messages.shell.keyBar.labels.APPLY, command: "APPLY" },
   { key: "F9", label: messages.shell.keyBar.labels.LOGON, command: "LOGON" },
   { key: "F8", label: messages.shell.keyBar.labels.PROFILE, command: "PROFILE" },

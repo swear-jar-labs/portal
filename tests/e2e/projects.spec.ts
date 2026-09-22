@@ -37,7 +37,7 @@ test("renders the registry cut by status", async ({ page }) => {
     projectPath("swearjar-dos"),
   );
   // The card carries the excerpt and the stack chips, not just the name.
-  await expect(cards(page).nth(0)).toContainText("The terminal you are looking at");
+  await expect(cards(page).nth(0)).toContainText("The terminal you're using");
   await expect(cards(page).nth(0).getByText("Next.js", { exact: true })).toBeVisible();
   await expect(cards(page).nth(0).getByText("Postgres", { exact: true })).toBeVisible();
   // Every feed card carries its section icon in the title row.
@@ -196,12 +196,8 @@ test("keeps an empty journal readable", async ({ page }) => {
   await page.goto(projectPath("flagship"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Flagship" });
-  await expect(
-    panel.getByText("No entries yet. The journal opens with the first thread."),
-  ).toBeVisible();
-  await expect(
-    panel.getByText("No repository yet. The forge wakes when the code lands."),
-  ).toBeVisible();
+  await expect(panel.getByText("No related threads yet.")).toBeVisible();
+  await expect(panel.getByText("No repository linked yet.")).toBeVisible();
 });
 
 test("shows forge counters, the frozen archive and the member call", async ({ page }) => {
@@ -226,8 +222,10 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
     panel.getByRole("link", { name: "https://github.com/swear-jar-labs/portal" }),
   ).toHaveAttribute("target", "_blank");
 
-  // Guests are pointed at APPLY: the journal belongs to members.
-  await expect(panel.getByText("Members write here. Want in?")).toBeVisible();
+  // Guests can explore the demo application without a promise of project access.
+  await expect(
+    panel.getByText("Interested in project work? Explore the demo application."),
+  ).toBeVisible();
   await expect(panel.getByRole("link", { name: "[ APPLY → ]" })).toHaveAttribute("href", "/apply");
 
   await page.goto(projectPath("token-cache"));
@@ -243,7 +241,9 @@ test("opens the journal for a member without an apply prompt", async ({ page }) 
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
 
-  await expect(panel.getByText("Members write here. Want in?")).toHaveCount(0);
+  await expect(
+    panel.getByText("Interested in project work? Explore the demo application."),
+  ).toHaveCount(0);
   await expect(panel.getByRole("link", { name: "ALL THREADS (1) →" })).toBeVisible();
 });
 

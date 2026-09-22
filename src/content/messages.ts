@@ -1,5 +1,7 @@
 import type { PluralForms } from "@/lib/plural";
 
+const demoSessionHint = "Demo only. Changes are lost when you reload.";
+
 // UI text lives here only: every localizable string of the app. The shell is the
 // landing experience (chrome + its surfaces); page sections of future routes are
 // added as siblings. Ids, routes, file names and other canon stay in code;
@@ -9,7 +11,7 @@ export const messages = {
   metadata: {
     title: "Swear Jar Labs",
     description:
-      "The public terminal of Swear Jar Labs — a community keeping the craft of software engineering alive.",
+      "A workshop for people who want to understand how software works — and how to build it well.",
   },
   shell: {
     brand: { name: "SWEARJAR.DOS", version: "v0.1" },
@@ -44,7 +46,6 @@ export const messages = {
         RULES: "Rules",
         DOOM: "Doom",
         PROJECTS: "Projects",
-        STATUS: "Status",
         APPLY: "Apply",
         LOGON: "Logon",
         PROFILE: "Profile",
@@ -76,7 +77,7 @@ export const messages = {
           "Tab switches panels; ▲/▼ moves between rows in a window, ◀/▶ inside a row.",
           "Space or Enter activates; Shift+Enter sends a form; Shift+▲/▼ scrolls the window.",
         ].join("\n"),
-        outro: "Tab completes in the command line. Try an unknown command — the jar clinks.",
+        outro: "Tab completes commands.",
       },
       dir: { title: "DIR" },
       coffee: {
@@ -87,13 +88,13 @@ export const messages = {
       doom: {
         title: "DOOM.EXE",
         text: "This is the only OS DOOM has not been ported to yet.",
-        hint: "But if you wish, you can take this on — APPLY.",
+        hint: "A suspicious gap in the roadmap.",
       },
       exit: {
         title: "EXIT",
-        text: "There is no exit, as there is no logon.",
+        text: "You're already logged out. The browser handles the actual exit.",
         hint: "Type LOGON to sign in.",
-        memberText: "There is no exit. The door is on the F9 key.",
+        memberText: "Looking for the door? Use LOGOFF or press F9.",
         memberHint: "LOGOFF ends the session; the jar stays.",
       },
       error: {
@@ -112,8 +113,8 @@ export const messages = {
       },
       login: {
         title: "LOGON REQUIRED",
-        text: "This action belongs to members. Log on to continue.",
-        hint: "No account yet? APPLY.",
+        text: "Log on to continue.",
+        hint: "This build uses demo accounts. Registration is not live yet.",
         confirm: "[ LOG ON ]",
         cancel: "[ CANCEL ]",
       },
@@ -131,15 +132,14 @@ export const messages = {
       descriptions: {
         ABOUT: "what is this place",
         MANIFESTO: "what we believe",
-        HOW: "how the team works",
+        HOW: "how to take part",
         RULES: "the rules",
-        STATUS: "who we need now",
         DISCUSSIONS: "open the board",
         READROOM: "the reading tasks",
         PROJECTS: "what we build",
         TICKETS: "the work queue",
-        APPLY: "join the team",
-        LOGON: "member login",
+        APPLY: "apply for project work",
+        LOGON: "sign in",
         PROFILE: "your account",
         SETTINGS: "tune the terminal",
         LOGOFF: "sign out",
@@ -154,31 +154,32 @@ export const messages = {
   },
   account: {
     gate: {
-      heading: "AUTH REQUIRED",
-      text: "This file belongs to members. Log on to open it.",
+      heading: "LOGON REQUIRED",
+      text: "Log on to open this file.",
       logon: "LOGON",
       apply: "APPLY",
     },
     apply: {
       metadata: {
         title: "Apply — Swear Jar Labs",
-        description: "Apply to join Swear Jar Labs as a learner or a reviewer.",
+        description: "Project participation at Swear Jar Labs. Try the demo application form.",
       },
-      heading: "JOIN THE TEAM",
+      heading: "PROJECT APPLICATION",
       intro:
-        "We take learners and reviewers. Tell us what you built, what you broke, and why by hand.",
+        "Ready to work on a project? Tell us about your experience and what you'd like to try.",
+      hint: "Demo form. Nothing is sent, and no account or project access is created.",
       fields: {
-        role: "Role",
-        user: "User",
+        role: "Interested in",
+        user: "Username",
         userPlaceholder: "ada-lovelace",
         email: "Email",
         experience: "What you have built or broken",
         weeklyHours: "Hours a week",
-        motivation: "Why by hand",
+        motivation: "What would you like to work on or learn?",
       },
       roles: {
-        learner: "Learner",
-        reviewer: "Reviewer",
+        learner: "Learning",
+        reviewer: "Reviewing",
       },
       weeklyHours: {
         "under-5": "Under 5",
@@ -189,27 +190,29 @@ export const messages = {
         user: "2-32 characters: letters, digits, - or _.",
         email: "An email address is needed.",
         experience: "Keep it under 2000 characters.",
-        motivation: "A few words, at least.",
+        motivation: "Tell us a little about your plans, up to 2000 characters.",
       },
       submit: "[ SUBMIT ]",
       receipt: {
-        heading: "APPLICATION RECEIVED",
-        text: "Your application is on file. We read every one by hand.",
+        heading: "DEMO APPLICATION",
+        text: "Form checked. Your application has not been sent or saved.",
         applicant: "APPLICANT",
-        hint: "Pick a file on the left while you wait.",
+        hint: "Pick a file on the left to keep exploring.",
       },
     },
     login: {
       metadata: {
         title: "Logon — Swear Jar Labs",
-        description: "Member logon for Swear Jar Labs.",
+        description: "Sign in to Swear Jar Labs. This build uses demo accounts.",
       },
-      heading: "MEMBER LOGON",
+      heading: "LOGON",
       fields: {
-        user: "User",
+        user: "Username",
         password: "Password",
       },
-      hint: "User names are lower-case: letters, digits, - or _.",
+      hint: "Usernames use letters, digits, - or _. Letters are saved in lower case.",
+      demoHint:
+        "Development demo: use a made-up password. Google and GitHub buttons also simulate sign-in; no real accounts are connected.",
       submit: "[ LOG ON ]",
       sso: {
         label: "OR LOG ON WITH",
@@ -221,10 +224,11 @@ export const messages = {
       errors: {
         user: "2-32 characters: letters, digits, - or _.",
         password: "A password is needed.",
-        invalid: "Bad user or password.",
-        unavailable: "Sessions arrive with the backend. This build has no auth yet.",
+        invalid: "Incorrect username or password.",
+        unavailable:
+          "Sign-in is not available in this build. Demo sign-in works in development only.",
       },
-      applyPrompt: "No account yet?",
+      applyPrompt: "Curious about project work?",
       applyLink: "APPLY",
     },
     profile: {
@@ -243,10 +247,10 @@ export const messages = {
       },
       threads: {
         heading: "MY THREADS",
-        empty: "No threads yet. Say something by hand.",
+        empty: "No threads yet. A question is a good start.",
       },
       activityHeading: "RECENT ACTIVITY",
-      activityEmpty: "No merged work yet. The jar is watching.",
+      activityEmpty: "No merged contributions yet. Check the jar.",
     },
     settings: {
       metadata: {
@@ -260,8 +264,8 @@ export const messages = {
         delay: "Idle delay",
       },
       save: "[ SAVE ]",
-      saved: "Saved on this terminal.",
-      hint: "These preferences live in this browser until accounts arrive.",
+      saved: "Saved in this browser.",
+      hint: "These preferences stay in this browser. They are not synced to an account.",
     },
   },
   members: {
@@ -305,8 +309,8 @@ export const messages = {
       tagLabel: "TAGS",
       allBoards: "ALL BOARDS",
       sorts: { hot: "HOT", new: "NEW" },
-      empty: "No threads yet. The board is quiet.",
-      emptyFilter: "No threads match these filters.",
+      empty: "No threads yet. Start a discussion.",
+      emptyFilter: "No matches. Try changing the filters.",
       newThread: "[ NEW THREAD ]",
     },
     compose: {
@@ -320,7 +324,7 @@ export const messages = {
       },
       submit: "[ POST THREAD ]",
       cancel: "[ CANCEL ]",
-      hint: "The thread lives in this session until the board has a backend.",
+      hint: demoSessionHint,
     },
     reply: {
       label: "REPLY",
@@ -341,8 +345,8 @@ export const messages = {
       error: "The post cannot be empty.",
       deleted: "This post was deleted.",
       deleteTitle: "DELETE POST",
-      deleteText: "Delete this post? The thread keeps a tombstone in its place.",
-      deleteHint: "Replies that quote it stay as they are.",
+      deleteText: 'Delete this post? A "deleted post" marker will remain.',
+      deleteHint: "Replies that quote it will stay unchanged.",
       deleteConfirm: "[ DELETE ]",
       editLabel: "EDIT POST",
     },
@@ -367,7 +371,7 @@ export const messages = {
     metadata: {
       title: "Readroom — Swear Jar Labs",
       description:
-        "The reading tasks: code read by hand, notes until the deadline, a write-up at the end.",
+        "Read code, write independent notes, then compare what everyone found. A write-up is optional.",
     },
     phases: {
       collecting: "COLLECTING",
@@ -377,7 +381,7 @@ export const messages = {
     },
     feed: {
       heading: "READROOM",
-      empty: "No tasks yet. The room is quiet.",
+      empty: "No reading tasks yet. Bring some code and a question.",
       archiveHeading: "ARCHIVE",
       newTask: "[ NEW TASK ]",
     },
@@ -423,9 +427,9 @@ export const messages = {
         empty: "This file is empty.",
         binary: "Preview is unavailable for this file. Download it to read it locally.",
         tooLarge: "This file exceeds the preview limit. Download it to read it locally.",
-        error: "Could not read this file. Close the viewer and attach it again.",
+        error: "Could not read this file. Close the viewer and try again.",
       },
-      temp: "Attached files live in this session only — nothing is uploaded yet.",
+      temp: "Files stay in this browser session. Nothing is uploaded.",
     },
     notes: {
       heading: "NOTES",
@@ -433,7 +437,7 @@ export const messages = {
       yours: "[YOURS]",
       sealed: "SEALED",
       edited: "[EDITED]",
-      posted: "One note per reader, edit yours above.",
+      posted: "One note per reader. You can edit yours until the deadline.",
       form: {
         label: "NOTE",
         submit: "[ POST NOTE ]",
@@ -449,19 +453,19 @@ export const messages = {
       delete: {
         action: "[ DELETE ]",
         title: "DELETE NOTE",
-        text: "Delete this note? You can post another one while the cycle collects.",
+        text: "Delete this note? You can post another one before the deadline.",
         confirm: "[ DELETE ]",
       },
     },
     report: {
       heading: "WRITE-UP",
-      inProgress: "Notes are closed. The lead is writing the write-up.",
-      stopped: "This task was stopped before a write-up.",
+      inProgress: "Notes are now open for everyone to read. A write-up may follow.",
+      stopped: "This reading was stopped without a write-up.",
       form: {
         label: "WRITE-UP",
         submit: "[ PUBLISH WRITE-UP ]",
         error: "Write the write-up first.",
-        hint: "The write-up lives in this session until the readroom has a backend.",
+        hint: demoSessionHint,
       },
     },
     lead: {
@@ -474,8 +478,8 @@ export const messages = {
       stop: "[ STOP TASK ]",
       stopTitle: "STOP TASK",
       stopText:
-        "Stop this cycle? The task stays public, its notes stay frozen and no write-up will follow.",
-      stopHint: "The stop cannot be undone in this session.",
+        "Stop this reading? The task and existing notes are kept. Notes still become public at the deadline. No further notes or write-up can be added.",
+      stopHint: "This cannot be undone in this demo session.",
       stopConfirm: "[ STOP ]",
     },
     compose: {
@@ -495,14 +499,14 @@ export const messages = {
         tags: "Ten tags is the limit.",
         description: "Describe what to read.",
         sourceUrl: "Paste an http(s) link.",
-        ticket: "A ticket id is short.",
+        ticket: "Use a ticket key of no more than 32 characters.",
         unknownTicket: "No ticket with this key.",
         deadline: "Pick a future date and time.",
       },
       noTicketMatch: "No tickets match.",
       submit: "[ OPEN TASK ]",
       cancel: "[ CANCEL ]",
-      hint: "The task lives in this session until the readroom has a backend.",
+      hint: demoSessionHint,
     },
     age: {
       now: "JUST NOW",
@@ -517,7 +521,7 @@ export const messages = {
     metadata: {
       title: "Projects — Swear Jar Labs",
       description:
-        "The Swear Jar Labs projects: a public registry with forge counters and journals.",
+        "Explore project goals, repositories, discussions and open tickets at Swear Jar Labs.",
     },
     statuses: {
       active: "ACTIVE",
@@ -526,7 +530,7 @@ export const messages = {
     },
     feed: {
       heading: "PROJECTS",
-      empty: "No projects yet. The lab is quiet.",
+      empty: "No projects yet.",
       sections: {
         active: "ACTIVE",
         planned: "PLANNED",
@@ -553,7 +557,7 @@ export const messages = {
         edit: "[ EDIT ]",
         save: "[ SAVE ]",
         cancel: "[ CANCEL ]",
-        hint: "The ladder lives in this session until the projects have a backend.",
+        hint: demoSessionHint,
       },
     },
     forge: {
@@ -566,15 +570,15 @@ export const messages = {
       activity: "ACTIVITY",
       synced: "SYNCED",
       frozen: "FROZEN",
-      empty: "No repository yet. The forge wakes when the code lands.",
+      empty: "No repository linked yet.",
     },
     journal: {
       heading: "RELATED THREADS",
-      empty: "No entries yet. The journal opens with the first thread.",
+      empty: "No related threads yet.",
       allThreads: "ALL THREADS",
     },
     cta: {
-      guestText: "Members write here. Want in?",
+      guestText: "Interested in project work? Explore the demo application.",
       apply: "[ APPLY → ]",
     },
     age: {
@@ -616,8 +620,8 @@ export const messages = {
       newTicket: "[ NEW TICKET ]",
       unassigned: "UNASSIGNED",
       blocked: "BLOCKED",
-      empty: "No tickets yet. The queue is quiet.",
-      noMatch: "No tickets match these filters.",
+      empty: "No tickets yet.",
+      noMatch: "No matches. Try changing the filters.",
       columns: {
         key: "KEY",
         title: "TITLE",
@@ -662,7 +666,7 @@ export const messages = {
       },
       submit: "[ OPEN TICKET ]",
       cancel: "[ CANCEL ]",
-      hint: "The ticket lives in this session until the tracker has a backend.",
+      hint: demoSessionHint,
     },
     dossier: {
       project: "PROJECT",
@@ -687,10 +691,10 @@ export const messages = {
         needs: "NEED",
         done: "DONE",
         have: "YOU HAVE",
-        // Taking a ticket is a promise, not a booking (RULES §15): the timers
-        // stay a hint until the tracker has a backend (Phase 5).
+        // Three days without activity is a maintainer check-in, not a timer
+        // that automatically unassigns the ticket. This is guidance only.
         timers:
-          "Taking it means the first commit within 3 days; silence ends in STALLED on the maintainer call.",
+          "Keep the ticket updated. After three days without activity, a maintainer may check in. Ask for help if you're stuck.",
       },
       blocked: {
         heading: "BLOCKED BY",
@@ -703,11 +707,11 @@ export const messages = {
         noMatch: "No tickets match.",
         unknown: "No ticket with this key.",
         self: "A ticket cannot block itself.",
-        duplicate: "This ticket is already pinned.",
+        duplicate: "This ticket is already listed as a blocker.",
         cycle: "The tickets would wait for each other.",
         remove: "Remove blocker",
         startHint: "Waiting for the blockers:",
-        hint: "The blocker list lives in this session until the tracker has a backend.",
+        hint: demoSessionHint,
       },
       links: {
         heading: "LINKS",
@@ -722,7 +726,7 @@ export const messages = {
         badLabel: "Give the link a label.",
         duplicate: "This link is already pinned.",
         remove: "Remove link",
-        hint: "The link lives in this session until the tracker has a backend.",
+        hint: demoSessionHint,
       },
       comments: {
         heading: "COMMENTS",
@@ -738,21 +742,21 @@ export const messages = {
         save: "[ SAVE ]",
         cancel: "[ CANCEL ]",
         deleteTitle: "DELETE COMMENT",
-        deleteText: "Delete this comment? The dossier keeps a tombstone in its place.",
+        deleteText: 'Delete this comment? A "deleted comment" marker will remain.',
         deleteConfirm: "[ DELETE ]",
       },
-      readrooms: { heading: "READROOMS", empty: "No reading cycle is attached." },
+      readrooms: { heading: "READROOMS", empty: "No linked reading tasks yet." },
     },
     edit: {
       heading: "EDIT TICKET",
       save: "[ SAVE ]",
       cancel: "[ CANCEL ]",
-      hint: "Changes live in this session until the tracker has a backend.",
+      hint: demoSessionHint,
       blocked: "The blockers must finish first:",
       assignee: "ASSIGNEE",
       assigneeHint: "Maintainers only: name a member, or clear the field to unassign.",
       badAssignee: "Name a member: 2-32 letters, digits, _ or -.",
-      statusRefused: "This status is not yours to set.",
+      statusRefused: "You can't make this status change. Ask a project maintainer.",
     },
     project: {
       heading: "LAST UPDATES",
@@ -785,7 +789,7 @@ export const messages = {
       badUrl: "Paste an http(s) image URL.",
       fileButton: "[ PICK FILE ]",
       fileOr: "OR",
-      temp: "Picked files preview until reload — nothing is uploaded yet.",
+      temp: "Images are available until you reload. Nothing is uploaded.",
     },
   },
 } as const;

@@ -28,7 +28,7 @@ export async function getOwnProfile(user: string): Promise<MemberProfile> {
     role: "member",
     joined: new Date().toISOString().slice(0, 10),
     avatar: avatarFor(user),
-    bio: "Learning by hand, one broken build at a time. No AI co-author.",
+    bio: "Learning how things work, one broken build at a time.",
     stats: [
       { id: "merged", value: 0 },
       { id: "reviews", value: 0 },

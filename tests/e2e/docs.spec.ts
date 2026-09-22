@@ -33,8 +33,9 @@ test("puts the document on the white paper surface", async ({ page }) => {
 
 test("renders the about hero and tone formatting", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
+  await expect(page.getByText("SIDE BY SIDE, LINE BY LINE", { exact: true })).toBeVisible();
 
-  const phrase = page.getByText("keeping the craft of building software systems alive");
+  const phrase = page.getByText("A small software workshop", { exact: true });
   await expect(phrase).toBeVisible();
 
   await expect(phrase).toHaveCSS("color", await resolveTone(page, "--dos-tone-cyan"));
@@ -65,6 +66,20 @@ test("centers the how-it-works and rules headings in the manifesto style", async
   await expect(howHeading).toBeVisible();
   await expect(howHeading).toHaveCSS("text-align", "center");
   await expect(howHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-yellow"));
+
+  const how = page.getByRole("region", { name: "HOW-IT-WORKS.TXT", exact: true });
+  for (const section of ["DISCUSSIONS & ERRATA", "READROOM", "PROJECTS"]) {
+    await expect(how.getByText(section, { exact: true })).toBeVisible();
+  }
+  await expect(
+    how.getByText(
+      "Learn to build software by making your own decisions, including the wrong ones.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    how.getByText("Demo build: registration and Member applications are still in development."),
+  ).toBeVisible();
 
   await files.getByRole("button", { name: "RULES" }).click();
   const rulesHeading = page.getByRole("heading", { level: 2, name: "THE RULES" });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { resolveCommand } from "@swearjar/dos";
 import {
   actionCommandIds,
   commandById,
@@ -127,14 +128,25 @@ describe("commands content", () => {
     }
   });
 
-  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 12 as member)", () => {
+  it("keeps the expected file summary (3 DIRS, 10 FILES as guest, 11 as member)", () => {
     const count = (signedIn: boolean) => {
       const groups = fileGroupsFor(signedIn);
       expect(groups).toHaveLength(3);
       return groups.reduce((total, group) => total + group.items.length, 0);
     };
-    expect(count(false)).toBe(11);
-    expect(count(true)).toBe(12);
+    expect(count(false)).toBe(10);
+    expect(count(true)).toBe(11);
+  });
+
+  it("removes the STATUS command and leaves F7 unassigned in both sessions", () => {
+    expect(resolveCommand(commands, "status")).toBeUndefined();
+    expect(docs.map((doc) => doc.id)).not.toContain("STATUS");
+    for (const signedIn of SESSIONS) {
+      expect(keyDefsFor(signedIn).map((def) => def.key)).not.toContain("F7");
+      expect(
+        fileGroupsFor(signedIn).flatMap((group) => group.items.map((item) => item.command)),
+      ).not.toContain("STATUS");
+    }
   });
 
   it("shows the account files of one session only", () => {

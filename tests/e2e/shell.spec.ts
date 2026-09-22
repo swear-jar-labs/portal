@@ -202,7 +202,9 @@ test.describe("welcome", () => {
     await expect(prompt).toHaveCSS("color", "rgb(0, 90, 0)");
     await expectMinimumContrast(headingText);
     await expectMinimumContrast(prompt);
-    await expectMinimumContrast(dialog.getByText("The public terminal of Swear Jar Labs"));
+    await expectMinimumContrast(
+      dialog.getByText("A workshop for people who want to understand how software works"),
+    );
   });
 
   test("does not greet again when a routed file leads back home", async ({ page }) => {

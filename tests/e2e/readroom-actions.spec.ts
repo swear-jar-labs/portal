@@ -11,7 +11,7 @@ const RETRY = "Postmortem read: the retry loop that never slept";
 const NEW_TASK = "Read the lock-free queue";
 const LOGON_PROMPT = "LOGON REQUIRED";
 const SNIPPET = "tests/e2e/fixtures/snippet.c";
-const ATTACH_TEMP = "Attached files live in this session only — nothing is uploaded yet.";
+const ATTACH_TEMP = "Files stay in this browser session. Nothing is uploaded.";
 
 const feed = (page: Page) => page.getByRole("region", { name: FEED_REGION });
 
@@ -179,9 +179,10 @@ test("the lead stops a cycle: the archive appears and the notes close", async ({
 
   await task.getByRole("button", { name: "[ STOP TASK ]" }).click();
   const dialog = page.getByRole("dialog", { name: "STOP TASK" });
+  await expect(dialog.getByText(/Notes still become public at the deadline/)).toBeVisible();
   await dialog.getByRole("button", { name: "[ STOP ]" }).click();
 
-  await expect(task.getByText("This task was stopped before a write-up.")).toBeVisible();
+  await expect(task.getByText("This reading was stopped without a write-up.")).toBeVisible();
   await expect(task.getByText(/ARCHIVED \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
   await expect(task.getByRole("textbox", { name: "NOTE" })).toHaveCount(0);
   await expect(task.getByRole("button", { name: "[ STOP TASK ]" })).toHaveCount(0);
@@ -193,9 +194,9 @@ test("the lead publishes the write-up in reviewing", async ({ page }) => {
   await waitForHydration(page);
   const task = page.getByRole("region", { name: RECURSIVE });
 
-  await expect(task.getByText("Notes are closed. The lead is writing the write-up.")).toHaveCount(
-    0,
-  );
+  await expect(
+    task.getByText("Notes are now open for everyone to read. A write-up may follow."),
+  ).toHaveCount(0);
   await task
     .getByRole("textbox", { name: "WRITE-UP" })
     .fill("## What the code does\n\nThe table is the canon; the `switch` is the special case.");

@@ -33,7 +33,7 @@ const projects: readonly Project[] = [
     name: "SWEARJAR.DOS",
     createdAt: "2026-08-01T09:00:00.000Z",
     description:
-      "The terminal you are looking at: the public face of the labs, built by hand in the open.",
+      "The terminal you're using. A place to work on the workshop itself, from keyboard navigation to code review.",
     techs: ["nextjs", "postgres", "typescript"],
     repoUrl: "https://github.com/swear-jar-labs/portal",
     forge: "github",
@@ -115,7 +115,8 @@ const projects: readonly Project[] = [
     slug: "flagship",
     name: "Flagship",
     createdAt: "2026-09-18T09:00:00.000Z",
-    description: "The cohort's flagship: one real project, chosen by poll, built by hand.",
+    description:
+      "A demo proposal for a shared project: choose a problem, agree on the scope, and build it together.",
     techs: [],
     status: "planned",
     lead: grace,

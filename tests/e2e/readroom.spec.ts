@@ -292,7 +292,7 @@ test("shows the report of a published task and the review hint otherwise", async
   await expect(
     page
       .getByRole("region", { name: RECURSIVE })
-      .getByText("Notes are closed. The lead is writing the write-up."),
+      .getByText("Notes are now open for everyone to read. A write-up may follow."),
   ).toBeVisible();
 
   await page.goto(readroomPath("retry-loop"));

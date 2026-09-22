@@ -473,7 +473,7 @@ test("a member manages blockers and the form refuses bad edges", async ({ page }
   await expect(dossier.getByText("A ticket cannot block itself.")).toBeVisible();
   await dossier.getByLabel("TICKET KEY").fill("CMP-1");
   await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
-  await expect(dossier.getByText("This ticket is already pinned.")).toBeVisible();
+  await expect(dossier.getByText("This ticket is already listed as a blocker.")).toBeVisible();
   await dossier.getByRole("button", { name: "[ CANCEL ]" }).click();
   await expect(dossier.getByRole("button", { name: "[ ADD BLOCKER ]" })).toBeFocused();
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_TAGS } from "@/lib/tags";
 import { readroomTagIds } from "./readrooms";
 
 // UI-first slice: input schemas of the readroom's forms. When the backend lands
@@ -7,8 +8,7 @@ import { readroomTagIds } from "./readrooms";
 // A note or a write-up: the same text limits as a board post.
 const MAX_BODY_LENGTH = 4000;
 const MAX_TITLE_LENGTH = 120;
-// Tags are optional; the cap keeps the source row readable.
-const MAX_TAGS = 3;
+
 const MAX_TICKET_LENGTH = 32;
 const MAX_URL_LENGTH = 500;
 

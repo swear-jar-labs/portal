@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_TAGS } from "@/lib/tags";
 import { projectSlugs } from "@/features/projects/contracts";
 import {
   ticketLinkKinds,
@@ -14,7 +15,7 @@ import {
 const MAX_TITLE_LENGTH = 120;
 const MAX_BODY_LENGTH = 4000;
 // Tags are optional; the cap keeps the dossier chip row readable.
-const MAX_TAGS = 3;
+
 const MAX_URL_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 

@@ -13,6 +13,7 @@ import {
   type SelectOption,
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { MAX_TAGS, toggleTagSelection } from "@/lib/tags";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import {
   boardTitle,
@@ -59,12 +60,7 @@ export function ComposePanel({ defaultBoard, onSubmit, onCancel }: ComposePanelP
   }
 
   function toggleTag(tag: TagId) {
-    update(
-      "tags",
-      values.tags.includes(tag)
-        ? values.tags.filter((current) => current !== tag)
-        : [...values.tags, tag],
-    );
+    update("tags", toggleTagSelection(values.tags, tag));
   }
 
   function handleSubmit() {
@@ -107,6 +103,7 @@ export function ComposePanel({ defaultBoard, onSubmit, onCancel }: ComposePanelP
                 key={tag}
                 tone={tagTones[tag]}
                 active={values.tags.includes(tag)}
+                disabled={!values.tags.includes(tag) && values.tags.length >= MAX_TAGS}
                 onClick={() => toggleTag(tag)}
               >
                 {messages.board.tags[tag]}

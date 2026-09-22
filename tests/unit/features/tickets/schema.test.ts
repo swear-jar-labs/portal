@@ -5,6 +5,7 @@ import {
   ticketComposeSchema,
   ticketEditSchema,
 } from "@/features/tickets/schema";
+import { ticketTagIds } from "@/features/tickets/tickets";
 
 const draft = {
   title: "A title",
@@ -23,8 +24,12 @@ describe("ticket edit schema", () => {
   it("refuses an empty title, an empty body and too many tags", () => {
     expect(ticketEditSchema.safeParse({ ...draft, title: "  " }).success).toBe(false);
     expect(ticketEditSchema.safeParse({ ...draft, body: "" }).success).toBe(false);
+    // The ticket vocabulary (6) fits under the cap: the whole list passes,
+    // eleven chips do not.
+    expect(ticketEditSchema.safeParse({ ...draft, tags: [...ticketTagIds] }).success).toBe(true);
     expect(
-      ticketEditSchema.safeParse({ ...draft, tags: ["bug", "docs", "feature", "testing"] }).success,
+      ticketEditSchema.safeParse({ ...draft, tags: [...ticketTagIds, ...ticketTagIds.slice(0, 5)] })
+        .success,
     ).toBe(false);
   });
 

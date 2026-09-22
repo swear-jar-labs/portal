@@ -8,10 +8,18 @@ export type TagProps = {
   // A clickable tag is a filter: it becomes a toggle button with a pressed state.
   onClick?: () => void;
   active?: boolean;
+  disabled?: boolean;
   className?: string;
 };
 
-export function Tag({ children, tone, onClick, active = false, className }: TagProps) {
+export function Tag({
+  children,
+  tone,
+  onClick,
+  active = false,
+  disabled = false,
+  className,
+}: TagProps) {
   const classes = cx(styles.tag, onClick && styles.button, active && styles.active, className);
   // The tone travels as custom properties, not as an inline color: the surface
   // owns how a chip spends it — ink by default, fill (the raw CGA block) on the
@@ -31,6 +39,7 @@ export function Tag({ children, tone, onClick, active = false, className }: TagP
         className={classes}
         style={style}
         aria-pressed={active}
+        disabled={disabled}
         onClick={onClick}
       >
         {children}

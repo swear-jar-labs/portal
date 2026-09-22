@@ -314,7 +314,7 @@ export const messages = {
       heading: "NEW THREAD",
       fields: { board: "BOARD", tags: "TAGS", title: "TITLE", body: "BODY" },
       errors: {
-        tags: "Three tags is the limit.",
+        tags: "Ten tags is the limit.",
         title: "Give the thread a title.",
         body: "Write the opening post.",
       },
@@ -482,7 +482,7 @@ export const messages = {
       },
       errors: {
         title: "Give the task a title.",
-        tags: "Three tags is the limit.",
+        tags: "Ten tags is the limit.",
         description: "Describe what to read.",
         sourceUrl: "Paste an http(s) link.",
         ticket: "A ticket id is short.",
@@ -648,7 +648,7 @@ export const messages = {
       errors: {
         title: "Give the ticket a title.",
         body: "Describe the work.",
-        tags: "Three tags is the limit.",
+        tags: "Ten tags is the limit.",
       },
       submit: "[ OPEN TICKET ]",
       cancel: "[ CANCEL ]",

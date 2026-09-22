@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_TAGS } from "@/lib/tags";
 import { composableBoardIds, tagIds } from "./threads";
 
 // UI-first slice: input schemas of the board's forms. When the backend lands
@@ -8,8 +9,6 @@ import { composableBoardIds, tagIds } from "./threads";
 const MAX_BODY_LENGTH = 4000;
 
 const MAX_TITLE_LENGTH = 120;
-// Tags are optional; the cap keeps the card's chip row readable.
-const MAX_TAGS = 3;
 
 export const replySchema = z.object({
   body: z.string().trim().min(1).max(MAX_BODY_LENGTH),

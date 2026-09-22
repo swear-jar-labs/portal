@@ -21,7 +21,7 @@
   outline-offset: calc(-1 * var(--dos-border-width));
 }
 
-.button:hover {
+.button:not(.active):not(:disabled):hover {
   background: var(--dos-light-blue);
   color: var(--dos-white);
 }
@@ -45,8 +45,13 @@
   color: var(--dos-black);
 }
 
-:global([data-dos-surface="light"]) .button:not(.active):hover,
-:global([data-dos-surface="paper"]) .button:not(.active):hover {
+:global([data-dos-surface="light"]) .button:not(.active):not(:disabled):hover,
+:global([data-dos-surface="paper"]) .button:not(.active):not(:disabled):hover {
   background: var(--dos-blue);
   color: var(--dos-white);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

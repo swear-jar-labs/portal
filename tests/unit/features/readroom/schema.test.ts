@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { MAX_TAGS } from "@/lib/tags";
 import { noteSchema, readroomSchema, reportSchema } from "@/features/readroom/schema";
+import { readroomTagIds } from "@/features/readroom/readrooms";
 
 const validTask = {
   title: "Read the parser",
@@ -61,12 +63,13 @@ describe("readroomSchema", () => {
     expect(readroomSchema.safeParse({ ...validTask, sourceUrl: "not a url" }).success).toBe(false);
   });
 
-  it("caps tags at three and knows the taxonomy", () => {
-    expect(readroomSchema.safeParse({ ...validTask, tags: ["c", "go", "linux"] }).success).toBe(
-      true,
-    );
+  it("caps tags at the shared limit and knows the taxonomy", () => {
     expect(
-      readroomSchema.safeParse({ ...validTask, tags: ["c", "go", "linux", "sql"] }).success,
+      readroomSchema.safeParse({ ...validTask, tags: readroomTagIds.slice(0, MAX_TAGS) }).success,
+    ).toBe(true);
+    expect(
+      readroomSchema.safeParse({ ...validTask, tags: readroomTagIds.slice(0, MAX_TAGS + 1) })
+        .success,
     ).toBe(false);
     expect(readroomSchema.safeParse({ ...validTask, tags: ["zig"] }).success).toBe(false);
   });

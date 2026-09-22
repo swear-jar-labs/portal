@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 import { Tag } from "../../components/Tag/Tag";
 
 describe("Tag", () => {
+  it("exposes native disabled state on an unavailable toggle", () => {
+    const html = renderToStaticMarkup(
+      <Tag disabled onClick={() => {}}>
+        ops
+      </Tag>,
+    );
+    expect(html).toContain('disabled=""');
+    expect(html).toContain('aria-pressed="false"');
+  });
+
   it("renders a plain span without a click handler", () => {
     const html = renderToStaticMarkup(<Tag tone="cyan">proposal</Tag>);
     expect(html).toContain("<span");

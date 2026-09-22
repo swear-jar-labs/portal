@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { composeSchema, replySchema } from "@/features/board/schema";
+import { tagIds } from "@/features/board/threads";
 
 const validCompose = {
   board: "general",
@@ -33,12 +34,12 @@ describe("composeSchema", () => {
     expect(composeSchema.safeParse({ ...validCompose, board: "token-cache" }).success).toBe(false);
   });
 
-  it("caps tags at three", () => {
+  it("caps tags at the shared limit", () => {
+    // The board vocabulary (7) fits under the cap: the whole list passes,
+    // eleven chips do not.
+    expect(composeSchema.safeParse({ ...validCompose, tags: [...tagIds] }).success).toBe(true);
     expect(
-      composeSchema.safeParse({ ...validCompose, tags: ["craft", "meta", "question"] }).success,
-    ).toBe(true);
-    expect(
-      composeSchema.safeParse({ ...validCompose, tags: ["craft", "meta", "question", "tooling"] })
+      composeSchema.safeParse({ ...validCompose, tags: [...tagIds, ...tagIds.slice(0, 4)] })
         .success,
     ).toBe(false);
   });

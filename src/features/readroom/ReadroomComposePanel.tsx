@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ComboBox, Field, Form, Heading, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { MAX_TAGS, toggleTagSelection } from "@/lib/tags";
 import { type Ticket } from "@/features/tickets/contracts";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { defaultDeadlineLocal, fromLocalInput, type ReadroomDraft } from "./datetime";
@@ -130,12 +131,7 @@ export function ReadroomComposePanel({
   }
 
   function toggleTag(tag: ReadroomTagId) {
-    update(
-      "tags",
-      values.tags.includes(tag)
-        ? values.tags.filter((current) => current !== tag)
-        : [...values.tags, tag],
-    );
+    update("tags", toggleTagSelection(values.tags, tag));
   }
 
   // An empty optional field never reaches the schema: absent means absent.
@@ -210,7 +206,12 @@ export function ReadroomComposePanel({
           {/* One walk row: ←/→ moves between tags, ↑/↓ leaves for the fields. */}
           <Stack direction="row" gap={4} wrap navRow>
             {readroomTagIds.map((tag) => (
-              <Tag key={tag} active={values.tags.includes(tag)} onClick={() => toggleTag(tag)}>
+              <Tag
+                key={tag}
+                active={values.tags.includes(tag)}
+                disabled={!values.tags.includes(tag) && values.tags.length >= MAX_TAGS}
+                onClick={() => toggleTag(tag)}
+              >
                 {messages.readroom.tags[tag]}
               </Tag>
             ))}

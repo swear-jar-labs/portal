@@ -3,6 +3,7 @@
 import { Field, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
 import { type ReactNode } from "react";
 import { messages } from "@/content/messages";
+import { MAX_TAGS, toggleTagSelection } from "@/lib/tags";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import type { TicketEditInput } from "./schema";
 import {
@@ -63,9 +64,7 @@ export function TicketFields({
 }: TicketFieldsProps) {
   function toggleTag(tag: TicketTagId) {
     onChange({
-      tags: values.tags.includes(tag)
-        ? values.tags.filter((current) => current !== tag)
-        : [...values.tags, tag],
+      tags: toggleTagSelection(values.tags, tag),
     });
   }
 
@@ -122,6 +121,7 @@ export function TicketFields({
               key={tag}
               tone={ticketTagTones[tag]}
               active={values.tags.includes(tag)}
+              disabled={!values.tags.includes(tag) && values.tags.length >= MAX_TAGS}
               onClick={() => toggleTag(tag)}
             >
               {messages.tickets.tags[tag]}

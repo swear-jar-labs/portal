@@ -17,7 +17,12 @@ import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { avatarFor } from "@/shared/members";
 import { ticketLinkSchema, type TicketLinkInput } from "./schema";
 import * as ticketStore from "./ticket-store";
-import { ticketLinkKinds, type TicketLink, type TicketLinkKind } from "./tickets";
+import {
+  ticketLinkKinds,
+  ticketLinksAddButtonId,
+  type TicketLink,
+  type TicketLinkKind,
+} from "./tickets";
 
 const kindOptions: SelectOption<TicketLinkKind>[] = ticketLinkKinds.map((kind) => ({
   value: kind,
@@ -97,6 +102,8 @@ export function TicketLinksSection({
     setValues(emptyLinkInput);
     setErrors({});
     setComposing(false);
+    // The trigger stays mounted behind the form, so the keyboard returns at once.
+    document.getElementById(ticketLinksAddButtonId)?.focus();
   }
 
   return (
@@ -132,6 +139,7 @@ export function TicketLinksSection({
               value={values.kind}
               options={kindOptions}
               onChange={(kind) => setValues((current) => ({ ...current, kind }))}
+              autoFocus
             />
             <Field
               label={messages.tickets.dossier.links.url}

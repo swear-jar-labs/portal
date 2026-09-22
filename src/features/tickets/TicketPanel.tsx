@@ -22,8 +22,10 @@ import {
   TICKETS_PATH,
   isBlocked,
   openBlockers,
+  ticketBlockedAddButtonId,
   ticketBlockedSectionId,
   ticketEditButtonId,
+  ticketLinksAddButtonId,
   ticketLinksSectionId,
   ticketPriorityTones,
   ticketSizeTones,
@@ -273,6 +275,7 @@ export function TicketPanel({
           ) : null}
           {canManageLinks ? (
             <Button
+              id={ticketBlockedAddButtonId}
               onClick={() => {
                 setBlockerComposing(true);
                 revealSection(ticketBlockedSectionId);
@@ -283,6 +286,7 @@ export function TicketPanel({
           ) : null}
           {canManageLinks ? (
             <Button
+              id={ticketLinksAddButtonId}
               onClick={() => {
                 setLinkComposing(true);
                 revealSection(ticketLinksSectionId);

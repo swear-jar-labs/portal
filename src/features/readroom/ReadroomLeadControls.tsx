@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Field, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
@@ -32,11 +32,23 @@ function StopConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCancel:
 /** The lead's cycle controls while the task is open (collecting or
  * reviewing): move the deadline, or stop the cycle with an archive and no
  * write-up (READROOM.md §7). */
+
+// The trigger the keyboard returns to when the move form closes (its buttons
+// unmount behind the form, like the claim ladder's EDIT).
+const LEAD_MOVE_BUTTON_ID = "readroom-lead-move";
+
 export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
   const dialogs = useShellDialogs();
   const [moving, setMoving] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | undefined>();
+  // The closed form hands the keyboard back to MOVE; the opening mount is not
+  // a close.
+  const wasMoving = useRef(false);
+  useEffect(() => {
+    if (wasMoving.current && !moving) document.getElementById(LEAD_MOVE_BUTTON_ID)?.focus();
+    wasMoving.current = moving;
+  }, [moving]);
 
   function save() {
     const iso = fromLocalInput(draft);
@@ -81,6 +93,7 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
             onChange={setDraft}
             required
             error={error}
+            autoFocus
           />
           <Stack direction="row" gap={6} navRow>
             <Button type="submit" variant="primary">
@@ -96,6 +109,7 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
   return (
     <Stack direction="row" gap={6} wrap navRow>
       <Button
+        id={LEAD_MOVE_BUTTON_ID}
         variant="ghost"
         onClick={() => {
           setDraft(toLocalInput(readroom.deadlineAt));

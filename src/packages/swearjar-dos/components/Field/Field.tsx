@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ChangeEvent, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import { cx } from "../tone";
 import styles from "../formControls.module.css";
 
@@ -16,6 +16,9 @@ export type FieldProps = {
   error?: string;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   className?: string;
+  // Puts input focus in the field on mount (an opening form hands over focus
+  // to its first control).
+  autoFocus?: boolean;
 };
 
 export function Field({
@@ -30,9 +33,15 @@ export function Field({
   error,
   onKeyDown,
   className,
+  autoFocus = false,
 }: FieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     onChange(event.target.value);
@@ -45,6 +54,7 @@ export function Field({
       </label>
       <input
         id={id}
+        ref={inputRef}
         name={name}
         type={type}
         value={value}

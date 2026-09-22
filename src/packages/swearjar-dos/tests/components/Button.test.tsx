@@ -27,4 +27,13 @@ describe("Button", () => {
     expect(html).toContain('<a href="/tickets?project=compiler&amp;new=1"');
     expect(html).toContain('class="button primary"');
   });
+
+  it("passes the download name through on links", () => {
+    const html = renderToStaticMarkup(
+      <Button href="blob:mock/file" download="snippet.c">
+        [ DOWNLOAD ]
+      </Button>,
+    );
+    expect(html).toContain('download="snippet.c"');
+  });
 });

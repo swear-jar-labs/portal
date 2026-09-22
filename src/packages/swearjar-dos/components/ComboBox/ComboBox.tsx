@@ -32,6 +32,9 @@ export type ComboBoxProps<T extends string = string> = {
   error?: string;
   required?: boolean;
   className?: string;
+  // Puts input focus in the box on mount (an opening form hands over focus
+  // to its first control); the list itself stays closed.
+  autoFocus?: boolean;
 };
 
 export function ComboBox<T extends string = string>({
@@ -46,6 +49,7 @@ export function ComboBox<T extends string = string>({
   error,
   required = false,
   className,
+  autoFocus = false,
 }: ComboBoxProps<T>) {
   const baseId = useId();
   const labelId = `${baseId}-label`;
@@ -75,6 +79,10 @@ export function ComboBox<T extends string = string>({
     if (!open) return;
     optionRefs.current[active]?.scrollIntoView({ block: "nearest" });
   }, [active, open]);
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   function openList() {
     setTyped(false);

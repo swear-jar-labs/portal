@@ -99,6 +99,12 @@ test("the lead moves the deadline and the clock follows", async ({ page }) => {
   await expect(task.getByRole("textbox", { name: "NOTE" })).toBeVisible();
   await expect(task.getByRole("button", { name: "[ MOVE DEADLINE ]" })).toBeVisible();
 
+  // Escape cancels like CANCEL and returns the keyboard to the trigger.
+  await task.getByRole("button", { name: "[ MOVE DEADLINE ]" }).click();
+  await page.keyboard.press("Escape");
+  await expect(task.getByLabel("NEW DEADLINE")).toHaveCount(0);
+  await expect(task.getByRole("button", { name: "[ MOVE DEADLINE ]" })).toBeFocused();
+
   // A past instant is refused.
   await task.getByRole("button", { name: "[ MOVE DEADLINE ]" }).click();
   await task.getByLabel("NEW DEADLINE").fill("2020-01-01T00:00");
@@ -139,10 +145,25 @@ test("the lead attaches and removes a file on a task", async ({ page }) => {
   const task = page.getByRole("region", { name: BUMP });
 
   await task.locator('input[type="file"]').setInputFiles(SNIPPET);
-  const file = task.getByRole("link", { name: "snippet.c" });
+  const file = task.getByRole("button", { name: "View file snippet.c" });
   await expect(file).toBeVisible();
-  await expect(file).toHaveAttribute("href", /^blob:/);
-  await expect(file).toHaveAttribute("download", "snippet.c");
+  await file.focus();
+  await page.keyboard.press("Enter");
+  const viewer = page.getByRole("dialog", { name: "FILE VIEWER: snippet.c" });
+  await expect(viewer.locator("pre")).toContainText("static Node *term");
+  await expect(viewer.getByRole("link", { name: "[ DOWNLOAD ]" })).toHaveAttribute(
+    "href",
+    /^blob:/,
+  );
+  await expect(viewer.getByRole("link", { name: "[ DOWNLOAD ]" })).toHaveAttribute(
+    "download",
+    "snippet.c",
+  );
+  await expectNoViolations(page, "attachment viewer");
+  await page.keyboard.press("Escape");
+  await expect(viewer).toBeHidden();
+  await expect(file).toBeFocused();
+  await expect(task).toBeVisible();
   await expect(task.getByText("FILES", { exact: true })).toBeVisible();
   await expect(task.getByText(ATTACH_TEMP)).toBeVisible();
 
@@ -223,7 +244,7 @@ test("a member opens a task in this session", async ({ page }) => {
   await expect(task.getByText("Table contract for the tickets tracker")).toBeVisible();
   await expect(task.getByText("C", { exact: true })).toBeVisible();
   await expect(task.getByText("Go", { exact: true })).toBeVisible();
-  await expect(task.getByRole("link", { name: "snippet.c" })).toBeVisible();
+  await expect(task.getByRole("button", { name: "View file snippet.c" })).toBeVisible();
   await expect(task.getByText(/DEADLINE 2026-12-24 \d{2}:\d{2} UTC/)).toBeVisible();
 
   // The new task collects notes like any other.

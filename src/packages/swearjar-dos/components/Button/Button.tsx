@@ -25,6 +25,8 @@ type ButtonControlProps = ButtonBaseProps & {
 
 type ButtonLinkProps = ButtonBaseProps & {
   href: string;
+  // A link styled as a raised button still downloads (the viewer footer).
+  download?: string;
   onClick?: never;
   type?: never;
   disabled?: never;
@@ -33,24 +35,34 @@ type ButtonLinkProps = ButtonBaseProps & {
 
 export type ButtonProps = ButtonControlProps | ButtonLinkProps;
 
-export function Button({
-  children,
-  id,
-  href,
-  onClick,
-  type = "button",
-  variant = "default",
-  disabled = false,
-  ariaLabel,
-  ariaPressed,
-  className,
-  style,
-}: ButtonProps) {
+export function Button(props: ButtonProps) {
+  const {
+    children,
+    id,
+    href,
+    onClick,
+    type = "button",
+    variant = "default",
+    disabled = false,
+    ariaLabel,
+    ariaPressed,
+    className,
+    style,
+  } = props;
   const classes = cx(styles.button, styles[variant], className);
 
   if (href !== undefined) {
+    // The href check narrows the union to the link variant.
+    const { download } = props;
     return (
-      <a id={id} href={href} aria-label={ariaLabel} className={classes} style={style}>
+      <a
+        id={id}
+        href={href}
+        download={download}
+        aria-label={ariaLabel}
+        className={classes}
+        style={style}
+      >
         {children}
       </a>
     );

@@ -187,9 +187,12 @@ export const composeButtonId = "tickets-compose-button";
 export const ticketEditButtonId = "tickets-edit-button";
 
 // The compose-form anchors: opening a form from the panel's action row scrolls
-// its section into view (the links form sits below the body).
+// its section into view (the links form sits below the body); closing one
+// hands the keyboard back to its trigger.
 export const ticketBlockedSectionId = "ticket-blocked-section";
 export const ticketLinksSectionId = "ticket-links-section";
+export const ticketBlockedAddButtonId = "ticket-blocked-add-button";
+export const ticketLinksAddButtonId = "ticket-links-add-button";
 
 export type TicketQuery = {
   project: ProjectSlug | "all";

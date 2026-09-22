@@ -264,9 +264,16 @@ test("a member pins a code link in the dossier", async ({ page }) => {
 
   // The author unpins: the link leaves, the empty state returns.
   await dossier.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(dossier.getByRole("button", { name: "[ ADD LINK ]" })).toBeFocused();
   await dossier.getByRole("button", { name: "Remove link Fix the clock source" }).click();
   await expect(dossier.getByRole("link", { name: "Fix the clock source" })).toHaveCount(0);
   await expect(dossier.getByText("No code links pinned yet.")).toBeVisible();
+
+  // Escape cancels like CANCEL and returns the keyboard to the trigger.
+  await dossier.getByRole("button", { name: "[ ADD LINK ]" }).click();
+  await page.keyboard.press("Escape");
+  await expect(dossier.getByLabel("URL")).toHaveCount(0);
+  await expect(dossier.getByRole("button", { name: "[ ADD LINK ]" })).toBeFocused();
 });
 
 test("opens an author profile over the dossier and returns focus", async ({ page }) => {
@@ -468,6 +475,13 @@ test("a member manages blockers and the form refuses bad edges", async ({ page }
   await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
   await expect(dossier.getByText("This ticket is already pinned.")).toBeVisible();
   await dossier.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await expect(dossier.getByRole("button", { name: "[ ADD BLOCKER ]" })).toBeFocused();
+
+  // Escape cancels like CANCEL and returns the keyboard to the trigger.
+  await dossier.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  await page.keyboard.press("Escape");
+  await expect(dossier.getByLabel("TICKET KEY")).toHaveCount(0);
+  await expect(dossier.getByRole("button", { name: "[ ADD BLOCKER ]" })).toBeFocused();
 
   // Removing the fixture blocker opens the gate; adding it back closes it.
   await dossier.getByRole("button", { name: "Remove blocker CMP-1" }).click();

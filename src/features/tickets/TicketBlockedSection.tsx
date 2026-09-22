@@ -18,6 +18,7 @@ import { ticketBlockSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
 import {
   isTicketKey,
+  ticketBlockedAddButtonId,
   ticketBlockedSectionId,
   ticketPath,
   ticketStatusTones,
@@ -103,6 +104,8 @@ export function TicketBlockedSection({
     setKey("");
     setError(undefined);
     setComposing(false);
+    // The trigger stays mounted behind the form, so the keyboard returns at once.
+    document.getElementById(ticketBlockedAddButtonId)?.focus();
   }
 
   function remove(blockerId: string) {
@@ -150,6 +153,7 @@ export function TicketBlockedSection({
               emptyText={messages.tickets.dossier.blocked.noMatch}
               error={error}
               required
+              autoFocus
             />
             <Stack direction="row" gap={8} wrap navRow>
               <Button type="submit" variant="primary">

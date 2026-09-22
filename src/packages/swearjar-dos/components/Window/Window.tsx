@@ -43,7 +43,11 @@ export function Window({
       >
         {children}
       </div>
-      {footer ? <div className={styles.footer}>{footer}</div> : null}
+      {footer ? (
+        <div className={styles.footer} {...{ [DOS_SURFACE_ATTR]: "light" }}>
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }

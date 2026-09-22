@@ -26,7 +26,7 @@ function note(id: string, user: string, body = "original"): ReadroomNote {
 }
 
 function file(id: string, name = "snippet.c"): ReadroomAttachment {
-  return { id, name, size: 42, url: `blob:mock/${id}` };
+  return { id, name, size: 42, mimeType: "text/plain", url: `blob:mock/${id}` };
 }
 
 function readroom(overrides: Partial<Readroom> = {}): Readroom {

@@ -2,7 +2,7 @@ import type { ReadroomAttachment } from "./readrooms";
 
 // The mock storage for attached files: a picked file becomes a blob URL that
 // lives one SPA session and dies with the reload — nothing is uploaded yet
-// (attachments-viewer brings the real storage). The slice's blob URLs are born
+// (real storage arrives in Phase 5). The slice's blob URLs are born
 // and revoked only here.
 
 const LOCAL_FILE_ID_PREFIX = "local-file-";
@@ -12,6 +12,7 @@ export function attachmentsFromFiles(files: Iterable<File>): ReadroomAttachment[
     id: `${LOCAL_FILE_ID_PREFIX}${crypto.randomUUID()}`,
     name: file.name,
     size: file.size,
+    mimeType: file.type,
     url: URL.createObjectURL(file),
   }));
 }

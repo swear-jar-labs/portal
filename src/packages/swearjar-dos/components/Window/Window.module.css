@@ -73,6 +73,22 @@
   color: var(--dos-black);
 }
 
+/* One DOS scrollbar like the panel bodies and the tables: the track is the
+   dark chrome, the thumb the light one. */
+.body::-webkit-scrollbar {
+  width: var(--dos-scrollbar-size);
+  height: var(--dos-scrollbar-size);
+}
+
+.body::-webkit-scrollbar-track {
+  background: var(--dos-scrollbar-track);
+}
+
+.body::-webkit-scrollbar-thumb {
+  background: var(--dos-scrollbar-thumb);
+  border: 2px solid var(--dos-scrollbar-track);
+}
+
 .footer {
   display: flex;
   justify-content: center;

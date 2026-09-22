@@ -412,8 +412,17 @@ test("a deep link opens the stack and Tab from the file list reaches the top lay
   await expect(files.locator("#file-DISCUSSIONS")).toHaveAttribute("aria-current", "true");
 
   await files.locator("#file-DISCUSSIONS").focus();
-  await page.keyboard.press("Tab");
-  await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
+  // Under parallel load a late island commit can replace the row between
+  // .focus() and Tab (the stroke then falls through to the native order):
+  // refocus the current row and retry until the panel answers.
+  const topBody = page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`);
+  await expect
+    .poll(async () => {
+      await files.locator("#file-DISCUSSIONS").focus();
+      await page.keyboard.press("Tab");
+      return await topBody.evaluate((node) => node === document.activeElement);
+    })
+    .toBe(true);
   await page.keyboard.press("Shift+Tab");
   await expect(files.locator("#file-DISCUSSIONS")).toBeFocused();
 

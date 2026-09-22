@@ -415,6 +415,16 @@ export const messages = {
       empty: "No files yet.",
       attach: "[ ATTACH FILES ]",
       remove: "Remove file",
+      preview: {
+        title: "FILE VIEWER",
+        open: "View file",
+        download: "[ DOWNLOAD ]",
+        loading: "Reading file…",
+        empty: "This file is empty.",
+        binary: "Preview is unavailable for this file. Download it to read it locally.",
+        tooLarge: "This file exceeds the preview limit. Download it to read it locally.",
+        error: "Could not read this file. Close the viewer and attach it again.",
+      },
       temp: "Attached files live in this session only — nothing is uploaded yet.",
     },
     notes: {

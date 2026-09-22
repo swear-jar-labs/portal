@@ -36,12 +36,12 @@ export type ReadroomNote = {
 };
 
 // An attached file of a task. The UI-first mock points `url` at a blob that
-// lives one SPA session; Phase 5 swaps it for a storage key (attachments-viewer)
-// and the field set stays.
+// lives one SPA session; Phase 5 swaps the mock for object storage.
 export type ReadroomAttachment = {
   id: string;
   name: string;
   size: number;
+  mimeType: string;
   url: string;
 };
 

@@ -49,7 +49,7 @@ export const welcome = {
     "Bring a question to FORUM, a mistake to ERRATA, or some code to READROOM.",
     "Open HOW-IT-WORKS.TXT to learn about participation and project work.",
     "Pick a file on the left to get started.",
-    "Type HELP for commands. Tab completes.",
+    "Type HELP for commands. Tab completes commands while you type.",
   ],
   footer: "Mistakes happen. Keep the lessons.",
 };

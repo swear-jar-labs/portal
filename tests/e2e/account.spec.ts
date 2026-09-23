@@ -295,7 +295,7 @@ test.describe("apply form", () => {
 
     await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
     await expect(page.getByText("2-32 characters: letters, digits, - or _.")).toBeVisible();
-    await expect(page.getByText("An email address is needed.")).toBeVisible();
+    await expect(page.getByText("Enter a valid email address.")).toBeVisible();
     await expect(
       page.getByText("Tell us a little about your plans, up to 2000 characters."),
     ).toBeVisible();
@@ -433,10 +433,10 @@ test.describe("apply form", () => {
     await page.keyboard.press("Enter");
     await page.keyboard.type("second");
     await expect(message).toHaveValue("first\nsecond");
-    await expect(page.getByText("An email address is needed.")).toHaveCount(0);
+    await expect(page.getByText("Enter a valid email address.")).toHaveCount(0);
 
     await page.keyboard.press("Shift+Enter");
-    await expect(page.getByText("An email address is needed.")).toBeVisible();
+    await expect(page.getByText("Enter a valid email address.")).toBeVisible();
   });
 
   test("Shift + arrows scroll an overflowing window", async ({ page }) => {
@@ -610,7 +610,7 @@ test.describe("logon window", () => {
     await page.goto("/no-such-route");
     const panel = page.getByRole("region", { name: "404.TXT" });
     await expect(panel).toHaveAttribute(DOS_SURFACE_ATTR, "paper");
-    await expectMinimumContrast(page.getByText("No such route in the file list"));
+    await expectMinimumContrast(page.getByText("This page could not be found"));
   });
 });
 

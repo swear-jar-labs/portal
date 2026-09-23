@@ -9,7 +9,7 @@ Learn to build software by making your own decisions, including the wrong ones.
 
 :cyan[**FORUM & ERRATA**] — ask questions, compare approaches, or share a mistake and what it taught you. Stories from your own practice are welcome.
 
-:cyan[**READROOM**] — bring code and a question. Write your own notes before the deadline, then compare what everyone found. A write-up is welcome, not required.
+:cyan[**READROOM**] — bring code and a question. Write your notes independently. Until the deadline, each reader sees only their own notes. Then everyone's notes become public. A write-up is welcome, not required.
 
 :cyan[**PROJECTS**] — take a ticket, explain your approach, and work through review. Ask for help when you get stuck.
 

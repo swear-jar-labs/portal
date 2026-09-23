@@ -398,11 +398,11 @@ test("assigns and leaves a ticket on its dossier", async ({ page }) => {
   await dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" }).focus();
   await page.keyboard.press("Enter");
   await expect(dossier.getByText("UNASSIGNED")).toHaveCount(0);
-  await expect(dossier.getByRole("button", { name: "[ LEAVE ]" })).toBeVisible();
+  await expect(dossier.getByRole("button", { name: "[ UNASSIGN ME ]" })).toBeVisible();
   await expect(dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" })).toHaveCount(0);
 
   // Leaving frees the ticket with no questions asked.
-  await dossier.getByRole("button", { name: "[ LEAVE ]" }).click();
+  await dossier.getByRole("button", { name: "[ UNASSIGN ME ]" }).click();
   await expect(dossier.getByText("UNASSIGNED")).toBeVisible();
   await expectNoViolations(page, "assigned ticket dossier");
 });
@@ -417,7 +417,7 @@ test("opens L to a done-M record and keeps S free for everyone", async ({ page }
   await expect(large.getByText("TASK (YOU HAVE 1)")).toBeVisible();
   await large.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
   await expect(large.getByText("UNASSIGNED")).toHaveCount(0);
-  await expect(large.getByRole("button", { name: "[ LEAVE ]" })).toBeVisible();
+  await expect(large.getByRole("button", { name: "[ UNASSIGN ME ]" })).toBeVisible();
   await expectNoViolations(page, "claimed L ticket");
 });
 
@@ -431,7 +431,7 @@ test("lets anyone take an S ticket: closed is no experience", async ({ page }) =
   await expect(dossier.getByText("EVERYONE")).toBeVisible();
   await dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
   await expect(dossier.getByText("UNASSIGNED")).toHaveCount(0);
-  await expect(dossier.getByRole("button", { name: "[ LEAVE ]" })).toBeVisible();
+  await expect(dossier.getByRole("button", { name: "[ UNASSIGN ME ]" })).toBeVisible();
 });
 
 test("a guest is prompted before assigning", async ({ page }) => {

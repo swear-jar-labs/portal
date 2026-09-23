@@ -78,7 +78,7 @@ export const messages = {
           "Tab switches panels; ▲/▼ moves between rows in a window, ◀/▶ inside a row.",
           "Space or Enter activates; Shift+Enter sends a form; Shift+▲/▼ scrolls the window.",
         ].join("\n"),
-        outro: "Tab completes commands.",
+        outro: "In the command line, Tab completes commands.",
       },
       dir: { title: "DIR" },
       coffee: {
@@ -127,7 +127,7 @@ export const messages = {
     notFound: {
       title: "404.TXT",
       heading: "PATH NOT FOUND",
-      hint: "No such route in the file list. Pick a file on the left or type HELP.",
+      hint: "This page could not be found. Pick a file on the left or type HELP.",
     },
     registry: {
       descriptions: {
@@ -166,9 +166,9 @@ export const messages = {
         title: "Apply — Swear Jar Labs",
         description: "Project participation at Swear Jar Labs. Try the demo application form.",
       },
-      heading: "PROJECT APPLICATION",
+      heading: "MEMBER APPLICATION",
       intro:
-        "Ready to work on a project? Tell us about your experience and what you'd like to try.",
+        "Ready to take on project tickets? Tell us what you've tried and what you'd like to work on.",
       hint: "Demo form. Nothing is sent, and no account or project access is created.",
       fields: {
         role: "Interested in",
@@ -190,8 +190,8 @@ export const messages = {
       },
       errors: {
         user: "2-32 characters: letters, digits, - or _.",
-        email: "An email address is needed.",
-        experience: "Keep it under 2000 characters.",
+        email: "Enter a valid email address.",
+        experience: "Use 2000 characters or fewer.",
         motivation: "Tell us a little about your plans, up to 2000 characters.",
       },
       submit: "[ SUBMIT ]",
@@ -466,7 +466,7 @@ export const messages = {
       form: {
         label: "WRITE-UP",
         submit: "[ PUBLISH WRITE-UP ]",
-        error: "Write the write-up first.",
+        error: "Add a summary of what the readers found.",
         hint: demoSessionHint,
       },
     },
@@ -499,7 +499,7 @@ export const messages = {
       errors: {
         title: "Give the task a title.",
         tags: "Ten tags is the limit.",
-        description: "Describe what to read.",
+        description: "Describe the code and what readers should look for.",
         sourceUrl: "Paste an http(s) link.",
         ticket: "Use a ticket key of no more than 32 characters.",
         unknownTicket: "No ticket with this key.",
@@ -684,7 +684,7 @@ export const messages = {
       edit: "[ EDIT ]",
       claim: {
         assign: "[ ASSIGN TO ME ]",
-        leave: "[ LEAVE ]",
+        leave: "[ UNASSIGN ME ]",
         // The ladder rows name the rung; the numbers land from the policy.
         // EVERYONE and N DONE read in magenta (a documented exception to the
         // tone rule: every role hue is taken by the rung chips or lies).

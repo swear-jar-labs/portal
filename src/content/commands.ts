@@ -21,12 +21,12 @@ export type FileMeta = {
 export const communityLevels = ["participant", "member"] as const;
 export type CommunityLevel = (typeof communityLevels)[number];
 
-export type Audience = "any" | "guest" | "account" | CommunityLevel;
+export type Audience = "any" | "guest" | "account" | "admin" | CommunityLevel;
 
 // Who is looking: nobody (guest) or a signed-in account with its level.
 // The shell passes its session straight through; the account slice resolves
 // the level from the mock registry (see features/account/actor.ts).
-export type Viewer = { level: CommunityLevel } | null;
+export type Viewer = { level: CommunityLevel; admin?: boolean } | null;
 
 // The shell home: docs open here, so no route command matches it.
 export const HOME_PATH = "/";
@@ -42,6 +42,7 @@ export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID
 // features/account/actor.ts); auth pages never serve as ?next= targets.
 export const LOGIN_PATH = "/login";
 export const APPLY_PATH = "/apply";
+export const ADMIN_PATH = "/admin";
 export const REGISTER_PATH = "/register";
 const LOGIN_RETURN_PARAM = "next";
 
@@ -142,6 +143,13 @@ const commandDefs = [
     href: APPLY_PATH,
     audience: "participant",
     file: { group: "account", name: "APPLY", ext: "EXE", size: 512, icon: "check" },
+  },
+  {
+    id: "ADMIN",
+    description: messages.shell.registry.descriptions.ADMIN,
+    href: ADMIN_PATH,
+    audience: "admin",
+    file: { group: "account", name: "ADMIN", ext: "EXE", size: 512, icon: "check" },
   },
   {
     id: "REGISTER",
@@ -259,6 +267,7 @@ export function isVisibleFor(command: Pick<AppCommand, "audience">, viewer: View
   if (audience === "any") return true;
   if (viewer === null) return audience === "guest";
   if (audience === "account") return true;
+  if (audience === "admin") return viewer.admin === true;
   return audience === viewer.level;
 }
 
@@ -341,6 +350,7 @@ const menuDefs: MenuDef[] = [
       { kind: "command", command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
       { kind: "command", command: "REGISTER", label: messages.shell.menuBar.labels.REGISTER },
       { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
+      { kind: "command", command: "ADMIN", label: messages.shell.menuBar.labels.ADMIN },
       { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
       { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
       { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },

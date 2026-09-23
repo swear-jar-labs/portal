@@ -101,10 +101,12 @@ describe("actor viewer and predicates", () => {
     expect(actorViewer({ user: "quinn", level: "participant", admin: false, email: null })).toEqual(
       {
         level: "participant",
+        admin: false,
       },
     );
     expect(actorViewer({ user: "ada", level: "member", admin: false, email: null })).toEqual({
       level: "member",
+      admin: false,
     });
   });
 

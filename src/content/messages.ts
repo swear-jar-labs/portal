@@ -28,6 +28,7 @@ export const messages = {
         PROJECTS: "Projects",
         TICKETS: "Tickets",
         APPLY: "Apply...",
+        ADMIN: "Admin...",
         LOGON: "Logon...",
         REGISTER: "Register...",
         PROFILE: "Profile...",
@@ -142,6 +143,7 @@ export const messages = {
         PROJECTS: "what we build",
         TICKETS: "the work queue",
         APPLY: "apply for project work",
+        ADMIN: "review member applications",
         REGISTER: "create an account",
         LOGON: "sign in",
         PROFILE: "your account",
@@ -171,7 +173,7 @@ export const messages = {
       heading: "MEMBER APPLICATION",
       intro:
         "Ready to work on project tickets? Tell us what you'd like to work on and what you've tried so far.",
-      hint: "This is a demo form. Nothing is sent or saved, and your access does not change.",
+      hint: "Demo applications stay in this server process. No message is sent outside this build.",
       fields: {
         applicant: "APPLICANT",
         experience: "What you have built or broken",
@@ -188,11 +190,44 @@ export const messages = {
         motivation: "Tell us a little about your plans, up to 2000 characters.",
       },
       submit: "[ SUBMIT ]",
-      receipt: {
-        heading: "DEMO APPLICATION",
-        text: "Form checked. Your application has not been sent or saved.",
-        applicant: "APPLICANT",
-        hint: "Pick a file on the left to keep exploring.",
+      reapply: "[ APPLY AGAIN ]",
+      statuses: {
+        pending: "PENDING",
+        "needs-info": "NEEDS INFO",
+        approved: "APPROVED",
+        rejected: "REJECTED",
+      },
+      states: {
+        pending: "Your application is in the admin queue. Check here for a decision.",
+        needsInfo: "Admin asked for more detail. Reply to continue this application.",
+        rejected:
+          "Your last application was declined. You can apply again; its history stays visible.",
+      },
+      response: {
+        heading: "REPLY TO ADMIN",
+        label: "Your clarification",
+        submit: "[ SEND REPLY ]",
+      },
+      actionErrors: {
+        forbidden: "This account cannot change that application.",
+        invalid: "Check the text and try again.",
+        conflict: "This application changed. Reload this page before continuing.",
+        missing: "This application is no longer available.",
+        unavailable: "Applications are available in the development demo only.",
+      },
+      history: {
+        heading: "APPLICATION HISTORY",
+        weeklyHours: "HOURS",
+        experience: "EXPERIENCE",
+        motivation: "MOTIVATION",
+        none: "None added",
+        events: {
+          submitted: "Submitted",
+          "clarification-requested": "Clarification requested",
+          "clarification-sent": "Clarification sent",
+          approved: "Approved",
+          rejected: "Rejected",
+        },
       },
     },
     login: {
@@ -310,6 +345,23 @@ export const messages = {
       saved: "Saved in this browser.",
       hint: "These preferences stay in this browser. They are not synced to an account.",
     },
+  },
+  admin: {
+    metadata: {
+      title: "Admin — Swear Jar Labs",
+      description: "Demo administration for Swear Jar Labs.",
+    },
+    heading: "MEMBER APPLICATIONS",
+    intro: "Review applications in this demo server. Decisions remain available while it runs.",
+    denied: "Admin access is required to open this file.",
+    empty: "No member applications yet. New submissions appear here.",
+    awaiting: "Waiting for the applicant's clarification. No decision is available yet.",
+    closed: "This application has a final decision. Its history remains visible.",
+    reason: "Reason or question",
+    reasonRequired: "Add a reason or question before continuing.",
+    request: "[ REQUEST DETAILS ]",
+    approve: "[ APPROVE ]",
+    reject: "[ DECLINE ]",
   },
   members: {
     metadata: {

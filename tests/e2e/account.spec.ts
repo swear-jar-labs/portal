@@ -510,6 +510,7 @@ test.describe("member threads", () => {
   test("lists the member's threads and opens one with a click or Space", async ({ page }) => {
     await logon(page);
     await page.goto("/profile");
+    await waitForHydration(page);
 
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
     await expect(profile.getByRole("heading", { level: 2, name: "MY THREADS" })).toBeVisible();
@@ -569,15 +570,16 @@ test.describe("member threads", () => {
 });
 
 test.describe("apply form", () => {
-  test("validates and shows a receipt", async ({ page }) => {
-    await logon(page, "quinn-form");
+  test("validates and submits a member application", async ({ page }) => {
+    const handle = `quinn-form-${Date.now().toString(36)}`;
+    await logon(page, handle);
     await page.goto("/apply");
     await expect(
       page.getByText(
-        "This is a demo form. Nothing is sent or saved, and your access does not change.",
+        "Demo applications stay in this server process. No message is sent outside this build.",
       ),
     ).toBeVisible();
-    await expect(page.getByText("APPLICANT: quinn-form")).toBeVisible();
+    await expect(page.getByText(`APPLICANT: ${handle}`)).toBeVisible();
     await expect(page.getByLabel(USER_LABEL)).toHaveCount(0);
     await expect(page.getByLabel("Email")).toHaveCount(0);
 
@@ -594,12 +596,11 @@ test.describe("apply form", () => {
       .fill("A compiler is a conversation.");
     await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
 
-    await expect(page.getByRole("heading", { level: 1, name: "DEMO APPLICATION" })).toBeVisible();
-    await expect(
-      page.getByText("Form checked. Your application has not been sent or saved."),
-    ).toBeVisible();
-    await expect(page.getByText("APPLICANT: quinn-form")).toBeVisible();
-    await expectNoViolations(page, "demo application receipt");
+    await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "APPLICATION HISTORY" })).toBeVisible();
+    await expect(page.getByText(/member-\d/)).toHaveCount(0);
+    await expect(page.getByText(`APPLICANT: ${handle}`)).toBeVisible();
+    await expectNoViolations(page, "submitted member application");
   });
 
   test("weekly hours dropdown works from the keyboard", async ({ page }) => {
@@ -717,7 +718,7 @@ test.describe("apply form", () => {
   });
 
   test("Enter keeps the newline and Shift+Enter sends the form", async ({ page }) => {
-    await logon(page, "quinn-newline");
+    await logon(page, `quinn-newline-${Date.now().toString(36)}`);
     await page.goto("/apply");
     const message = page.getByLabel("What would you like to work on or learn?");
 
@@ -729,7 +730,7 @@ test.describe("apply form", () => {
     await expect(page.getByRole("heading", { name: "MEMBER APPLICATION" })).toBeVisible();
 
     await page.keyboard.press("Shift+Enter");
-    await expect(page.getByRole("heading", { name: "DEMO APPLICATION" })).toBeVisible();
+    await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
   });
 
   test("Shift + arrows scroll an overflowing window", async ({ page }) => {
@@ -770,6 +771,139 @@ test.describe("apply form", () => {
     await expect(page.getByRole("option", { name: "Under 5" })).toBeVisible();
     await expectNoViolations(page, "/apply with an open dropdown");
     await page.keyboard.press("Escape");
+  });
+});
+
+test.describe("member application workflow", () => {
+  async function logoff(page: Page) {
+    await page.getByRole("button", { name: "F9 Logoff" }).click();
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+  }
+
+  test("keeps the server-rendered apply form disabled until hydration", async ({
+    browser,
+    page,
+  }) => {
+    await logon(page, `apply-cold-${Date.now().toString(36)}`);
+    const context = await browser.newContext({
+      javaScriptEnabled: false,
+      storageState: await page.context().storageState(),
+    });
+    try {
+      const coldPage = await context.newPage();
+      await coldPage.goto("/apply");
+      await expect(coldPage.getByRole("button", { name: SUBMIT_BUTTON })).toBeDisabled();
+      await expect(coldPage).toHaveURL("/apply");
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("keeps a clarification in one application and grants Member on approval", async ({
+    page,
+  }) => {
+    const applicant = `apply-flow-${Date.now().toString(36)}`;
+    await logon(page, applicant);
+    await page.goto("/apply");
+    await waitForHydration(page);
+    await page.getByLabel("What would you like to work on or learn?").fill("Work on parsers");
+    await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
+    await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
+    await logoff(page);
+
+    await logon(page, "admin");
+    await page.goto("/admin");
+    const review = page.getByRole("region", { name: applicant });
+    await expect(review.getByText("Work on parsers")).toBeVisible();
+    await expect(review.getByText(/member-\d/)).toHaveCount(0);
+    await expectNoViolations(page, "/admin queue");
+    await review.getByLabel("Reason or question").fill("Which parser have you built?");
+    await review.getByRole("button", { name: "[ REQUEST DETAILS ]" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(review.getByText("Waiting for the applicant's clarification.")).toBeVisible();
+    await logoff(page);
+
+    await logon(page, applicant);
+    await page.goto("/apply");
+    await waitForHydration(page);
+    await expect(page.getByText("Which parser have you built?")).toBeVisible();
+    await page.getByLabel("Your clarification").fill("An expression parser in TypeScript.");
+    await page.getByRole("button", { name: "[ SEND REPLY ]" }).click();
+    await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
+    await logoff(page);
+
+    await logon(page, "admin");
+    await page.goto("/admin");
+    await expect(review.getByText("An expression parser in TypeScript.")).toBeVisible();
+    await review.getByRole("button", { name: "[ APPROVE ]" }).click();
+    await expect(review.getByText("This application has a final decision.")).toBeVisible();
+    await logoff(page);
+
+    await logon(page, applicant);
+    await page.goto("/profile");
+    await expect(page.getByText("Member · JOINED")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "APPLICATION HISTORY" })).toBeVisible();
+    await expect(page.getByText("Approved · admin")).toBeVisible();
+    await expect(page.getByRole("link", { name: "APPLY" })).toHaveCount(0);
+    await page.goto("/apply");
+    await expect(page).toHaveURL("/profile");
+  });
+
+  test("denies the admin route to guests and ordinary accounts", async ({ page }) => {
+    await page.goto("/admin");
+    await expect(page.getByText("Admin access is required to open this file.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "[ APPROVE ]" })).toHaveCount(0);
+    await logon(page, `apply-denied-${Date.now().toString(36)}`);
+    await page.goto("/admin");
+    await expect(page.getByText("Admin access is required to open this file.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "ADMIN" })).toHaveCount(0);
+    await logoff(page);
+    await logon(page, "ada");
+    await page.goto("/admin");
+    await expect(page.getByText("Admin access is required to open this file.")).toBeVisible();
+    await logoff(page);
+    await logon(page, "coadmin");
+    await page.goto("/admin");
+    await expect(page.getByRole("heading", { name: "MEMBER APPLICATIONS" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "ADMIN" })).toBeVisible();
+  });
+
+  test("preserves a rejection when the applicant reapplies", async ({ page }) => {
+    const applicant = `apply-retry-${Date.now().toString(36)}`;
+    await logon(page, applicant);
+    await page.goto("/apply");
+    await waitForHydration(page);
+    await page.getByLabel("What would you like to work on or learn?").fill("First draft");
+    await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
+    await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
+    await logoff(page);
+
+    await logon(page, "admin");
+    await page.goto("/admin");
+    const review = page.getByRole("region", { name: applicant });
+    await review.getByLabel("Reason or question").fill("Please give a concrete example.");
+    await review.getByRole("button", { name: "[ DECLINE ]" }).click();
+    await expect(review.getByText("This application has a final decision.")).toBeVisible();
+    await logoff(page);
+
+    await logon(page, applicant);
+    await page.goto("/apply");
+    await waitForHydration(page);
+    await expect(page.getByText("Please give a concrete example.")).toBeVisible();
+    await page.getByLabel("What would you like to work on or learn?").fill("A parser I built");
+    await page.getByRole("button", { name: "[ APPLY AGAIN ]" }).click();
+    await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
+    await expect(page.getByText("First draft")).toBeVisible();
+    await expect(page.getByText("A parser I built")).toBeVisible();
+
+    await logoff(page);
+    await logon(page, "admin");
+    await page.goto("/admin");
+    const attempts = page.getByRole("region", { name: applicant });
+    await expect(attempts).toHaveCount(2);
+    await expect(attempts.nth(0)).toContainText("A parser I built");
+    await expect(attempts.nth(1)).toContainText("First draft");
   });
 });
 

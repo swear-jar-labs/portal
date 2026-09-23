@@ -8,15 +8,16 @@ import {
 } from "./verification";
 
 // The demo roster: ada and grace back the social buttons and the existing
-// member-path specs; admin previews the admin/co-admin queues (full workflow
-// in ui-member-applications). Every other handle provisions as a Participant
-// on first contact, so fixture authors (ken, lin) and fresh registrations
-// need no roster entry. Mock-only: production auth resolves levels from the
+// member-path specs; admin and coadmin review the application queue. Every
+// other handle provisions as a Participant on first contact, so fixture
+// authors (ken, lin) and fresh registrations need no roster entry. Mock-only:
+// production auth resolves levels from the
 // backend, and this module never ships real credentials.
 const registry = createAccountRegistry([
   { user: "ada", level: "member" },
   { user: "grace", level: "member" },
   { user: "admin", level: "member", admin: true },
+  { user: "coadmin", level: "member", admin: true },
 ]);
 
 const verifications = createVerificationStore();
@@ -27,6 +28,10 @@ export function resolveAccount(user: string): Actor | null {
 
 export function ensureAccount(user: string): Actor {
   return registry.ensure(user);
+}
+
+export function promoteAccount(user: string): Actor | null {
+  return registry.setLevel(user, "member");
 }
 
 // Social signup provisions its own demo Participant per provider: unlike the

@@ -4,8 +4,7 @@ import type { CommunityLevel, Viewer } from "@/content/commands";
 // path-safe by the account schema) and the display string at once. The level
 // follows community-participation: Participant takes part in
 // Discussions/ERRATA/Readroom, Member additionally works project tickets.
-// Admin powers (admin/co-admin queues land in ui-member-applications) are a
-// separate flag, never a community level; project Reviewer/Maintainer roles
+// Admin powers are a separate flag, never a community level; project Reviewer/Maintainer roles
 // live on the project, not on the account.
 export type Actor = {
   user: string;
@@ -57,8 +56,7 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
       known.set(user, created);
       return toActor(user, created);
     },
-    // The future apply flow (ui-member-applications) flips levels through
-    // this function only. Unknown handles are not created here: the apply
+    // The apply flow flips levels through this function only. Unknown handles are not created here: the apply
     // queue owns the account first.
     setLevel(user: string, level: CommunityLevel): Actor | null {
       const entry = known.get(user);
@@ -70,10 +68,10 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
   };
 }
 
-// The viewer the shell and the command registry understand: level only,
+// The viewer the shell and the command registry understand: level and admin flag,
 // composed so the shell never imports the account slice.
 export function actorViewer(actor: Actor | null): Viewer {
-  return actor === null ? null : { level: actor.level };
+  return actor === null ? null : { level: actor.level, admin: actor.admin };
 }
 
 export function isParticipant(actor: Actor | null): boolean {

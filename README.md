@@ -4,7 +4,7 @@ A workshop for people who want to understand how software works — and how to b
 
 We write code, question it, and help each other fix what we were sure would work. The platform brings together FORUM, ERRATA, READROOM and project work in **SWEARJAR.DOS**, a keyboard-friendly DOS-style interface. Open source, MIT licensed.
 
-This repository currently runs on demo data. Threads, notes, tickets and project changes live in browser memory and reset on reload. Terminal preferences persist in this browser; demo sign-in uses a cookie. Application forms do not submit applications, and repository counters and demo activity are fixtures, not live integrations.
+This repository currently runs on demo data. Threads, notes, tickets and project changes live in browser memory and reset on reload. Terminal preferences persist in this browser; demo sign-in uses a cookie. Member applications and admin decisions live in the dev server process and reset when it restarts. Repository counters and demo activity are fixtures, not live integrations.
 
 The next milestone is a complete UI on mocks. Real registration, project permissions and shared storage are not implemented yet. The backend choice is still open; the existing database and auth scaffold is not a commitment to the final stack.
 
@@ -31,6 +31,8 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000).
 
 In development, LOGON accepts a valid username and any non-empty demo password. Use made-up credentials, never a real password. The Google and GitHub buttons simulate sign-in as `ada` and `grace`; they do not contact those providers. Demo sessions are disabled in production and are not a security boundary.
+
+New demo accounts join as Participants. APPLY submits a demo Member application; `admin` and `coadmin` can review it through ADMIN.EXE. A decision updates the demo account, with no email or external delivery.
 
 The database scripts below belong to the scaffold. Do not run schema pushes or generate migrations for UI-only changes; backend integration is a separate step. Values in `.env.example` are local placeholders, not production secrets.
 

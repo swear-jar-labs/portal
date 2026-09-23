@@ -278,6 +278,9 @@ describe("commands content", () => {
     expect(memberFiles).not.toContain("APPLY");
     expect(memberFiles).not.toContain("LOGON");
     expect(memberFiles).not.toContain("REGISTER");
+    expect(memberFiles).not.toContain("ADMIN");
+    expect(filesFor({ level: "member", admin: true })).toContain("ADMIN");
+    expect(filesFor({ level: "participant", admin: false })).not.toContain("ADMIN");
   });
 
   it("resolves every doc command to a document", () => {

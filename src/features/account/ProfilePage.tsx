@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { Stack } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { listThreadSummariesByAuthor } from "@/features/board/contracts";
 import { ShellPanel } from "@/features/shell";
 import { AccountGate } from "./AccountGate";
+import { ApplicationHistory } from "./ApplicationHistory";
 import { getOwnProfile } from "./data";
+import { memberApplicationsFor } from "./mock-applications";
 import { getActorSession } from "./mock-session.server";
 import { ProfileView } from "./ProfileView";
 
@@ -20,7 +23,10 @@ export async function ProfilePage() {
 
   return (
     <ShellPanel title={fileTitle("PROFILE")} closable>
-      <ProfileView profile={profile} threads={threads} now={now} />
+      <Stack gap={12}>
+        <ProfileView profile={profile} threads={threads} now={now} />
+        <ApplicationHistory applications={memberApplicationsFor(actor.user)} />
+      </Stack>
     </ShellPanel>
   );
 }

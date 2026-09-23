@@ -1,6 +1,7 @@
-// The account slice's public surface for other features: the actor and its
-// level predicates. Server readers (getActorSession) and pages stay behind
-// the slice facade; the level mutation lands with the apply queue
-// (ui-member-applications). No logic and no cross-feature imports live here.
-export type { Actor } from "../actor";
-export { actorViewer, isAdmin, isMember, isParticipant } from "../actor";
+// The account slice's public surface for admin. No logic or cross-feature
+// imports live here; additional leaves are published with their consumers.
+export type { MemberApplication } from "../applications";
+export { listMemberApplications } from "../mock-applications";
+export { getActorSession } from "../mock-session.server";
+export { mockDecideMemberApplication } from "../mock-application-actions";
+export { ApplicationHistory } from "../ApplicationHistory";

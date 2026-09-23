@@ -3,11 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import {
-  accountEmailTaken,
   confirmRegistration,
   ensureAccount,
   ensureSocialAccount,
-  resolveAccount,
   startRegistration,
 } from "./mock-accounts";
 import {
@@ -30,7 +28,7 @@ export type MockRegisterStartResult =
 
 export type MockRegisterConfirmResult =
   | { ok: true; user: string }
-  | { ok: false; error: "invalid" | "mismatch" | "expired" | "missing" | "unavailable" };
+  | { ok: false; error: "invalid" | "mismatch" | "expired" | "missing" | "taken" | "unavailable" };
 
 async function setMockSession(user: string): Promise<void> {
   const store = await cookies();
@@ -62,13 +60,12 @@ export async function mockStartRegistration(input: unknown): Promise<MockRegiste
   const parsed = mockRegisterStartSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
 
-  if (resolveAccount(parsed.data.user)) return { ok: false, error: "taken" };
-  if (accountEmailTaken(parsed.data.email)) return { ok: false, error: "email-taken" };
-
   // No mail leaves the demo: the code is issued server-side and shown on
-  // screen, and the account is created only after it comes back.
-  const pending = startRegistration(parsed.data.user, parsed.data.email);
-  return { ok: true, user: pending.user, demoCode: pending.code };
+  // screen, and the account is created only after it comes back. The flow
+  // owns the taken checks (handle and mailbox, pending codes included).
+  const started = startRegistration(parsed.data.user, parsed.data.email);
+  if (!started.ok) return { ok: false, error: started.error };
+  return { ok: true, user: started.pending.user, demoCode: started.pending.code };
 }
 
 export async function mockConfirmRegistration(input: unknown): Promise<MockRegisterConfirmResult> {

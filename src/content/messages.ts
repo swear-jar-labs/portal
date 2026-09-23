@@ -264,6 +264,7 @@ export const messages = {
         password: "A password is needed.",
         taken: "That username is taken. Pick another one, or log on.",
         emailTaken: "That email is already registered. Log on instead.",
+        form: "Check the fields and try again.",
       },
       code: {
         heading: "CHECK YOUR EMAIL",

@@ -58,6 +58,14 @@ export function createVerificationStore() {
       pending.set(user, entry);
       return entry;
     },
+    // A pending code claims its mailbox: registration must not hand the same
+    // address to two handles while both wait for confirmation.
+    hasPendingEmail(email: string): boolean {
+      for (const entry of pending.values()) {
+        if (entry.email === email) return true;
+      }
+      return false;
+    },
     confirm(user: string, input: string, now: number = Date.now()): VerificationCheck | "missing" {
       const entry = pending.get(user);
       if (!entry) return "missing";

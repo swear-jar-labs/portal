@@ -10,12 +10,13 @@ import {
   projectName,
   projectSlugs,
 } from "@/features/projects/contracts";
+import { ERRATA_BOARD_ID } from "@/lib/board";
 import { formatAge as formatRelativeAge } from "@/shared/age";
 
 // Boards: the general one, errata (its own vocabulary, same machinery) and
 // the project journals (names come from the projects slice; Phase 5 reads
 // them from sections.title).
-export const staticBoardIds = ["general", "errata"] as const;
+export const staticBoardIds = ["general", ERRATA_BOARD_ID] as const;
 
 export const boardIds = [...staticBoardIds, ...projectSlugs] as const;
 export type BoardId = (typeof boardIds)[number];

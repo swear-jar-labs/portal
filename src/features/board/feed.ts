@@ -1,3 +1,4 @@
+import { BOARD_QUERY_PARAM } from "@/lib/board";
 import { isBoardId, isTagId, type BoardId, type TagId } from "./threads";
 
 export const threadSorts = ["hot", "new"] as const;
@@ -15,7 +16,6 @@ export type FeedQuery = FeedFilters & {
 
 export const DEFAULT_FEED_QUERY: FeedQuery = { sort: "hot" };
 
-const BOARD_PARAM = "board";
 const TAG_PARAM = "tag";
 const SORT_PARAM = "sort";
 
@@ -25,7 +25,7 @@ function isThreadSort(value: string): value is ThreadSort {
 
 /** Reads the feed state out of the URL; unknown values fall back to defaults. */
 export function parseFeedQuery(params: URLSearchParams): FeedQuery {
-  const board = params.get(BOARD_PARAM);
+  const board = params.get(BOARD_QUERY_PARAM);
   const tag = params.get(TAG_PARAM);
   const sort = params.get(SORT_PARAM);
   return {
@@ -43,7 +43,7 @@ export function sameFeedQuery(a: FeedQuery, b: FeedQuery): boolean {
 /** The URL form of the feed state: defaults stay out, so the feed links clean. */
 export function feedQueryParams(query: FeedQuery): URLSearchParams {
   const params = new URLSearchParams();
-  if (query.board) params.set(BOARD_PARAM, query.board);
+  if (query.board) params.set(BOARD_QUERY_PARAM, query.board);
   if (query.tag) params.set(TAG_PARAM, query.tag);
   if (query.sort !== DEFAULT_FEED_QUERY.sort) params.set(SORT_PARAM, query.sort);
   return params;

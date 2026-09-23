@@ -1,4 +1,5 @@
 import type { Command, SpriteName } from "@swearjar/dos";
+import { BOARD_QUERY_PARAM, ERRATA_BOARD_ID } from "@/lib/board";
 import type { DocId } from "./docs";
 import { messages } from "./messages";
 
@@ -33,8 +34,6 @@ export const HOME_PATH = "/";
 // The board feed doubles as two section entries: FORUM is the whole feed,
 // ERRATA opens it pre-filtered to the errata board (no new engine or copy).
 export const FORUM_PATH = "/forum";
-const BOARD_QUERY_PARAM = "board";
-const ERRATA_BOARD_ID = "errata";
 export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID}`;
 
 // Guest-only entries: LOGON carries the return location (?next=) so a logon

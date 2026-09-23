@@ -47,18 +47,12 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
     },
     // First contact provisions a Participant: the demo logon doubles as an
     // implicit registration, so fixture handles keep working without a roster
-    // entry. Existing entries are never downgraded by this path; a verified
-    // email attaches when the entry has none yet.
+    // entry. Existing entries are never downgraded or rewritten here — the
+    // email is stored on creation only, and a handle claimed while a code
+    // waited is rejected by the registration flow, not attached.
     ensure(user: string, email?: string): Actor {
       const entry = known.get(user);
-      if (entry !== undefined) {
-        if (email !== undefined && entry.email === undefined) {
-          const updated: AccountSeed = { ...entry, email };
-          known.set(user, updated);
-          return toActor(user, updated);
-        }
-        return toActor(user, entry);
-      }
+      if (entry !== undefined) return toActor(user, entry);
       const created: AccountSeed = { user, level: "participant", email };
       known.set(user, created);
       return toActor(user, created);
@@ -75,8 +69,6 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
     },
   };
 }
-
-export type AccountRegistry = ReturnType<typeof createAccountRegistry>;
 
 // The viewer the shell and the command registry understand: level only,
 // composed so the shell never imports the account slice.

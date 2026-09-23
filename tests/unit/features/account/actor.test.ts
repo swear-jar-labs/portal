@@ -67,13 +67,15 @@ describe("account registry", () => {
     });
   });
 
-  it("stores a verified email on provision and attaches it to email-less entries", () => {
+  it("stores a verified email on creation and never rewrites a known entry", () => {
     const accounts = roster();
     expect(accounts.ensure("quinn", "quinn@example.com").email).toBe("quinn@example.com");
     expect(accounts.emailTaken("quinn@example.com")).toBe(true);
     expect(accounts.emailTaken("nobody@example.com")).toBe(false);
-    expect(accounts.ensure("ada", "ada@example.com").email).toBe("ada@example.com");
-    expect(accounts.ensure("ada", "other@example.com").email).toBe("ada@example.com");
+    // A taken handle keeps its own record: the registration flow rejects the
+    // claim instead of attaching (see mock-accounts.test.ts).
+    expect(accounts.ensure("ada", "ada@example.com").email).toBeNull();
+    expect(accounts.emailTaken("ada@example.com")).toBe(false);
   });
 
   it("applies level changes through the single setLevel point", () => {

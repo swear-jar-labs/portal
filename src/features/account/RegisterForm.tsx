@@ -67,7 +67,7 @@ export function RegisterForm() {
         setErrors({ email: copy.errors.emailTaken });
         return;
       }
-      setErrors({ form: messages.account.login.errors.unavailable });
+      setErrors({ form: copy.errors.form });
     });
   }
 
@@ -83,6 +83,17 @@ export function RegisterForm() {
       const result = await mockConfirmRegistration(parsed.data);
       if (result.ok) {
         router.push("/profile");
+        return;
+      }
+      if (result.error === "invalid") {
+        setErrors({ code: copy.code.errors.invalid });
+        return;
+      }
+      // The handle was claimed while the code waited: back to the details,
+      // where another one can be picked (the code is not burned).
+      if (result.error === "taken") {
+        setStep({ name: "details" });
+        setErrors({ user: copy.errors.taken });
         return;
       }
       if (result.error === "expired") {

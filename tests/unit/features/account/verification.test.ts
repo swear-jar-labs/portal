@@ -41,6 +41,24 @@ describe("verification store", () => {
     expect(store.pendingFor("quinn")).toBeUndefined();
   });
 
+  it("claims the mailbox of a pending code until it is confirmed or dropped", () => {
+    const store = createVerificationStore();
+    store.start("quinn", "quinn@example.com", { code: "123456", now: 1000 });
+    expect(store.hasPendingEmail("quinn@example.com")).toBe(true);
+    expect(store.hasPendingEmail("other@example.com")).toBe(false);
+    expect(store.confirm("quinn", "000000", 2000)).toBe("mismatch");
+    expect(store.hasPendingEmail("quinn@example.com")).toBe(true);
+    expect(store.confirm("quinn", "123456", 2000)).toBe("ok");
+    expect(store.hasPendingEmail("quinn@example.com")).toBe(false);
+  });
+
+  it("releases the mailbox when the pending code expires", () => {
+    const store = createVerificationStore();
+    store.start("quinn", "quinn@example.com", { code: "123456", now: 1000 });
+    expect(store.confirm("quinn", "123456", 1000 + OTP_TTL_MS + 1)).toBe("expired");
+    expect(store.hasPendingEmail("quinn@example.com")).toBe(false);
+  });
+
   it("reports unknown handles as missing", () => {
     expect(createVerificationStore().confirm("quinn", "123456", 1000)).toBe("missing");
   });

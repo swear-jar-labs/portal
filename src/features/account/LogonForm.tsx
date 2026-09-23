@@ -119,9 +119,9 @@ export function LogonForm({ returnTo }: LogonFormProps) {
         </Stack>
 
         <Text>
-          {messages.account.login.applyPrompt}{" "}
-          <Link href="/apply" underline>
-            {messages.account.login.applyLink}
+          {messages.account.login.registerPrompt}{" "}
+          <Link href="/register" underline>
+            {messages.account.login.registerLink}
           </Link>
         </Text>
       </Stack>

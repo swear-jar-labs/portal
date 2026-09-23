@@ -50,6 +50,13 @@ describe("registration flow", () => {
     });
   });
 
+  it("reissues a code for the same handle and mailbox", () => {
+    const { user, email } = pendingFor("retry");
+    expect(startRegistration(user, email, { code: "654321", now: 2000 }).ok).toBe(true);
+    expect(confirmRegistration(user, "123456", 3000)).toEqual({ result: "mismatch", actor: null });
+    expect(confirmRegistration(user, "654321", 3000).result).toBe("ok");
+  });
+
   it("rejects a mailbox that belongs to a confirmed account", () => {
     const { user, email } = pendingFor("lin");
     expect(confirmRegistration(user, "123456", 2000).result).toBe("ok");

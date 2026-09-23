@@ -2,8 +2,8 @@ import { Heading, Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 
-// Member-only routes render this for guests instead of redirecting: the shell
-// stays put and the next step (logon or apply) is one click away.
+// Account-only routes render this for guests instead of redirecting: the shell
+// stays put and the next step (logon or register) is one click away.
 export function AccountGate({ title }: { title: string }) {
   return (
     <ShellPanel title={title} closable>
@@ -17,8 +17,8 @@ export function AccountGate({ title }: { title: string }) {
             </Link>
           </Text>
           <Text>
-            <Link href="/apply" underline>
-              {messages.account.gate.apply}
+            <Link href="/register" underline>
+              {messages.account.gate.register}
             </Link>
           </Text>
         </Stack>

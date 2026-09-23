@@ -57,7 +57,7 @@ export function startRegistration(
   if (registry.resolve(user)) return { ok: false, error: "taken" };
   // The pending store claims its mailbox too: two handles must not verify the
   // same address in parallel.
-  if (registry.emailTaken(email) || verifications.hasPendingEmail(email)) {
+  if (registry.emailTaken(email) || verifications.hasPendingEmail(email, user)) {
     return { ok: false, error: "email-taken" };
   }
   return { ok: true, pending: verifications.start(user, email, start) };

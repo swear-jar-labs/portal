@@ -26,16 +26,10 @@ export const emailSchema = z
 // length, valid for OTP_TTL_MS (see verification.ts, server-only).
 export const OTP_LENGTH = 6;
 
-export const applyRoles = ["learner", "reviewer"] as const;
-export type ApplyRole = (typeof applyRoles)[number];
-
 export const weeklyHourIds = ["under-5", "5-10", "over-10"] as const;
 export type WeeklyHoursId = (typeof weeklyHourIds)[number];
 
 export const applySchema = z.object({
-  role: z.enum(applyRoles),
-  user: userSchema,
-  email: z.string().trim().pipe(z.email()),
   experience: z.string().trim().max(MAX_TEXT_LENGTH),
   weeklyHours: z.enum(weeklyHourIds),
   motivation: z.string().trim().min(1).max(MAX_TEXT_LENGTH),

@@ -1,31 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Field, Form, Heading, Select, Stack, Text, Textarea } from "@swearjar/dos";
+import { Button, Form, Heading, Select, Stack, Text, Textarea } from "@swearjar/dos";
 import type { ZodError } from "zod";
 import { messages } from "@/content/messages";
-import { applyRoles, applySchema, weeklyHourIds, type ApplyInput } from "./schema";
+import { applySchema, weeklyHourIds, type ApplyInput } from "./schema";
 
 const EXPERIENCE_ROWS = 3;
 const MOTIVATION_ROWS = 5;
 
-const FIELD_KEYS = ["user", "email", "experience", "motivation"] as const;
+const FIELD_KEYS = ["experience", "motivation"] as const;
 
 type FieldErrors = Partial<Record<(typeof FIELD_KEYS)[number], string>>;
 
 const INITIAL_VALUES: ApplyInput = {
-  role: "learner",
-  user: "",
-  email: "",
   experience: "",
   weeklyHours: "5-10",
   motivation: "",
 };
-
-const roleOptions = applyRoles.map((role) => ({
-  value: role,
-  label: messages.account.apply.roles[role],
-}));
 
 const weeklyHoursOptions = weeklyHourIds.map((id) => ({
   value: id,
@@ -42,7 +34,7 @@ function toFieldErrors(error: ZodError): FieldErrors {
   return errors;
 }
 
-export function ApplyForm() {
+export function ApplyForm({ applicant }: { applicant: string }) {
   const [values, setValues] = useState<ApplyInput>(INITIAL_VALUES);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [sent, setSent] = useState(false);
@@ -68,7 +60,7 @@ export function ApplyForm() {
         <Heading level={1}>{messages.account.apply.receipt.heading}</Heading>
         <Text>{messages.account.apply.receipt.text}</Text>
         <Text role="hint">
-          {messages.account.apply.receipt.applicant}: {values.user}
+          {messages.account.apply.receipt.applicant}: {applicant}
         </Text>
         <Text role="hint">{messages.account.apply.receipt.hint}</Text>
       </Stack>
@@ -82,33 +74,9 @@ export function ApplyForm() {
         <Text>{messages.account.apply.intro}</Text>
         <Text role="hint">{messages.account.apply.hint}</Text>
 
-        <Select
-          label={messages.account.apply.fields.role}
-          name="role"
-          value={values.role}
-          onChange={(role) => update("role", role)}
-          options={roleOptions}
-        />
-        <Field
-          label={messages.account.apply.fields.user}
-          name="user"
-          value={values.user}
-          onChange={(user) => update("user", user)}
-          placeholder={messages.account.apply.fields.userPlaceholder}
-          autoComplete="username"
-          required
-          error={errors.user}
-        />
-        <Field
-          label={messages.account.apply.fields.email}
-          name="email"
-          type="email"
-          value={values.email}
-          onChange={(email) => update("email", email)}
-          autoComplete="email"
-          required
-          error={errors.email}
-        />
+        <Text role="hint">
+          {messages.account.apply.fields.applicant}: {applicant}
+        </Text>
         <Select
           label={messages.account.apply.fields.weeklyHours}
           name="weeklyHours"

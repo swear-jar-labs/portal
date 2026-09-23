@@ -56,7 +56,7 @@ test.describe("guest account chrome", () => {
     const gate = page.getByRole("region", { name: "PROFILE.EXE" });
     await expect(page.getByRole("heading", { level: 1, name: "LOGON REQUIRED" })).toBeVisible();
     await expect(gate.getByRole("link", { name: "LOGON" })).toBeVisible();
-    await expect(gate.getByRole("link", { name: "APPLY" })).toBeVisible();
+    await expect(gate.getByRole("link", { name: "REGISTER" })).toHaveAttribute("href", "/register");
     await expectNoViolations(page, "/profile gate");
 
     await page.goto("/settings");
@@ -447,6 +447,9 @@ test.describe("registration and levels", () => {
   });
 
   test("opens apply for participants and bounces members to the profile", async ({ page }) => {
+    await page.goto("/apply");
+    await expect(page).toHaveURL("/register");
+
     await logon(page, "quinn-apply");
     await page.goto("/apply");
     await expect(page.getByRole("heading", { level: 1, name: "MEMBER APPLICATION" })).toBeVisible();
@@ -567,25 +570,25 @@ test.describe("member threads", () => {
 
 test.describe("apply form", () => {
   test("validates and shows a receipt", async ({ page }) => {
+    await logon(page, "quinn-form");
     await page.goto("/apply");
     await expect(
-      page.getByText("Demo form. Nothing is sent, and no account or project access is created."),
+      page.getByText(
+        "This is a demo form. Nothing is sent or saved, and your access does not change.",
+      ),
     ).toBeVisible();
+    await expect(page.getByText("APPLICANT: quinn-form")).toBeVisible();
+    await expect(page.getByLabel(USER_LABEL)).toHaveCount(0);
+    await expect(page.getByLabel("Email")).toHaveCount(0);
 
     await page.getByRole("button", { name: SUBMIT_BUTTON }).click();
-    await expect(page.getByText("2-32 characters: letters, digits, - or _.")).toBeVisible();
-    await expect(page.getByText("Enter a valid email address.")).toBeVisible();
     await expect(
       page.getByText("Tell us a little about your plans, up to 2000 characters."),
     ).toBeVisible();
 
-    await page.getByLabel("Interested in").click();
-    await page.getByRole("option", { name: "Reviewing" }).click();
     await page.getByLabel("Hours a week").click();
     await page.getByRole("option", { name: "Over 10" }).click();
 
-    await page.getByLabel(USER_LABEL).fill("grace-hopper");
-    await page.getByLabel("Email").fill("grace@example.com");
     await page
       .getByLabel("What would you like to work on or learn?")
       .fill("A compiler is a conversation.");
@@ -595,56 +598,64 @@ test.describe("apply form", () => {
     await expect(
       page.getByText("Form checked. Your application has not been sent or saved."),
     ).toBeVisible();
-    await expect(page.getByText("APPLICANT: grace-hopper")).toBeVisible();
+    await expect(page.getByText("APPLICANT: quinn-form")).toBeVisible();
     await expectNoViolations(page, "demo application receipt");
   });
 
-  test("dropdowns work from the keyboard", async ({ page }) => {
+  test("weekly hours dropdown works from the keyboard", async ({ page }) => {
+    await logon(page, "quinn-hours");
     await page.goto("/apply");
-    const role = page.getByLabel("Interested in");
-    await role.focus();
+    const hours = page.getByLabel("Hours a week");
+    await hours.focus();
 
     // Plain ↑/↓ walk controls instead of opening the list.
     await page.keyboard.press("ArrowDown");
     await expect(page.getByRole("listbox")).toHaveCount(0);
-    await expect(page.getByLabel(USER_LABEL)).toBeFocused();
+    await expect(page.getByLabel("What you have built or broken")).toBeFocused();
 
-    await role.focus();
+    await hours.focus();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("option", { name: "Learning" })).toBeVisible();
+    await expect(page.getByRole("option", { name: "5 to 10" })).toBeVisible();
 
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
-    await expect(role).toContainText("Reviewing");
+    await expect(hours).toContainText("Over 10");
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
+    await hours.focus();
     await page.keyboard.press("Enter");
     await page.keyboard.press("ArrowUp");
     await page.keyboard.press("Escape");
-    await expect(role).toContainText("Reviewing");
+    await expect(hours).toContainText("Over 10");
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     // Tab from an open list commits the active option and toggles panels.
+    await hours.focus();
     await page.keyboard.press("Enter");
+    await expect(page.getByRole("listbox")).toBeVisible();
     await page.keyboard.press("ArrowUp");
+    await expect(page.getByRole("option", { name: "5 to 10" })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
     await page.keyboard.press("Tab");
     await expect(page.getByRole("listbox")).toHaveCount(0);
-    await expect(role).toContainText("Learning");
-    // Guests have no APPLY row: the cursor falls back to the displayed doc.
-    await expect(page.locator("#file-ABOUT")).toBeFocused();
+    await expect(hours).toContainText("5 to 10");
+    await expect(hours).not.toBeFocused();
   });
 
   test("typing on a closed dropdown opens it at the match without feeding the command line", async ({
     page,
   }) => {
+    await logon(page, "quinn-hours-type");
     await page.goto("/apply");
-    const role = page.getByLabel("Interested in");
-    await role.focus();
-    await expect(role).toContainText("Learning");
+    const hours = page.getByLabel("Hours a week");
+    await hours.focus();
+    await expect(hours).toContainText("5 to 10");
 
-    await page.keyboard.type("r");
+    await page.keyboard.type("o");
     await expect(page.getByRole("listbox")).toBeVisible();
-    await expect(page.getByRole("option", { name: "Reviewing" })).toHaveAttribute(
+    await expect(page.getByRole("option", { name: "Over 10" })).toHaveAttribute(
       "data-active",
       "true",
     );
@@ -652,10 +663,11 @@ test.describe("apply form", () => {
     await expect(page.getByLabel("Command line")).toHaveValue("");
 
     await page.keyboard.press("Enter");
-    await expect(role).toContainText("Reviewing");
+    await expect(hours).toContainText("Over 10");
   });
 
   test("a textarea keeps its caret and only arrows out from its edges", async ({ page }) => {
+    await logon(page, "quinn-caret");
     await page.goto("/apply");
     const message = page.getByLabel("What would you like to work on or learn?");
     const experience = page.getByLabel("What you have built or broken");
@@ -705,6 +717,7 @@ test.describe("apply form", () => {
   });
 
   test("Enter keeps the newline and Shift+Enter sends the form", async ({ page }) => {
+    await logon(page, "quinn-newline");
     await page.goto("/apply");
     const message = page.getByLabel("What would you like to work on or learn?");
 
@@ -713,27 +726,32 @@ test.describe("apply form", () => {
     await page.keyboard.press("Enter");
     await page.keyboard.type("second");
     await expect(message).toHaveValue("first\nsecond");
-    await expect(page.getByText("Enter a valid email address.")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "MEMBER APPLICATION" })).toBeVisible();
 
     await page.keyboard.press("Shift+Enter");
-    await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "DEMO APPLICATION" })).toBeVisible();
   });
 
   test("Shift + arrows scroll an overflowing window", async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 420 });
+    await logon(page, "quinn-scroll");
     await page.goto("/apply");
     const body = docScroll(page);
     const scrollTop = () => body.evaluate((element) => element.scrollTop);
 
+    await expect
+      .poll(() => body.evaluate((element) => element.scrollHeight))
+      .toBeGreaterThan(await body.evaluate((element) => element.clientHeight));
     expect(await scrollTop()).toBe(0);
 
     // From a non-text control the arrows scroll instead of walking.
-    await page.getByLabel("Interested in").focus();
+    await page.getByLabel("Hours a week").focus();
     await page.keyboard.press("Shift+ArrowDown");
     const scrolled = await scrollTop();
     expect(scrolled).toBeGreaterThan(0);
     await page.keyboard.press("Shift+ArrowUp");
     expect(await scrollTop()).toBeLessThan(scrolled);
-    await expect(page.getByLabel("Interested in")).toBeFocused();
+    await expect(page.getByLabel("Hours a week")).toBeFocused();
 
     // A textarea keeps Shift+↑ for selection: the window stays put.
     const message = page.getByLabel("What would you like to work on or learn?");
@@ -744,11 +762,12 @@ test.describe("apply form", () => {
   });
 
   test("has no accessibility violations", async ({ page }) => {
+    await logon(page, "quinn-axe");
     await page.goto("/apply");
     await expectNoViolations(page, "/apply");
 
-    await page.getByLabel("Interested in").click();
-    await expect(page.getByRole("option", { name: "Learning" })).toBeVisible();
+    await page.getByLabel("Hours a week").click();
+    await expect(page.getByRole("option", { name: "Under 5" })).toBeVisible();
     await expectNoViolations(page, "/apply with an open dropdown");
     await page.keyboard.press("Escape");
   });
@@ -822,13 +841,13 @@ test.describe("logon window", () => {
     ).toBeVisible();
     const user = page.getByLabel(USER_LABEL);
     const password = page.getByLabel(PASSWORD_LABEL);
-    const apply = form.getByRole("link", { name: "APPLY" });
+    const register = form.getByRole("link", { name: "REGISTER" });
 
     // From the panel surface the walk enters at the matching edge.
     await page.locator("#file-LOGON").focus();
     await page.keyboard.press("Tab");
     await page.keyboard.press("ArrowUp");
-    await expect(apply).toBeFocused();
+    await expect(register).toBeFocused();
     await page.keyboard.press("ArrowDown");
     await expect(user).toBeFocused();
     await page.keyboard.press("ArrowDown");

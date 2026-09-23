@@ -4,8 +4,7 @@ import { Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
 
-/** The guest call under the project: members already have ALL THREADS above,
- * guests are pointed at APPLY — composing itself lives in the forum. */
+/** The guest call under the project: registration comes before a Member application. */
 export function ProjectCta() {
   const session = useShellSession();
 
@@ -13,7 +12,7 @@ export function ProjectCta() {
   return (
     <Stack gap={4} navRow>
       <Text role="hint">{messages.projects.cta.guestText}</Text>
-      <Link href="/apply">{messages.projects.cta.apply}</Link>
+      <Link href="/register">{messages.projects.cta.register}</Link>
     </Stack>
   );
 }

@@ -161,29 +161,22 @@ export const messages = {
       heading: "LOGON REQUIRED",
       text: "Log on to open this file.",
       logon: "LOGON",
-      apply: "APPLY",
+      register: "REGISTER",
     },
     apply: {
       metadata: {
         title: "Apply — Swear Jar Labs",
-        description: "Project participation at Swear Jar Labs. Try the demo application form.",
+        description: "Participant application for project access at Swear Jar Labs.",
       },
       heading: "MEMBER APPLICATION",
       intro:
-        "Ready to take on project tickets? Tell us what you've tried and what you'd like to work on.",
-      hint: "Demo form. Nothing is sent, and no account or project access is created.",
+        "Ready to work on project tickets? Tell us what you'd like to work on and what you've tried so far.",
+      hint: "This is a demo form. Nothing is sent or saved, and your access does not change.",
       fields: {
-        role: "Interested in",
-        user: "Username",
-        userPlaceholder: "ada-lovelace",
-        email: "Email",
+        applicant: "APPLICANT",
         experience: "What you have built or broken",
         weeklyHours: "Hours a week",
         motivation: "What would you like to work on or learn?",
-      },
-      roles: {
-        learner: "Learning",
-        reviewer: "Reviewing",
       },
       weeklyHours: {
         "under-5": "Under 5",
@@ -191,8 +184,6 @@ export const messages = {
         "over-10": "Over 10",
       },
       errors: {
-        user: "2-32 characters: letters, digits, - or _.",
-        email: "Enter a valid email address.",
         experience: "Use 2000 characters or fewer.",
         motivation: "Tell us a little about your plans, up to 2000 characters.",
       },
@@ -232,8 +223,8 @@ export const messages = {
         unavailable:
           "Sign-in is not available in this build. Demo sign-in works in development only.",
       },
-      applyPrompt: "Curious about project work?",
-      applyLink: "APPLY",
+      registerPrompt: "New to the workshop?",
+      registerLink: "REGISTER",
     },
     register: {
       metadata: {
@@ -630,8 +621,8 @@ export const messages = {
       allThreads: "ALL THREADS",
     },
     cta: {
-      guestText: "Interested in project work? Explore the demo application.",
-      apply: "[ APPLY → ]",
+      guestText: "Interested in project work? Register as a Participant first.",
+      register: "[ REGISTER → ]",
     },
     age: {
       now: "JUST NOW",

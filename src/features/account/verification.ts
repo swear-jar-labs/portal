@@ -60,9 +60,9 @@ export function createVerificationStore() {
     },
     // A pending code claims its mailbox: registration must not hand the same
     // address to two handles while both wait for confirmation.
-    hasPendingEmail(email: string): boolean {
+    hasPendingEmail(email: string, exceptUser?: string): boolean {
       for (const entry of pending.values()) {
-        if (entry.email === email) return true;
+        if (entry.email === email && entry.user !== exceptUser) return true;
       }
       return false;
     },

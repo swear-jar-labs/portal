@@ -222,11 +222,14 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
     panel.getByRole("link", { name: "https://github.com/swear-jar-labs/portal" }),
   ).toHaveAttribute("target", "_blank");
 
-  // Guests can explore the demo application without a promise of project access.
+  // Guests register before they can apply for project access.
   await expect(
-    panel.getByText("Interested in project work? Explore the demo application."),
+    panel.getByText("Interested in project work? Register as a Participant first."),
   ).toBeVisible();
-  await expect(panel.getByRole("link", { name: "[ APPLY → ]" })).toHaveAttribute("href", "/apply");
+  await expect(panel.getByRole("link", { name: "[ REGISTER → ]" })).toHaveAttribute(
+    "href",
+    "/register",
+  );
 
   await page.goto(projectPath("token-cache"));
   await waitForHydration(page);
@@ -242,7 +245,7 @@ test("opens the journal for a member without an apply prompt", async ({ page }) 
   const panel = page.getByRole("region", { name: "Tooling" });
 
   await expect(
-    panel.getByText("Interested in project work? Explore the demo application."),
+    panel.getByText("Interested in project work? Register as a Participant first."),
   ).toHaveCount(0);
   await expect(panel.getByRole("link", { name: "ALL THREADS (1) →" })).toBeVisible();
 });

@@ -2,8 +2,7 @@
 // function bodies change, the pages and signatures do not (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
-
-export type MemberRole = "member";
+import type { CommunityLevel } from "@/content/commands";
 
 export type MemberStat = {
   id: "merged" | "reviews" | "errata";
@@ -12,7 +11,8 @@ export type MemberStat = {
 
 export type MemberProfile = {
   user: string;
-  role: MemberRole;
+  role: CommunityLevel;
+  admin: boolean;
   joined: string;
   bio: string;
   stats: readonly MemberStat[];
@@ -22,10 +22,14 @@ export type MemberProfile = {
   avatar?: string;
 };
 
-export async function getOwnProfile(user: string): Promise<MemberProfile> {
+export async function getOwnProfile(
+  user: string,
+  standing: { level: CommunityLevel; admin: boolean },
+): Promise<MemberProfile> {
   return {
     user,
-    role: "member",
+    role: standing.level,
+    admin: standing.admin,
     joined: new Date().toISOString().slice(0, 10),
     avatar: avatarFor(user),
     bio: "Learning how things work, one broken build at a time.",

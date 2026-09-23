@@ -35,6 +35,7 @@ import {
   stripQuery,
   visibleCommands,
   type CommandId,
+  type CommunityLevel,
 } from "@/content/commands";
 import { bootLines, welcome } from "@/content/landing";
 import { messages } from "@/content/messages";
@@ -62,8 +63,10 @@ import dialogsStyles from "./dialogs.module.css";
 import styles from "./DosShell.module.css";
 
 // The shell knows nothing about auth: any session-shaped value with a user
-// works, and logoff is injected by the layout (mock action until auth lands).
-export type ShellSession = { user: string } | null;
+// and a community level works, and logoff is injected by the layout (mock
+// action until auth lands). The level type comes from the command registry,
+// so the frame never imports the account slice (see AGENTS.md).
+export type ShellSession = { user: string; level: CommunityLevel; admin: boolean } | null;
 
 export type DosShellProps = {
   children: ReactNode;
@@ -137,9 +140,9 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
     if (!isHome) push(HOME_PATH);
   }, [isHome, push]);
 
-  const commandList = useMemo(() => visibleCommands(signedIn), [signedIn]);
-  const groups = useMemo(() => fileGroupsFor(signedIn), [signedIn]);
-  const functionKeys = useMemo(() => keyDefsFor(signedIn), [signedIn]);
+  const commandList = useMemo(() => visibleCommands(session), [session]);
+  const groups = useMemo(() => fileGroupsFor(session), [session]);
+  const functionKeys = useMemo(() => keyDefsFor(session), [session]);
 
   // The runner needs the file manager (to open docs) and the file manager needs
   // the runner (to run LOGOFF): the ref breaks the cycle.
@@ -270,7 +273,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
 
   const menus = useMemo(
     () =>
-      menuDefsFor(signedIn).map((menu) => ({
+      menuDefsFor(session).map((menu) => ({
         id: menu.id,
         label: menu.label,
         entries: menu.entries.map((entry) =>
@@ -284,7 +287,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
               },
         ),
       })),
-    [runCommand, signedIn],
+    [runCommand, session],
   );
 
   const keyItems = useMemo(

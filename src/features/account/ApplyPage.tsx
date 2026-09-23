@@ -4,13 +4,16 @@ import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 import { ApplyForm } from "./ApplyForm";
-import { getMockSession } from "./mock-session.server";
+import { getActorSession } from "./mock-session.server";
 
 export const applyMetadata: Metadata = messages.account.apply.metadata;
 
 export async function ApplyPage() {
-  const session = await getMockSession();
-  if (session) redirect("/profile");
+  const actor = await getActorSession();
+  // Members already hold project access: their status lives on the profile.
+  // Guests and Participants get the demo form (real queue in
+  // ui-member-applications); nothing submitted here creates access.
+  if (actor?.level === "member") redirect("/profile");
 
   return (
     <ShellPanel title={fileTitle("APPLY")} closable>

@@ -5,17 +5,17 @@ import { listThreadSummariesByAuthor } from "@/features/board/contracts";
 import { ShellPanel } from "@/features/shell";
 import { AccountGate } from "./AccountGate";
 import { getOwnProfile } from "./data";
-import { getMockSession } from "./mock-session.server";
+import { getActorSession } from "./mock-session.server";
 import { ProfileView } from "./ProfileView";
 
 export const profileMetadata: Metadata = messages.account.profile.metadata;
 
 export async function ProfilePage() {
-  const session = await getMockSession();
-  if (!session) return <AccountGate title={fileTitle("PROFILE")} />;
+  const actor = await getActorSession();
+  if (!actor) return <AccountGate title={fileTitle("PROFILE")} />;
 
-  const profile = await getOwnProfile(session.user);
-  const threads = await listThreadSummariesByAuthor(session.user);
+  const profile = await getOwnProfile(actor.user, { level: actor.level, admin: actor.admin });
+  const threads = await listThreadSummariesByAuthor(actor.user);
   const now = new Date().toISOString();
 
   return (

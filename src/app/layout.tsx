@@ -4,7 +4,7 @@ import { Crt } from "@swearjar/dos";
 import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
-import { getMockSession, mockLogoff } from "@/features/account";
+import { getActorSession, mockLogoff } from "@/features/account";
 import { DosShell } from "@/features/shell";
 import { messages } from "@/content/messages";
 
@@ -36,7 +36,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const session = await getMockSession();
+  const session = await getActorSession();
 
   return (
     <html lang="en" className={`${greybeard18.variable} ${greybeard16.variable}`}>

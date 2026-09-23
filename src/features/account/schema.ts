@@ -14,6 +14,18 @@ export const userSchema = z
   .regex(USER_INPUT_PATTERN)
   .transform((value) => value.toLowerCase());
 
+// Lower-cased: mailbox comparison is case-insensitive, so the taken-check
+// must not treat Quinn@x.io and quinn@x.io as two mailboxes.
+export const emailSchema = z
+  .string()
+  .trim()
+  .pipe(z.email())
+  .transform((value) => value.toLowerCase());
+
+// Email ownership proof at registration: a numeric one-time code of this
+// length, valid for OTP_TTL_MS (see verification.ts, server-only).
+export const OTP_LENGTH = 6;
+
 export const applyRoles = ["learner", "reviewer"] as const;
 export type ApplyRole = (typeof applyRoles)[number];
 

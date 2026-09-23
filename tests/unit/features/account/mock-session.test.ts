@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   mockLogonSchema,
+  mockRegisterConfirmSchema,
+  mockRegisterStartSchema,
   mockSessionEnabled,
   mockSocialLogonSchema,
   parseMockSession,
@@ -70,6 +72,36 @@ describe("mockSocialLogonSchema", () => {
   it("keeps the demo users distinct so providers stay observable", () => {
     const users = socialProviders.map((provider) => socialProviderUsers[provider]);
     expect(new Set(users).size).toBe(users.length);
+  });
+});
+
+describe("mockRegisterStartSchema", () => {
+  it("lowercases the mailbox so the taken-check is case-insensitive", () => {
+    const parsed = mockRegisterStartSchema.safeParse({
+      user: "quinn",
+      email: "  Quinn@Example.COM ",
+      password: "secret",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.email).toBe("quinn@example.com");
+    }
+  });
+
+  it("rejects malformed mailboxes and codes", () => {
+    expect(
+      mockRegisterStartSchema.safeParse({
+        user: "quinn",
+        email: "not-an-email",
+        password: "secret",
+      }).success,
+    ).toBe(false);
+    expect(mockRegisterConfirmSchema.safeParse({ user: "quinn", code: "12345" }).success).toBe(
+      false,
+    );
+    expect(mockRegisterConfirmSchema.safeParse({ user: "quinn", code: "123456" }).success).toBe(
+      true,
+    );
   });
 });
 

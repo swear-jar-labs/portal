@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { USER_PATTERN, userSchema } from "./schema";
+import { emailSchema, OTP_LENGTH, USER_PATTERN, userSchema } from "./schema";
 
 // Mock session until Better Auth lands (Phase 5, see TECH.md): the cookie
 // carries the user, nothing is signed. Presentation only — never a security
@@ -34,6 +34,19 @@ export const mockSocialLogonSchema = z.object({
 });
 
 export type MockSocialLogonInput = z.infer<typeof mockSocialLogonSchema>;
+
+// Email registration proves mailbox ownership with a one-time code: the
+// handle and the email arrive first, the code comes back second.
+export const mockRegisterStartSchema = z.object({
+  user: userSchema,
+  email: emailSchema,
+  password: z.string().min(1),
+});
+
+export const mockRegisterConfirmSchema = z.object({
+  user: userSchema,
+  code: z.string().regex(new RegExp(`^[0-9]{${OTP_LENGTH}}$`)),
+});
 
 export function parseMockSession(value: string | undefined): MockSession | null {
   if (!value) return null;

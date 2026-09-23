@@ -14,9 +14,18 @@ export type FileMeta = {
   icon?: SpriteName;
 };
 
-// Who sees a command: guests only, signed-in members only, or everyone.
-// Presentation only — real authorization stays on the server (see TECH.md).
-export type Audience = "any" | "guest" | "member";
+// Who sees a command: guests only, a signed-in account of any level, one
+// community level, or everyone. Presentation only — real authorization stays
+// on the server (see TECH.md).
+export const communityLevels = ["participant", "member"] as const;
+export type CommunityLevel = (typeof communityLevels)[number];
+
+export type Audience = "any" | "guest" | "account" | CommunityLevel;
+
+// Who is looking: nobody (guest) or a signed-in account with its level.
+// The shell passes its session straight through; the account slice resolves
+// the level from the mock registry (see features/account/actor.ts).
+export type Viewer = { level: CommunityLevel } | null;
 
 // The shell home: docs open here, so no route command matches it.
 export const HOME_PATH = "/";
@@ -30,8 +39,11 @@ export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID
 
 // Guest-only entries: LOGON carries the return location (?next=) so a logon
 // started on a page lands back there; a direct visit falls back to FORUM.
+// REGISTER creates a demo Participant account on the mocks (see
+// features/account/actor.ts); auth pages never serve as ?next= targets.
 export const LOGIN_PATH = "/login";
 export const APPLY_PATH = "/apply";
+export const REGISTER_PATH = "/register";
 const LOGIN_RETURN_PARAM = "next";
 
 export function loginHref(returnTo?: string): `/${string}` {
@@ -49,6 +61,7 @@ export function parseLoginReturn(value: string | null | undefined): string | und
   const bare = stripQuery(value);
   if (bare === LOGIN_PATH || bare.startsWith(`${LOGIN_PATH}/`)) return undefined;
   if (bare === APPLY_PATH || bare.startsWith(`${APPLY_PATH}/`)) return undefined;
+  if (bare === REGISTER_PATH || bare.startsWith(`${REGISTER_PATH}/`)) return undefined;
   return value;
 }
 
@@ -128,8 +141,15 @@ const commandDefs = [
     id: "APPLY",
     description: messages.shell.registry.descriptions.APPLY,
     href: APPLY_PATH,
-    audience: "guest",
+    audience: "participant",
     file: { group: "account", name: "APPLY", ext: "EXE", size: 512, icon: "check" },
+  },
+  {
+    id: "REGISTER",
+    description: messages.shell.registry.descriptions.REGISTER,
+    href: REGISTER_PATH,
+    audience: "guest",
+    file: { group: "account", name: "REGISTER", ext: "EXE", size: 512, icon: "person" },
   },
   {
     id: "LOGON",
@@ -142,20 +162,20 @@ const commandDefs = [
     id: "PROFILE",
     description: messages.shell.registry.descriptions.PROFILE,
     href: "/profile",
-    audience: "member",
+    audience: "account",
     file: { group: "account", name: "PROFILE", ext: "EXE", size: 512, icon: "person" },
   },
   {
     id: "SETTINGS",
     description: messages.shell.registry.descriptions.SETTINGS,
     href: "/settings",
-    audience: "member",
+    audience: "account",
     file: { group: "account", name: "SETTINGS", ext: "EXE", size: 512, icon: "gear" },
   },
   {
     id: "LOGOFF",
     description: messages.shell.registry.descriptions.LOGOFF,
-    audience: "member",
+    audience: "account",
     file: { group: "account", name: "LOGOFF", ext: "EXE", size: 512, icon: "door" },
   },
   { id: "COFFEE", description: messages.shell.registry.descriptions.COFFEE },
@@ -235,13 +255,16 @@ export function commandIdForLocation(location: string): CommandId | undefined {
   return commandIdForPath(pathname);
 }
 
-export function isVisibleFor(command: Pick<AppCommand, "audience">, signedIn: boolean): boolean {
+export function isVisibleFor(command: Pick<AppCommand, "audience">, viewer: Viewer): boolean {
   const audience = command.audience ?? "any";
-  return audience === "any" || audience === (signedIn ? "member" : "guest");
+  if (audience === "any") return true;
+  if (viewer === null) return audience === "guest";
+  if (audience === "account") return true;
+  return audience === viewer.level;
 }
 
-export function visibleCommands(signedIn: boolean): AppCommand[] {
-  return commands.filter((command) => isVisibleFor(command, signedIn));
+export function visibleCommands(viewer: Viewer): AppCommand[] {
+  return commands.filter((command) => isVisibleFor(command, viewer));
 }
 
 export function fileTitle(commandId: CommandId): string {
@@ -274,12 +297,12 @@ const fileGroupDefs = [
   { id: "read", ...messages.shell.files.groups.read },
 ] as const satisfies readonly { id: FileGroupId; label: string; short: string }[];
 
-export function fileGroupsFor(signedIn: boolean): FileGroup[] {
+export function fileGroupsFor(viewer: Viewer): FileGroup[] {
   return fileGroupDefs.map((group) => ({
     ...group,
     items: commands.flatMap((command) => {
       const file = command.file;
-      if (!file || file.group !== group.id || !isVisibleFor(command, signedIn)) return [];
+      if (!file || file.group !== group.id || !isVisibleFor(command, viewer)) return [];
       return [
         { command: command.id, name: file.name, ext: file.ext, size: file.size, icon: file.icon },
       ];
@@ -317,6 +340,7 @@ const menuDefs: MenuDef[] = [
     label: messages.shell.menuBar.titles.account,
     entries: [
       { kind: "command", command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
+      { kind: "command", command: "REGISTER", label: messages.shell.menuBar.labels.REGISTER },
       { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
       { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
       { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
@@ -355,14 +379,14 @@ function trimSeparators(entries: MenuEntry[]): MenuEntry[] {
   return result;
 }
 
-export function menuDefsFor(signedIn: boolean): MenuDef[] {
+export function menuDefsFor(viewer: Viewer): MenuDef[] {
   return menuDefs.map((menu) => ({
     ...menu,
     entries: trimSeparators(
       menu.entries.filter((entry) => {
         if (entry.kind === "separator") return true;
         const command = commandById.get(entry.command);
-        return command === undefined || isVisibleFor(command, signedIn);
+        return command === undefined || isVisibleFor(command, viewer);
       }),
     ),
   }));
@@ -381,16 +405,16 @@ const keyDefs: KeyDef[] = [
   { key: "F4", label: messages.shell.keyBar.labels.RULES, command: "RULES" },
   { key: "F5", label: messages.shell.keyBar.labels.DOOM, command: "DOOM" },
   { key: "F6", label: messages.shell.keyBar.labels.PROJECTS, command: "PROJECTS" },
-  { key: "F8", label: messages.shell.keyBar.labels.APPLY, command: "APPLY" },
+  { key: "F8", label: messages.shell.keyBar.labels.REGISTER, command: "REGISTER" },
   { key: "F9", label: messages.shell.keyBar.labels.LOGON, command: "LOGON" },
   { key: "F8", label: messages.shell.keyBar.labels.PROFILE, command: "PROFILE" },
   { key: "F9", label: messages.shell.keyBar.labels.LOGOFF, command: "LOGOFF" },
   { key: "F10", label: messages.shell.keyBar.labels.EXIT, command: "EXIT" },
 ];
 
-export function keyDefsFor(signedIn: boolean): KeyDef[] {
+export function keyDefsFor(viewer: Viewer): KeyDef[] {
   return keyDefs.filter((def) => {
     const command = commandById.get(def.command);
-    return command === undefined || isVisibleFor(command, signedIn);
+    return command === undefined || isVisibleFor(command, viewer);
   });
 }

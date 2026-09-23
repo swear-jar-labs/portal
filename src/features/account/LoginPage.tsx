@@ -4,7 +4,7 @@ import { fileTitle, FORUM_PATH, parseLoginReturn } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 import { LogonForm } from "./LogonForm";
-import { getMockSession } from "./mock-session.server";
+import { getActorSession } from "./mock-session.server";
 
 export const loginMetadata: Metadata = messages.account.login.metadata;
 
@@ -18,8 +18,8 @@ export async function LoginPage({ searchParams }: LoginPageProps) {
   // A logon started on a page lands back there (?next=); a direct visit (or a
   // signed-in member opening /login) falls back to the member home, FORUM.
   const returnTo = parseLoginReturn(Array.isArray(raw) ? raw[0] : raw);
-  const session = await getMockSession();
-  if (session) redirect(returnTo ?? FORUM_PATH);
+  const actor = await getActorSession();
+  if (actor) redirect(returnTo ?? FORUM_PATH);
 
   return (
     <ShellPanel title={fileTitle("LOGON")} closable>

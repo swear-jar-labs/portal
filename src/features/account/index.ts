@@ -1,6 +1,7 @@
 export { ApplyPage, applyMetadata } from "./ApplyPage";
 export { LoginPage, loginMetadata } from "./LoginPage";
+export { RegisterPage, registerMetadata } from "./RegisterPage";
 export { ProfilePage, profileMetadata } from "./ProfilePage";
 export { SettingsPage, settingsMetadata } from "./SettingsPage";
-export { getMockSession } from "./mock-session.server";
+export { getActorSession } from "./mock-session.server";
 export { mockLogoff } from "./mock-session-actions";

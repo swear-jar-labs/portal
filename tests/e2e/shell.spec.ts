@@ -140,12 +140,12 @@ test("hands the keyboard to the right panel after a routed file opens", async ({
 
   // An EXE route: the panel arrives together with the page and takes the
   // keyboard; opening it again (same route) focuses it right away.
-  await files.getByRole("link", { name: "APPLY" }).click();
-  await expect(page).toHaveURL("/apply");
-  const panel = page.getByRole("region", { name: "APPLY.EXE" }).locator(`[${DOS_SCROLL_ATTR}]`);
+  await files.getByRole("link", { name: "REGISTER" }).click();
+  await expect(page).toHaveURL("/register");
+  const panel = page.getByRole("region", { name: "REGISTER.EXE" }).locator(`[${DOS_SCROLL_ATTR}]`);
   await expect(panel).toBeFocused();
 
-  await files.getByRole("link", { name: "APPLY" }).click();
+  await files.getByRole("link", { name: "REGISTER" }).click();
   await expect(panel).toBeFocused();
 });
 
@@ -219,8 +219,8 @@ test.describe("welcome", () => {
     await enterShell(page);
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-    await files.getByRole("link", { name: "APPLY" }).click();
-    await expect(page).toHaveURL("/apply");
+    await files.getByRole("link", { name: "REGISTER" }).click();
+    await expect(page).toHaveURL("/register");
 
     await files.getByRole("button", { name: "MANIFESTO" }).click();
     await expect(page).toHaveURL("/");
@@ -228,7 +228,7 @@ test.describe("welcome", () => {
   });
 
   test("does not greet when home opens after a deep link", async ({ page }) => {
-    await page.goto("/apply");
+    await page.goto("/register");
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     await files.getByRole("button", { name: "MANIFESTO" }).click();
@@ -255,17 +255,17 @@ test.describe("spa navigation", () => {
     await expect(dialog).toBeHidden();
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-    const apply = files.getByRole("link", { name: "APPLY" });
-    await apply.click();
+    const register = files.getByRole("link", { name: "REGISTER" });
+    await register.click();
 
-    await expect(page).toHaveURL("/apply");
+    await expect(page).toHaveURL("/register");
     await expect(page.getByRole("menubar")).toBeVisible();
-    await expect(apply).toHaveAttribute("aria-current", "true");
+    await expect(register).toHaveAttribute("aria-current", "true");
 
     await page.goBack();
     await expect(page).toHaveURL("/");
     await expect(page.getByRole("menubar")).toBeVisible();
-    await expect(apply).not.toHaveAttribute("aria-current", "true");
+    await expect(register).not.toHaveAttribute("aria-current", "true");
 
     await input.focus();
     await page.keyboard.type("ASDF");
@@ -274,10 +274,10 @@ test.describe("spa navigation", () => {
   });
 
   test("selects the route file on a direct visit", async ({ page }) => {
-    await page.goto("/apply");
+    await page.goto("/register");
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-    await expect(files.getByRole("link", { name: "APPLY" })).toHaveAttribute(
+    await expect(files.getByRole("link", { name: "REGISTER" })).toHaveAttribute(
       "aria-current",
       "true",
     );

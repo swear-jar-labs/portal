@@ -29,6 +29,7 @@ export const messages = {
         TICKETS: "Tickets",
         APPLY: "Apply...",
         LOGON: "Logon...",
+        REGISTER: "Register...",
         PROFILE: "Profile...",
         SETTINGS: "Settings...",
         LOGOFF: "Logoff",
@@ -47,7 +48,7 @@ export const messages = {
         RULES: "Rules",
         DOOM: "Doom",
         PROJECTS: "Projects",
-        APPLY: "Apply",
+        REGISTER: "Register",
         LOGON: "Logon",
         PROFILE: "Profile",
         LOGOFF: "Logoff",
@@ -115,7 +116,7 @@ export const messages = {
       login: {
         title: "LOGON REQUIRED",
         text: "Log on to continue.",
-        hint: "This build uses demo accounts. Registration is not live yet.",
+        hint: "This build uses demo accounts. Registration works here; nothing leaves this build.",
         confirm: "[ LOG ON ]",
         cancel: "[ CANCEL ]",
       },
@@ -141,6 +142,7 @@ export const messages = {
         PROJECTS: "what we build",
         TICKETS: "the work queue",
         APPLY: "apply for project work",
+        REGISTER: "create an account",
         LOGON: "sign in",
         PROFILE: "your account",
         SETTINGS: "tune the terminal",
@@ -233,15 +235,62 @@ export const messages = {
       applyPrompt: "Curious about project work?",
       applyLink: "APPLY",
     },
+    register: {
+      metadata: {
+        title: "Register — Swear Jar Labs",
+        description: "Create a Swear Jar Labs demo account and join as a Participant.",
+      },
+      heading: "REGISTER",
+      intro: "Pick a username to join the workshop. New accounts start as Participants.",
+      hint: "Usernames use letters, digits, - or _. Letters are saved in lower case.",
+      demoHint:
+        "Development demo: use a made-up password and any mailbox. The account lives in this build only; sign-in stays mocked until real auth lands.",
+      fields: {
+        user: "Username",
+        email: "Email",
+        password: "Password",
+      },
+      submit: "[ REGISTER ]",
+      sso: {
+        label: "OR REGISTER WITH",
+        providers: {
+          google: "[ GOOGLE ]",
+          github: "[ GITHUB ]",
+        },
+      },
+      errors: {
+        user: "2-32 characters: letters, digits, - or _.",
+        email: "Enter a valid email address.",
+        password: "A password is needed.",
+        taken: "That username is taken. Pick another one, or log on.",
+        emailTaken: "That email is already registered. Log on instead.",
+      },
+      code: {
+        heading: "CHECK YOUR EMAIL",
+        text: "No mail leaves this build: the demo code is shown below. Type it to finish registration.",
+        demoCode: "Demo code:",
+        label: "Email code",
+        submit: "[ CONFIRM ]",
+        back: "[ BACK ]",
+        errors: {
+          invalid: "Six digits, no spaces.",
+          mismatch: "Wrong code. Check the demo code and try again.",
+          expired: "The code expired. Send a fresh one.",
+          missing: "No code was sent for this handle. Start over.",
+        },
+      },
+    },
     profile: {
       metadata: {
         title: "Profile — Swear Jar Labs",
         description: "Your Swear Jar Labs account.",
       },
-      joined: "MEMBER SINCE",
+      joined: "JOINED",
       roles: {
+        participant: "Participant",
         member: "Member",
       },
+      admin: "ADMIN",
       stats: {
         merged: "MERGED",
         reviews: "REVIEWS",

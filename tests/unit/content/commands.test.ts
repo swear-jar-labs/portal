@@ -18,11 +18,12 @@ import {
   menuDefsFor,
   parseLoginReturn,
   visibleCommands,
+  type Viewer,
 } from "@/content/commands";
 import { docs } from "@/content/docs";
 import { messages } from "@/content/messages";
 
-const SESSIONS = [false, true] as const;
+const VIEWERS: Viewer[] = [null, { level: "participant" }, { level: "member" }];
 
 describe("commands content", () => {
   it("keeps command ids unique", () => {
@@ -40,8 +41,8 @@ describe("commands content", () => {
   });
 
   it("resolves every command referenced by the menus in both sessions", () => {
-    for (const signedIn of SESSIONS) {
-      const menuDefs = menuDefsFor(signedIn);
+    for (const viewer of VIEWERS) {
+      const menuDefs = menuDefsFor(viewer);
       const referenced = menuDefs.flatMap((menu) =>
         menu.entries.flatMap((entry) => (entry.kind === "command" ? [entry.command] : [])),
       );
@@ -53,8 +54,8 @@ describe("commands content", () => {
   });
 
   it("keeps menus free of dangling separators in both sessions", () => {
-    for (const signedIn of SESSIONS) {
-      for (const menu of menuDefsFor(signedIn)) {
+    for (const viewer of VIEWERS) {
+      for (const menu of menuDefsFor(viewer)) {
         expect(menu.entries.at(0)?.kind, `${menu.id} starts with a separator`).not.toBe(
           "separator",
         );
@@ -64,8 +65,8 @@ describe("commands content", () => {
   });
 
   it("resolves every command referenced by the function keys in both sessions", () => {
-    for (const signedIn of SESSIONS) {
-      for (const def of keyDefsFor(signedIn)) {
+    for (const viewer of VIEWERS) {
+      for (const def of keyDefsFor(viewer)) {
         expect(
           commandById.has(def.command),
           `key ${def.key} references unknown ${def.command}`,
@@ -75,24 +76,25 @@ describe("commands content", () => {
   });
 
   it("keeps function keys unique in each session", () => {
-    for (const signedIn of SESSIONS) {
-      const keys = keyDefsFor(signedIn).map((def) => def.key);
+    for (const viewer of VIEWERS) {
+      const keys = keyDefsFor(viewer).map((def) => def.key);
       expect(new Set(keys).size).toBe(keys.length);
     }
   });
 
   it("swaps the account keys with the session", () => {
-    const accountKeys = (signedIn: boolean) =>
-      keyDefsFor(signedIn)
+    const accountKeys = (viewer: Viewer) =>
+      keyDefsFor(viewer)
         .filter((def) => def.key === "F8" || def.key === "F9")
         .map((def) => def.command);
-    expect(accountKeys(false)).toEqual(["APPLY", "LOGON"]);
-    expect(accountKeys(true)).toEqual(["PROFILE", "LOGOFF"]);
+    expect(accountKeys(null)).toEqual(["REGISTER", "LOGON"]);
+    expect(accountKeys({ level: "participant" })).toEqual(["PROFILE", "LOGOFF"]);
+    expect(accountKeys({ level: "member" })).toEqual(["PROFILE", "LOGOFF"]);
   });
 
   it("resolves every command referenced by the file groups in both sessions", () => {
-    for (const signedIn of SESSIONS) {
-      for (const group of fileGroupsFor(signedIn)) {
+    for (const viewer of VIEWERS) {
+      for (const group of fileGroupsFor(viewer)) {
         for (const item of group.items) {
           expect(commandById.has(item.command), `file ${item.name} has no command`).toBe(true);
           expect(commandById.get(item.command)?.file).toEqual({
@@ -108,11 +110,11 @@ describe("commands content", () => {
   });
 
   it("lists every visible command with file metadata exactly once", () => {
-    for (const signedIn of SESSIONS) {
-      const filed = visibleCommands(signedIn)
+    for (const viewer of VIEWERS) {
+      const filed = visibleCommands(viewer)
         .filter((command) => command.file)
         .map((command) => command.id);
-      const listed = fileGroupsFor(signedIn).flatMap((group) =>
+      const listed = fileGroupsFor(viewer).flatMap((group) =>
         group.items.map((item) => item.command),
       );
       expect([...listed].sort()).toEqual([...filed].sort());
@@ -120,8 +122,8 @@ describe("commands content", () => {
   });
 
   it("gives every program an icon and leaves documents on the sheet", () => {
-    for (const signedIn of SESSIONS) {
-      for (const group of fileGroupsFor(signedIn)) {
+    for (const viewer of VIEWERS) {
+      for (const group of fileGroupsFor(viewer)) {
         for (const item of group.items) {
           const file = `${item.name}.${item.ext}`;
           if (item.ext === "EXE") {
@@ -134,25 +136,26 @@ describe("commands content", () => {
     }
   });
 
-  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 12 as member)", () => {
-    const count = (signedIn: boolean) => {
-      const groups = fileGroupsFor(signedIn);
+  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 13 as participant, 12 as member)", () => {
+    const count = (viewer: Viewer) => {
+      const groups = fileGroupsFor(viewer);
       expect(groups).toHaveLength(3);
       return groups.reduce((total, group) => total + group.items.length, 0);
     };
-    expect(count(false)).toBe(11);
-    expect(count(true)).toBe(12);
+    expect(count(null)).toBe(11);
+    expect(count({ level: "participant" })).toBe(13);
+    expect(count({ level: "member" })).toBe(12);
   });
 
   it("names the COMMUNITY, ACCOUNT and GUIDE groups in order", () => {
-    for (const signedIn of SESSIONS) {
-      expect(fileGroupsFor(signedIn).map((group) => group.short)).toEqual([
+    for (const viewer of VIEWERS) {
+      expect(fileGroupsFor(viewer).map((group) => group.short)).toEqual([
         "COMMUNITY",
         "ACCOUNT",
         "GUIDE",
       ]);
     }
-    const guest = fileGroupsFor(false);
+    const guest = fileGroupsFor(null);
     expect(guest[0]?.items.map((item) => item.command)).toEqual([
       "FORUM",
       "ERRATA",
@@ -180,8 +183,8 @@ describe("commands content", () => {
       icon: "errata",
     });
     expect(isActionCommand("ERRATA")).toBe(false);
-    for (const signedIn of SESSIONS) {
-      expect(visibleCommands(signedIn).map((command) => command.id)).toContain("ERRATA");
+    for (const viewer of VIEWERS) {
+      expect(visibleCommands(viewer).map((command) => command.id)).toContain("ERRATA");
     }
   });
 
@@ -201,62 +204,80 @@ describe("commands content", () => {
   });
 
   it("keeps the top menu at COMMUNITY, ACCOUNT, GUIDE and HELP", () => {
-    for (const signedIn of SESSIONS) {
-      expect(menuDefsFor(signedIn).map((menu) => menu.label)).toEqual([
+    for (const viewer of VIEWERS) {
+      expect(menuDefsFor(viewer).map((menu) => menu.label)).toEqual([
         "Community",
         "Account",
         "Guide",
         "Help",
       ]);
     }
-    const entryCommands = (menuId: string, signedIn: boolean) =>
-      menuDefsFor(signedIn)
+    const entryCommands = (menuId: string, viewer: Viewer) =>
+      menuDefsFor(viewer)
         .find((menu) => menu.id === menuId)
         ?.entries.flatMap((entry) => (entry.kind === "command" ? [entry.command] : []));
-    for (const signedIn of SESSIONS) {
-      expect(entryCommands("file", signedIn)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES"]);
-      expect(entryCommands("board", signedIn)).toEqual([
+    for (const viewer of VIEWERS) {
+      expect(entryCommands("file", viewer)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES"]);
+      expect(entryCommands("board", viewer)).toEqual([
         "FORUM",
         "ERRATA",
         "READROOM",
         "PROJECTS",
         "TICKETS",
       ]);
-      expect(entryCommands("help", signedIn)).toEqual(["HELP", "COFFEE"]);
+      expect(entryCommands("help", viewer)).toEqual(["HELP", "COFFEE"]);
     }
-    expect(entryCommands("account", false)).toEqual(["LOGON", "APPLY"]);
-    expect(entryCommands("account", true)).toEqual(["PROFILE", "SETTINGS", "LOGOFF"]);
+    expect(entryCommands("account", null)).toEqual(["LOGON", "REGISTER"]);
+    expect(entryCommands("account", { level: "participant" })).toEqual([
+      "APPLY",
+      "PROFILE",
+      "SETTINGS",
+      "LOGOFF",
+    ]);
+    expect(entryCommands("account", { level: "member" })).toEqual([
+      "PROFILE",
+      "SETTINGS",
+      "LOGOFF",
+    ]);
   });
 
   it("removes the STATUS command and leaves F7 unassigned in both sessions", () => {
     expect(resolveCommand(commands, "status")).toBeUndefined();
     expect(docs.map((doc) => doc.id)).not.toContain("STATUS");
-    for (const signedIn of SESSIONS) {
-      expect(keyDefsFor(signedIn).map((def) => def.key)).not.toContain("F7");
+    for (const viewer of VIEWERS) {
+      expect(keyDefsFor(viewer).map((def) => def.key)).not.toContain("F7");
       expect(
-        fileGroupsFor(signedIn).flatMap((group) => group.items.map((item) => item.command)),
+        fileGroupsFor(viewer).flatMap((group) => group.items.map((item) => item.command)),
       ).not.toContain("STATUS");
     }
   });
 
   it("shows the account files of one session only", () => {
-    const guestFiles = fileGroupsFor(false).flatMap((group) =>
-      group.items.map((item) => item.command),
-    );
-    const memberFiles = fileGroupsFor(true).flatMap((group) =>
-      group.items.map((item) => item.command),
-    );
-    expect(guestFiles).toContain("APPLY");
+    const filesFor = (viewer: Viewer) =>
+      fileGroupsFor(viewer).flatMap((group) => group.items.map((item) => item.command));
+    const guestFiles = filesFor(null);
+    const participantFiles = filesFor({ level: "participant" });
+    const memberFiles = filesFor({ level: "member" });
+    expect(guestFiles).toContain("REGISTER");
     expect(guestFiles).toContain("LOGON");
+    expect(guestFiles).not.toContain("APPLY");
     expect(guestFiles).not.toContain("PROFILE");
     expect(guestFiles).not.toContain("SETTINGS");
     expect(guestFiles).not.toContain("LOGOFF");
+
+    expect(participantFiles).toContain("APPLY");
+    expect(participantFiles).toContain("PROFILE");
+    expect(participantFiles).toContain("SETTINGS");
+    expect(participantFiles).toContain("LOGOFF");
+    expect(participantFiles).not.toContain("REGISTER");
+    expect(participantFiles).not.toContain("LOGON");
 
     expect(memberFiles).toContain("PROFILE");
     expect(memberFiles).toContain("SETTINGS");
     expect(memberFiles).toContain("LOGOFF");
     expect(memberFiles).not.toContain("APPLY");
     expect(memberFiles).not.toContain("LOGON");
+    expect(memberFiles).not.toContain("REGISTER");
   });
 
   it("resolves every doc command to a document", () => {
@@ -280,9 +301,9 @@ describe("commands content", () => {
   });
 
   it("keeps hidden commands out of the surfaces", () => {
-    for (const signedIn of SESSIONS) {
-      const visibleIds = new Set(visibleCommands(signedIn).map((command) => command.id));
-      const listed = fileGroupsFor(signedIn).flatMap((group) =>
+    for (const viewer of VIEWERS) {
+      const visibleIds = new Set(visibleCommands(viewer).map((command) => command.id));
+      const listed = fileGroupsFor(viewer).flatMap((group) =>
         group.items.map((item) => item.command),
       );
       for (const id of listed) {
@@ -293,6 +314,7 @@ describe("commands content", () => {
 
   it("derives panel titles from the file metadata", () => {
     expect(fileTitle("APPLY")).toBe("APPLY.EXE");
+    expect(fileTitle("REGISTER")).toBe("REGISTER.EXE");
     expect(fileTitle("ABOUT")).toBe("ABOUT.TXT");
     expect(fileTitle("COFFEE")).toBe("COFFEE");
   });
@@ -305,6 +327,7 @@ describe("commands content", () => {
     expect(commandIdForPath("/projects")).toBe("PROJECTS");
     expect(commandIdForPath("/tickets")).toBe("TICKETS");
     expect(commandIdForPath("/apply")).toBe("APPLY");
+    expect(commandIdForPath("/register")).toBe("REGISTER");
     expect(commandIdForPath("/login")).toBe("LOGON");
     expect(commandIdForPath("/profile")).toBe("PROFILE");
     expect(commandIdForPath("/settings")).toBe("SETTINGS");
@@ -361,6 +384,8 @@ describe("commands content", () => {
     expect(parseLoginReturn("/login")).toBeUndefined();
     expect(parseLoginReturn("/login?next=%2Fprofile")).toBeUndefined();
     expect(parseLoginReturn("/apply")).toBeUndefined();
+    expect(parseLoginReturn("/register")).toBeUndefined();
+    expect(parseLoginReturn("/register?next=%2Fprofile")).toBeUndefined();
     expect(parseLoginReturn("https://example.com/")).toBeUndefined();
     expect(parseLoginReturn("//evil")).toBeUndefined();
   });

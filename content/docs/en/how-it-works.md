@@ -15,6 +15,6 @@ Learn to build software by making your own decisions, including the wrong ones.
 
 Register to join FORUM and READROOM. Apply to become a Member when you're ready for project work.
 
-:dim[Demo build: registration and Member applications are still in development.]
+:dim[Demo build: registration works with demo accounts; Member applications are still in development.]
 
 :dim[Pick a section on the left, or type FORUM, ERRATA, READROOM, PROJECTS or TICKETS.]

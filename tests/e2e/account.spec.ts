@@ -31,20 +31,24 @@ async function skipBootAsGuest(page: Page) {
 }
 
 test.describe("guest account chrome", () => {
-  test("shows apply and logon only", async ({ page }) => {
+  test("shows register and logon only", async ({ page }) => {
     await enterShell(page);
     const files = page.getByRole("region", { name: FILES_REGION });
 
-    await expect(files.getByRole("link", { name: "APPLY" })).toBeVisible();
+    await expect(files.getByRole("link", { name: "REGISTER" })).toBeVisible();
     await expect(files.getByRole("link", { name: "LOGON" })).toBeVisible();
+    await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
     await expect(files.getByRole("link", { name: "PROFILE" })).toHaveCount(0);
     await expect(files.getByRole("link", { name: "SETTINGS" })).toHaveCount(0);
     await expect(files.getByRole("button", { name: "LOGOFF" })).toHaveCount(0);
     await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "F8 Apply" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "F8 Register" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
+
+    await page.keyboard.press("F8");
+    await expect(page).toHaveURL("/register");
   });
 
   test("gates member routes instead of opening them", async ({ page }) => {
@@ -224,6 +228,281 @@ test.describe("member session", () => {
   });
 });
 
+test.describe("registration and levels", () => {
+  test("registers a guest by email code and lands on the profile", async ({ page }) => {
+    await enterShell(page);
+    const files = page.getByRole("region", { name: FILES_REGION });
+    await files.getByRole("link", { name: "REGISTER" }).click();
+    await expect(page).toHaveURL("/register");
+
+    // The mock registry outlives a single run (reused dev server), so the
+    // handle carries a timestamp instead of colliding with earlier runs.
+    const handle = `quinn-${Date.now().toString(36)}`;
+    const form = page.getByRole("form", { name: "REGISTER" });
+    await form.getByLabel(USER_LABEL).fill(handle);
+    await form.getByLabel("Email").fill(`${handle}@example.com`);
+    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+
+    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
+    // No mail leaves the demo: the issued code is shown on screen, and the
+    // step takes the keyboard for immediate typing.
+    const codeField = form.getByLabel("Email code");
+    await expect(codeField).toBeFocused();
+    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
+      const match = /([0-9]{6})/.exec(element.textContent ?? "");
+      if (!match?.[1]) throw new Error("the demo code is not shown");
+      return match[1];
+    });
+    await expectNoViolations(page, "/register code step");
+
+    await codeField.fill(demoCode);
+    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+
+    await expect(page).toHaveURL("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 1, name: handle })).toBeVisible();
+    await expect(profile.getByText("Participant")).toBeVisible();
+    await expect(profile.getByRole("img")).toHaveCount(0);
+    await expectNoViolations(page, "fresh participant profile");
+  });
+
+  test("rejects a wrong email code without creating the account", async ({ page }) => {
+    await page.goto("/register");
+    const handle = `quinn-wrong-${Date.now().toString(36)}`;
+    const form = page.getByRole("form", { name: "REGISTER" });
+    await form.getByLabel(USER_LABEL).fill(handle);
+    await form.getByLabel("Email").fill(`${handle}@example.com`);
+    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+
+    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
+    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
+      const match = /([0-9]{6})/.exec(element.textContent ?? "");
+      if (!match?.[1]) throw new Error("the demo code is not shown");
+      return match[1];
+    });
+    const wrong = demoCode.startsWith("0") ? `1${demoCode.slice(1)}` : `0${demoCode.slice(1)}`;
+    await form.getByLabel("Email code").fill(wrong);
+    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+
+    await expect(form.getByText("Wrong code. Check the demo code and try again.")).toBeVisible();
+    await expect(page).toHaveURL("/register");
+
+    // Back to the details keeps the typed mailbox for a quick fix.
+    await form.getByRole("button", { name: "[ BACK ]" }).click();
+    await expect(form.getByLabel("Email")).toHaveValue(`${handle}@example.com`);
+
+    // The retry reissues the code; the fresh one still lands the account.
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
+    const retryCode = await form.getByText("Demo code:").evaluate((element) => {
+      const match = /([0-9]{6})/.exec(element.textContent ?? "");
+      if (!match?.[1]) throw new Error("the demo code is not shown");
+      return match[1];
+    });
+    await form.getByLabel("Email code").fill(retryCode);
+    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+    await expect(page).toHaveURL("/profile");
+  });
+
+  test("registers fresh participants through the social buttons", async ({ page }) => {
+    await page.goto("/register");
+    const form = page.getByRole("form", { name: "REGISTER" });
+
+    await form.getByRole("button", { name: "[ GOOGLE ]" }).click();
+    await expect(page).toHaveURL("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 1, name: "google-newcomer" })).toBeVisible();
+    await expect(profile.getByText("Participant")).toBeVisible();
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+
+    await page.goto("/register");
+    await page
+      .getByRole("form", { name: "REGISTER" })
+      .getByRole("button", { name: "[ GITHUB ]" })
+      .click();
+    await expect(page).toHaveURL("/profile");
+    const second = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(second.getByRole("heading", { level: 1, name: "github-newcomer" })).toBeVisible();
+    await expect(second.getByText("Participant")).toBeVisible();
+  });
+
+  test("shows apply to participants only", async ({ page }) => {
+    await logon(page, "quinn-sees-apply");
+    const files = page.getByRole("region", { name: FILES_REGION });
+    await expect(files.getByRole("link", { name: "APPLY" })).toBeVisible();
+    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+
+    await page.getByRole("menuitem", { name: "Account" }).click();
+    await expect(page.getByRole("menu").getByRole("menuitem", { name: "Apply..." })).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+
+    await logon(page);
+    await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
+  });
+
+  test("provisions an unknown logon as a participant", async ({ page }) => {
+    await logon(page, "quinn-provision");
+    await page.goto("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 1, name: "quinn-provision" })).toBeVisible();
+    await expect(profile.getByText("Participant")).toBeVisible();
+  });
+
+  test("switching actors keeps their levels", async ({ page }) => {
+    await logon(page, "quinn-switch");
+    await page.goto("/profile");
+    await expect(
+      page.getByRole("region", { name: "PROFILE.EXE" }).getByText("Participant"),
+    ).toBeVisible();
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+
+    await logon(page);
+    await page.goto("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
+    await expect(profile.getByText("Member")).toBeVisible();
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+
+    await logon(page, "quinn-switch");
+    await page.goto("/profile");
+    await expect(
+      page.getByRole("region", { name: "PROFILE.EXE" }).getByText("Participant"),
+    ).toBeVisible();
+  });
+
+  test("rejects taken handles, taken emails and validates the form", async ({ page }) => {
+    await page.goto("/register");
+    const form = page.getByRole("form", { name: "REGISTER" });
+
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await expect(form.getByText("2-32 characters: letters, digits, - or _.")).toBeVisible();
+    await expect(form.getByText("Enter a valid email address.")).toBeVisible();
+    await expect(form.getByText("A password is needed.")).toBeVisible();
+    await expect(page).toHaveURL("/register");
+
+    await form.getByLabel(USER_LABEL).fill("ada");
+    await form.getByLabel("Email").fill("ada@example.com");
+    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await expect(
+      form.getByText("That username is taken. Pick another one, or log on."),
+    ).toBeVisible();
+    await expect(page).toHaveURL("/register");
+
+    // Register one handle, then reuse its mailbox for another.
+    const first = `quinn-mail-${Date.now().toString(36)}`;
+    const mailbox = `${first}@example.com`;
+    await form.getByLabel(USER_LABEL).fill(first);
+    await form.getByLabel("Email").fill(mailbox);
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
+    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
+      const match = /([0-9]{6})/.exec(element.textContent ?? "");
+      if (!match?.[1]) throw new Error("the demo code is not shown");
+      return match[1];
+    });
+    await form.getByLabel("Email code").fill(demoCode);
+    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+    await expect(page).toHaveURL("/profile");
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+
+    await page.goto("/register");
+    const retry = page.getByRole("form", { name: "REGISTER" });
+    await retry.getByLabel(USER_LABEL).fill(`quinn-mail-2-${Date.now().toString(36)}`);
+    await retry.getByLabel("Email").fill(mailbox);
+    await retry.getByLabel(PASSWORD_LABEL).fill("secret");
+    await retry.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await expect(
+      retry.getByText("That email is already registered. Log on instead."),
+    ).toBeVisible();
+    await expect(page).toHaveURL("/register");
+  });
+
+  test("marks the admin demo on the profile", async ({ page }) => {
+    await logon(page, "admin");
+    await page.goto("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 1, name: "admin" })).toBeVisible();
+    await expect(profile.getByText("Member")).toBeVisible();
+    await expect(profile.getByText("JOINED")).toContainText("ADMIN");
+  });
+
+  test("opens apply for participants and bounces members to the profile", async ({ page }) => {
+    await logon(page, "quinn-apply");
+    await page.goto("/apply");
+    await expect(page.getByRole("heading", { level: 1, name: "MEMBER APPLICATION" })).toBeVisible();
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await expect(page).toHaveURL("/");
+
+    await logon(page);
+    await page.goto("/apply");
+    await expect(page).toHaveURL("/profile");
+  });
+
+  test("sends members from the register route to the profile", async ({ page }) => {
+    await logon(page);
+    await page.goto("/register");
+    await expect(page).toHaveURL("/profile");
+  });
+
+  test("walks the register form by keyboard with no violations", async ({ page }) => {
+    await page.goto("/register");
+    const form = page.getByRole("form", { name: "REGISTER" });
+    const user = form.getByLabel(USER_LABEL);
+    const email = form.getByLabel("Email");
+    const password = form.getByLabel(PASSWORD_LABEL);
+
+    await page.locator("#file-REGISTER").focus();
+    await page.keyboard.press("Tab");
+    await expect(docScroll(page)).toBeFocused();
+
+    await page.keyboard.press("ArrowDown");
+    await expect(email).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(user).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(password).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(user).toBeFocused();
+
+    await expectNoViolations(page, "/register");
+
+    const handle = `quinn-keys-${Date.now().toString(36)}`;
+    await user.fill(handle);
+    await email.fill(`${handle}@example.com`);
+    await password.fill("secret");
+    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+
+    const code = form.getByLabel("Email code");
+    await expect(code).toBeVisible();
+    await code.focus();
+    await page.keyboard.type("000000");
+    await expect(code).toHaveValue("000000");
+    await expectNoViolations(page, "/register code step");
+  });
+});
+
 test.describe("member threads", () => {
   test("lists the member's threads and opens one with a click or Space", async ({ page }) => {
     await logon(page);
@@ -351,7 +630,8 @@ test.describe("apply form", () => {
     await page.keyboard.press("Tab");
     await expect(page.getByRole("listbox")).toHaveCount(0);
     await expect(role).toContainText("Learning");
-    await expect(page.locator("#file-APPLY")).toBeFocused();
+    // Guests have no APPLY row: the cursor falls back to the displayed doc.
+    await expect(page.locator("#file-ABOUT")).toBeFocused();
   });
 
   test("typing on a closed dropdown opens it at the match without feeding the command line", async ({

@@ -17,8 +17,9 @@ export function ProfileView({ profile, threads, now }: ProfileViewProps) {
         <Stack gap={2}>
           <Heading level={1}>{profile.user}</Heading>
           <Text role="hint">
-            {messages.account.profile.roles[profile.role]} · {messages.account.profile.joined}{" "}
-            {profile.joined}
+            {messages.account.profile.roles[profile.role]}
+            {profile.admin ? ` · ${messages.account.profile.admin}` : null} ·{" "}
+            {messages.account.profile.joined} {profile.joined}
           </Text>
         </Stack>
       </Stack>

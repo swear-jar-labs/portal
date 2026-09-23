@@ -277,7 +277,7 @@ test("function keys open their commands", async ({ page }) => {
   const toolbar = page.getByRole("toolbar", { name: "Function keys" });
   await expect(toolbar.getByRole("button", { name: "F6 Projects" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: /^F7\b/ })).toHaveCount(0);
-  await expect(toolbar.getByRole("button", { name: "F8 Apply" })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "F8 Register" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F9 Logon" })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "F10 Exit" })).toBeVisible();
 
@@ -420,10 +420,10 @@ test.describe("file manager", () => {
   test("opens a route file with Space from the focused row", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-    await files.getByRole("link", { name: "APPLY" }).focus();
+    await files.getByRole("link", { name: "REGISTER" }).focus();
     await page.keyboard.press(" ");
 
-    await expect(page).toHaveURL("/apply");
+    await expect(page).toHaveURL("/register");
   });
 
   test("enters the scrolled file list from its visible edge", async ({ page }) => {

@@ -356,7 +356,20 @@ test.describe("file manager", () => {
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "TYPE" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "SIZE" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+  });
+
+  test("lists COMMUNITY, ACCOUNT and GUIDE in order", async ({ page }) => {
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+    // Community first (what people come back for), then the personal account
+    // entries, then the occasional reference. The order never moves on logon.
+    const dirs = await files
+      .locator('[id^="dir-"]')
+      .evaluateAll((nodes) => nodes.map((node) => node.id));
+    expect(dirs).toEqual(["dir-board", "dir-account", "dir-read"]);
+    await expect(files.getByRole("button", { name: /COMMUNITY/ })).toBeVisible();
+    await expect(files.getByRole("button", { name: /ACCOUNT/ })).toBeVisible();
+    await expect(files.getByRole("button", { name: /GUIDE/ })).toBeVisible();
   });
 
   test("moves the selection with arrows without changing the document", async ({ page }) => {
@@ -365,7 +378,7 @@ test.describe("file manager", () => {
     await files.getByRole("button", { name: "ABOUT" }).click();
     await page.keyboard.press("ArrowDown");
 
-    await expect(files.locator("#file-MANIFESTO")).toBeFocused();
+    await expect(files.locator("#file-HOW")).toBeFocused();
     await expect(page.getByRole("heading", { level: 2, name: "ABOUT.TXT" })).toBeVisible();
     await expect(files.getByRole("button", { name: "ABOUT" })).toHaveAttribute(
       "aria-current",
@@ -401,7 +414,7 @@ test.describe("file manager", () => {
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("ArrowRight");
 
-    await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "HOW-IT-WORKS.TXT" })).toBeVisible();
   });
 
   test("opens a route file with Space from the focused row", async ({ page }) => {
@@ -419,11 +432,25 @@ test.describe("file manager", () => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     const scroll = files.locator(`[${DOS_SCROLL_ATTR}]`);
 
-    // The cursor sits on ABOUT; the wheel scrolls the list away from it.
+    // Nine steps up: ABOUT (row 10) to FORUM (row 1) with no wrap-around, so
+    // the cursor lands exactly even if DOM focus trails by a render. The
+    // wheel then scrolls the list away from it.
     await files.locator("#file-ABOUT").focus();
+    for (let step = 0; step < 9; step++) await page.keyboard.press("ArrowUp");
+    await expect(files.locator("#file-FORUM")).toBeFocused();
     await scroll.hover();
     await page.mouse.wheel(0, 2000);
-    await expect.poll(() => scroll.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    // The wheel scrolls in increments: wait until the list settles, so the
+    // cursor row is out of sight before stepping (a first >0 read still moves).
+    let lastTop = -1;
+    await expect
+      .poll(async () => {
+        const top: number = await scroll.evaluate((el) => el.scrollTop);
+        const settled = top > 0 && top === lastTop;
+        lastTop = top;
+        return settled;
+      })
+      .toBe(true);
 
     await page.keyboard.press("ArrowDown");
     const state = await scroll.evaluate((el) => {
@@ -461,10 +488,10 @@ test.describe("file manager", () => {
     await page.keyboard.press("ArrowRight");
     await expect(files.getByRole("button", { name: "ABOUT" })).toBeVisible();
 
-    await files.getByRole("button", { name: /BOARD/ }).click();
-    await expect(files.getByRole("link", { name: /DISCUSSIONS/ })).toBeHidden();
-    await files.getByRole("button", { name: /BOARD/ }).click();
-    await expect(files.getByRole("link", { name: /DISCUSSIONS/ })).toBeVisible();
+    await files.getByRole("button", { name: /COMMUNITY/ }).click();
+    await expect(files.getByRole("link", { name: /FORUM/ })).toBeHidden();
+    await files.getByRole("button", { name: /COMMUNITY/ }).click();
+    await expect(files.getByRole("link", { name: /FORUM/ })).toBeVisible();
   });
 
   test("activates the selection from an empty command line", async ({ page }) => {
@@ -475,7 +502,7 @@ test.describe("file manager", () => {
     await page.getByLabel("Command line").focus();
     await page.keyboard.press("Enter");
 
-    await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
   });
 
   test("opens a file by clicking its size cell", async ({ page }) => {
@@ -496,7 +523,7 @@ test.describe("mobile file manager", () => {
   test("cycles peek, compact and full via the header and footer", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     const scroller = files.locator("table").locator("..");
     const height = () => scroller.evaluate((el) => el.clientHeight);

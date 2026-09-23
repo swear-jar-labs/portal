@@ -68,7 +68,7 @@ test("centers the how-it-works and rules headings in the manifesto style", async
   await expect(howHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-yellow"));
 
   const how = page.getByRole("region", { name: "HOW-IT-WORKS.TXT", exact: true });
-  for (const section of ["DISCUSSIONS & ERRATA", "READROOM", "PROJECTS"]) {
+  for (const section of ["FORUM & ERRATA", "READROOM", "PROJECTS"]) {
     await expect(how.getByText(section, { exact: true })).toBeVisible();
   }
   await expect(

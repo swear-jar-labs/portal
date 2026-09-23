@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { FEED_PATH, threadPath } from "../../src/features/board/threads";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
-const FEED_REGION = "DISCUSSIONS.EXE";
+const FEED_REGION = "FORUM.EXE";
 const READ_FIRST = "READ FIRST: how this board works";
 const PIXEL = "tests/e2e/fixtures/pixel.png";
 

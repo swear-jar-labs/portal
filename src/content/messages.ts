@@ -16,13 +16,14 @@ export const messages = {
   shell: {
     brand: { name: "SWEARJAR.DOS", version: "v0.1" },
     menuBar: {
-      titles: { file: "File", board: "Board", account: "Account", help: "Help" },
+      titles: { file: "Guide", board: "Community", account: "Account", help: "Help" },
       labels: {
         ABOUT: "About...",
         MANIFESTO: "Manifesto",
         HOW: "How it works",
         RULES: "Rules",
-        DISCUSSIONS: "Discussions",
+        FORUM: "Forum",
+        ERRATA: "Errata",
         READROOM: "Readroom",
         PROJECTS: "Projects",
         TICKETS: "Tickets",
@@ -64,8 +65,8 @@ export const messages = {
       cycleHeader: "Cycle file list size (header)",
       cycleFooter: "Cycle file list size (footer)",
       groups: {
-        read: { label: "── READ ──────────────", short: "READ" },
-        board: { label: "── BOARD ─────────────", short: "BOARD" },
+        read: { label: "── GUIDE ─────────────", short: "GUIDE" },
+        board: { label: "── COMMUNITY ─────────", short: "COMMUNITY" },
         account: { label: "── ACCOUNT ───────────", short: "ACCOUNT" },
       },
     },
@@ -134,7 +135,8 @@ export const messages = {
         MANIFESTO: "what we believe",
         HOW: "how to take part",
         RULES: "the rules",
-        DISCUSSIONS: "open the board",
+        FORUM: "open the forum",
+        ERRATA: "open the errata board",
         READROOM: "the reading tasks",
         PROJECTS: "what we build",
         TICKETS: "the work queue",
@@ -281,7 +283,7 @@ export const messages = {
   },
   board: {
     metadata: {
-      title: "Discussions — Swear Jar Labs",
+      title: "Forum — Swear Jar Labs",
       description: "The Swear Jar Labs board: threads, proposals and postmortems.",
     },
     boards: {
@@ -303,7 +305,7 @@ export const messages = {
       maintainer: "MAINTAINER",
     },
     feed: {
-      heading: "DISCUSSIONS",
+      heading: "FORUM",
       boardLabel: "BOARD",
       sortLabel: "SORT",
       tagLabel: "TAGS",

@@ -1,6 +1,6 @@
 .stack {
   /* The cascade step: the vertical offset reveals exactly the title bar of the
-     layer below (border + title line), so DISCUSSIONS.EXE stays readable behind
+     layer below (border + title line), so FORUM.EXE stays readable behind
      the open thread. */
   --dos-panel-stack-offset: calc(var(--dos-border-width) + var(--dos-line-height));
   display: grid;

@@ -35,6 +35,11 @@ export function parseFeedQuery(params: URLSearchParams): FeedQuery {
   };
 }
 
+/** Structural equality for feed queries: the URL sync resets only on change. */
+export function sameFeedQuery(a: FeedQuery, b: FeedQuery): boolean {
+  return a.board === b.board && a.tag === b.tag && a.sort === b.sort;
+}
+
 /** The URL form of the feed state: defaults stay out, so the feed links clean. */
 export function feedQueryParams(query: FeedQuery): URLSearchParams {
   const params = new URLSearchParams();

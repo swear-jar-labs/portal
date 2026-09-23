@@ -3,14 +3,20 @@ import { resolveCommand } from "@swearjar/dos";
 import {
   actionCommandIds,
   commandById,
+  commandIdForLocation,
   commandIdForPath,
   commands,
+  ERRATA_HREF,
   fileGroupsFor,
   fileTitle,
   HOME_PATH,
   isActionCommand,
+  joinLocation,
   keyDefsFor,
+  loginHref,
+  LOGIN_PATH,
   menuDefsFor,
+  parseLoginReturn,
   visibleCommands,
 } from "@/content/commands";
 import { docs } from "@/content/docs";
@@ -128,14 +134,98 @@ describe("commands content", () => {
     }
   });
 
-  it("keeps the expected file summary (3 DIRS, 10 FILES as guest, 11 as member)", () => {
+  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 12 as member)", () => {
     const count = (signedIn: boolean) => {
       const groups = fileGroupsFor(signedIn);
       expect(groups).toHaveLength(3);
       return groups.reduce((total, group) => total + group.items.length, 0);
     };
-    expect(count(false)).toBe(10);
-    expect(count(true)).toBe(11);
+    expect(count(false)).toBe(11);
+    expect(count(true)).toBe(12);
+  });
+
+  it("names the COMMUNITY, ACCOUNT and GUIDE groups in order", () => {
+    for (const signedIn of SESSIONS) {
+      expect(fileGroupsFor(signedIn).map((group) => group.short)).toEqual([
+        "COMMUNITY",
+        "ACCOUNT",
+        "GUIDE",
+      ]);
+    }
+    const guest = fileGroupsFor(false);
+    expect(guest[0]?.items.map((item) => item.command)).toEqual([
+      "FORUM",
+      "ERRATA",
+      "READROOM",
+      "PROJECTS",
+      "TICKETS",
+    ]);
+    expect(guest[2]?.items.map((item) => item.command)).toEqual([
+      "ABOUT",
+      "HOW",
+      "MANIFESTO",
+      "RULES",
+    ]);
+  });
+
+  it("opens ERRATA on the errata board of the existing feed", () => {
+    const errata = commandById.get("ERRATA");
+    expect(errata?.href).toBe(ERRATA_HREF);
+    expect(errata?.href).toBe("/forum?board=errata");
+    expect(errata?.file).toEqual({
+      group: "board",
+      name: "ERRATA",
+      ext: "EXE",
+      size: 1024,
+      icon: "errata",
+    });
+    expect(isActionCommand("ERRATA")).toBe(false);
+    for (const signedIn of SESSIONS) {
+      expect(visibleCommands(signedIn).map((command) => command.id)).toContain("ERRATA");
+    }
+  });
+
+  it("names the FORUM file after the section", () => {
+    const forum = commandById.get("FORUM");
+    expect(forum?.href).toBe("/forum");
+    expect(forum?.file?.name).toBe("FORUM");
+    expect(forum?.file?.ext).toBe("EXE");
+    expect(fileTitle("FORUM")).toBe("FORUM.EXE");
+    expect(fileTitle("ERRATA")).toBe("ERRATA.EXE");
+  });
+
+  it("resolves typed FORUM and ERRATA and forgets DISCUSSIONS", () => {
+    expect(resolveCommand(commands, "forum")?.id).toBe("FORUM");
+    expect(resolveCommand(commands, "errata")?.id).toBe("ERRATA");
+    expect(resolveCommand(commands, "discussions")).toBeUndefined();
+  });
+
+  it("keeps the top menu at COMMUNITY, ACCOUNT, GUIDE and HELP", () => {
+    for (const signedIn of SESSIONS) {
+      expect(menuDefsFor(signedIn).map((menu) => menu.label)).toEqual([
+        "Community",
+        "Account",
+        "Guide",
+        "Help",
+      ]);
+    }
+    const entryCommands = (menuId: string, signedIn: boolean) =>
+      menuDefsFor(signedIn)
+        .find((menu) => menu.id === menuId)
+        ?.entries.flatMap((entry) => (entry.kind === "command" ? [entry.command] : []));
+    for (const signedIn of SESSIONS) {
+      expect(entryCommands("file", signedIn)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES"]);
+      expect(entryCommands("board", signedIn)).toEqual([
+        "FORUM",
+        "ERRATA",
+        "READROOM",
+        "PROJECTS",
+        "TICKETS",
+      ]);
+      expect(entryCommands("help", signedIn)).toEqual(["HELP", "COFFEE"]);
+    }
+    expect(entryCommands("account", false)).toEqual(["LOGON", "APPLY"]);
+    expect(entryCommands("account", true)).toEqual(["PROFILE", "SETTINGS", "LOGOFF"]);
   });
 
   it("removes the STATUS command and leaves F7 unassigned in both sessions", () => {
@@ -208,8 +298,8 @@ describe("commands content", () => {
   });
 
   it("maps routes to their section command", () => {
-    expect(commandIdForPath("/discussions")).toBe("DISCUSSIONS");
-    // ERRATA is a board of the feed, not a route of its own.
+    expect(commandIdForPath("/forum")).toBe("FORUM");
+    // /errata has no page of its own: ERRATA opens the feed with ?board=errata.
     expect(commandIdForPath("/errata")).toBeUndefined();
     expect(commandIdForPath("/readroom")).toBe("READROOM");
     expect(commandIdForPath("/projects")).toBe("PROJECTS");
@@ -223,10 +313,23 @@ describe("commands content", () => {
   });
 
   it("maps deep routes to their section command by segment boundary", () => {
-    expect(commandIdForPath("/discussions/3f2a1c")).toBe("DISCUSSIONS");
-    expect(commandIdForPath("/discussions/3f2a1c/")).toBe("DISCUSSIONS");
-    expect(commandIdForPath("/discussions-archive")).toBeUndefined();
+    expect(commandIdForPath("/forum/3f2a1c")).toBe("FORUM");
+    expect(commandIdForPath("/forum/3f2a1c/")).toBe("FORUM");
+    expect(commandIdForPath("/forum-archive")).toBeUndefined();
     expect(commandIdForPath("/readroom/2026/05")).toBe("READROOM");
+  });
+
+  it("maps locations with a query to a single section entry", () => {
+    expect(commandIdForLocation("/forum")).toBe("FORUM");
+    expect(commandIdForLocation("/forum?board=general")).toBe("FORUM");
+    expect(commandIdForLocation("/forum?board=errata")).toBe("ERRATA");
+    expect(commandIdForLocation("/forum?board=errata&sort=new")).toBe("ERRATA");
+    expect(commandIdForLocation("/forum/?board=errata")).toBe("ERRATA");
+    // Threads stay on the section entry even with a board filter in the URL.
+    expect(commandIdForLocation("/forum/read-first?board=errata")).toBe("FORUM");
+    expect(commandIdForLocation("/readroom?board=errata")).toBe("READROOM");
+    expect(commandIdForLocation(HOME_PATH)).toBeUndefined();
+    expect(commandIdForLocation("/unknown")).toBeUndefined();
   });
 
   it("keeps every route owned by a single command", () => {
@@ -241,6 +344,25 @@ describe("commands content", () => {
       expect(command?.href, `${id} is an action and must not have href`).toBeUndefined();
       expect(command?.doc, `${id} is an action and must not have doc`).toBeUndefined();
     }
+  });
+
+  it("joins locations with the shared query separator", () => {
+    expect(joinLocation("/forum", "")).toBe("/forum");
+    expect(joinLocation("/forum", "board=errata")).toBe("/forum?board=errata");
+    expect(joinLocation(HOME_PATH, "")).toBe(HOME_PATH);
+  });
+
+  it("carries the logon return location and refuses anything off-shell", () => {
+    expect(loginHref()).toBe(LOGIN_PATH);
+    expect(loginHref("/tickets/FLAG-1")).toBe("/login?next=%2Ftickets%2FFLAG-1");
+    expect(parseLoginReturn(undefined)).toBeUndefined();
+    expect(parseLoginReturn("/tickets/FLAG-1")).toBe("/tickets/FLAG-1");
+    expect(parseLoginReturn("/forum?board=errata")).toBe("/forum?board=errata");
+    expect(parseLoginReturn("/login")).toBeUndefined();
+    expect(parseLoginReturn("/login?next=%2Fprofile")).toBeUndefined();
+    expect(parseLoginReturn("/apply")).toBeUndefined();
+    expect(parseLoginReturn("https://example.com/")).toBeUndefined();
+    expect(parseLoginReturn("//evil")).toBeUndefined();
   });
 
   it("never marks a routed or doc command as an action", () => {

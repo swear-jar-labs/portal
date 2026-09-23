@@ -50,6 +50,6 @@ describe("board taxonomy", () => {
   });
 
   it("owns the thread URL canon", () => {
-    expect(threadPath("read-first")).toBe("/discussions/read-first");
+    expect(threadPath("read-first")).toBe("/forum/read-first");
   });
 });

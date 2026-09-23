@@ -7,15 +7,17 @@ import {
   useRef,
   useState,
   useTransition,
+  Suspense,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   CmdLine,
   cx,
   Dialog,
   KeyBar,
   MenuBar,
+  resolveCommand,
   Screensaver,
   Sprite,
   Stack,
@@ -24,9 +26,13 @@ import {
 import {
   commandById,
   fileGroupsFor,
+  FORUM_PATH,
   HOME_PATH,
+  joinLocation,
   keyDefsFor,
+  loginHref,
   menuDefsFor,
+  stripQuery,
   visibleCommands,
   type CommandId,
 } from "@/content/commands";
@@ -65,6 +71,18 @@ export type DosShellProps = {
   logoff: () => Promise<void>;
 };
 
+// The file highlight follows the query (FORUM vs ERRATA share a pathname),
+// but useSearchParams needs a Suspense boundary to keep the shell
+// prerenderable: this island syncs the query into the shell state.
+function ShellSearchSync({ onSearch }: { onSearch: (search: string) => void }) {
+  const params = useSearchParams();
+  const search = params.toString();
+  useEffect(() => {
+    onSearch(search);
+  }, [onSearch, search]);
+  return null;
+}
+
 export function DosShell({ children, session, logoff }: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -83,6 +101,15 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
     screensaverPrefs.enabled,
   );
   const signedIn = session !== null;
+  // Opening the site without a destination lands members on FORUM; guests
+  // start at the default document (ABOUT). Mount-only: opening a document
+  // in-app also shows "/", and must never bounce to the forum.
+  const coldOpened = useRef(false);
+  useEffect(() => {
+    if (coldOpened.current) return;
+    coldOpened.current = true;
+    if (signedIn && pathname === HOME_PATH) router.replace(FORUM_PATH);
+  }, [signedIn, pathname, router]);
   // Welcome is a boot-time greeting: guests see it once per load, and neither a
   // logon nor a logoff mid-session turns it back on.
   const [welcomeEligible, setWelcomeEligible] = useState(() => !signedIn);
@@ -94,6 +121,11 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
   // the file manager hands the keyboard to the right panel exactly then.
   const [isNavigating, startNavigation] = useTransition();
   const panelFocusTarget = useRef<string | null>(null);
+  // Query-only navigations (FORUM <-> ERRATA) keep the pathname: the search
+  // arrives through the sync island below.
+  const [search, setSearch] = useState("");
+  const syncSearch = useCallback((value: string) => setSearch(value), []);
+  const location = joinLocation(pathname, search);
 
   const push = useCallback(
     (href: string) => {
@@ -116,21 +148,27 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
   // Opening a program (EXE route) hands the keyboard to the right panel; docs
   // keep it in the list and dialogs take focus themselves. A route that is
   // already open focuses right away, the rest wait for the route to settle.
+  // The focus target is the pathname part: query entries (ERRATA) share it.
+  // LOGON carries the current location (?next=): a logon started on a page
+  // lands back there, a direct /login visit falls back to FORUM.
   const runFromFiles = useCallback(
     (commandId: CommandId) => {
-      const href = commandById.get(commandId)?.href;
+      const command = commandById.get(commandId);
+      const href = commandId === "LOGON" && command?.href ? loginHref(location) : command?.href;
       if (href) {
-        if (href === pathname) focusPanelBody();
-        else panelFocusTarget.current = href;
+        const target = stripQuery(href);
+        if (target === pathname) focusPanelBody();
+        else panelFocusTarget.current = target;
       }
       runRef.current(commandId);
     },
-    [pathname],
+    [location, pathname],
   );
 
   const fileManager = useFileManager({
     isMobile,
     pathname,
+    search,
     signedIn,
     onDocumentOpened: goHome,
     groups,
@@ -166,6 +204,20 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
     signedIn,
   });
 
+  // Every command goes through the runner, except LOGON: it remembers the
+  // current location (?next=), so a logon started on a page lands back there
+  // after success. The runner itself stays location-free.
+  const runCommand = useCallback(
+    (raw: string) => {
+      if (resolveCommand(commandList, raw)?.id === "LOGON") {
+        push(loginHref(location));
+        return;
+      }
+      run(raw);
+    },
+    [commandList, location, push, run],
+  );
+
   // Features cannot mount their own modals: they ask the shell to run one. The
   // guest prompt is the shared form of that (the board's gated actions).
   const shellDialogs = useMemo<ShellDialogs>(
@@ -179,26 +231,26 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
             <LoginPromptBody
               onLogon={() => {
                 closeDialog();
-                run("LOGON");
+                runCommand("LOGON");
               }}
               onCancel={closeDialog}
             />
           ),
         }),
     }),
-    [closeDialog, openDialog, run],
+    [closeDialog, openDialog, runCommand],
   );
 
   useEffect(() => {
-    runRef.current = run;
-  }, [run]);
+    runRef.current = runCommand;
+  }, [runCommand]);
 
   useEffect(() => {
     hydrateScreensaverPrefs();
   }, [hydrateScreensaverPrefs]);
 
   const controlsEnabled = booted && dialog === null && !screensaverOn;
-  useFunctionKeys(functionKeys, run, controlsEnabled);
+  useFunctionKeys(functionKeys, runCommand, controlsEnabled);
   usePanelNav(controlsEnabled);
   useFileCursorKeys({
     enabled: controlsEnabled,
@@ -228,11 +280,11 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
                 kind: "item" as const,
                 id: `${menu.id}-${entry.command}`,
                 label: entry.label,
-                onSelect: () => run(entry.command),
+                onSelect: () => runCommand(entry.command),
               },
         ),
       })),
-    [run, signedIn],
+    [runCommand, signedIn],
   );
 
   const keyItems = useMemo(
@@ -240,9 +292,9 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
       functionKeys.map((def) => ({
         key: def.key,
         label: def.label,
-        onSelect: () => run(def.command),
+        onSelect: () => runCommand(def.command),
       })),
-    [functionKeys, run],
+    [functionKeys, runCommand],
   );
 
   if (!booted) {
@@ -269,6 +321,9 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
         />
 
         <FileManagerProvider value={fileManager}>
+          <Suspense fallback={null}>
+            <ShellSearchSync onSearch={syncSearch} />
+          </Suspense>
           <Stack direction={isMobile ? "column" : "row"} gap={0} className={styles.panels}>
             <FileManagerPanel
               isMobile={isMobile}
@@ -289,7 +344,7 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
 
         <CmdLine
           commands={commandList}
-          onSubmit={run}
+          onSubmit={runCommand}
           onSubmitEmpty={fileManager.activateSelection}
           onNavigate={fileManager.moveCursor}
           captureDisabled={dialog !== null || screensaverOn}

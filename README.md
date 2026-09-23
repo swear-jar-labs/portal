@@ -2,7 +2,7 @@
 
 A workshop for people who want to understand how software works — and how to build it well.
 
-We write code, question it, and help each other fix what we were sure would work. The platform brings together DISCUSSIONS, ERRATA, READROOM and project work in **SWEARJAR.DOS**, a keyboard-friendly DOS-style interface. Open source, MIT licensed.
+We write code, question it, and help each other fix what we were sure would work. The platform brings together FORUM, ERRATA, READROOM and project work in **SWEARJAR.DOS**, a keyboard-friendly DOS-style interface. Open source, MIT licensed.
 
 This repository currently runs on demo data. Threads, notes, tickets and project changes live in browser memory and reset on reload. Terminal preferences persist in this browser; demo sign-in uses a cookie. Application forms do not submit applications, and repository counters and demo activity are fixtures, not live integrations.
 

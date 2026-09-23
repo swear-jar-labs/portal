@@ -104,7 +104,7 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
 
   await expect(panel.getByRole("link", { name: "[ NEW THREAD ]" })).toHaveAttribute(
     "href",
-    "/discussions?board=swearjar-dos&new=1",
+    "/forum?board=swearjar-dos&new=1",
   );
 
   await expect(
@@ -128,9 +128,9 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await page.keyboard.press("ArrowRight");
   await expect(panel.getByRole("link", { name: "ken" })).toBeFocused();
   const allThreads = panel.getByRole("link", { name: "ALL THREADS (2) →" });
-  await expect(allThreads).toHaveAttribute("href", "/discussions?board=swearjar-dos");
+  await expect(allThreads).toHaveAttribute("href", "/forum?board=swearjar-dos");
   await allThreads.click();
-  await expect(page).toHaveURL("/discussions?board=swearjar-dos");
+  await expect(page).toHaveURL("/forum?board=swearjar-dos");
 });
 
 test("opens a thread composer with the project preselected", async ({ page }) => {
@@ -140,7 +140,7 @@ test("opens a thread composer with the project preselected", async ({ page }) =>
   const panel = page.getByRole("region", { name: "Compiler" });
 
   await panel.getByRole("link", { name: "[ NEW THREAD ]" }).click();
-  await expect(page).toHaveURL("/discussions?board=compiler");
+  await expect(page).toHaveURL("/forum?board=compiler");
   const form = page.getByRole("form", { name: "NEW THREAD" });
   await expect(form.getByRole("combobox", { name: "BOARD" })).toContainText("Compiler");
 });
@@ -151,7 +151,7 @@ test("opens a journal thread and closes back to the project", async ({ page }) =
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
 
   await panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }).click();
-  await expect(page).toHaveURL("/discussions/swearjar-boot");
+  await expect(page).toHaveURL("/forum/swearjar-boot");
   await expect(
     page.getByRole("region", { name: "Boot sequence: CRT-on before first paint" }),
   ).toBeVisible();
@@ -176,7 +176,7 @@ test("filters the board by tag inside the project scope", async ({ page }) => {
     .filter({ hasText: "Palette check: CGA against the CRT glow" })
     .getByRole("button", { name: "QUESTION" })
     .click();
-  await expect(page).toHaveURL("/discussions?board=swearjar-dos&tag=question");
+  await expect(page).toHaveURL("/forum?board=swearjar-dos&tag=question");
 });
 
 test("votes in the journal", async ({ page }) => {

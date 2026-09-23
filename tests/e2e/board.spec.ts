@@ -8,6 +8,7 @@ import {
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { FEED_PATH, threadPath } from "../../src/features/board/threads";
 import {
+  enterShell,
   expectAbove,
   expectNoViolations,
   expectSameVerticalCenter,
@@ -16,7 +17,7 @@ import {
   waitForHydration,
 } from "./helpers";
 
-const FEED_REGION = "DISCUSSIONS.EXE";
+const FEED_REGION = "FORUM.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
 const READ_FIRST = "READ FIRST: how this board works";
 const CI_CACHE = "CI cache poisoning: how we lost a day";
@@ -409,22 +410,22 @@ test("a deep link opens the stack and Tab from the file list reaches the top lay
 
   // The section file stays current on its deep routes.
   const files = page.getByRole("region", { name: FILES_REGION });
-  await expect(files.locator("#file-DISCUSSIONS")).toHaveAttribute("aria-current", "true");
+  await expect(files.locator("#file-FORUM")).toHaveAttribute("aria-current", "true");
 
-  await files.locator("#file-DISCUSSIONS").focus();
+  await files.locator("#file-FORUM").focus();
   // Under parallel load a late island commit can replace the row between
   // .focus() and Tab (the stroke then falls through to the native order):
   // refocus the current row and retry until the panel answers.
   const topBody = page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`);
   await expect
     .poll(async () => {
-      await files.locator("#file-DISCUSSIONS").focus();
+      await files.locator("#file-FORUM").focus();
       await page.keyboard.press("Tab");
       return await topBody.evaluate((node) => node === document.activeElement);
     })
     .toBe(true);
   await page.keyboard.press("Shift+Tab");
-  await expect(files.locator("#file-DISCUSSIONS")).toBeFocused();
+  await expect(files.locator("#file-FORUM")).toBeFocused();
 
   // A deep-linked thread pushes the feed on close.
   await page.keyboard.press("Tab");
@@ -495,7 +496,16 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   await page.getByRole("button", { name: "[ POST REPLY ]" }).click();
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "[ LOG ON ]" }).click();
-  await expect(page).toHaveURL("/login");
+  // The logon started on the thread, so it carries the way back (?next=).
+  await expect(page).toHaveURL("/login?next=%2Fforum%2Fci-cache-poisoning");
+
+  await page.getByLabel("Username").fill("ada");
+  await page.getByLabel("Password").fill("secret");
+  await page.getByRole("button", { name: "[ LOG ON ]" }).click();
+  // The logon lands back on the thread. The typed draft does not survive the
+  // page change (it lives in the thread panel, not the session store); the
+  // cancel path above is what keeps it.
+  await expect(page).toHaveURL("/forum/ci-cache-poisoning");
 });
 
 test("votes a thread once and keeps the delta across panels", async ({ page }) => {
@@ -996,4 +1006,101 @@ test("has no accessibility violations as a member", async ({ page }) => {
     .click();
   await expect(page.getByText("REPLYING TO")).toBeVisible();
   await expectNoViolations(page, "member thread with reply target");
+});
+
+test.describe("forum and errata entries", () => {
+  const ERRATA_URL = `${FEED_PATH}?board=errata`;
+
+  test("opens FORUM and ERRATA from the file manager with a single current row", async ({
+    page,
+  }) => {
+    await enterShell(page);
+    const files = page.getByRole("region", { name: FILES_REGION });
+
+    await files.getByRole("link", { name: "FORUM" }).click();
+    await expect(page).toHaveURL(FEED_PATH);
+    await expect(page.getByRole("region", { name: FEED_REGION })).toBeVisible();
+    await expect(files.locator("#file-FORUM")).toHaveAttribute("aria-current", "true");
+    await expect(files.locator("#file-ERRATA")).not.toHaveAttribute("aria-current", "true");
+
+    // Keyboard-only: Space activates the focused row like a click.
+    await files.locator("#file-ERRATA").focus();
+    await page.keyboard.press(" ");
+    await expect(page).toHaveURL(ERRATA_URL);
+    await expect(files.locator("#file-ERRATA")).toHaveAttribute("aria-current", "true");
+    await expect(files.locator("#file-FORUM")).not.toHaveAttribute("aria-current", "true");
+
+    // ERRATA is the same feed pre-filtered to the errata board, not a copy.
+    const feed = page.getByRole("region", { name: FEED_REGION });
+    await expect(feed.getByRole("combobox", { name: "BOARD" })).toContainText("ERRATA");
+  });
+
+  test("opens the sections from the COMMUNITY menu", async ({ page }) => {
+    await enterShell(page);
+    const files = page.getByRole("region", { name: FILES_REGION });
+
+    await page.getByRole("menuitem", { name: "Community" }).click();
+    await expect(page.getByRole("menu")).toBeVisible();
+    await page.getByRole("menuitem", { name: "Errata" }).click();
+    await expect(page).toHaveURL(ERRATA_URL);
+    await expect(files.locator("#file-ERRATA")).toHaveAttribute("aria-current", "true");
+    await expect(files.locator("#file-FORUM")).not.toHaveAttribute("aria-current", "true");
+
+    await page.getByRole("menuitem", { name: "Community" }).click();
+    await page.getByRole("menuitem", { name: "Forum" }).click();
+    await expect(page).toHaveURL(FEED_PATH);
+    await expect(files.locator("#file-FORUM")).toHaveAttribute("aria-current", "true");
+
+    await page.getByRole("menuitem", { name: "Guide" }).click();
+    await expect(page.getByRole("menuitem", { name: "How it works" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "File" })).toHaveCount(0);
+  });
+
+  test("runs FORUM and ERRATA from the command line and rejects DISCUSSIONS", async ({ page }) => {
+    await enterShell(page);
+    const input = page.getByLabel("Command line");
+    const files = page.getByRole("region", { name: FILES_REGION });
+
+    await input.focus();
+    await page.keyboard.type("ERRATA");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(ERRATA_URL);
+    await expect(files.locator("#file-ERRATA")).toHaveAttribute("aria-current", "true");
+
+    await input.focus();
+    await page.keyboard.type("FORUM");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(FEED_PATH);
+    await expect(files.locator("#file-FORUM")).toHaveAttribute("aria-current", "true");
+
+    await input.focus();
+    await page.keyboard.type("DISCUSSIONS");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("dialog").getByText("Bad command or file name.")).toBeVisible();
+    await page.keyboard.press("Escape");
+  });
+
+  test("highlights ERRATA on a direct visit", async ({ page }) => {
+    await page.goto(ERRATA_URL);
+    await waitForHydration(page);
+    const files = page.getByRole("region", { name: FILES_REGION });
+    await expect(files.locator("#file-ERRATA")).toHaveAttribute("aria-current", "true");
+    await expect(files.locator("#file-FORUM")).not.toHaveAttribute("aria-current", "true");
+    await expectNoViolations(page, ERRATA_URL);
+  });
+
+  test("marks ERRATA with its own file icon", async ({ page }) => {
+    await enterShell(page);
+    const files = page.getByRole("region", { name: FILES_REGION });
+    await expect(files.locator('#file-ERRATA [data-file-icon="errata"]')).toHaveCount(1);
+    await expect(files.locator('#file-FORUM [data-file-icon="speech"]')).toHaveCount(1);
+  });
+
+  test("redirects the legacy discussions path to the forum", async ({ page }) => {
+    await page.goto("/discussions/read-first");
+    await expect(page).toHaveURL("/forum/read-first");
+    await expect(
+      page.getByRole("region", { name: "READ FIRST: how this board works" }),
+    ).toBeVisible();
+  });
 });

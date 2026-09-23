@@ -32,7 +32,7 @@ import {
 import { avatarFor } from "@/shared/members";
 import { ComposePanel } from "./ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
-import { feedQueryParams, parseFeedQuery, type FeedQuery } from "./feed";
+import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "./feed";
 import { postElementId, postIdFromHash } from "./post-anchor";
 import type { ComposeInput } from "./schema";
 import { ThreadActionsProvider, type ThreadActions } from "./thread-actions";
@@ -58,7 +58,7 @@ export type BoardStackProps = {
 
 /** The feed panel before the URL filters are known (the Suspense fallback). */
 export function BoardFallback() {
-  return <ShellPanel title={fileTitle("DISCUSSIONS")}>{null}</ShellPanel>;
+  return <ShellPanel title={fileTitle("FORUM")}>{null}</ShellPanel>;
 }
 
 export function BoardStack({ threads, now, thread }: BoardStackProps) {
@@ -69,6 +69,17 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const [query, setQuery] = useState<FeedQuery>(() => parseFeedQuery(searchParams));
+  // The last search the state was synced from: UI-driven edits rewrite the URL
+  // with replaceState (the router never reports those back), so only a new
+  // search string resyncs — a section entry (ERRATA) or history step.
+  const [syncedSearch, setSyncedSearch] = useState(() => searchParams.toString());
+  const liveSearch = searchParams.toString();
+  // Render-adjust, like the file cursor: no effect, no cascading subscription.
+  if (syncedSearch !== liveSearch) {
+    setSyncedSearch(liveSearch);
+    const next = parseFeedQuery(searchParams);
+    if (!sameFeedQuery(query, next)) setQuery(next);
+  }
   const initialCompose =
     searchParams.get("new") === "1" &&
     query.board !== undefined &&
@@ -328,7 +339,7 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   return (
     <ThreadActionsProvider actions={threadActions}>
       <PanelStack onCloseTop={closeTop}>
-        <ShellPanel title={fileTitle("DISCUSSIONS")} closable>
+        <ShellPanel title={fileTitle("FORUM")} closable>
           <FeedPanel
             threads={visible}
             now={now}

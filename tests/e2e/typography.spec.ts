@@ -60,7 +60,7 @@ test("keeps light surfaces on the real bold with the smear, not a stroke", async
 
   // File rows are buttons (docs) or links (routed EXEs): the UA control reset
   // must not drop the surface ink on either.
-  for (const row of ["MANIFESTO", "DISCUSSIONS"]) {
+  for (const row of ["MANIFESTO", "FORUM"]) {
     const control = page.locator("tbody tr", { hasText: row }).locator("a, button").first();
     await expect(control).toBeVisible();
     expect(await control.evaluate((element) => getComputedStyle(element).textShadow)).not.toBe(

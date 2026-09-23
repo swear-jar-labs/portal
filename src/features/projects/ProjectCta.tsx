@@ -5,7 +5,7 @@ import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
 
 /** The guest call under the project: members already have ALL THREADS above,
- * guests are pointed at APPLY — composing itself lives in Discussions. */
+ * guests are pointed at APPLY — composing itself lives in the forum. */
 export function ProjectCta() {
   const session = useShellSession();
 

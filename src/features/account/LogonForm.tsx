@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Field, Form, Heading, Link, Stack, Text } from "@swearjar/dos";
+import { FORUM_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { mockLogonSchema, socialProviders, type SocialProvider } from "./mock-session";
 import { mockLogon, mockSocialLogon } from "./mock-session-actions";
@@ -14,20 +15,25 @@ type LogonErrors = {
   form?: string;
 };
 
-const PROFILE_PATH = "/profile";
+export type LogonFormProps = {
+  // Where a successful logon lands: the page the logon started from (?next=),
+  // or the member home (FORUM) for a direct visit.
+  returnTo?: string;
+};
 
-function errorText(error: "invalid" | "unavailable"): string {
-  return error === "unavailable"
-    ? messages.account.login.errors.unavailable
-    : messages.account.login.errors.invalid;
-}
-
-export function LogonForm() {
+export function LogonForm({ returnTo }: LogonFormProps) {
   const router = useRouter();
+  const landing = returnTo ?? FORUM_PATH;
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LogonErrors>({});
   const [pending, startTransition] = useTransition();
+
+  function errorText(error: "invalid" | "unavailable"): string {
+    return error === "unavailable"
+      ? messages.account.login.errors.unavailable
+      : messages.account.login.errors.invalid;
+  }
 
   function handleSubmit() {
     const parsed = mockLogonSchema.safeParse({ user, password });
@@ -46,7 +52,7 @@ export function LogonForm() {
     startTransition(async () => {
       const result = await mockLogon(parsed.data);
       if (result.ok) {
-        router.push(PROFILE_PATH);
+        router.push(landing);
         return;
       }
       setErrors({ form: errorText(result.error) });
@@ -58,7 +64,7 @@ export function LogonForm() {
     startTransition(async () => {
       const result = await mockSocialLogon({ provider });
       if (result.ok) {
-        router.push(PROFILE_PATH);
+        router.push(landing);
         return;
       }
       setErrors({ form: errorText(result.error) });

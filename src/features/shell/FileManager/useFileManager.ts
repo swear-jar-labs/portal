@@ -5,8 +5,9 @@ import { DOS_SCROLL_ATTR, isInScrollView, nextStepIndex } from "@swearjar/dos";
 import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import {
   commandById,
-  commandIdForPath,
+  commandIdForLocation,
   HOME_PATH,
+  joinLocation,
   type CommandId,
   type FileGroup,
 } from "@/content/commands";
@@ -32,22 +33,25 @@ const INITIAL_CURSOR_ID = fileRowId(DEFAULT_DOC_ID);
 
 type CursorState = {
   id: string;
-  pathname: string;
+  location: string;
   signedIn: boolean;
 };
 
-function rowIdForPath(pathname: string): string | undefined {
-  const commandId = commandIdForPath(pathname);
+function rowIdForLocation(location: string): string | undefined {
+  const commandId = commandIdForLocation(location);
   return commandId ? fileRowId(commandId) : undefined;
 }
 
-function cursorStateFor(pathname: string, signedIn: boolean): CursorState {
-  return { id: rowIdForPath(pathname) ?? INITIAL_CURSOR_ID, pathname, signedIn };
+function cursorStateFor(location: string, signedIn: boolean): CursorState {
+  return { id: rowIdForLocation(location) ?? INITIAL_CURSOR_ID, location, signedIn };
 }
 
 export type FileManagerOptions = {
   isMobile: boolean;
   pathname: string;
+  // The URL query (without "?"): FORUM and ERRATA share a pathname, so the
+  // cursor and the current row follow the full location.
+  search: string;
   signedIn: boolean;
   onDocumentOpened: () => void;
   groups: readonly FileGroup[];
@@ -59,13 +63,15 @@ export type FileManagerOptions = {
 export function useFileManager({
   isMobile,
   pathname,
+  search,
   signedIn,
   onDocumentOpened,
   groups,
   onCommand,
 }: FileManagerOptions) {
+  const location = joinLocation(pathname, search);
   const [selectedDocId, setSelectedDocId] = useState<DocId | null>(DEFAULT_DOC_ID);
-  const [cursor, setCursor] = useState<CursorState>(() => cursorStateFor(pathname, signedIn));
+  const [cursor, setCursor] = useState<CursorState>(() => cursorStateFor(location, signedIn));
   const [collapsedGroups, setCollapsedGroups] = useState<readonly string[]>([]);
   const [listSize, setListSize] = useState<FileListSize>("compact");
   const focusCursor = useRef(false);
@@ -80,27 +86,27 @@ export function useFileManager({
 
   const docRowId = selectedDocId ? fileRowId(selectedDocId) : undefined;
   const resetCursorId = fallbackRowId(rowIds, docRowId, INITIAL_CURSOR_ID);
-  const routeRowId = rowIdForPath(pathname);
+  const routeRowId = rowIdForLocation(location);
 
   // Adjusting state during render (React pattern) keeps the stored cursor in
-  // sync with the route and the session: a new pathname stores the route's row
-  // (or keeps the cursor on `/` and doc routes), a logon/logoff resets to the
-  // displayed document even when the stale row still exists in the other
+  // sync with the location and the session: a new location stores the entry's
+  // row (or keeps the cursor on `/` and doc routes), a logon/logoff resets to
+  // the displayed document even when the stale row still exists in the other
   // session's file list. A row that is gone (collapsed folder) falls back the
   // same way, instead of tracking all that in effects.
-  if (cursor.pathname !== pathname || cursor.signedIn !== signedIn) {
+  if (cursor.location !== location || cursor.signedIn !== signedIn) {
     const id =
-      cursor.pathname !== pathname
+      cursor.location !== location
         ? (routeRowId ?? (cursor.signedIn !== signedIn ? resetCursorId : cursor.id))
         : resetCursorId;
-    setCursor({ id, pathname, signedIn });
+    setCursor({ id, location, signedIn });
   }
 
   const activeCursorId = rowIds.includes(cursor.id) ? cursor.id : resetCursorId;
 
   const setCursorId = useCallback(
-    (id: string) => setCursor({ id, pathname, signedIn }),
-    [pathname, signedIn],
+    (id: string) => setCursor({ id, location, signedIn }),
+    [location, signedIn],
   );
 
   const moveCursor = useCallback(
@@ -164,9 +170,10 @@ export function useFileManager({
   const rows = useMemo<FileTableItem[]>(() => {
     const items: FileTableItem[] = [];
     const onHome = pathname === HOME_PATH;
-    // Deep routes belong to their section: /discussions/<id> keeps the section
-    // row current (see commandIdForPath).
-    const routeCommandId = commandIdForPath(pathname);
+    // Deep locations belong to their section: /forum/<id> keeps the
+    // section row current, ?board=errata picks ERRATA (see
+    // commandIdForLocation).
+    const routeCommandId = commandIdForLocation(location);
     for (const group of groups) {
       const collapsed = collapsedGroups.includes(group.id);
       const dirId = dirRowId(group.id);
@@ -220,6 +227,7 @@ export function useFileManager({
     activeCursorId,
     collapsedGroups,
     groups,
+    location,
     onCommand,
     pathname,
     selectedDocId,

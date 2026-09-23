@@ -8,7 +8,7 @@ import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const cases = [
   {
-    path: "/discussions",
+    path: "/forum",
     action: "[ NEW THREAD ]",
     form: "NEW THREAD",
     tags: tagIds.map((tag) => messages.board.tags[tag]),

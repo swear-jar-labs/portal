@@ -21,7 +21,7 @@ const groups: FileGroup[] = [
     id: "board",
     label: "── BOARD ──",
     short: "BOARD",
-    items: [{ command: "DISCUSSIONS", name: "DISCUSSIONS", ext: "EXE", size: 2048 }],
+    items: [{ command: "FORUM", name: "FORUM", ext: "EXE", size: 2048 }],
   },
 ];
 
@@ -32,7 +32,7 @@ describe("buildRowIds", () => {
       `${FILE_ROW_PREFIX}ABOUT`,
       `${FILE_ROW_PREFIX}RULES`,
       `${DIR_ROW_PREFIX}board`,
-      `${FILE_ROW_PREFIX}DISCUSSIONS`,
+      `${FILE_ROW_PREFIX}FORUM`,
     ]);
   });
 
@@ -40,7 +40,7 @@ describe("buildRowIds", () => {
     expect(buildRowIds(groups, ["read"])).toEqual([
       `${DIR_ROW_PREFIX}read`,
       `${DIR_ROW_PREFIX}board`,
-      `${FILE_ROW_PREFIX}DISCUSSIONS`,
+      `${FILE_ROW_PREFIX}FORUM`,
     ]);
   });
 });

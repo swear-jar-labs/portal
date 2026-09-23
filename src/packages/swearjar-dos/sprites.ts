@@ -106,6 +106,32 @@ export const sprites = {
       "................",
     ],
   },
+  // The errata file: the same sheet as a document, marked in red.
+  errata: {
+    palette: {
+      K: "#000000",
+      W: "#FFFFFF",
+      r: "#FF5555",
+    },
+    map: [
+      "................",
+      "...KKKKKKK......",
+      "...KWWWWWK......",
+      "...KWWWWWWK.....",
+      "...KWWWWWWWK....",
+      "...KWWWrrWWWK...",
+      "...KWWWrrWWWK...",
+      "...KWWWrrWWWK...",
+      "...KWWWrrWWWK...",
+      "...KWWWrrWWWK...",
+      "...KWWWWWWWWK...",
+      "...KWWWrrWWWK...",
+      "...KWWWWWWWWK...",
+      "...KKKKKKKKKK...",
+      "................",
+      "................",
+    ],
+  },
   speech: {
     palette: {
       K: "#000000",

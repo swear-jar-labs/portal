@@ -5,6 +5,7 @@ import {
   filterThreads,
   parseFeedQuery,
   rankThreads,
+  sameFeedQuery,
   type RankableThread,
 } from "@/features/board/feed";
 
@@ -135,5 +136,14 @@ describe("feed URL codec", () => {
     const query = { board: "compiler", tag: "proposal", sort: "new" } as const;
     expect(feedQueryParams(query).toString()).toBe("board=compiler&tag=proposal&sort=new");
     expect(parseFeedQuery(feedQueryParams(query))).toEqual(query);
+  });
+
+  it("compares queries structurally", () => {
+    expect(sameFeedQuery(DEFAULT_FEED_QUERY, { sort: "hot" })).toBe(true);
+    expect(sameFeedQuery({ sort: "hot" }, { sort: "new" })).toBe(false);
+    expect(sameFeedQuery({ board: "errata", sort: "hot" }, { board: "errata", sort: "hot" })).toBe(
+      true,
+    );
+    expect(sameFeedQuery({ board: "errata", sort: "hot" }, { sort: "hot" })).toBe(false);
   });
 });

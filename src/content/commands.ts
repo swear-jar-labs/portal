@@ -21,6 +21,49 @@ export type Audience = "any" | "guest" | "member";
 // The shell home: docs open here, so no route command matches it.
 export const HOME_PATH = "/";
 
+// The board feed doubles as two section entries: FORUM is the whole feed,
+// ERRATA opens it pre-filtered to the errata board (no new engine or copy).
+export const FORUM_PATH = "/forum";
+const BOARD_QUERY_PARAM = "board";
+const ERRATA_BOARD_ID = "errata";
+export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID}`;
+
+// Guest-only entries: LOGON carries the return location (?next=) so a logon
+// started on a page lands back there; a direct visit falls back to FORUM.
+export const LOGIN_PATH = "/login";
+export const APPLY_PATH = "/apply";
+const LOGIN_RETURN_PARAM = "next";
+
+export function loginHref(returnTo?: string): `/${string}` {
+  if (!returnTo) return LOGIN_PATH;
+  // Narrowed by construction: LOGIN_PATH is the leading slash, the rest is
+  // an encoded query string.
+  return `${LOGIN_PATH}?${LOGIN_RETURN_PARAM}=${encodeURIComponent(returnTo)}` as `/${string}`;
+}
+
+// Same-origin in-app paths only: auth pages would bounce, anything else (an
+// absolute URL smuggled into ?next=) never leaves the shell.
+export function parseLoginReturn(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  if (!value.startsWith("/") || value.startsWith("//")) return undefined;
+  const bare = stripQuery(value);
+  if (bare === LOGIN_PATH || bare.startsWith(`${LOGIN_PATH}/`)) return undefined;
+  if (bare === APPLY_PATH || bare.startsWith(`${APPLY_PATH}/`)) return undefined;
+  return value;
+}
+
+// The query separator shared by location helpers: one constant, one place.
+export const QUERY_SEPARATOR = "?";
+
+export function joinLocation(pathname: string, search: string): string {
+  return search === "" ? pathname : `${pathname}${QUERY_SEPARATOR}${search}`;
+}
+
+export function stripQuery(location: string): string {
+  const queryIndex = location.indexOf(QUERY_SEPARATOR);
+  return queryIndex === -1 ? location : location.slice(0, queryIndex);
+}
+
 type AppCommandDef = Command & {
   file?: FileMeta;
   audience?: Audience;
@@ -34,16 +77,16 @@ const commandDefs = [
     file: { group: "read", name: "ABOUT", ext: "TXT", size: 1024 },
   },
   {
-    id: "MANIFESTO",
-    description: messages.shell.registry.descriptions.MANIFESTO,
-    doc: "MANIFESTO",
-    file: { group: "read", name: "MANIFESTO", ext: "TXT", size: 512 },
-  },
-  {
     id: "HOW",
     description: messages.shell.registry.descriptions.HOW,
     doc: "HOW",
     file: { group: "read", name: "HOW-IT-WORKS", ext: "TXT", size: 2048 },
+  },
+  {
+    id: "MANIFESTO",
+    description: messages.shell.registry.descriptions.MANIFESTO,
+    doc: "MANIFESTO",
+    file: { group: "read", name: "MANIFESTO", ext: "TXT", size: 512 },
   },
   {
     id: "RULES",
@@ -52,10 +95,16 @@ const commandDefs = [
     file: { group: "read", name: "RULES", ext: "TXT", size: 640 },
   },
   {
-    id: "DISCUSSIONS",
-    description: messages.shell.registry.descriptions.DISCUSSIONS,
-    href: "/discussions",
-    file: { group: "board", name: "DISCUSSIONS", ext: "EXE", size: 2048, icon: "speech" },
+    id: "FORUM",
+    description: messages.shell.registry.descriptions.FORUM,
+    href: FORUM_PATH,
+    file: { group: "board", name: "FORUM", ext: "EXE", size: 2048, icon: "speech" },
+  },
+  {
+    id: "ERRATA",
+    description: messages.shell.registry.descriptions.ERRATA,
+    href: ERRATA_HREF,
+    file: { group: "board", name: "ERRATA", ext: "EXE", size: 1024, icon: "errata" },
   },
   {
     id: "READROOM",
@@ -78,14 +127,14 @@ const commandDefs = [
   {
     id: "APPLY",
     description: messages.shell.registry.descriptions.APPLY,
-    href: "/apply",
+    href: APPLY_PATH,
     audience: "guest",
     file: { group: "account", name: "APPLY", ext: "EXE", size: 512, icon: "check" },
   },
   {
     id: "LOGON",
     description: messages.shell.registry.descriptions.LOGON,
-    href: "/login",
+    href: LOGIN_PATH,
     audience: "guest",
     file: { group: "account", name: "LOGON", ext: "EXE", size: 512, icon: "key" },
   },
@@ -164,12 +213,26 @@ export function isActionCommand(id: CommandId): id is ActionCommandId {
 export function commandIdForPath(pathname: string): CommandId | undefined {
   const exact = commands.find((command) => command.href === pathname);
   if (exact) return exact.id;
-  // Deep routes belong to their section: /discussions/<id> keeps the cursor on
-  // DISCUSSIONS.EXE. The trailing slash holds the segment boundary, so
-  // /discussions-archive is not the board.
+  // Deep routes belong to their section: /forum/<id> keeps the cursor on
+  // FORUM.EXE. The trailing slash holds the segment boundary, so
+  // /forum-archive is not the board.
   return commands.find(
     (command) => command.href !== undefined && pathname.startsWith(`${command.href}/`),
   )?.id;
+}
+
+// The file highlight follows the full location, not just the pathname: FORUM
+// and ERRATA share one pathname, so the query picks the entry. Any other
+// board filter (or none) highlights FORUM.
+export function commandIdForLocation(location: string): CommandId | undefined {
+  const bare = stripQuery(location);
+  const pathname = bare.length > 1 && bare.endsWith("/") ? bare.slice(0, -1) : bare;
+  if (pathname === FORUM_PATH) {
+    const queryStart = location.indexOf(QUERY_SEPARATOR);
+    const query = queryStart === -1 ? "" : location.slice(queryStart + 1);
+    if (new URLSearchParams(query).get(BOARD_QUERY_PARAM) === ERRATA_BOARD_ID) return "ERRATA";
+  }
+  return commandIdForPath(pathname);
 }
 
 export function isVisibleFor(command: Pick<AppCommand, "audience">, signedIn: boolean): boolean {
@@ -201,10 +264,14 @@ export type FileGroup = {
   items: FileItem[];
 };
 
+// The surfaces read COMMUNITY first: it is what people come back for.
+// ACCOUNT holds the personal entries (and the future inbox), GUIDE the
+// occasional reference. The order is the same for guests and members, so
+// folders never jump after a logon.
 const fileGroupDefs = [
-  { id: "read", ...messages.shell.files.groups.read },
   { id: "board", ...messages.shell.files.groups.board },
   { id: "account", ...messages.shell.files.groups.account },
+  { id: "read", ...messages.shell.files.groups.read },
 ] as const satisfies readonly { id: FileGroupId; label: string; short: string }[];
 
 export function fileGroupsFor(signedIn: boolean): FileGroup[] {
@@ -231,30 +298,15 @@ export type MenuDef = {
 
 const menuDefs: MenuDef[] = [
   {
-    id: "file",
-    label: messages.shell.menuBar.titles.file,
-    entries: [
-      { kind: "command", command: "ABOUT", label: messages.shell.menuBar.labels.ABOUT },
-      { kind: "command", command: "MANIFESTO", label: messages.shell.menuBar.labels.MANIFESTO },
-      { kind: "command", command: "HOW", label: messages.shell.menuBar.labels.HOW },
-      { kind: "command", command: "RULES", label: messages.shell.menuBar.labels.RULES },
-      { kind: "separator" },
-      { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
-      { kind: "command", command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
-      { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
-      { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
-      { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
-    ],
-  },
-  {
     id: "board",
     label: messages.shell.menuBar.titles.board,
     entries: [
       {
         kind: "command",
-        command: "DISCUSSIONS",
-        label: messages.shell.menuBar.labels.DISCUSSIONS,
+        command: "FORUM",
+        label: messages.shell.menuBar.labels.FORUM,
       },
+      { kind: "command", command: "ERRATA", label: messages.shell.menuBar.labels.ERRATA },
       { kind: "command", command: "READROOM", label: messages.shell.menuBar.labels.READROOM },
       { kind: "command", command: "PROJECTS", label: messages.shell.menuBar.labels.PROJECTS },
       { kind: "command", command: "TICKETS", label: messages.shell.menuBar.labels.TICKETS },
@@ -269,6 +321,16 @@ const menuDefs: MenuDef[] = [
       { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
       { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
       { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
+    ],
+  },
+  {
+    id: "file",
+    label: messages.shell.menuBar.titles.file,
+    entries: [
+      { kind: "command", command: "ABOUT", label: messages.shell.menuBar.labels.ABOUT },
+      { kind: "command", command: "HOW", label: messages.shell.menuBar.labels.HOW },
+      { kind: "command", command: "MANIFESTO", label: messages.shell.menuBar.labels.MANIFESTO },
+      { kind: "command", command: "RULES", label: messages.shell.menuBar.labels.RULES },
     ],
   },
   {

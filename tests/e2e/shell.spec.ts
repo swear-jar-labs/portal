@@ -8,7 +8,8 @@ import {
 } from "@swearjar/dos/contracts";
 import { enterShell, expectMinimumContrast } from "./helpers";
 
-// A route with no page and none planned: the RSC 404 falls back to a full load.
+// /errata has no page of its own: ERRATA opens the feed with ?board=errata,
+// so the RSC 404 falls back to a full load here.
 const STUB_ROUTE = "/errata";
 
 test("does not boot on inner routes and keeps the shell chrome", async ({ page }) => {
@@ -30,13 +31,23 @@ test("does not boot on inner routes and keeps the shell chrome", async ({ page }
   expect(results.violations).toEqual([]);
 });
 
+test("orders the top menu as COMMUNITY, ACCOUNT, GUIDE and HELP", async ({ page }) => {
+  await page.goto("/apply");
+
+  const triggers = await page
+    .getByRole("menubar")
+    .getByRole("menuitem")
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim()));
+  expect(triggers).toEqual(["Community", "Account", "Guide", "Help"]);
+});
+
 test("keeps the menu dropdown above the file list on a cold inner route", async ({ page }) => {
   // Without a boot the CRT switch-on (and the stacking context its animation
   // leaves behind) is absent, so the dropdown must carry itself with z-index
   // over the file table's sticky header.
   await page.goto("/apply");
 
-  await page.getByRole("menuitem", { name: "File" }).click();
+  await page.getByRole("menuitem", { name: "Guide" }).click();
   await expect(page.getByRole("menu")).toBeVisible();
 
   const coveredBy = await page.evaluate(() => {
@@ -110,15 +121,12 @@ test("navigates from the board file to the route without a reload", async ({ pag
   await expect(error).toBeHidden();
 
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-  await files.getByRole("link", { name: "DISCUSSIONS" }).click();
+  await files.getByRole("link", { name: "FORUM" }).click();
 
   // The Board page exists now: the shell survives through a soft navigation.
-  await expect(page).toHaveURL("/discussions");
+  await expect(page).toHaveURL("/forum");
   await expect(page.getByRole("menubar")).toBeVisible();
-  await expect(files.getByRole("link", { name: "DISCUSSIONS" })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
+  await expect(files.getByRole("link", { name: "FORUM" })).toHaveAttribute("aria-current", "true");
 
   await input.focus();
   await page.keyboard.type("ASDF");
@@ -147,15 +155,15 @@ test("keeps the panel keyboard when a route takes a slow reply", async ({ page }
 
   // The armed request must survive a navigation that outlives the transition
   // window: the keyboard lands in the panel when the route finally commits.
-  await page.route("**/discussions**", async (route) => {
+  await page.route("**/forum**", async (route) => {
     if (route.request().url().includes("_rsc")) {
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
     await route.continue();
   });
-  await files.getByRole("link", { name: "DISCUSSIONS" }).click();
+  await files.getByRole("link", { name: "FORUM" }).click();
 
-  const feed = page.getByRole("region", { name: "DISCUSSIONS.EXE" });
+  const feed = page.getByRole("region", { name: "FORUM.EXE" });
   await expect(feed.getByRole("article")).toHaveCount(12);
   await expect(feed.locator(`[${DOS_SCROLL_ATTR}]`)).toBeFocused();
   await page.keyboard.press("ArrowDown");

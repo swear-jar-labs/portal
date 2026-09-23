@@ -61,7 +61,7 @@ export function isTagId(value: string): value is TagId {
 }
 
 // The board's URL canon: the feed and the profile build thread links from it.
-export const FEED_PATH = "/discussions";
+export const FEED_PATH = "/forum";
 export const threadPath = (id: string) => `${FEED_PATH}/${id}`;
 
 export type BoardRoleId = "member" | "contributor" | "maintainer";

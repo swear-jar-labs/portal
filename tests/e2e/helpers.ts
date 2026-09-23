@@ -53,13 +53,15 @@ export async function repeatKey(page: Page, key: keyof typeof ARROW_KEY_CODES): 
   await client.detach();
 }
 
-// The mock logon: any spec that needs a member session starts here.
+// The mock logon: any spec that needs a member session starts here. A plain
+// logon lands on the member home (FORUM); a ?next= return is covered by the
+// account spec, not by every consumer of this helper.
 export async function logon(page: Page, user = "ada") {
   await page.goto("/login");
   await page.getByLabel("Username").fill(user);
   await page.getByLabel("Password").fill("secret");
   await page.getByRole("button", { name: "[ LOG ON ]" }).click();
-  await expect(page).toHaveURL("/profile");
+  await expect(page).toHaveURL("/forum");
 }
 
 // Client-side navigation updates <title> asynchronously; axe would otherwise

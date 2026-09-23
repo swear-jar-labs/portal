@@ -9,6 +9,7 @@ import {
   expectNoViolations,
   logon,
   repeatKey,
+  waitForHydration,
 } from "./helpers";
 
 const FILES_REGION = "C:\\SWEARJAR";
@@ -39,7 +40,7 @@ test.describe("guest account chrome", () => {
     await expect(files.getByRole("link", { name: "PROFILE" })).toHaveCount(0);
     await expect(files.getByRole("link", { name: "SETTINGS" })).toHaveCount(0);
     await expect(files.getByRole("button", { name: "LOGOFF" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Apply" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
@@ -60,41 +61,79 @@ test.describe("guest account chrome", () => {
 });
 
 test.describe("member session", () => {
-  test("logon swaps the account chrome and skips the guest welcome", async ({ page }) => {
+  test("logon lands on the forum and skips the guest welcome", async ({ page }) => {
     await logon(page);
+    await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();
+
+    await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
 
     // The Google demo user carries a picture; the letter square stays the fallback.
     // Rows repeat the picture per thread, so the header owns the assertion.
     await expect(page.locator('img[src="/avatars/ada.png"]').first()).toBeVisible();
 
-    await page.goto("/");
-    await page.keyboard.press("Enter");
+    await page.goto("/forum");
+    await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();
 
     const files = page.getByRole("region", { name: FILES_REGION });
     await expect(files.getByRole("link", { name: "PROFILE" })).toBeVisible();
     await expect(files.getByRole("link", { name: "SETTINGS" })).toBeVisible();
     await expect(files.getByRole("button", { name: "LOGOFF" })).toBeVisible();
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Profile" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
-    await expect(page.getByText("ada", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("toolbar", { name: "Function keys" }).getByText("ada", { exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
     await page.keyboard.press("F8");
     await expect(page).toHaveURL("/profile");
   });
 
-  test("member routes send members to the profile", async ({ page }) => {
+  test("guest-only routes send members to their home sections", async ({ page }) => {
     await logon(page);
 
     await page.goto("/login");
-    await expect(page).toHaveURL("/profile");
+    await expect(page).toHaveURL("/forum");
 
     await page.goto("/apply");
     await expect(page).toHaveURL("/profile");
+  });
+
+  test("opens the forum for a signed-in member without a destination", async ({ page }) => {
+    await logon(page);
+    await page.goto("/profile");
+    await expect(page).toHaveURL("/profile");
+
+    await page.goto("/");
+    await expect(page).toHaveURL("/forum");
+    await waitForHydration(page);
+    await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();
+  });
+
+  test("opens guide documents in place without bouncing to the forum", async ({ page }) => {
+    await logon(page);
+    await page.goto("/forum");
+
+    await page.locator("#file-MANIFESTO").click();
+    await expect(page).toHaveURL("/");
+    await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
+    await expect(page.locator("#file-MANIFESTO")).toHaveAttribute("aria-current", "true");
+  });
+
+  test("a logon started on a page returns there instead of the forum", async ({ page }) => {
+    await page.goto("/tickets/FLAG-1");
+    await waitForHydration(page);
+    await page.locator("#file-LOGON").click();
+    await expect(page).toHaveURL("/login?next=%2Ftickets%2FFLAG-1");
+
+    await page.getByLabel(USER_LABEL).fill("ada");
+    await page.getByLabel(PASSWORD_LABEL).fill("secret");
+    await page.getByRole("button", { name: "[ LOG ON ]" }).click();
+    await expect(page).toHaveURL("/tickets/FLAG-1");
   });
 
   test("F9 asks for confirmation and works by keyboard alone", async ({ page }) => {
@@ -123,7 +162,7 @@ test.describe("member session", () => {
     // Cancel keeps the session and the page.
     await page.keyboard.press(" ");
     await expect(dialog).toBeHidden();
-    await expect(page).toHaveURL("/profile");
+    await expect(page).toHaveURL("/forum");
     await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
 
     await page.keyboard.press("F9");
@@ -135,14 +174,14 @@ test.describe("member session", () => {
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
     const files = page.getByRole("region", { name: FILES_REGION });
-    await expect(files.getByText("3 DIRS, 10 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     // The cursor lands on the displayed document (ABOUT), not on the first row:
-    // one ArrowDown step from ABOUT reaches MANIFESTO.
+    // one ArrowDown step from ABOUT reaches HOW-IT-WORKS.
     await files.locator("#file-ABOUT").focus();
     await expect(files.locator("#file-ABOUT")).toBeFocused();
     await page.keyboard.press("ArrowDown");
-    await expect(files.locator("#file-MANIFESTO")).toBeFocused();
+    await expect(files.locator("#file-HOW")).toBeFocused();
   });
 
   test("has no accessibility violations on member pages", async ({ page }) => {
@@ -188,6 +227,7 @@ test.describe("member session", () => {
 test.describe("member threads", () => {
   test("lists the member's threads and opens one with a click or Space", async ({ page }) => {
     await logon(page);
+    await page.goto("/profile");
 
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
     await expect(profile.getByRole("heading", { level: 2, name: "MY THREADS" })).toBeVisible();
@@ -203,7 +243,7 @@ test.describe("member threads", () => {
       (window as unknown as { sjSpaMarker?: number }).sjSpaMarker = 1;
     });
     await profile.getByRole("link", { name: "CI cache poisoning: how we lost a day" }).click();
-    await expect(page).toHaveURL("/discussions/ci-cache-poisoning");
+    await expect(page).toHaveURL("/forum/ci-cache-poisoning");
     await expect(
       page.getByRole("region", { name: "CI cache poisoning: how we lost a day" }),
     ).toBeVisible();
@@ -217,15 +257,16 @@ test.describe("member threads", () => {
     const row = page.getByRole("link", { name: "READ FIRST: how this board works" });
     await row.focus();
     await page.keyboard.press(" ");
-    await expect(page).toHaveURL("/discussions/read-first");
+    await expect(page).toHaveURL("/forum/read-first");
   });
 
   test("closes a thread back to the profile that pushed it", async ({ page }) => {
     await logon(page);
+    await page.goto("/profile");
 
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
     await profile.getByRole("link", { name: "READ FIRST: how this board works" }).click();
-    await expect(page).toHaveURL("/discussions/read-first");
+    await expect(page).toHaveURL("/forum/read-first");
     await expect(
       page.getByRole("region", { name: "READ FIRST: how this board works" }),
     ).toBeVisible();
@@ -240,6 +281,7 @@ test.describe("member threads", () => {
 
   test("shows the empty state for a member without threads", async ({ page }) => {
     await logon(page, "nobody");
+    await page.goto("/profile");
     await expect(page.getByText("No threads yet. A question is a good start.")).toBeVisible();
   });
 });
@@ -437,7 +479,8 @@ test.describe("social logon", () => {
     await page.goto("/login");
 
     await page.getByRole("button", { name: "[ GOOGLE ]" }).click();
-    await expect(page).toHaveURL("/profile");
+    await expect(page).toHaveURL("/forum");
+    await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
 
     await page.keyboard.press("F9");
@@ -450,7 +493,8 @@ test.describe("social logon", () => {
     await page.goto("/login");
 
     await page.getByRole("button", { name: "[ GITHUB ]" }).click();
-    await expect(page).toHaveURL("/profile");
+    await expect(page).toHaveURL("/forum");
+    await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "grace" })).toBeVisible();
   });
 

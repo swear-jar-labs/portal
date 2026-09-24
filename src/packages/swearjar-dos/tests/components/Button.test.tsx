@@ -6,7 +6,7 @@ describe("Button", () => {
   it("uses the same variants for links", () => {
     const html = renderToStaticMarkup(
       <Button href="/tickets?project=compiler&new=1" variant="primary">
-        [ NEW TICKET ]
+        NEW TICKET
       </Button>,
     );
 
@@ -17,7 +17,7 @@ describe("Button", () => {
   it("passes the download name through on links", () => {
     const html = renderToStaticMarkup(
       <Button href="blob:mock/file" download="snippet.c">
-        [ DOWNLOAD ]
+        DOWNLOAD
       </Button>,
     );
     expect(html).toContain('download="snippet.c"');

@@ -9,27 +9,27 @@ import { expectNoViolations, logon, waitForHydration } from "./helpers";
 const cases = [
   {
     path: "/forum",
-    action: "[ NEW THREAD ]",
+    action: "NEW THREAD",
     form: "NEW THREAD",
     tags: tagIds.map((tag) => messages.board.tags[tag]),
     body: "BODY",
-    submit: "[ POST THREAD ]",
+    submit: "POST THREAD",
   },
   {
     path: "/readroom",
-    action: "[ NEW TASK ]",
+    action: "NEW TASK",
     form: "NEW TASK",
     tags: readroomTagIds.map((tag) => messages.readroom.tags[tag]),
     body: "DESCRIPTION",
-    submit: "[ OPEN TASK ]",
+    submit: "OPEN TASK",
   },
   {
     path: "/tickets?project=dos-shell",
-    action: "[ NEW TICKET ]",
+    action: "NEW TICKET",
     form: "NEW TICKET",
     tags: ticketTagIds.map((tag) => messages.tickets.tags[tag]),
     body: "BODY",
-    submit: "[ OPEN TICKET ]",
+    submit: "OPEN TICKET",
   },
 ];
 
@@ -95,7 +95,7 @@ test("ticket editing fits the whole vocabulary under the cap", async ({ page }) 
   await logon(page, "grace");
   await page.goto("/tickets/DOS-3");
   await waitForHydration(page);
-  await page.getByRole("button", { name: "[ EDIT ]", exact: true }).click();
+  await page.getByRole("button", { name: "EDIT", exact: true }).click();
   const form = page.getByRole("form", { name: "EDIT TICKET" });
   // Clear the fixture selection, then take every available tag: six chips fit
   // under the shared cap, so none disables and SAVE lands them all.
@@ -109,6 +109,6 @@ test("ticket editing fits the whole vocabulary under the cap", async ({ page }) 
     await expect(
       form.getByRole("button", { name: messages.tickets.tags[tag], exact: true }),
     ).toBeEnabled();
-  await form.getByRole("button", { name: "[ SAVE ]" }).click();
+  await form.getByRole("button", { name: "SAVE" }).click();
   await expect(form).toHaveCount(0);
 });

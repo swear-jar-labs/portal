@@ -27,7 +27,7 @@ test("views literal source, handles empty and oversized files, and downloads bin
   await expectNoViolations(page, "literal HTML viewer");
   await page.screenshot({ path: test.info().outputPath("viewer-desktop.png") });
   const download = page.waitForEvent("download");
-  await dialog.getByRole("link", { name: "[ DOWNLOAD ]" }).click();
+  await dialog.getByRole("link", { name: "DOWNLOAD" }).click();
   expect((await download).suggestedFilename()).toBe("source.html");
   await page.keyboard.press("Escape");
   await expect(file).toBeFocused();
@@ -39,7 +39,7 @@ test("views literal source, handles empty and oversized files, and downloads bin
     await task.getByRole("button", { name: `View file ${name}` }).click();
     dialog = page.getByRole("dialog", { name: `FILE VIEWER: ${name}` });
     await expect(dialog.getByText(text, { exact: false })).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "[ DOWNLOAD ]" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "DOWNLOAD" })).toBeVisible();
     await page.keyboard.press("Escape");
   }
   const binary = task.getByRole("link", { name: "data.zip" });
@@ -75,7 +75,7 @@ test("sniffs content when the filename says nothing", async ({ page }) => {
   await expect(
     dialog.getByText("Preview is unavailable for this file.", { exact: false }),
   ).toBeVisible();
-  await expect(dialog.getByRole("link", { name: "[ DOWNLOAD ]" })).toBeVisible();
+  await expect(dialog.getByRole("link", { name: "DOWNLOAD" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expectNoViolations(page, "sniffed attachments");
 });
@@ -87,11 +87,11 @@ test("draft preview closes back to the form and a submitted file remains readabl
   await logon(page);
   await page.goto("/readroom");
   await waitForHydration(page);
-  await page.getByRole("button", { name: "[ NEW TASK ]" }).click();
+  await page.getByRole("button", { name: "NEW TASK" }).click();
   const form = page.getByRole("form", { name: "NEW TASK" });
   const filename = `${"long_filename_".repeat(8)}.ts`;
   const source = `const example = "${"word".repeat(200)}";\n${"// next line\n".repeat(100)}`;
-  await form.getByLabel("[ ATTACH FILES ]").focus();
+  await form.getByLabel("ATTACH FILES").focus();
   const choosing = page.waitForEvent("filechooser");
   await page.keyboard.press("Space");
   await (await choosing).setFiles({ name: filename, mimeType: "", buffer: Buffer.from(source) });
@@ -111,11 +111,11 @@ test("draft preview closes back to the form and a submitted file remains readabl
   await form.getByLabel("TITLE").fill("Files stay with the task");
   await form.getByRole("textbox", { name: "DESCRIPTION" }).fill("Read the attached source.");
   await form.getByLabel("DEADLINE").fill("2026-12-24T18:00");
-  await form.getByRole("button", { name: "[ OPEN TASK ]" }).click();
+  await form.getByRole("button", { name: "OPEN TASK" }).click();
   const task = page.getByRole("region", { name: "Files stay with the task" });
   await task.getByRole("button", { name: `View file ${filename}` }).click();
   await expect(dialog.locator("pre")).toHaveText(source);
   await page.keyboard.press("Escape");
   await task.getByRole("button", { name: `Remove file ${filename}` }).click();
-  await expect(task.getByLabel("[ ATTACH FILES ]")).toBeFocused();
+  await expect(task.getByLabel("ATTACH FILES")).toBeFocused();
 });

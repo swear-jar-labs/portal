@@ -92,7 +92,7 @@ test("orders and filters the queue by priority", async ({ page }) => {
   const layer = page.getByRole("region", { name: "EDIT TICKET" });
   await layer.getByRole("combobox", { name: "PRIORITY" }).click();
   await page.getByRole("option", { name: "HIGH", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(dossier.getByText("HIGH", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(rows.nth(1).getByRole("link", { name: "DOS-3" })).toBeVisible();
@@ -136,7 +136,7 @@ test("walks the tracker with arrows, opens with Enter and returns focus", async 
   await focusedBody(page).focus();
   const firstTicket = table(page).getByRole("link", { name: "DOS-1" });
   await page.keyboard.press("ArrowDown");
-  await expect(feed(page).getByRole("button", { name: "[ NEW TICKET ]" })).toBeFocused();
+  await expect(feed(page).getByRole("button", { name: "NEW TICKET" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(feed(page).getByRole("combobox", { name: "PROJECT" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -161,7 +161,7 @@ test("walks the tracker with arrows, opens with Enter and returns focus", async 
 test("a guest is prompted before composing", async ({ page }) => {
   await page.goto(TICKETS_PATH);
   await waitForHydration(page);
-  await feed(page).getByRole("button", { name: "[ NEW TICKET ]" }).click();
+  await feed(page).getByRole("button", { name: "NEW TICKET" }).click();
   await expect(page.getByRole("dialog", { name: "LOGON REQUIRED" })).toBeVisible();
 });
 
@@ -174,7 +174,7 @@ test("a guest reads the dossier and is prompted before commenting", async ({ pag
   await expect(dossier.locator(`#${ticketEditButtonId}`)).toHaveCount(0);
 
   await dossier.getByRole("textbox", { name: "COMMENT" }).fill("Looks familiar.");
-  await dossier.getByRole("button", { name: "[ POST COMMENT ]" }).click();
+  await dossier.getByRole("button", { name: "POST COMMENT" }).click();
   await expect(page.getByRole("dialog", { name: "LOGON REQUIRED" })).toBeVisible();
 });
 
@@ -182,7 +182,7 @@ test("a member composes globally and the session ticket opens in place", async (
   await logon(page, "ada");
   await page.goto(TICKETS_PATH);
   await waitForHydration(page);
-  await feed(page).getByRole("button", { name: "[ NEW TICKET ]" }).click();
+  await feed(page).getByRole("button", { name: "NEW TICKET" }).click();
   const form = page.getByRole("form", { name: "NEW TICKET" });
   await form.getByRole("combobox", { name: "PROJECT" }).click();
   await page.getByRole("option", { name: "Compiler", exact: true }).click();
@@ -191,7 +191,7 @@ test("a member composes globally and the session ticket opens in place", async (
   await form.getByRole("button", { name: "BUG" }).click();
   await form.getByRole("combobox", { name: "PRIORITY" }).click();
   await page.getByRole("option", { name: "HIGH", exact: true }).click();
-  await form.getByRole("button", { name: "[ OPEN TICKET ]" }).click();
+  await form.getByRole("button", { name: "OPEN TICKET" }).click();
 
   const dossier = page.getByRole("region", { name: "CMP-6" });
   await expect(
@@ -224,7 +224,7 @@ test("the project entry opens a preselected composer and preserves the project f
     "href",
     "/tickets?project=compiler",
   );
-  await project.getByRole("link", { name: "[ NEW TICKET ]" }).click();
+  await project.getByRole("link", { name: "NEW TICKET" }).click();
   await expect(page).toHaveURL("/tickets?project=compiler&new=1");
   // The entry may arrive as a client navigation or as a fresh document (the
   // suite runs under load): a fresh document must hydrate before the form
@@ -234,7 +234,7 @@ test("the project entry opens a preselected composer and preserves the project f
   await expect(form.getByRole("combobox", { name: "PROJECT" })).toContainText("Compiler");
   await form.getByLabel("TITLE").fill("Document the precedence table");
   await form.getByRole("textbox", { name: "BODY" }).fill("One table, one source of truth.");
-  await form.getByRole("button", { name: "[ OPEN TICKET ]" }).click();
+  await form.getByRole("button", { name: "OPEN TICKET" }).click();
   await expect(page).toHaveURL("/tickets?project=compiler");
   await expect(page.getByRole("region", { name: "CMP-6" })).toBeVisible();
 });
@@ -244,37 +244,37 @@ test("a member pins a code link in the dossier", async ({ page }) => {
   await page.goto(ticketPath("DOS-2"));
   await waitForHydration(page);
   const dossier = page.getByRole("region", { name: "DOS-2" });
-  await dossier.getByRole("button", { name: "[ ADD LINK ]" }).click();
+  await dossier.getByRole("button", { name: "ADD LINK" }).click();
   await dossier.getByLabel("URL").fill("https://github.com/swear-jar-labs/portal/commit/abc123");
   await dossier.getByLabel("LABEL").fill("Fix the clock source");
-  await dossier.getByRole("button", { name: "[ PIN LINK ]" }).click();
+  await dossier.getByRole("button", { name: "PIN LINK" }).click();
   await expect(dossier.getByRole("link", { name: "Fix the clock source" })).toHaveAttribute(
     "href",
     "https://github.com/swear-jar-labs/portal/commit/abc123",
   );
 
   // One url per ticket (the database's unique invariant): a duplicate is refused.
-  await dossier.getByRole("button", { name: "[ ADD LINK ]" }).click();
+  await dossier.getByRole("button", { name: "ADD LINK" }).click();
   await dossier.getByLabel("URL").fill("https://github.com/swear-jar-labs/portal/commit/abc123");
   await dossier.getByLabel("LABEL").fill("Fix the clock source, again");
-  await dossier.getByRole("button", { name: "[ PIN LINK ]" }).click();
+  await dossier.getByRole("button", { name: "PIN LINK" }).click();
   await expect(dossier.getByText("This link is already pinned.")).toBeVisible();
   await expect(
     dossier.getByRole("link", { name: "Fix the clock source", exact: true }),
   ).toHaveCount(1);
 
   // The author unpins: the link leaves, the empty state returns.
-  await dossier.getByRole("button", { name: "[ CANCEL ]" }).click();
-  await expect(dossier.getByRole("button", { name: "[ ADD LINK ]" })).toBeFocused();
+  await dossier.getByRole("button", { name: "CANCEL" }).click();
+  await expect(dossier.getByRole("button", { name: "ADD LINK" })).toBeFocused();
   await dossier.getByRole("button", { name: "Remove link Fix the clock source" }).click();
   await expect(dossier.getByRole("link", { name: "Fix the clock source" })).toHaveCount(0);
   await expect(dossier.getByText("No code links pinned yet.")).toBeVisible();
 
   // Escape cancels like CANCEL and returns the keyboard to the trigger.
-  await dossier.getByRole("button", { name: "[ ADD LINK ]" }).click();
+  await dossier.getByRole("button", { name: "ADD LINK" }).click();
   await page.keyboard.press("Escape");
   await expect(dossier.getByLabel("URL")).toHaveCount(0);
-  await expect(dossier.getByRole("button", { name: "[ ADD LINK ]" })).toBeFocused();
+  await expect(dossier.getByRole("button", { name: "ADD LINK" })).toBeFocused();
 });
 
 test("opens an author profile over the dossier and returns focus", async ({ page }) => {
@@ -325,9 +325,9 @@ test("starts a blocked ticket only after its blocker finishes", async ({ page })
   const layer = page.getByRole("region", { name: "EDIT TICKET" });
   await layer.getByRole("combobox", { name: "STATUS" }).click();
   await page.getByRole("option", { name: "IN PROGRESS", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(layer.getByText("The blockers must finish first: DOS-3")).toBeVisible();
-  await layer.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await layer.getByRole("button", { name: "CANCEL" }).click();
 
   // Finish the blocker in its own dossier (SPA navigation keeps the session).
   await page.keyboard.press("Escape");
@@ -336,7 +336,7 @@ test("starts a blocked ticket only after its blocker finishes", async ({ page })
   await blockerDossier.locator(`#${ticketEditButtonId}`).click();
   await layer.getByRole("combobox", { name: "STATUS" }).click();
   await page.getByRole("option", { name: "DONE", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(blockerDossier.getByText("DONE", { exact: true })).toBeVisible();
 
   // The gate is open: taking the free S ticket claims it on its dossier.
@@ -346,14 +346,14 @@ test("starts a blocked ticket only after its blocker finishes", async ({ page })
   const opened = page.getByRole("region", { name: "DOS-4" });
   await expect(opened.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
   await expect(opened.getByText("EVERYONE")).toBeVisible();
-  await opened.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
+  await opened.getByRole("button", { name: "ASSIGN TO ME" }).click();
   await expect(opened.getByRole("link", { name: "ada" })).toHaveCount(1);
 
   // The start itself moved to the edit layer and keeps the assignee.
   await opened.locator(`#${ticketEditButtonId}`).click();
   await layer.getByRole("combobox", { name: "STATUS" }).click();
   await page.getByRole("option", { name: "IN PROGRESS", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(opened.getByText("IN PROGRESS", { exact: true })).toBeVisible();
   await expect(opened.getByRole("link", { name: "ada" })).toHaveCount(1);
   await expectNoViolations(page, "started ticket dossier");
@@ -370,7 +370,7 @@ test("refuses ASSIGN below the ladder rung and explains the need", async ({ page
   await expect(medium.getByText("TASKS NEED")).toBeVisible();
   await expect(medium.getByText("2 DONE")).toBeVisible();
   await expect(medium.getByText("TASKS (YOU HAVE 0)")).toBeVisible();
-  await medium.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
+  await medium.getByRole("button", { name: "ASSIGN TO ME" }).click();
   await expect(medium.getByText("UNASSIGNED")).toBeVisible();
   await page.keyboard.press("Escape");
 
@@ -379,7 +379,7 @@ test("refuses ASSIGN below the ladder rung and explains the need", async ({ page
   await expect(large.getByText("TASKS NEED")).toBeVisible();
   await expect(large.getByText("1 DONE")).toBeVisible();
   await expect(large.getByText("TASK (YOU HAVE 0)")).toBeVisible();
-  await large.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
+  await large.getByRole("button", { name: "ASSIGN TO ME" }).click();
   await expect(large.getByText("UNASSIGNED")).toBeVisible();
   await expectNoViolations(page, "refused ticket claim");
 });
@@ -396,14 +396,14 @@ test("assigns and leaves a ticket on its dossier", async ({ page }) => {
   await expect(dossier.getByText("2 DONE")).toBeVisible();
   await expect(dossier.getByText("TASKS (YOU HAVE 2)")).toBeVisible();
   // The button answers the keyboard too, not only the mouse.
-  await dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" }).focus();
+  await dossier.getByRole("button", { name: "ASSIGN TO ME" }).focus();
   await page.keyboard.press("Enter");
   await expect(dossier.getByText("UNASSIGNED")).toHaveCount(0);
-  await expect(dossier.getByRole("button", { name: "[ UNASSIGN ME ]" })).toBeVisible();
-  await expect(dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" })).toHaveCount(0);
+  await expect(dossier.getByRole("button", { name: "UNASSIGN ME" })).toBeVisible();
+  await expect(dossier.getByRole("button", { name: "ASSIGN TO ME" })).toHaveCount(0);
 
   // Leaving frees the ticket with no questions asked.
-  await dossier.getByRole("button", { name: "[ UNASSIGN ME ]" }).click();
+  await dossier.getByRole("button", { name: "UNASSIGN ME" }).click();
   await expect(dossier.getByText("UNASSIGNED")).toBeVisible();
   await expectNoViolations(page, "assigned ticket dossier");
 });
@@ -416,9 +416,9 @@ test("opens L to a done-M record and keeps S free for everyone", async ({ page }
   const large = page.getByRole("region", { name: "CMP-1" });
   await expect(large.getByText("1 DONE")).toBeVisible();
   await expect(large.getByText("TASK (YOU HAVE 1)")).toBeVisible();
-  await large.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
+  await large.getByRole("button", { name: "ASSIGN TO ME" }).click();
   await expect(large.getByText("UNASSIGNED")).toHaveCount(0);
-  await expect(large.getByRole("button", { name: "[ UNASSIGN ME ]" })).toBeVisible();
+  await expect(large.getByRole("button", { name: "UNASSIGN ME" })).toBeVisible();
   await expectNoViolations(page, "claimed L ticket");
 });
 
@@ -430,16 +430,16 @@ test("lets anyone take an S ticket: closed is no experience", async ({ page }) =
   const dossier = page.getByRole("region", { name: "DOS-4" });
   await expect(dossier.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
   await expect(dossier.getByText("EVERYONE")).toBeVisible();
-  await dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
+  await dossier.getByRole("button", { name: "ASSIGN TO ME" }).click();
   await expect(dossier.getByText("UNASSIGNED")).toHaveCount(0);
-  await expect(dossier.getByRole("button", { name: "[ UNASSIGN ME ]" })).toBeVisible();
+  await expect(dossier.getByRole("button", { name: "UNASSIGN ME" })).toBeVisible();
 });
 
 test("a guest is prompted before assigning", async ({ page }) => {
   await page.goto(ticketPath("DOS-4"));
   await waitForHydration(page);
   const dossier = page.getByRole("region", { name: "DOS-4" });
-  await dossier.getByRole("button", { name: "[ ASSIGN TO ME ]" }).click();
+  await dossier.getByRole("button", { name: "ASSIGN TO ME" }).click();
   await expect(page.getByRole("dialog", { name: "LOGON REQUIRED" })).toBeVisible();
 });
 
@@ -452,11 +452,11 @@ test("a member manages blockers and the form refuses bad edges", async ({ page }
   // A cycle: CMP-2 already waits for CMP-1, so CMP-1 cannot wait for CMP-2.
   await table(page).getByRole("link", { name: "CMP-1" }).click();
   const first = page.getByRole("region", { name: "CMP-1" });
-  await first.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  await first.getByRole("button", { name: "ADD BLOCKER" }).click();
   await first.getByLabel("TICKET KEY").fill("CMP-2");
-  await first.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await first.getByRole("button", { name: "BLOCK", exact: true }).click();
   await expect(first.getByText("The tickets would wait for each other.")).toBeVisible();
-  await first.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await first.getByRole("button", { name: "CANCEL" }).click();
 
   await page.keyboard.press("Escape");
   await table(page).getByRole("link", { name: "CMP-2" }).click();
@@ -465,32 +465,32 @@ test("a member manages blockers and the form refuses bad edges", async ({ page }
   await expect(dossier.getByRole("link", { name: "CMP-1" })).toBeVisible();
 
   // Unknown keys, self-blocks and duplicates are refused with their own text.
-  await dossier.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  await dossier.getByRole("button", { name: "ADD BLOCKER" }).click();
   await dossier.getByLabel("TICKET KEY").fill("NOPE-1");
-  await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await dossier.getByRole("button", { name: "BLOCK", exact: true }).click();
   await expect(dossier.getByText("No ticket with this key.")).toBeVisible();
   await dossier.getByLabel("TICKET KEY").fill("CMP-2");
-  await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await dossier.getByRole("button", { name: "BLOCK", exact: true }).click();
   await expect(dossier.getByText("A ticket cannot block itself.")).toBeVisible();
   await dossier.getByLabel("TICKET KEY").fill("CMP-1");
-  await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await dossier.getByRole("button", { name: "BLOCK", exact: true }).click();
   await expect(dossier.getByText("This ticket is already listed as a blocker.")).toBeVisible();
-  await dossier.getByRole("button", { name: "[ CANCEL ]" }).click();
-  await expect(dossier.getByRole("button", { name: "[ ADD BLOCKER ]" })).toBeFocused();
+  await dossier.getByRole("button", { name: "CANCEL" }).click();
+  await expect(dossier.getByRole("button", { name: "ADD BLOCKER" })).toBeFocused();
 
   // Escape cancels like CANCEL and returns the keyboard to the trigger.
-  await dossier.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  await dossier.getByRole("button", { name: "ADD BLOCKER" }).click();
   await page.keyboard.press("Escape");
   await expect(dossier.getByLabel("TICKET KEY")).toHaveCount(0);
-  await expect(dossier.getByRole("button", { name: "[ ADD BLOCKER ]" })).toBeFocused();
+  await expect(dossier.getByRole("button", { name: "ADD BLOCKER" })).toBeFocused();
 
   // Removing the fixture blocker opens the gate; adding it back closes it.
   await dossier.getByRole("button", { name: "Remove blocker CMP-1" }).click();
   await expect(dossier.getByText("Nothing blocks this ticket.")).toBeVisible();
   await expect(dossier.getByText("Waiting for the blockers: CMP-1")).toHaveCount(0);
-  await dossier.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  await dossier.getByRole("button", { name: "ADD BLOCKER" }).click();
   await dossier.getByLabel("TICKET KEY").fill("CMP-1");
-  await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await dossier.getByRole("button", { name: "BLOCK", exact: true }).click();
   await expect(dossier.getByText("Waiting for the blockers: CMP-1")).toBeVisible();
   await expectNoViolations(page, "ticket dossier with blockers");
 });
@@ -553,7 +553,7 @@ test("pins a blocker picked from the keyboard", async ({ page }) => {
 
   await table(page).getByRole("link", { name: "CMP-1" }).click();
   const dossier = page.getByRole("region", { name: "CMP-1" });
-  await dossier.getByRole("button", { name: "[ ADD BLOCKER ]" }).click();
+  await dossier.getByRole("button", { name: "ADD BLOCKER" }).click();
   const box = dossier.getByRole("combobox", { name: "TICKET KEY" });
   await box.fill("dos");
   await expect(page.getByRole("option", { name: /DOS-1/ })).toBeVisible();
@@ -561,8 +561,8 @@ test("pins a blocker picked from the keyboard", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(box).toHaveValue("DOS-1");
   // A pick advances to the submit next to the box.
-  await expect(dossier.getByRole("button", { name: "[ BLOCK ]" })).toBeFocused();
-  await dossier.getByRole("button", { name: "[ BLOCK ]" }).click();
+  await expect(dossier.getByRole("button", { name: "BLOCK", exact: true })).toBeFocused();
+  await dossier.getByRole("button", { name: "BLOCK", exact: true }).click();
   await expect(dossier.getByRole("link", { name: "DOS-1" })).toBeVisible();
   await expectNoViolations(page, "ticket dossier with a picked blocker");
 });
@@ -580,13 +580,13 @@ test("moves the status from the edit layer and reopens a closed ticket", async (
   const status = layer.getByRole("combobox", { name: "STATUS" });
   await status.click();
   await page.getByRole("option", { name: "IN PROGRESS", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(dossier.getByText("IN PROGRESS", { exact: true })).toBeVisible();
 
   await dossier.locator(`#${ticketEditButtonId}`).click();
   await status.click();
   await page.getByRole("option", { name: "DONE", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(dossier.getByText("DONE", { exact: true })).toBeVisible();
   // The closing stamp lands in the dates row.
   await expect(dossier.getByText("CLOSED", { exact: true })).toBeVisible();
@@ -595,7 +595,7 @@ test("moves the status from the edit layer and reopens a closed ticket", async (
   await dossier.locator(`#${ticketEditButtonId}`).click();
   await status.click();
   await page.getByRole("option", { name: "OPEN", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(dossier.getByText("OPEN", { exact: true })).toBeVisible();
   await expect(dossier.getByText("CLOSED", { exact: true })).toHaveCount(0);
   await expectNoViolations(page, "reopened ticket dossier");
@@ -615,8 +615,8 @@ test("an editor edits a ticket; cancel keeps the draft out", async ({ page }) =>
   await expect(other.locator(`#${ticketEditButtonId}`)).toHaveCount(0);
   // Ada is neither the author, the assignee nor a maintainer here: no link or
   // blocker controls either.
-  await expect(other.getByRole("button", { name: "[ ADD LINK ]" })).toHaveCount(0);
-  await expect(other.getByRole("button", { name: "[ ADD BLOCKER ]" })).toHaveCount(0);
+  await expect(other.getByRole("button", { name: "ADD LINK" })).toHaveCount(0);
+  await expect(other.getByRole("button", { name: "ADD BLOCKER" })).toHaveCount(0);
   await page.keyboard.press("Escape");
 
   // The author edits title, body, tags and priority: SAVE lands in the dossier.
@@ -624,7 +624,7 @@ test("an editor edits a ticket; cancel keeps the draft out", async ({ page }) =>
   const dossier = page.getByRole("region", { name: "DOS-2" });
   await dossier.locator(`#${ticketEditButtonId}`).click();
   const layer = page.getByRole("region", { name: "EDIT TICKET" });
-  await expect(layer.getByRole("button", { name: "[ SAVE ]" })).toBeDisabled();
+  await expect(layer.getByRole("button", { name: "SAVE" })).toBeDisabled();
   await layer.getByLabel("TITLE").fill("KeyBar clock drifts under load");
   await layer
     .getByRole("textbox", { name: "BODY" })
@@ -632,7 +632,7 @@ test("an editor edits a ticket; cancel keeps the draft out", async ({ page }) =>
   await layer.getByRole("button", { name: "TESTING" }).click();
   await layer.getByRole("combobox", { name: "PRIORITY" }).click();
   await page.getByRole("option", { name: "LOW", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(
     dossier.getByRole("heading", { name: "KeyBar clock drifts under load" }),
   ).toBeVisible();
@@ -642,7 +642,7 @@ test("an editor edits a ticket; cancel keeps the draft out", async ({ page }) =>
   // CANCEL drops the draft and the dossier keeps the saved fields.
   await dossier.locator(`#${ticketEditButtonId}`).click();
   await layer.getByLabel("TITLE").fill("Discarded title");
-  await layer.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await layer.getByRole("button", { name: "CANCEL" }).click();
   await expect(
     dossier.getByRole("heading", { name: "KeyBar clock drifts under load" }),
   ).toBeVisible();
@@ -667,7 +667,7 @@ test("the assignee moves status inside their range and touches nothing else", as
   await expect(page.getByRole("option", { name: "REVIEW", exact: true })).toBeVisible();
   await expect(page.getByRole("option", { name: "DONE", exact: true })).toHaveCount(0);
   await page.getByRole("option", { name: "REVIEW", exact: true }).click();
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(dossier.getByText("REVIEW", { exact: true })).toBeVisible();
   await expectNoViolations(page, "assignee edit layer");
 });
@@ -683,9 +683,9 @@ test("the author fixes content but never the status or the size", async ({ page 
   await expect(layer.getByLabel("TITLE")).toBeVisible();
   await expect(layer.getByRole("combobox", { name: "STATUS" })).toHaveCount(0);
   await expect(layer.getByRole("combobox", { name: "SIZE" })).toHaveCount(0);
-  await expect(layer.getByRole("button", { name: "[ SAVE ]" })).toBeDisabled();
+  await expect(layer.getByRole("button", { name: "SAVE" })).toBeDisabled();
   await layer.getByLabel("TITLE").fill("Flagship charter, poll and scope");
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(
     dossier.getByRole("heading", { name: "Flagship charter, poll and scope" }),
   ).toBeVisible();
@@ -700,11 +700,11 @@ test("a maintainer reassigns anyone and the form refuses bad names", async ({ pa
   const layer = page.getByRole("region", { name: "EDIT TICKET" });
 
   await layer.getByLabel("ASSIGNEE").fill("x");
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(layer.getByText("Name a member: 2-32 letters, digits, _ or -.")).toBeVisible();
 
   await layer.getByLabel("ASSIGNEE").fill("ken");
-  await layer.getByRole("button", { name: "[ SAVE ]" }).click();
+  await layer.getByRole("button", { name: "SAVE" }).click();
   await expect(dossier.getByText("UNASSIGNED")).toHaveCount(0);
   await expect(dossier.getByRole("link", { name: "ken" }).first()).toBeVisible();
   await expectNoViolations(page, "maintainer reassignment");
@@ -719,7 +719,7 @@ test("a member posts a comment on a ticket", async ({ page }) => {
   await expect(dossier.getByRole("heading", { name: "COMMENTS · 1" })).toBeVisible();
 
   await dossier.getByRole("textbox", { name: "COMMENT" }).fill("The clock source is the culprit.");
-  await dossier.getByRole("button", { name: "[ POST COMMENT ]" }).click();
+  await dossier.getByRole("button", { name: "POST COMMENT" }).click();
   await expect(dossier.getByRole("heading", { name: "COMMENTS · 2" })).toBeVisible();
   await expect(dossier.getByText("The clock source is the culprit.")).toBeVisible();
 });
@@ -733,27 +733,27 @@ test("edits and deletes an own comment; others stay read-only", async ({ page })
 
   // The fixture comment belongs to ken: ada only reads it.
   const fixture = dossier.getByRole("article").first();
-  await expect(fixture.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
-  await expect(fixture.getByRole("button", { name: "[ DELETE ]" })).toHaveCount(0);
+  await expect(fixture.getByRole("button", { name: "EDIT" })).toHaveCount(0);
+  await expect(fixture.getByRole("button", { name: "DELETE" })).toHaveCount(0);
 
   await dossier.getByRole("textbox", { name: "COMMENT", exact: true }).fill("First pass.");
-  await dossier.getByRole("button", { name: "[ POST COMMENT ]" }).click();
+  await dossier.getByRole("button", { name: "POST COMMENT" }).click();
   const mine = dossier.getByRole("article").nth(1);
   await expect(mine.getByText("First pass.")).toBeVisible();
 
   // The author edits inline: the mark appears next to the age.
-  await mine.getByRole("button", { name: "[ EDIT ]" }).click();
+  await mine.getByRole("button", { name: "EDIT" }).click();
   await mine.getByRole("textbox", { name: "EDIT COMMENT" }).fill("Second pass.");
-  await mine.getByRole("button", { name: "[ SAVE ]" }).click();
+  await mine.getByRole("button", { name: "SAVE" }).click();
   await expect(mine.getByText("Second pass.")).toBeVisible();
   await expect(mine.getByText("[EDITED]")).toBeVisible();
 
   // The author deletes: the comment becomes a tombstone with no body.
-  await mine.getByRole("button", { name: "[ DELETE ]" }).click();
+  await mine.getByRole("button", { name: "DELETE" }).click();
   const dialog = page.getByRole("dialog", { name: "DELETE COMMENT" });
-  await dialog.getByRole("button", { name: "[ DELETE ]" }).click();
+  await dialog.getByRole("button", { name: "DELETE" }).click();
   await expect(mine.getByText("This comment was deleted.")).toBeVisible();
   await expect(mine.getByText("Second pass.")).toHaveCount(0);
-  await expect(mine.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+  await expect(mine.getByRole("button", { name: "EDIT" })).toHaveCount(0);
   await expectNoViolations(page, "ticket dossier after a comment tombstone");
 });

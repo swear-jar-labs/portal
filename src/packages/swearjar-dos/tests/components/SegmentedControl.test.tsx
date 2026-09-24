@@ -31,8 +31,8 @@ describe("SegmentedControl", () => {
         mode="buttons"
         label="Editor mode"
         options={[
-          { value: "write", label: "[ WRITE ]" },
-          { value: "preview", label: "[ PREVIEW ]" },
+          { value: "write", label: "WRITE" },
+          { value: "preview", label: "PREVIEW" },
         ]}
         value="write"
         onChange={() => {}}

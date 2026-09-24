@@ -3,7 +3,7 @@ import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 async function logoff(page: Page) {
   await page.getByRole("button", { name: "F9 Logoff" }).click();
-  await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+  await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
 }
 
@@ -15,7 +15,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await logon(page, "ada");
   await page.goto("/projects");
   await waitForHydration(page);
-  await page.getByRole("button", { name: "[ PROPOSE PROJECT ]" }).click();
+  await page.getByRole("button", { name: "PROPOSE PROJECT" }).click();
   await expect(page).toHaveURL("/projects/propose");
   await expect(page.getByRole("region", { name: "PROPOSE A PROJECT" })).toBeVisible();
   const form = page.getByRole("form", { name: "PROPOSE A PROJECT" });
@@ -46,7 +46,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
     .getByLabel("What help or contributors are needed?")
     .fill("Members can build examples, tests and documentation.");
   await expectNoViolations(page, "project proposal form");
-  await form.getByRole("button", { name: "[ SUBMIT PROPOSAL ]" }).focus();
+  await form.getByRole("button", { name: "SUBMIT PROPOSAL" }).focus();
   await page.keyboard.press("Enter");
   await expect(
     page.getByRole("region", { name: new RegExp(name) }).getByText("Waiting for admin review."),
@@ -70,7 +70,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   const review = page.getByRole("region", { name: `${name} ada`, exact: false });
   await expect(review.getByText(/TypeScript, Rust/)).toBeVisible();
   await review.getByLabel("Reason or question").fill("Who will review releases?");
-  await review.getByRole("button", { name: "[ REQUEST DETAILS ]" }).click();
+  await review.getByRole("button", { name: "REQUEST DETAILS" }).click();
   await expect(review.getByText("Waiting for the applicant's clarification.")).toBeVisible();
   await logoff(page);
 
@@ -84,7 +84,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await reply
     .getByLabel("Reply to admin")
     .fill("I will review releases and ask another Maintainer when needed.");
-  await reply.getByRole("button", { name: "[ SEND REPLY ]" }).click();
+  await reply.getByRole("button", { name: "SEND REPLY" }).click();
   await expect(
     page.getByRole("region", { name: new RegExp(name) }).getByText("Waiting for admin review."),
   ).toBeVisible();
@@ -97,7 +97,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await expect(
     ready.getByText("I will review releases and ask another Maintainer when needed."),
   ).toBeVisible();
-  await ready.getByRole("button", { name: "[ APPROVE ]" }).click();
+  await ready.getByRole("button", { name: "APPROVE" }).click();
   await expect(ready.getByText("This application has a final decision.")).toBeVisible();
   await page.goto("/projects");
   await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
@@ -120,14 +120,14 @@ test("guests and Participants can discuss ideas but cannot submit a project", as
   await page.goto("/projects");
   await expect(page.getByRole("form", { name: "PROPOSE A PROJECT" })).toHaveCount(0);
   await waitForHydration(page);
-  await page.getByRole("button", { name: "[ PROPOSE PROJECT ]" }).click();
+  await page.getByRole("button", { name: "PROPOSE PROJECT" }).click();
   await expect(page).toHaveURL("/projects/propose");
-  await expect(page.getByRole("link", { name: "[ DISCUSS IN FORUM → ]" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "DISCUSS IN FORUM →" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL("/projects");
-  await expect(page.getByRole("button", { name: "[ PROPOSE PROJECT ]" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "PROPOSE PROJECT" })).toBeFocused();
   await logon(page, `project-participant-${Date.now().toString(36)}`);
   await page.goto("/projects/propose");
   await expect(page.getByRole("form", { name: "PROPOSE A PROJECT" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "[ APPLY FOR MEMBER → ]" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "APPLY FOR MEMBER →" })).toBeVisible();
 });

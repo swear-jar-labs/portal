@@ -93,7 +93,7 @@ test("walks the index with arrows and opens with Enter", async ({ page }) => {
   await focusedBody(page).focus();
 
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("button", { name: "[ PROPOSE PROJECT ]" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "PROPOSE PROJECT" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(cards(page).nth(0).getByRole("link", { name: "SWEARJAR.DOS" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -110,7 +110,7 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
   await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
-  await expect(panel.getByRole("link", { name: "[ NEW THREAD ]" })).toHaveAttribute(
+  await expect(panel.getByRole("link", { name: "NEW THREAD" })).toHaveAttribute(
     "href",
     "/forum?board=swearjar-dos&new=1",
   );
@@ -148,7 +148,7 @@ test("opens a thread composer with the project preselected", async ({ page }) =>
   const panel = page.getByRole("region", { name: "Compiler" });
   await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
-  await panel.getByRole("link", { name: "[ NEW THREAD ]" }).click();
+  await panel.getByRole("link", { name: "NEW THREAD" }).click();
   await expect(page).toHaveURL("/forum?board=compiler");
   const form = page.getByRole("form", { name: "NEW THREAD" });
   await expect(form.getByRole("combobox", { name: "BOARD" })).toContainText("Compiler");
@@ -241,7 +241,7 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
   await expect(
     panel.getByText("Interested in project work? Register as a Participant first."),
   ).toBeVisible();
-  await expect(panel.getByRole("link", { name: "[ REGISTER → ]" })).toHaveAttribute(
+  await expect(panel.getByRole("link", { name: "REGISTER →" })).toHaveAttribute(
     "href",
     "/register",
   );
@@ -306,8 +306,8 @@ test("shows the claim ladder and lets a maintainer tune it", async ({ page }) =>
   await expect(panel.getByText("2 DONE")).toBeVisible();
   await expect(panel.getByText("1 DONE")).toBeVisible();
 
-  await panel.getByRole("button", { name: "[ EDIT ]" }).click();
-  const save = panel.getByRole("button", { name: "[ SAVE ]" });
+  await panel.getByRole("button", { name: "EDIT" }).click();
+  const save = panel.getByRole("button", { name: "SAVE" });
   // The opened form hands input focus to its first control.
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
   await expect(save).toBeDisabled();
@@ -315,17 +315,17 @@ test("shows the claim ladder and lets a maintainer tune it", async ({ page }) =>
   await page.getByRole("option", { name: "3", exact: true }).click();
   await expect(save).toBeEnabled();
   // CANCEL drops the draft: the fixture rungs are back, the form is gone.
-  await panel.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await panel.getByRole("button", { name: "CANCEL" }).click();
   await expect(panel.getByText("2 DONE")).toBeVisible();
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
 
   // SAVE lands the tune in the session: the rungs and the dossier gate
   // read it (cross-page it dies with the reload, like the tickets' store —
   // Phase 5 keeps it server-side).
-  await panel.getByRole("button", { name: "[ EDIT ]" }).click();
+  await panel.getByRole("button", { name: "EDIT" }).click();
   await panel.getByRole("combobox", { name: "M NEEDS" }).click();
   await page.getByRole("option", { name: "3", exact: true }).click();
-  await panel.getByRole("button", { name: "[ SAVE ]" }).click();
+  await panel.getByRole("button", { name: "SAVE" }).click();
   await expect(panel.getByText("3 DONE")).toBeVisible();
   await expect(panel.getByText("2 DONE")).toHaveCount(0);
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
@@ -339,7 +339,7 @@ test("Escape cancels the claim form first and closes the project next", async ({
   const panel = page.getByRole("region", { name: "Tooling" });
   await panel.getByRole("tab", { name: "TEAM" }).click();
 
-  await panel.getByRole("button", { name: "[ EDIT ]" }).click();
+  await panel.getByRole("button", { name: "EDIT" }).click();
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
   // The first Esc drops the draft like CANCEL: the form is gone, the project
   // stays open, and the keyboard is back on the trigger.
@@ -347,7 +347,7 @@ test("Escape cancels the claim form first and closes the project next", async ({
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
   await expect(page).toHaveURL(projectTabPath("tooling", "team"));
   await expect(layers(page)).toHaveCount(2);
-  await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toBeFocused();
+  await expect(panel.getByRole("button", { name: "EDIT" })).toBeFocused();
   // The second Esc finds no form and closes the project as before.
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(PROJECTS_PATH);
@@ -365,7 +365,7 @@ test("shows the ladder read-only without a maintainer seat", async ({ page }) =>
   await expect(panel.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
   await expect(panel.getByText("EVERYONE")).toBeVisible();
   await expect(panel.getByText("TASKS NEED")).toHaveCount(2);
-  await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "EDIT" })).toHaveCount(0);
 });
 
 test("shows the ladder to a guest", async ({ page }) => {
@@ -375,5 +375,5 @@ test("shows the ladder to a guest", async ({ page }) => {
   await panel.getByRole("tab", { name: "TEAM" }).click();
   await expect(panel.getByText("EVERYONE")).toBeVisible();
   await expect(panel.getByText("1 DONE")).toBeVisible();
-  await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "EDIT" })).toHaveCount(0);
 });

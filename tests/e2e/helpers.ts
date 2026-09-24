@@ -61,7 +61,7 @@ export async function logon(page: Page, user = "ada") {
   await waitForHydration(page);
   await page.getByLabel("Username").fill(user);
   await page.getByLabel("Password").fill("secret");
-  await page.getByRole("button", { name: "[ LOG ON ]" }).click();
+  await page.getByRole("button", { name: "LOG ON" }).click();
   await expect(page).toHaveURL("/forum", { timeout: 15_000 });
 }
 

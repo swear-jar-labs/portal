@@ -15,7 +15,7 @@ import {
 const FILES_REGION = "C:\\SWEARJAR";
 const USER_LABEL = "Username";
 const PASSWORD_LABEL = "Password";
-const SUBMIT_BUTTON = "[ SUBMIT ]";
+const SUBMIT_BUTTON = "SUBMIT";
 const LONG_DELAY_MS = screensaverDelayMs(30);
 const MINUTE_MS = 60_000;
 
@@ -137,7 +137,7 @@ test.describe("member session", () => {
 
     await page.getByLabel(USER_LABEL).fill("ada");
     await page.getByLabel(PASSWORD_LABEL).fill("secret");
-    await page.getByRole("button", { name: "[ LOG ON ]" }).click();
+    await page.getByRole("button", { name: "LOG ON" }).click();
     await expect(page).toHaveURL("/tickets/FLAG-1");
   });
 
@@ -150,8 +150,8 @@ test.describe("member session", () => {
     await expectNoViolations(page, "logoff confirmation");
 
     // The first action is focused; all four arrows cycle through the actions.
-    const confirm = page.getByRole("button", { name: "[ LOG OFF ]" });
-    const cancel = page.getByRole("button", { name: "[ CANCEL ]" });
+    const confirm = page.getByRole("button", { name: "LOG OFF" });
+    const cancel = page.getByRole("button", { name: "CANCEL" });
     await expect(confirm).toBeFocused();
     await page.keyboard.press("ArrowRight");
     await expect(cancel).toBeFocused();
@@ -203,7 +203,7 @@ test.describe("member session", () => {
     await logon(page);
     await page.goto("/settings");
 
-    const save = page.getByRole("button", { name: "[ SAVE ]" });
+    const save = page.getByRole("button", { name: "SAVE" });
     const toggle = page.getByRole("checkbox", { name: "Starfield after idle" });
     const delay = page.getByLabel("Idle delay");
 
@@ -243,7 +243,7 @@ test.describe("registration and levels", () => {
     await form.getByLabel(USER_LABEL).fill(handle);
     await form.getByLabel("Email").fill(`${handle}@example.com`);
     await form.getByLabel(PASSWORD_LABEL).fill("secret");
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
 
     await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
     // No mail leaves the demo: the issued code is shown on screen, and the
@@ -258,7 +258,7 @@ test.describe("registration and levels", () => {
     await expectNoViolations(page, "/register code step");
 
     await codeField.fill(demoCode);
-    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+    await form.getByRole("button", { name: "CONFIRM" }).click();
 
     await expect(page).toHaveURL("/profile");
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
@@ -275,7 +275,7 @@ test.describe("registration and levels", () => {
     await form.getByLabel(USER_LABEL).fill(handle);
     await form.getByLabel("Email").fill(`${handle}@example.com`);
     await form.getByLabel(PASSWORD_LABEL).fill("secret");
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
 
     await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
     const demoCode = await form.getByText("Demo code:").evaluate((element) => {
@@ -285,17 +285,17 @@ test.describe("registration and levels", () => {
     });
     const wrong = demoCode.startsWith("0") ? `1${demoCode.slice(1)}` : `0${demoCode.slice(1)}`;
     await form.getByLabel("Email code").fill(wrong);
-    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+    await form.getByRole("button", { name: "CONFIRM" }).click();
 
     await expect(form.getByText("Wrong code. Check the demo code and try again.")).toBeVisible();
     await expect(page).toHaveURL("/register");
 
     // Back to the details keeps the typed mailbox for a quick fix.
-    await form.getByRole("button", { name: "[ BACK ]" }).click();
+    await form.getByRole("button", { name: "BACK" }).click();
     await expect(form.getByLabel("Email")).toHaveValue(`${handle}@example.com`);
 
     // The retry reissues the code; the fresh one still lands the account.
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
     await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
     const retryCode = await form.getByText("Demo code:").evaluate((element) => {
       const match = /([0-9]{6})/.exec(element.textContent ?? "");
@@ -303,7 +303,7 @@ test.describe("registration and levels", () => {
       return match[1];
     });
     await form.getByLabel("Email code").fill(retryCode);
-    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+    await form.getByRole("button", { name: "CONFIRM" }).click();
     await expect(page).toHaveURL("/profile");
   });
 
@@ -311,20 +311,20 @@ test.describe("registration and levels", () => {
     await page.goto("/register");
     const form = page.getByRole("form", { name: "REGISTER" });
 
-    await form.getByRole("button", { name: "[ GOOGLE ]" }).click();
+    await form.getByRole("button", { name: "GOOGLE" }).click();
     await expect(page).toHaveURL("/profile");
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
     await expect(profile.getByRole("heading", { level: 1, name: "google-newcomer" })).toBeVisible();
     await expect(profile.getByText("Participant")).toBeVisible();
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
     await page.goto("/register");
     await page
       .getByRole("form", { name: "REGISTER" })
-      .getByRole("button", { name: "[ GITHUB ]" })
+      .getByRole("button", { name: "GITHUB" })
       .click();
     await expect(page).toHaveURL("/profile");
     const second = page.getByRole("region", { name: "PROFILE.EXE" });
@@ -343,7 +343,7 @@ test.describe("registration and levels", () => {
     await page.keyboard.press("Escape");
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
     await logon(page);
@@ -367,7 +367,7 @@ test.describe("registration and levels", () => {
     ).toBeVisible();
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
     await logon(page);
@@ -377,7 +377,7 @@ test.describe("registration and levels", () => {
     await expect(profile.getByText("Member")).toBeVisible();
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
     await logon(page, "quinn-switch");
@@ -391,7 +391,7 @@ test.describe("registration and levels", () => {
     await page.goto("/register");
     const form = page.getByRole("form", { name: "REGISTER" });
 
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
     await expect(form.getByText("2-32 characters: letters, digits, - or _.")).toBeVisible();
     await expect(form.getByText("Enter a valid email address.")).toBeVisible();
     await expect(form.getByText("A password is needed.")).toBeVisible();
@@ -400,7 +400,7 @@ test.describe("registration and levels", () => {
     await form.getByLabel(USER_LABEL).fill("ada");
     await form.getByLabel("Email").fill("ada@example.com");
     await form.getByLabel(PASSWORD_LABEL).fill("secret");
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
     await expect(
       form.getByText("That username is taken. Pick another one, or log on."),
     ).toBeVisible();
@@ -411,7 +411,7 @@ test.describe("registration and levels", () => {
     const mailbox = `${first}@example.com`;
     await form.getByLabel(USER_LABEL).fill(first);
     await form.getByLabel("Email").fill(mailbox);
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
     await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
     const demoCode = await form.getByText("Demo code:").evaluate((element) => {
       const match = /([0-9]{6})/.exec(element.textContent ?? "");
@@ -419,11 +419,11 @@ test.describe("registration and levels", () => {
       return match[1];
     });
     await form.getByLabel("Email code").fill(demoCode);
-    await form.getByRole("button", { name: "[ CONFIRM ]" }).click();
+    await form.getByRole("button", { name: "CONFIRM" }).click();
     await expect(page).toHaveURL("/profile");
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
     await page.goto("/register");
@@ -431,7 +431,7 @@ test.describe("registration and levels", () => {
     await retry.getByLabel(USER_LABEL).fill(`quinn-mail-2-${Date.now().toString(36)}`);
     await retry.getByLabel("Email").fill(mailbox);
     await retry.getByLabel(PASSWORD_LABEL).fill("secret");
-    await retry.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await retry.getByRole("button", { name: "REGISTER" }).click();
     await expect(
       retry.getByText("That email is already registered. Log on instead."),
     ).toBeVisible();
@@ -456,7 +456,7 @@ test.describe("registration and levels", () => {
     await expect(page.getByRole("heading", { level: 1, name: "MEMBER APPLICATION" })).toBeVisible();
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
     await logon(page);
@@ -496,7 +496,7 @@ test.describe("registration and levels", () => {
     await user.fill(handle);
     await email.fill(`${handle}@example.com`);
     await password.fill("secret");
-    await form.getByRole("button", { name: "[ REGISTER ]" }).click();
+    await form.getByRole("button", { name: "REGISTER" }).click();
 
     const code = form.getByLabel("Email code");
     await expect(code).toBeVisible();
@@ -779,7 +779,7 @@ test.describe("apply form", () => {
 test.describe("member application workflow", () => {
   async function logoff(page: Page) {
     await page.getByRole("button", { name: "F9 Logoff" }).click();
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
   }
 
@@ -821,7 +821,7 @@ test.describe("member application workflow", () => {
     await expect(review.getByText(/member-\d/)).toHaveCount(0);
     await expectNoViolations(page, "/admin queue");
     await review.getByLabel("Reason or question").fill("Which parser have you built?");
-    await review.getByRole("button", { name: "[ REQUEST DETAILS ]" }).focus();
+    await review.getByRole("button", { name: "REQUEST DETAILS" }).focus();
     await page.keyboard.press("Enter");
     await expect(review.getByText("Waiting for the applicant's clarification.")).toBeVisible();
     await logoff(page);
@@ -831,14 +831,14 @@ test.describe("member application workflow", () => {
     await waitForHydration(page);
     await expect(page.getByText("Which parser have you built?")).toBeVisible();
     await page.getByLabel("Your clarification").fill("An expression parser in TypeScript.");
-    await page.getByRole("button", { name: "[ SEND REPLY ]" }).click();
+    await page.getByRole("button", { name: "SEND REPLY" }).click();
     await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
     await logoff(page);
 
     await logon(page, "admin");
     await page.goto("/admin");
     await expect(review.getByText("An expression parser in TypeScript.")).toBeVisible();
-    await review.getByRole("button", { name: "[ APPROVE ]" }).click();
+    await review.getByRole("button", { name: "APPROVE" }).click();
     await expect(review.getByText("This application has a final decision.")).toBeVisible();
     await logoff(page);
 
@@ -855,7 +855,7 @@ test.describe("member application workflow", () => {
   test("denies the admin route to guests and ordinary accounts", async ({ page }) => {
     await page.goto("/admin");
     await expect(page.getByText("Admin access is required to open this file.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "[ APPROVE ]" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "APPROVE" })).toHaveCount(0);
     await logon(page, `apply-denied-${Date.now().toString(36)}`);
     await page.goto("/admin");
     await expect(page.getByText("Admin access is required to open this file.")).toBeVisible();
@@ -885,7 +885,7 @@ test.describe("member application workflow", () => {
     await page.goto("/admin");
     const review = page.getByRole("region", { name: applicant });
     await review.getByLabel("Reason or question").fill("Please give a concrete example.");
-    await review.getByRole("button", { name: "[ DECLINE ]" }).click();
+    await review.getByRole("button", { name: "DECLINE" }).click();
     await expect(review.getByText("This application has a final decision.")).toBeVisible();
     await logoff(page);
 
@@ -894,7 +894,7 @@ test.describe("member application workflow", () => {
     await waitForHydration(page);
     await expect(page.getByText("Please give a concrete example.")).toBeVisible();
     await page.getByLabel("What would you like to work on or learn?").fill("A parser I built");
-    await page.getByRole("button", { name: "[ APPLY AGAIN ]" }).click();
+    await page.getByRole("button", { name: "APPLY AGAIN" }).click();
     await expect(page.getByText("Your application is in the admin queue.")).toBeVisible();
     await expect(page.getByText("First draft")).toBeVisible();
     await expect(page.getByText("A parser I built")).toBeVisible();
@@ -913,13 +913,13 @@ test.describe("social logon", () => {
   test("logs in with Google and logs off", async ({ page }) => {
     await page.goto("/login");
 
-    await page.getByRole("button", { name: "[ GOOGLE ]" }).click();
+    await page.getByRole("button", { name: "GOOGLE" }).click();
     await expect(page).toHaveURL("/forum");
     await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
 
     await page.keyboard.press("F9");
-    await page.getByRole("button", { name: "[ LOG OFF ]" }).click();
+    await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
   });
@@ -927,7 +927,7 @@ test.describe("social logon", () => {
   test("maps GitHub to its own demo user", async ({ page }) => {
     await page.goto("/login");
 
-    await page.getByRole("button", { name: "[ GITHUB ]" }).click();
+    await page.getByRole("button", { name: "GITHUB" }).click();
     await expect(page).toHaveURL("/forum");
     await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "grace" })).toBeVisible();
@@ -998,8 +998,8 @@ test.describe("logon window", () => {
     await page.goto("/login");
     const form = page.getByRole("form", { name: "LOGON" });
     const user = page.getByLabel(USER_LABEL);
-    const logon = form.getByRole("button", { name: "[ LOG ON ]" });
-    const google = form.getByRole("button", { name: "[ GOOGLE ]" });
+    const logon = form.getByRole("button", { name: "LOG ON" });
+    const google = form.getByRole("button", { name: "GOOGLE" });
 
     // The form stacks controls without row markup: a flat region walks ←/→
     // exactly like ↑/↓.
@@ -1020,7 +1020,7 @@ test.describe("logon window", () => {
   test("a window without a scrollbar ignores Shift + arrows", async ({ page }) => {
     await page.goto("/login");
     const body = docScroll(page);
-    const google = page.getByRole("button", { name: "[ GOOGLE ]" });
+    const google = page.getByRole("button", { name: "GOOGLE" });
 
     await google.focus();
     await page.keyboard.press("Shift+ArrowDown");
@@ -1056,7 +1056,7 @@ test.describe("screensaver settings", () => {
 
     const toggle = page.getByRole("checkbox", { name: "Starfield after idle" });
     const delay = page.getByLabel("Idle delay");
-    const save = page.getByRole("button", { name: "[ SAVE ]" });
+    const save = page.getByRole("button", { name: "SAVE" });
     await expect(toggle).toBeChecked();
     await expect(delay).toContainText("5 MINUTES");
     await expect(save).toBeDisabled();
@@ -1086,7 +1086,7 @@ test.describe("screensaver settings", () => {
     await page.goto("/settings");
 
     const toggle = page.getByRole("checkbox", { name: "Starfield after idle" });
-    const save = page.getByRole("button", { name: "[ SAVE ]" });
+    const save = page.getByRole("button", { name: "SAVE" });
     const stored = () =>
       page.evaluate((key) => localStorage.getItem(key), SCREENSAVER_PREFS_STORAGE_KEY);
 

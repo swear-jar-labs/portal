@@ -277,10 +277,10 @@ test("shows a member their own notes and seals the rest before the deadline", as
   await expect(task.getByText(messages.readroom.notes.posted)).toBeVisible();
 
   // The author deletes her note: the seal keeps the others, the composer returns.
-  await task.getByRole("button", { name: "[ DELETE ]" }).click();
+  await task.getByRole("button", { name: "DELETE" }).click();
   await page
     .getByRole("dialog", { name: "DELETE NOTE" })
-    .getByRole("button", { name: "[ DELETE ]" })
+    .getByRole("button", { name: "DELETE" })
     .click();
   await expect(task.getByText(/max_free_chunks/)).toHaveCount(0);
   await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
@@ -325,7 +325,7 @@ test("walks the feed and the task by rows", async ({ page }) => {
   await expect(async () => {
     await focusedBody(page).focus();
     await page.keyboard.press("ArrowDown");
-    await expect(feed.getByRole("button", { name: "[ NEW TASK ]" })).toBeFocused({
+    await expect(feed.getByRole("button", { name: "NEW TASK" })).toBeFocused({
       timeout: 1_000,
     });
     await page.keyboard.press("ArrowDown");

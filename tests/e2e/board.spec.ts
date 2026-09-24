@@ -23,7 +23,7 @@ const READ_FIRST = "READ FIRST: how this board works";
 const CI_CACHE = "CI cache poisoning: how we lost a day";
 const HEAP_POSTMORTEM = "Postmortem: heap corruption at 3am";
 const TABS_CLOSED = "Bikeshed closed: tabs, and here is why";
-const NEW_THREAD = "[ NEW THREAD ]";
+const NEW_THREAD = "NEW THREAD";
 const LOGON_PROMPT = "LOGON REQUIRED";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
 // The PanelStack effect focuses the top layer's body and attaches the Esc
@@ -275,18 +275,18 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await expect(rows.nth(2)).toBeFocused();
   // The composer walks top-down like the eyes: tabs, toolbar, field, submit.
   await page.keyboard.press("ArrowDown");
-  await expect(thread.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(thread.getByRole("button", { name: "Code", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(thread.getByRole("button", { name: "[ POST REPLY ]" })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "POST REPLY" })).toBeFocused();
   // The post walk wraps at both ends.
   await page.keyboard.press("ArrowDown");
   await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await expect(thread.getByRole("button", { name: "[ POST REPLY ]" })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "POST REPLY" })).toBeFocused();
 });
 
 test("opens a thread at the top and scrolls to the composer on reply", async ({ page }) => {
@@ -304,7 +304,7 @@ test("opens a thread at the top and scrolls to the composer on reply", async ({ 
     .getByRole("region", { name: HEAP_POSTMORTEM })
     .getByRole("article")
     .first()
-    .getByRole("button", { name: "[ REPLY ]" })
+    .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
 });
@@ -468,7 +468,7 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   // Compose is gated.
   await feed.getByRole("button", { name: NEW_THREAD }).click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await dialog.getByRole("button", { name: "CANCEL" }).click();
   await expect(dialog).toBeHidden();
 
   // A vote is gated too, and nothing changes behind the prompt.
@@ -479,7 +479,7 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   await expect(vote).toHaveAttribute("aria-pressed", "false");
   await vote.click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await dialog.getByRole("button", { name: "CANCEL" }).click();
   await expect(vote).toHaveAttribute("aria-pressed", "false");
 
   // A reply attempt keeps the draft for after the logon.
@@ -488,20 +488,20 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
     .getByRole("region", { name: CI_CACHE })
     .getByRole("textbox", { name: "REPLY" });
   await reply.fill("Writing for the jar.");
-  await page.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await page.getByRole("button", { name: "POST REPLY" }).click();
   await expect(dialog).toBeVisible();
   // The modal hides the page from the a11y tree; check the draft after closing.
-  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await dialog.getByRole("button", { name: "CANCEL" }).click();
   await expect(reply).toHaveValue("Writing for the jar.");
-  await page.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await page.getByRole("button", { name: "POST REPLY" }).click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "[ LOG ON ]" }).click();
+  await dialog.getByRole("button", { name: "LOG ON" }).click();
   // The logon started on the thread, so it carries the way back (?next=).
   await expect(page).toHaveURL("/login?next=%2Fforum%2Fci-cache-poisoning");
 
   await page.getByLabel("Username").fill("ada");
   await page.getByLabel("Password").fill("secret");
-  await page.getByRole("button", { name: "[ LOG ON ]" }).click();
+  await page.getByRole("button", { name: "LOG ON" }).click();
   // The logon lands back on the thread. The typed draft does not survive the
   // page change (it lives in the thread panel, not the session store); the
   // cancel path above is what keeps it.
@@ -562,7 +562,7 @@ test("composes a thread that lives in the session", async ({ page }) => {
   const form = page.getByRole("form", { name: "NEW THREAD" });
 
   // An empty submit names both required fields.
-  await form.getByRole("button", { name: "[ POST THREAD ]" }).click();
+  await form.getByRole("button", { name: "POST THREAD" }).click();
   await expect(form.getByText("Give the thread a title.")).toBeVisible();
   await expect(form.getByText("Write the opening post.")).toBeVisible();
 
@@ -571,7 +571,7 @@ test("composes a thread that lives in the session", async ({ page }) => {
   await form.getByRole("button", { name: "TOOLING" }).click();
   await form.getByLabel("TITLE").fill(title);
   await form.getByLabel("BODY").fill("A header edit slipped past the cache again.");
-  await form.getByRole("button", { name: "[ POST THREAD ]" }).click();
+  await form.getByRole("button", { name: "POST THREAD" }).click();
 
   const card = feed.getByRole("article").filter({ hasText: title });
   await expect(card).toBeVisible();
@@ -595,9 +595,13 @@ test("composes a thread that lives in the session", async ({ page }) => {
 
   // A jump inside the local thread writes the hash; closing drops it, so the
   // feed URL never points at a layer that is gone.
-  await thread.getByRole("article").first().getByRole("button", { name: "[ REPLY ]" }).click();
+  await thread
+    .getByRole("article")
+    .first()
+    .getByRole("button", { name: "REPLY", exact: true })
+    .click();
   await thread.getByRole("textbox", { name: "REPLY" }).fill("Answering the opening post.");
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
   await thread.getByRole("article").last().getByRole("button", { name: "In reply to ada" }).click();
   await expect(page).toHaveURL(/#board-post-/);
 
@@ -614,17 +618,17 @@ test("replies, edits and tombstones a post", async ({ page }) => {
 
   // A post by another author offers no edit controls.
   const gracePost = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
-  await expect(gracePost.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);
+  await expect(gracePost.getByRole("button", { name: "EDIT" })).toHaveCount(0);
 
   const reply = thread.getByRole("textbox", { name: "REPLY" });
   await reply.fill("Updated rules: the jar takes IOUs now.");
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
   await expect(reply).toHaveValue("");
   const added = thread.getByRole("article").last();
   await expect(added).toContainText("Updated rules: the jar takes IOUs now.");
 
   // The edit opens with the caret in the text and saves on Shift+Enter.
-  await added.getByRole("button", { name: "[ EDIT ]" }).click();
+  await added.getByRole("button", { name: "EDIT" }).click();
   const editor = thread.getByRole("textbox", { name: "EDIT POST" });
   await expect(editor).toBeFocused();
   await editor.fill("Updated rules: the jar takes IOUs, by hand.");
@@ -635,20 +639,20 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   await expect(added).toBeFocused();
 
   // Cancelling an edit also hands the keyboard back and drops the draft.
-  await added.getByRole("button", { name: "[ EDIT ]" }).click();
+  await added.getByRole("button", { name: "EDIT" }).click();
   await thread.getByRole("textbox", { name: "EDIT POST" }).fill("Discarded text.");
-  await added.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await added.getByRole("button", { name: "CANCEL" }).click();
   await expect(added).toBeFocused();
   await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
   await expect(added).not.toContainText("Discarded text.");
 
   // Delete asks first; cancelling keeps the post, confirming leaves a tombstone.
-  await added.getByRole("button", { name: "[ DELETE ]" }).click();
+  await added.getByRole("button", { name: "DELETE" }).click();
   const dialog = page.getByRole("dialog", { name: "DELETE POST" });
-  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await dialog.getByRole("button", { name: "CANCEL" }).click();
   await expect(added).toContainText("by hand");
-  await added.getByRole("button", { name: "[ DELETE ]" }).click();
-  await dialog.getByRole("button", { name: "[ DELETE ]" }).click();
+  await added.getByRole("button", { name: "DELETE" }).click();
+  await dialog.getByRole("button", { name: "DELETE" }).click();
   await expect(added).toContainText("This post was deleted.");
   await expect(added).not.toContainText("by hand");
   await expect(added).toContainText("ada");
@@ -683,7 +687,7 @@ test("targets a post from the composer and posts the marker", async ({ page }) =
   const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
-  await parent.getByRole("button", { name: "[ REPLY ]" }).click();
+  await parent.getByRole("button", { name: "REPLY", exact: true }).click();
   // Choosing a target hands the caret to the composer and names the parent.
   await expect(reply).toBeFocused();
   await expect(thread.getByText("REPLYING TO")).toBeVisible();
@@ -695,7 +699,7 @@ test("targets a post from the composer and posts the marker", async ({ page }) =
   ).toBeVisible();
 
   await reply.fill("Carrying on, with the jar watching.");
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
 
   const added = thread.getByRole("article").last();
   await expect(added).toContainText("Carrying on, with the jar watching.");
@@ -714,7 +718,7 @@ test("cancels the reply target and keeps the draft", async ({ page }) => {
   const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
-  await parent.getByRole("button", { name: "[ REPLY ]" }).click();
+  await parent.getByRole("button", { name: "REPLY", exact: true }).click();
   await reply.fill("Draft stays.");
   await thread.getByRole("button", { name: "Cancel reply target" }).click();
   await expect(reply).toBeFocused();
@@ -722,7 +726,7 @@ test("cancels the reply target and keeps the draft", async ({ page }) => {
   await expect(thread.getByText("REPLYING TO")).toHaveCount(0);
 
   // Posted without a target, the reply carries no marker.
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
   const added = thread.getByRole("article").last();
   await expect(added).toContainText("Draft stays.");
   await expect(added.getByRole("button", { name: "In reply to" })).toHaveCount(0);
@@ -738,7 +742,7 @@ test("reaches the reply target clear control with the arrows", async ({ page }) 
   await thread
     .getByRole("article")
     .filter({ hasText: "Pinned. If a thread drifts" })
-    .getByRole("button", { name: "[ REPLY ]" })
+    .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect(reply).toBeFocused();
 
@@ -747,7 +751,7 @@ test("reaches the reply target clear control with the arrows", async ({ page }) 
   await page.keyboard.press("ArrowUp");
   await expect(thread.getByRole("button", { name: "Code", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await expect(thread.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   const clear = thread.getByRole("button", { name: "Cancel reply target" });
   await expect(clear).toBeFocused();
@@ -767,14 +771,14 @@ test("a guest reply keeps its target through the logon prompt", async ({ page })
   await thread
     .getByRole("article")
     .filter({ hasText: "Pinned. If a thread drifts" })
-    .getByRole("button", { name: "[ REPLY ]" })
+    .getByRole("button", { name: "REPLY", exact: true })
     .click();
   const reply = thread.getByRole("textbox", { name: "REPLY" });
   await reply.fill("Writing for the jar.");
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
   await expect(dialog).toBeVisible();
 
-  await dialog.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await dialog.getByRole("button", { name: "CANCEL" }).click();
   await expect(thread.getByText("REPLYING TO")).toBeVisible();
   await expect(reply).toHaveValue("Writing for the jar.");
 });
@@ -787,7 +791,7 @@ test("a locked thread takes no reply targets", async ({ page }) => {
 
   // The published marker stays a navigation aid; the reply controls are gone.
   await expect(locked.getByRole("button", { name: "In reply to ken" })).toBeVisible();
-  await expect(locked.getByRole("button", { name: "[ REPLY ]" })).toHaveCount(0);
+  await expect(locked.getByRole("button", { name: "REPLY", exact: true })).toHaveCount(0);
   await expect(locked.getByRole("textbox", { name: "REPLY" })).toHaveCount(0);
 });
 
@@ -799,24 +803,24 @@ test("quotes a tombstoned parent by name only", async ({ page }) => {
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await reply.fill("Parent to be buried.");
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
   const parentAnchor = await thread.getByRole("article").last().getAttribute("id");
   if (parentAnchor === null) throw new Error("the session post carries no anchor");
   // The article locator is live; the anchor keeps naming the same post after
   // the next reply lands below it.
   const parent = page.locator(`#${parentAnchor}`);
 
-  await parent.getByRole("button", { name: "[ REPLY ]" }).click();
+  await parent.getByRole("button", { name: "REPLY", exact: true }).click();
   await reply.fill("The child keeps the name.");
-  await thread.getByRole("button", { name: "[ POST REPLY ]" }).click();
+  await thread.getByRole("button", { name: "POST REPLY" }).click();
   const child = thread.getByRole("article").last();
   const marker = child.getByRole("button", { name: "In reply to ada" });
   await expect(marker).toContainText("Parent to be buried.");
 
-  await parent.getByRole("button", { name: "[ DELETE ]" }).click();
+  await parent.getByRole("button", { name: "DELETE" }).click();
   await page
     .getByRole("dialog", { name: "DELETE POST" })
-    .getByRole("button", { name: "[ DELETE ]" })
+    .getByRole("button", { name: "DELETE" })
     .click();
   await expect(marker).not.toContainText("Parent to be buried.");
   await expect(marker).toContainText("ada");
@@ -857,15 +861,15 @@ test("walks the compose layer and returns focus to its button", async ({ page })
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("textbox", { name: "TITLE" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(form.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
+  await expect(form.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("button", { name: "Code", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("textbox", { name: "BODY" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(form.getByRole("button", { name: "[ POST THREAD ]" })).toBeFocused();
+  await expect(form.getByRole("button", { name: "POST THREAD" })).toBeFocused();
   await page.keyboard.press("ArrowRight");
-  await expect(form.getByRole("button", { name: "[ CANCEL ]" })).toBeFocused();
+  await expect(form.getByRole("button", { name: "CANCEL" })).toBeFocused();
 
   await page.keyboard.press("Escape");
   await expect(form).toHaveCount(0);
@@ -890,7 +894,7 @@ test("keeps the caret in the reply textarea inside its row", async ({ page }) =>
   await page.keyboard.press("ArrowUp");
   await expect(page.getByRole("button", { name: "Code", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await expect(page.getByRole("button", { name: "[ WRITE ]" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
   await expect(rows.nth(2)).toBeFocused();
@@ -963,7 +967,7 @@ test("has no accessibility violations", async ({ page }) => {
   const prompt = page.getByRole("dialog", { name: LOGON_PROMPT });
   await expect(prompt).toBeVisible();
   await expectNoViolations(page, "logon prompt");
-  await prompt.getByRole("button", { name: "[ CANCEL ]" }).click();
+  await prompt.getByRole("button", { name: "CANCEL" }).click();
 
   await page
     .getByRole("region", { name: FEED_REGION })
@@ -1002,7 +1006,7 @@ test("has no accessibility violations as a member", async ({ page }) => {
   await thread
     .getByRole("article")
     .filter({ hasText: "Pinned. If a thread drifts" })
-    .getByRole("button", { name: "[ REPLY ]" })
+    .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect(page.getByText("REPLYING TO")).toBeVisible();
   await expectNoViolations(page, "member thread with reply target");

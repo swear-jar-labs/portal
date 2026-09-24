@@ -36,4 +36,13 @@ describe("Tag", () => {
     expect(html).toContain('aria-pressed="true"');
     expect(html).not.toContain("--dos-tone-red");
   });
+
+  it("names a button whose press does more than its text says", () => {
+    const html = renderToStaticMarkup(
+      <Tag ariaLabel="Remove ops" onClick={() => {}}>
+        ops
+      </Tag>,
+    );
+    expect(html).toContain('aria-label="Remove ops"');
+  });
 });

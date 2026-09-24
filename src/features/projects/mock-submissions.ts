@@ -1,15 +1,22 @@
 import type { Actor } from "@/features/account/contracts";
+import { isMockMode } from "@/shared/mock";
 import { createProjectSubmissionStore } from "./submissions";
 
-const submissions = createProjectSubmissionStore();
-const DEMO_AT = "2026-09-20T11:00:00.000Z";
+// The proposal queue is a server-process mock (see mock-applications in the
+// account slice). The store is lazy: importing the module (also through the
+// projects contract in client graphs) performs no work and seeds nothing.
+// The first server read or action builds it once and seeds the demo queue.
+type ProjectSubmissionStore = ReturnType<typeof createProjectSubmissionStore>;
 
+const DEMO_AT = "2026-09-20T11:00:00.000Z";
 const DEMO_GRACE: Actor = { user: "grace", level: "member", admin: false, email: null };
 const DEMO_ADA: Actor = { user: "ada", level: "member", admin: false, email: null };
 const DEMO_ADMIN: Actor = { user: "admin", level: "member", admin: true, email: null };
 
-if (process.env.NODE_ENV !== "production") {
-  submissions.submit(
+let store: ProjectSubmissionStore | null = null;
+
+function seedStore(target: ProjectSubmissionStore): void {
+  target.submit(
     DEMO_GRACE,
     {
       slug: "demo-parser-lab",
@@ -21,7 +28,7 @@ if (process.env.NODE_ENV !== "production") {
     },
     DEMO_AT,
   );
-  const second = submissions.submit(
+  const second = target.submit(
     DEMO_ADA,
     {
       slug: "demo-ci-garden",
@@ -34,7 +41,7 @@ if (process.env.NODE_ENV !== "production") {
     DEMO_AT,
   );
   if (second.ok) {
-    submissions.decide(
+    target.decide(
       DEMO_ADMIN,
       second.submission.id,
       second.submission.version,
@@ -45,14 +52,25 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
+function getStore(): ProjectSubmissionStore {
+  if (!store) {
+    store = createProjectSubmissionStore();
+    if (isMockMode()) seedStore(store);
+  }
+  return store;
+}
+
 export function projectSubmissionsFor(user: string) {
-  return submissions.forUser(user);
+  return getStore().forUser(user);
 }
 
 export function listProjectSubmissions(actor: Actor | null) {
-  return submissions.all(actor);
+  return getStore().all(actor);
 }
 
-export const submitProject = submissions.submit;
-export const respondToProject = submissions.respond;
-export const decideProject = submissions.decide;
+export const submitProject: ProjectSubmissionStore["submit"] = (...args) =>
+  getStore().submit(...args);
+export const respondToProject: ProjectSubmissionStore["respond"] = (...args) =>
+  getStore().respond(...args);
+export const decideProject: ProjectSubmissionStore["decide"] = (...args) =>
+  getStore().decide(...args);

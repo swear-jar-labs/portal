@@ -8,14 +8,14 @@ import {
   listProjects,
   projectName,
 } from "@/features/projects/data";
-import { isProjectSlug, projectSlugs, rankProjects } from "@/features/projects/projects";
+import { isFixtureProjectSlug, projectSlugs, rankProjects } from "@/features/projects/projects";
 
 describe("projects fixtures", () => {
   it("covers every slug and resolves every project", async () => {
     const projects = await listProjects();
     expect(projects.map((project) => project.slug).sort()).toEqual([...projectSlugs].sort());
     for (const slug of projectSlugs) {
-      expect(isProjectSlug(slug)).toBe(true);
+      expect(isFixtureProjectSlug(slug)).toBe(true);
       expect(await getProject(slug), `${slug} is not resolvable`).not.toBeNull();
       expect(projectName(slug)).toBe(projects.find((project) => project.slug === slug)?.name);
     }

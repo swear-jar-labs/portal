@@ -34,14 +34,14 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await expect(page.getByRole("option", { name: "TypeScript" })).toBeVisible();
   await stackSearch.press("Enter");
   await expect(stackSearch).toBeFocused();
-  await expect(form.getByRole("button", { name: "TypeScript" })).toBeVisible();
+  await expect(form.getByRole("button", { name: "Remove TypeScript" })).toBeVisible();
   await stackSearch.fill("Rus");
   await stackSearch.press("Enter");
-  await form.getByRole("button", { name: "Rust" }).click();
-  await expect(form.getByRole("button", { name: "Rust" })).toHaveCount(0);
+  await form.getByRole("button", { name: "Remove Rust" }).click();
+  await expect(form.getByRole("button", { name: "Remove Rust" })).toHaveCount(0);
   await stackSearch.fill("Rust");
   await page.getByRole("option", { name: "Rust" }).click();
-  await expect(form.getByRole("button", { name: "Rust" })).toBeVisible();
+  await expect(form.getByRole("button", { name: "Remove Rust" })).toBeVisible();
   await form
     .getByLabel("What help or contributors are needed?")
     .fill("Members can build examples, tests and documentation.");

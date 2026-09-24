@@ -1,5 +1,6 @@
 import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { formatTimestamp } from "@/lib/format";
 import type { MemberApplication } from "./applications";
 import styles from "./ApplicationHistory.module.css";
 
@@ -33,7 +34,7 @@ export function ApplicationHistory({
             {application.history.map((event, index) => (
               <li key={`${application.id}-${index}`}>
                 <Text>
-                  {copy.events[event.kind]} · {event.by} · {event.at}
+                  {copy.events[event.kind]} · {event.by} · {formatTimestamp(event.at)}
                 </Text>
                 {event.note ? <Text>{event.note}</Text> : null}
               </li>

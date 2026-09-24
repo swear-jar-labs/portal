@@ -21,7 +21,7 @@ import {
   wouldCycle,
   type Ticket,
 } from "@/features/tickets/tickets";
-import { isProjectSlug, projectSlugs } from "@/features/projects/contracts";
+import { isFixtureProjectSlug, projectSlugs } from "@/features/projects/contracts";
 
 const ada = { user: "ada" };
 
@@ -148,7 +148,7 @@ describe("ticket query", () => {
       new URLSearchParams(
         "project=compiler&size=M&priority=high&status=review&assignee=none&tag=bug&q=grace",
       ),
-      isProjectSlug,
+      isFixtureProjectSlug,
     );
     expect(query).toEqual({
       project: "compiler",
@@ -177,7 +177,7 @@ describe("ticket query", () => {
         new URLSearchParams(
           "project=nope&size=XL&priority=urgent&status=nope&tag=nope&assignee=ada",
         ),
-        isProjectSlug,
+        isFixtureProjectSlug,
       ),
     ).toEqual(DEFAULT_TICKET_QUERY);
   });

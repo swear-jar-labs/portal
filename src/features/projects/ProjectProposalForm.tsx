@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -16,6 +16,7 @@ import {
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { techIds, type TechId } from "@/content/techs";
+import { useClientInteractive } from "@/shared/useClientInteractive";
 import { mockRespondToProject, mockSubmitProject } from "./mock-submission-actions";
 import { projectPath } from "./projects";
 import {
@@ -36,9 +37,6 @@ const initial: ProjectSubmissionInput = {
   stack: [],
   contributors: "",
 };
-const subscribeHydration = () => () => {};
-const clientInteractive = () => true;
-const serverInteractive = () => false;
 
 export function ProjectProposalForm({
   level,
@@ -53,13 +51,13 @@ export function ProjectProposalForm({
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-  const interactive = useSyncExternalStore(
-    subscribeHydration,
-    clientInteractive,
-    serverInteractive,
-  );
+  const interactive = useClientInteractive();
   const awaiting = submissions.filter((item) => item.status === "needs-info");
-  const latestBySlug = [...new Map(submissions.map((item) => [item.details.slug, item])).values()];
+  // Newest proposal first, one per slug: reversing before the Map dedupe keeps
+  // the latest record of a re-submitted slug and its position by freshness.
+  const latestBySlug = [
+    ...new Map([...submissions].reverse().map((item) => [item.details.slug, item])).values(),
+  ];
   const previousForSlug = submissions
     .filter((item) => item.details.slug === values.slug.trim())
     .at(-1);
@@ -228,7 +226,12 @@ export function ProjectProposalForm({
                   {values.stack.length > 0 ? (
                     <Stack direction="row" gap={4} wrap navRow>
                       {values.stack.map((tech) => (
-                        <Tag key={tech} active onClick={() => removeTech(tech)}>
+                        <Tag
+                          key={tech}
+                          active
+                          ariaLabel={`${copy.removeTech} ${messages.readroom.tags[tech]}`}
+                          onClick={() => removeTech(tech)}
+                        >
                           {messages.readroom.tags[tech]}
                         </Tag>
                       ))}

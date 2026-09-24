@@ -117,7 +117,9 @@ export function createProjectSubmissionStore(
       at = new Date().toISOString(),
     ): SubmissionResult {
       const submission = byId.get(id);
-      if (!actor || submission?.user !== actor.user || actor.level !== "member") {
+      if (!actor) return { ok: false, error: "forbidden" };
+      if (!submission) return { ok: false, error: "missing" };
+      if (submission.user !== actor.user || actor.level !== "member") {
         return { ok: false, error: "forbidden" };
       }
       if (submission.version !== version || submission.status !== "needs-info") {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Heading, Stack, Text, Textarea } from "@swearjar/dos";
 import { DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "@/content/messages";
+import { formatTimestamp } from "@/lib/format";
 import type { ProjectSubmission } from "@/features/projects/contracts";
 import styles from "./AdminQueue.module.css";
 
@@ -25,6 +26,10 @@ function Review({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+
+  const submittedAt = submission.history[0]
+    ? formatTimestamp(submission.history[0].at)
+    : messages.projects.proposal.none;
 
   function decide(decision: "clarification-requested" | "approved" | "rejected") {
     if (decision !== "approved" && !note.trim()) {
@@ -50,7 +55,7 @@ function Review({
 
   return (
     <section
-      aria-label={`${submission.details.name} ${submission.user} ${submission.history[0]?.at}`}
+      aria-label={`${submission.details.name} ${submission.user} ${submittedAt}`}
       className={styles.application}
       {...{ [DOS_SURFACE_ATTR]: "light" }}
     >
@@ -81,7 +86,8 @@ function Review({
             {submission.history.map((event, index) => (
               <li key={`${submission.id}-${index}`}>
                 <Text>
-                  {messages.projects.proposal.events[event.kind]} · {event.by} · {event.at}
+                  {messages.projects.proposal.events[event.kind]} · {event.by} ·{" "}
+                  {formatTimestamp(event.at)}
                 </Text>
                 {event.note ? <Text>{event.note}</Text> : null}
               </li>

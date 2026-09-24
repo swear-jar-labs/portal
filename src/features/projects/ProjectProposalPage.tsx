@@ -10,7 +10,7 @@ import { ProjectsStack } from "./ProjectsStack";
 
 export const projectProposalMetadata: Metadata = {
   title: `${messages.projects.proposal.heading} — ${messages.metadata.title}`,
-  description: messages.projects.metadata.description,
+  description: messages.projects.proposal.metadata.description,
 };
 
 export async function ProjectProposalPage() {

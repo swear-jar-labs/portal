@@ -24,10 +24,14 @@ export const projectSlugs = [
   "flagship",
 ] as const;
 // Approved proposals add slugs at runtime; the fixture tuple remains the
-// compile-time inventory for static data and its consistency tests.
-export type ProjectSlug = string;
+// compile-time inventory for static data and its consistency tests. The slug
+// is a URL canon, not the database identity: Phase 5 lands a UUID ProjectId
+// (UI-MOCK-PLAN: backend after the UI freeze), and the slug stays a unique
+// human-readable key beside it.
+export type FixtureProjectSlug = (typeof projectSlugs)[number];
+export type ProjectSlug = FixtureProjectSlug | (string & {});
 
-export function isProjectSlug(value: string): value is ProjectSlug {
+export function isFixtureProjectSlug(value: string): value is FixtureProjectSlug {
   return projectSlugs.some((slug) => slug === value);
 }
 
@@ -50,7 +54,7 @@ export const fixtureTicketPrefixes = {
   tooling: "TOOL",
   "token-cache": "CACHE",
   flagship: "FLAG",
-} as const satisfies Record<(typeof projectSlugs)[number], string>;
+} as const satisfies Record<FixtureProjectSlug, string>;
 
 // The forges the UI block knows (v1): hosts are github.com and gitlab.com,
 // self-hosted and the smaller forges extend the union later.

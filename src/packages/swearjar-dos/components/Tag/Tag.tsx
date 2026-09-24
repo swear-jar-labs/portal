@@ -8,6 +8,9 @@ export type TagProps = {
   // A clickable tag is a filter: it becomes a toggle button with a pressed state.
   onClick?: () => void;
   active?: boolean;
+  // A button whose visible text does not say what the press does (a "remove
+  // me" chip): the accessible name then comes from here, e.g. "Remove Rust".
+  ariaLabel?: string;
   disabled?: boolean;
   className?: string;
 };
@@ -17,6 +20,7 @@ export function Tag({
   tone,
   onClick,
   active = false,
+  ariaLabel,
   disabled = false,
   className,
 }: TagProps) {
@@ -39,6 +43,7 @@ export function Tag({
         className={classes}
         style={style}
         aria-pressed={active}
+        aria-label={ariaLabel}
         disabled={disabled}
         onClick={onClick}
       >

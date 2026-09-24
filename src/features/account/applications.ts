@@ -1,6 +1,8 @@
 import type { Actor } from "./actor";
 import { applySchema, type ApplyInput } from "./schema";
 
+export const MAX_NOTE_LENGTH = 2000;
+
 type ApplicationStatus = "pending" | "needs-info" | "approved" | "rejected";
 type ApplicationEventKind =
   "submitted" | "clarification-requested" | "clarification-sent" | "approved" | "rejected";
@@ -124,5 +126,3 @@ export function createApplicationStore(promote: (user: string) => Actor | null) 
     },
   };
 }
-
-export const MAX_NOTE_LENGTH = 2000;

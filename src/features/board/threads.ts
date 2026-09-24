@@ -6,7 +6,7 @@ import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import {
   archivedProjectSlugs,
-  isProjectSlug,
+  isKnownProjectSlug,
   projectName,
   projectSlugs,
 } from "@/features/projects/contracts";
@@ -29,9 +29,9 @@ const archivedBoards: ReadonlySet<string> = new Set(archivedProjectSlugs);
 export const composableBoardIds = boardIds.filter((id) => !archivedBoards.has(id));
 
 /** The board's display name: chrome labels for the static boards, the project
- * registry's name for the journals. */
+ * registry's name for the journals (fixture and runtime-approved alike). */
 export function boardTitle(id: BoardId): string {
-  if (isProjectSlug(id)) return projectName(id);
+  if (isKnownProjectSlug(id)) return projectName(id);
   if (id === "general" || id === ERRATA_BOARD_ID) return messages.board.boards[id];
   return id;
 }

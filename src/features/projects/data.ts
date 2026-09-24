@@ -3,7 +3,7 @@
 // change to queries while the signatures stay put (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
-import { DEFAULT_CLAIM_POLICY } from "./projects";
+import { DEFAULT_CLAIM_POLICY, isFixtureProjectSlug } from "./projects";
 import { approvedProject, approvedProjects } from "./project-registry";
 import type { Project, ProjectPerson, ProjectSlug, ProjectStats } from "./projects";
 
@@ -148,6 +148,6 @@ export async function getProject(slug: string): Promise<Project | null> {
   return project ?? null;
 }
 
-export function isKnownProjectSlug(slug: string): slug is ProjectSlug {
-  return bySlug.has(slug) || approvedProject(slug) !== null;
+export function isKnownProjectSlug(slug: string): boolean {
+  return isFixtureProjectSlug(slug) || approvedProject(slug) !== null;
 }

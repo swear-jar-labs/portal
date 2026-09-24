@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  actorViewer,
-  createAccountRegistry,
-  isAdmin,
-  isMember,
-  isParticipant,
-} from "@/features/account/actor";
+import { createAccountRegistry } from "@/features/account/actor";
 
 function roster() {
   return createAccountRegistry([
@@ -92,34 +86,5 @@ describe("account registry", () => {
 
   it("refuses to create accounts through the level path", () => {
     expect(roster().setLevel("quinn", "member")).toBeNull();
-  });
-});
-
-describe("actor viewer and predicates", () => {
-  it("maps guests to a null viewer and accounts to their level", () => {
-    expect(actorViewer(null)).toBeNull();
-    expect(actorViewer({ user: "quinn", level: "participant", admin: false, email: null })).toEqual(
-      {
-        level: "participant",
-        admin: false,
-      },
-    );
-    expect(actorViewer({ user: "ada", level: "member", admin: false, email: null })).toEqual({
-      level: "member",
-      admin: false,
-    });
-  });
-
-  it("separates levels from admin powers", () => {
-    const admin = { user: "admin", level: "member" as const, admin: true, email: null };
-    const participant = { user: "quinn", level: "participant" as const, admin: false, email: null };
-    expect(isParticipant(participant)).toBe(true);
-    expect(isMember(participant)).toBe(false);
-    expect(isMember(admin)).toBe(true);
-    expect(isAdmin(admin)).toBe(true);
-    expect(isAdmin(participant)).toBe(false);
-    expect(isParticipant(null)).toBe(false);
-    expect(isMember(null)).toBe(false);
-    expect(isAdmin(null)).toBe(false);
   });
 });

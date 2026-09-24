@@ -353,6 +353,7 @@ export const messages = {
     },
     heading: "MEMBER APPLICATIONS",
     tabs: { members: "MEMBER APPLICATIONS", projects: "PROJECT PROPOSALS" },
+    tabsLabel: "Admin sections",
     intro: "Review applications in this demo server. Decisions remain available while it runs.",
     denied: "Admin access is required to open this file.",
     empty: "No member applications yet. New submissions appear here.",
@@ -639,6 +640,9 @@ export const messages = {
       },
     },
     proposal: {
+      metadata: {
+        description: "Propose a project for the Swear Jar Labs registry.",
+      },
       heading: "PROPOSE A PROJECT",
       open: "[ PROPOSE PROJECT ]",
       intro:
@@ -654,6 +658,7 @@ export const messages = {
         "Search the technology list. Press Enter to add; select a chip below to remove it (up to 10).",
       stackEmpty: "No matching technology.",
       stackLimit: "Ten technologies is the limit. Remove a chip to add another.",
+      removeTech: "Remove",
       details: "PROJECT DETAILS",
       history: "PROPOSAL HISTORY",
       current: "YOUR PROPOSALS",

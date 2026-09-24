@@ -40,7 +40,7 @@ export function AdminWorkspace({
 
   return (
     <Stack gap={12}>
-      <div role="tablist" aria-label={messages.admin.metadata.title} className={styles.tabs}>
+      <div role="tablist" aria-label={messages.admin.tabsLabel} className={styles.tabs}>
         {TABS.map((tab) => (
           <button
             key={tab}

@@ -46,6 +46,14 @@ describe("project submissions", () => {
     if (!submitted.ok) return;
     const { id } = submitted.submission;
     expect(store.all(member)).toEqual([]);
+    expect(store.respond(member, "project-999", 1, "reply")).toEqual({
+      ok: false,
+      error: "missing",
+    });
+    expect(store.decide(admin, "project-999", 1, "approved", "")).toEqual({
+      ok: false,
+      error: "missing",
+    });
     expect(store.respond(other, id, 1, "reply")).toEqual({ ok: false, error: "forbidden" });
     expect(store.decide(member, id, 1, "approved", "")).toEqual({ ok: false, error: "forbidden" });
     expect(store.decide(admin, id, 1, "clarification-requested", "")).toEqual({

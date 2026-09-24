@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Heading, Stack, Text, Textarea } from "@swearjar/dos";
 import { DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "@/content/messages";
+import { formatTimestamp } from "@/lib/format";
 import type { MemberApplication } from "@/features/account/contracts";
 import styles from "./AdminQueue.module.css";
 
@@ -25,8 +26,9 @@ function ApplicationReview({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-  const submittedAt =
-    application.history[0]?.at ?? messages.account.apply.statuses[application.status];
+  const submittedAt = application.history[0]
+    ? formatTimestamp(application.history[0].at)
+    : messages.account.apply.statuses[application.status];
 
   function decide(decision: "clarification-requested" | "approved" | "rejected") {
     if (decision !== "approved" && !note.trim()) {

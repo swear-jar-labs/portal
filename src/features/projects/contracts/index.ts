@@ -9,7 +9,7 @@ export {
   fixtureTicketPrefixes,
   MAX_POLICY_NEED,
   MIN_POLICY_NEED,
-  isProjectSlug,
+  isFixtureProjectSlug,
   projectPath,
   projectSlugs,
 } from "../projects";
@@ -20,7 +20,7 @@ export {
   projectStoreSnapshot,
   subscribeProjectStore,
 } from "../project-store";
-export type { ClaimPolicy, ProjectSlug } from "../projects";
+export type { ClaimPolicy, FixtureProjectSlug, ProjectSlug } from "../projects";
 export type { ProjectPolicyBase } from "../project-store";
 export { decideProject, listProjectSubmissions } from "../mock-submissions";
 export { MAX_PROJECT_NOTE_LENGTH } from "../submissions";

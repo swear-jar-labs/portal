@@ -4,7 +4,7 @@ import {
   JOURNAL_PREVIEW_COUNT,
   PROJECTS_CARD_ATTR,
   PROJECTS_PATH,
-  isProjectSlug,
+  isFixtureProjectSlug,
   projectPath,
   projectSlugs,
   projectStatusTones,
@@ -31,10 +31,13 @@ function project(overrides: Partial<Project> & { slug: Project["slug"] }): Proje
 }
 
 describe("projects model", () => {
-  it("keeps slugs unique and guarded", () => {
+  it("keeps the fixture slugs closed while the slug ref stays open", () => {
     expect(new Set(projectSlugs).size).toBe(projectSlugs.length);
-    expect(isProjectSlug("compiler")).toBe(true);
-    expect(isProjectSlug("nope")).toBe(false);
+    expect(isFixtureProjectSlug("compiler")).toBe(true);
+    expect(isFixtureProjectSlug("nope")).toBe(false);
+    // Approved proposals add slugs at runtime: they are valid project refs
+    // without being fixture slugs.
+    expect(isFixtureProjectSlug("workshop-night")).toBe(false);
   });
 
   it("tones active and planned, leaves the archive neutral", () => {

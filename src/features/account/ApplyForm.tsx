@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Form, Heading, Select, Stack, Text, Textarea } from "@swearjar/dos";
 import type { ZodError } from "zod";
 import { messages } from "@/content/messages";
+import { useClientInteractive } from "@/shared/useClientInteractive";
 import { ApplicationHistory } from "./ApplicationHistory";
 import type { MemberApplication } from "./applications";
 import {
@@ -22,18 +23,6 @@ type FieldErrors = Partial<Record<(typeof FIELD_KEYS)[number], string>>;
 const INITIAL_VALUES: ApplyInput = { experience: "", weeklyHours: "5-10", motivation: "" };
 const copy = messages.account.apply;
 const weeklyHoursOptions = weeklyHourIds.map((id) => ({ value: id, label: copy.weeklyHours[id] }));
-
-function subscribeHydration() {
-  return () => {};
-}
-
-function clientInteractive() {
-  return true;
-}
-
-function serverInteractive() {
-  return false;
-}
 
 function toFieldErrors(error: ZodError): FieldErrors {
   const errors: FieldErrors = {};
@@ -56,11 +45,7 @@ export function ApplyForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [actionError, setActionError] = useState("");
   const [pending, startTransition] = useTransition();
-  const interactive = useSyncExternalStore(
-    subscribeHydration,
-    clientInteractive,
-    serverInteractive,
-  );
+  const interactive = useClientInteractive();
   const latest = applications.at(-1);
 
   // Server-rendered forms have no submit handler until hydration. Keep their

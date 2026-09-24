@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pluralForms } from "@/content/messages";
-import { formatCount, formatSize, formatSummary } from "@/lib/format";
+import { formatCount, formatSize, formatSummary, formatTimestamp } from "@/lib/format";
 
 describe("formatSize", () => {
   it("keeps bytes below a kilobyte", () => {
@@ -25,5 +25,11 @@ describe("formatSummary", () => {
   it("joins dirs and files", () => {
     expect(formatSummary(3, 12, pluralForms)).toBe("3 DIRS, 12 FILES");
     expect(formatSummary(1, 1, pluralForms)).toBe("1 DIR, 1 FILE");
+  });
+});
+
+describe("formatTimestamp", () => {
+  it("stamps an ISO instant as a compact UTC line", () => {
+    expect(formatTimestamp("2026-09-20T11:00:00.000Z")).toBe("2026-09-20 11:00 UTC");
   });
 });

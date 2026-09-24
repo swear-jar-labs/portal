@@ -1,4 +1,4 @@
-import type { CommunityLevel, Viewer } from "@/content/commands";
+import type { CommunityLevel } from "@/content/commands";
 
 // An account on the mocks: the handle is the stable identity (lower-case,
 // path-safe by the account schema) and the display string at once. The level
@@ -66,22 +66,4 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
       return toActor(user, updated);
     },
   };
-}
-
-// The viewer the shell and the command registry understand: level and admin flag,
-// composed so the shell never imports the account slice.
-export function actorViewer(actor: Actor | null): Viewer {
-  return actor === null ? null : { level: actor.level, admin: actor.admin };
-}
-
-export function isParticipant(actor: Actor | null): boolean {
-  return actor?.level === "participant";
-}
-
-export function isMember(actor: Actor | null): boolean {
-  return actor?.level === "member";
-}
-
-export function isAdmin(actor: Actor | null): boolean {
-  return actor?.admin === true;
 }

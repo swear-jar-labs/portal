@@ -94,7 +94,7 @@ export type Project = {
   repoUrl?: string;
   forge?: ForgeId;
   status: ProjectStatus;
-  lead: ProjectPerson;
+  lead: ProjectPerson | null;
   maintainers: readonly ProjectPerson[];
   // The claim ladder of this project (RULES §15): the fixtures carry the
   // default, the maintainers tune it per project.
@@ -122,7 +122,16 @@ export const MAX_POLICY_NEED = 10;
 export const PROJECTS_PATH = "/projects";
 export const PROJECT_PROPOSE_PATH = `${PROJECTS_PATH}/propose`;
 export const PROJECT_PROPOSE_BUTTON_ID = "projects-propose-button";
+export const PROJECT_TEAM_MANAGE_QUERY = "team";
+export const PROJECT_TEAM_MANAGE_BUTTON_ID = "project-team-manage-button";
+export const PROJECT_TAB_QUERY = "tab";
+export const projectTabs = ["project", "team", "activity"] as const;
+export type ProjectTab = (typeof projectTabs)[number];
 export const projectPath = (slug: ProjectSlug) => `${PROJECTS_PATH}/${slug}`;
+export const projectTabPath = (slug: ProjectSlug, tab: ProjectTab) =>
+  tab === "project" ? projectPath(slug) : `${projectPath(slug)}?${PROJECT_TAB_QUERY}=${tab}`;
+export const projectTeamManagePath = (slug: ProjectSlug) =>
+  `${projectTabPath(slug, "team")}&manage=${PROJECT_TEAM_MANAGE_QUERY}`;
 
 // How many journal entries the project page previews; the rest lives behind
 // ALL THREADS on the project's board.

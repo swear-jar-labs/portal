@@ -8,8 +8,9 @@ import {
   listMemberApplications,
   mockDecideMemberApplication,
 } from "@/features/account/contracts";
-import { listProjectSubmissions } from "@/features/projects/contracts";
+import { listProjectSubmissions, listProjects } from "@/features/projects/contracts";
 import { ProjectAdminQueue } from "./AdminProjectQueue";
+import { AdminProjectTeams } from "./AdminProjectTeams";
 import { ShellPanel } from "@/features/shell";
 import { AdminQueue } from "./AdminQueue";
 import { AdminWorkspace } from "./AdminWorkspace";
@@ -19,6 +20,7 @@ export const adminMetadata: Metadata = messages.admin.metadata;
 
 export async function AdminPage() {
   const actor = await getActorSession();
+  const projects = actor?.admin ? await listProjects() : [];
   return (
     <ShellPanel title={fileTitle("ADMIN")} closable>
       {actor?.admin ? (
@@ -38,6 +40,7 @@ export async function AdminPage() {
               onDecide={mockDecideProject}
             />
           }
+          teamQueue={<AdminProjectTeams projects={projects} />}
         />
       ) : (
         <Stack gap={8}>

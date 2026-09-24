@@ -44,6 +44,12 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
       }
       return false;
     },
+    memberUsers(): string[] {
+      return [...known.values()]
+        .filter((entry) => entry.level === "member")
+        .map((entry) => entry.user)
+        .sort();
+    },
     // First contact provisions a Participant: the demo logon doubles as an
     // implicit registration, so fixture handles keep working without a roster
     // entry. Existing entries are never downgraded or rewritten here — the

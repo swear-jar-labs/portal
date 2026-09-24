@@ -23,6 +23,7 @@ describe("projects contract", () => {
       "projectSlugs",
       "projectStoreServerSnapshot",
       "projectStoreSnapshot",
+      "projectTeamManagePath",
       "subscribeProjectStore",
     ]);
   });

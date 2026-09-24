@@ -12,7 +12,10 @@ import {
   PROJECTS_PATH,
   PROJECT_PROPOSE_BUTTON_ID,
   PROJECT_PROPOSE_PATH,
+  PROJECT_TEAM_MANAGE_BUTTON_ID,
   projectPath,
+  projectTeamManagePath,
+  projectTabPath,
   type Project,
 } from "./projects";
 import { projectCardId } from "./ProjectsCard";
@@ -24,6 +27,7 @@ export type ProjectsProjectLayer = {
   // The project's panel body, rendered in RSC (Markdown stays out of the
   // client bundle) and slotted into the panel chrome here.
   layer: ReactNode;
+  manageLayer?: ReactNode;
 };
 
 export type ProjectsStackProps = {
@@ -47,7 +51,7 @@ export function ProjectsStack({ projects, now, project, proposalLayer }: Project
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
     closingRef.current = false;
-  }, [memberLayerOpen, project?.slug, proposalLayer]);
+  }, [memberLayerOpen, project?.slug, project?.manageLayer, proposalLayer]);
 
   // After a layer pops, focus returns to the card that opened it: the request
   // crosses the page remount in the SPA session memory.
@@ -57,7 +61,7 @@ export function ProjectsStack({ projects, now, project, proposalLayer }: Project
     const card = document.getElementById(id) ?? document.getElementById(projectCardId(id));
     card?.focus();
     card?.scrollIntoView({ block: "nearest" });
-  }, [project?.slug, proposalLayer]);
+  }, [project?.slug, project?.manageLayer, proposalLayer]);
 
   // Unlike a project route, an intercepted profile keeps this ProjectsStack
   // and its author link mounted. The known id can therefore receive focus as
@@ -105,6 +109,15 @@ export function ProjectsStack({ projects, now, project, proposalLayer }: Project
     else router.push(PROJECTS_PATH);
   }, [proposalLayer, router]);
 
+  const closeManage = useCallback(() => {
+    if (!project?.manageLayer || closingRef.current) return;
+    closingRef.current = true;
+    stackMemory.requestCardFocus(PROJECT_TEAM_MANAGE_BUTTON_ID);
+    const route = `${window.location.pathname}${window.location.search}`;
+    if (stackMemory.takePushedFrom(route)) router.back();
+    else router.push(projectTabPath(project.slug, "team"));
+  }, [project, router]);
+
   const closeMember = useCallback(() => {
     if (!memberLayerOpen) return;
     if (closingRef.current) return;
@@ -114,7 +127,13 @@ export function ProjectsStack({ projects, now, project, proposalLayer }: Project
     if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
     else
       router.push(
-        project ? projectPath(project.slug) : proposalLayer ? PROJECT_PROPOSE_PATH : PROJECTS_PATH,
+        project?.manageLayer
+          ? projectTeamManagePath(project.slug)
+          : project
+            ? projectPath(project.slug)
+            : proposalLayer
+              ? PROJECT_PROPOSE_PATH
+              : PROJECTS_PATH,
       );
   }, [memberLayerOpen, router, project, proposalLayer]);
 
@@ -123,9 +142,18 @@ export function ProjectsStack({ projects, now, project, proposalLayer }: Project
       closeMember();
       return;
     }
-    if (proposalLayer) closeProposal();
+    if (project?.manageLayer) closeManage();
+    else if (proposalLayer) closeProposal();
     else closeProject();
-  }, [closeMember, closeProject, closeProposal, memberLayerOpen, proposalLayer]);
+  }, [
+    closeManage,
+    closeMember,
+    closeProject,
+    closeProposal,
+    memberLayerOpen,
+    project?.manageLayer,
+    proposalLayer,
+  ]);
 
   return (
     <PanelStack onCloseTop={closeTop}>
@@ -144,6 +172,14 @@ export function ProjectsStack({ projects, now, project, proposalLayer }: Project
           actions={<CloseButton onClose={closeProject} label={messages.shell.window.closeLabel} />}
         >
           {project.layer}
+        </ShellPanel>
+      ) : null}
+      {project?.manageLayer ? (
+        <ShellPanel
+          title={messages.projects.team.manageHeading}
+          actions={<CloseButton onClose={closeManage} label={messages.shell.window.closeLabel} />}
+        >
+          {project.manageLayer}
         </ShellPanel>
       ) : null}
       {proposalLayer ? (

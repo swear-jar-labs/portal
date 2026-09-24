@@ -86,6 +86,7 @@ test("keeps the ladder keywords readable in magenta", async ({ page }) => {
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
+  await panel.getByRole("tab", { name: "TEAM" }).click();
   await expectMinimumContrast(panel.getByText("2 DONE"));
   await expectMinimumContrast(panel.getByText("EVERYONE"));
 });

@@ -5,6 +5,7 @@
 import { avatarFor } from "@/shared/members";
 import { DEFAULT_CLAIM_POLICY, isFixtureProjectSlug } from "./projects";
 import { approvedProject, approvedProjects } from "./project-registry";
+import { projectTeams } from "./team-store";
 import type { Project, ProjectPerson, ProjectSlug, ProjectStats } from "./projects";
 
 const ada: ProjectPerson = { user: "ada", avatar: avatarFor("ada") };
@@ -140,12 +141,17 @@ export function projectName(slug: ProjectSlug): string {
 }
 
 export async function listProjects(): Promise<Project[]> {
-  return [...projects, ...approvedProjects()];
+  return [...projects, ...approvedProjects()].map(withLiveTeam);
 }
 
 export async function getProject(slug: string): Promise<Project | null> {
   const project = bySlug.get(slug) ?? approvedProject(slug);
-  return project ?? null;
+  return project ? withLiveTeam(project) : null;
+}
+
+function withLiveTeam(project: Project): Project {
+  const team = projectTeams.view(project);
+  return { ...project, lead: team.lead, maintainers: team.maintainers };
 }
 
 export function isKnownProjectSlug(slug: string): boolean {

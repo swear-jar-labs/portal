@@ -73,7 +73,7 @@ function RungRow({ size, need, needSize }: { size: RungSize; need: number; needS
   );
 }
 
-/** The claim ladder as its own section after FORGE: a chip-led row per rung
+/** The claim ladder in TEAM: a chip-led row per rung
  * for everyone, an inline form for the maintainers. The tune lives in the
  * session store, so the tickets' dossier gates on it without a round trip. */
 export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSectionProps) {
@@ -83,9 +83,11 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
   const [draft, setDraft] = useState<ClaimPolicy | null>(null);
 
   const isMaintainer = session !== null && maintainers.includes(session.user);
+  const visibleDraft = isMaintainer ? draft : null;
   const claim = messages.projects.about.claim;
   const dirty =
-    draft !== null && (draft.minSForM !== live.minSForM || draft.minMForL !== live.minMForL);
+    visibleDraft !== null &&
+    (visibleDraft.minSForM !== live.minSForM || visibleDraft.minMForL !== live.minMForL);
   // The closed draft hands the keyboard back to its trigger (both the button
   // and the kit's Esc dismissal land here); the opening mount is not a close.
   const wasDraft = useRef(false);
@@ -95,8 +97,8 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
   }, [draft]);
 
   function handleSave() {
-    if (draft === null || !dirty) return;
-    const parsed = claimPolicySchema.safeParse(draft);
+    if (visibleDraft === null || !dirty) return;
+    const parsed = claimPolicySchema.safeParse(visibleDraft);
     if (!parsed.success) return;
     projectStore.setClaimPolicy(slug, parsed.data);
     setDraft(null);
@@ -110,7 +112,7 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
     <Stack gap={4}>
       <Stack direction="row" gap={8} align="center" wrap navRow>
         <Heading level={2}>{claim.heading}</Heading>
-        {isMaintainer && draft === null ? (
+        {isMaintainer && visibleDraft === null ? (
           <Button id={CLAIM_EDIT_ID} onClick={() => setDraft({ ...live })}>
             {claim.edit}
           </Button>
@@ -120,23 +122,23 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
       <RungRow size="S" need={MIN_POLICY_NEED} needSize="S" />
       <RungRow size="M" need={live.minSForM} needSize="S" />
       <RungRow size="L" need={live.minMForL} needSize="M" />
-      {draft !== null ? (
+      {visibleDraft !== null ? (
         <Form onSubmit={handleSave} onCancel={handleCancel} ariaLabel={claim.heading}>
           <Stack gap={6}>
             <Stack direction="row" gap={6} align="center" wrap navRow>
               <Select
                 label={claim.mNeeds}
                 name="minSForM"
-                value={String(draft.minSForM)}
-                onChange={(need) => setDraft({ ...draft, minSForM: Number(need) })}
+                value={String(visibleDraft.minSForM)}
+                onChange={(need) => setDraft({ ...visibleDraft, minSForM: Number(need) })}
                 options={NEED_OPTIONS}
                 autoFocus
               />
               <Select
                 label={claim.lNeeds}
                 name="minMForL"
-                value={String(draft.minMForL)}
-                onChange={(need) => setDraft({ ...draft, minMForL: Number(need) })}
+                value={String(visibleDraft.minMForL)}
+                onChange={(need) => setDraft({ ...visibleDraft, minMForL: Number(need) })}
                 options={NEED_OPTIONS}
               />
             </Stack>
@@ -149,7 +151,7 @@ export function ProjectClaimSection({ slug, base, maintainers }: ProjectClaimSec
           </Stack>
         </Form>
       ) : null}
-      {draft !== null ? <Text role="hint">{claim.hint}</Text> : null}
+      {visibleDraft !== null ? <Text role="hint">{claim.hint}</Text> : null}
     </Stack>
   );
 }

@@ -37,6 +37,7 @@ export type TicketProjectOption = {
   name: string;
   // The project's maintainers: they edit its tickets and reassign anyone.
   maintainers: readonly string[];
+  assignmentsPaused: boolean;
   // The claim ladder of the project (RULES §15): the dossier gates ASSIGN on it.
   claimPolicy: ClaimPolicy;
 };

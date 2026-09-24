@@ -1,16 +1,20 @@
 import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { FEED_PATH, JournalRows, type ThreadSummary } from "@/features/board/contracts";
-import { MemberLink } from "@/features/members/contracts";
 import { TicketsTable, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
 import { ProjectClaimSection } from "./ProjectClaimSection";
+import { ProjectTeamSection } from "./ProjectTeamSection";
+import { ProjectWorkspace } from "./ProjectWorkspace";
 import { ProjectCta } from "./ProjectCta";
-import { PROJECTS_PATH, projectStatusTones, type Project } from "./projects";
+import type { ProjectTeam } from "./team-store";
+import { PROJECTS_PATH, projectStatusTones, type Project, type ProjectTab } from "./projects";
 import styles from "./projects.module.css";
 export type ProjectPanelProps = {
   project: Project;
+  activeTab: ProjectTab;
+  team: ProjectTeam;
   journal: readonly ThreadSummary[];
   tickets: readonly Ticket[];
   ticketCount: number;
@@ -79,6 +83,8 @@ function ForgeBlock({ project, now }: { project: Project; now: string }) {
  * reads the session in its own client island. */
 export function ProjectPanel({
   project,
+  activeTab,
+  team,
   journal,
   tickets,
   ticketCount,
@@ -99,108 +105,108 @@ export function ProjectPanel({
         </Tag>
       </Stack>
 
-      <Stack gap={4}>
-        <Heading level={2}>{messages.projects.about.heading}</Heading>
-        <Markdown>{project.description}</Markdown>
-        <Stack gap={4}>
-          {project.techs.length === 0 ? null : (
-            <Stack direction="row" gap={6} align="center" wrap navRow>
-              <Text as="span" role="hint">
-                {messages.projects.about.stack}
-              </Text>
-              {project.techs.map((tech) => (
-                <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
-              ))}
-            </Stack>
-          )}
-          {project.contributors ? (
-            <Text>
-              <Text as="span" role="hint">
-                {messages.projects.about.contributors}:{" "}
-              </Text>
-              {project.contributors}
-            </Text>
-          ) : null}
-          <Stack direction="row" gap={6} align="center" wrap navRow>
-            <Text as="span" role="hint">
-              {messages.projects.about.lead}
-            </Text>
-            <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
-          </Stack>
-          {project.maintainers.length === 0 ? null : (
-            <Stack direction="row" gap={6} align="center" wrap navRow>
-              <Text as="span" role="hint">
-                {messages.projects.about.maintainers}
-              </Text>
-              {project.maintainers.map((person) => (
-                <MemberLink key={person.user} person={person} sectionPath={PROJECTS_PATH} />
-              ))}
-            </Stack>
-          )}
-        </Stack>
-      </Stack>
-
-      <Stack gap={4}>
-        <Heading level={2}>{messages.projects.forge.heading}</Heading>
-        <ForgeBlock project={project} now={now} />
-      </Stack>
-
-      <ProjectClaimSection
+      <ProjectWorkspace
         slug={project.slug}
-        base={project.claimPolicy}
-        maintainers={project.maintainers.map((person) => person.user)}
+        initialTab={activeTab}
+        project={
+          <Stack gap={12}>
+            <Stack gap={4}>
+              <Heading level={2}>{messages.projects.about.heading}</Heading>
+              <Markdown>{project.description}</Markdown>
+              <Stack gap={4}>
+                {project.techs.length === 0 ? null : (
+                  <Stack direction="row" gap={6} align="center" wrap navRow>
+                    <Text as="span" role="hint">
+                      {messages.projects.about.stack}
+                    </Text>
+                    {project.techs.map((tech) => (
+                      <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+                    ))}
+                  </Stack>
+                )}
+                {project.contributors ? (
+                  <Text>
+                    <Text as="span" role="hint">
+                      {messages.projects.about.contributors}:{" "}
+                    </Text>
+                    {project.contributors}
+                  </Text>
+                ) : null}
+              </Stack>
+            </Stack>
+            <Stack gap={4}>
+              <Heading level={2}>{messages.projects.forge.heading}</Heading>
+              <ForgeBlock project={project} now={now} />
+            </Stack>
+          </Stack>
+        }
+        team={
+          <Stack gap={12}>
+            <ProjectTeamSection project={project} team={team} />
+            <ProjectClaimSection
+              key={project.maintainers.map((person) => person.user).join(",")}
+              slug={project.slug}
+              base={project.claimPolicy}
+              maintainers={project.maintainers.map((person) => person.user)}
+            />
+            <ProjectCta />
+          </Stack>
+        }
+        activity={
+          <Stack gap={12}>
+            <Stack gap={6}>
+              <Stack direction="row" gap={8} align="center" wrap navRow>
+                <Heading level={2}>{messages.tickets.project.heading}</Heading>
+                {project.status === "archived" ? null : (
+                  <Button href={newTicketHref} variant="primary">
+                    {messages.tickets.project.newTicket}
+                  </Button>
+                )}
+              </Stack>
+              {tickets.length === 0 ? (
+                <Text role="hint">{messages.tickets.project.empty}</Text>
+              ) : (
+                <TicketsTable
+                  tickets={tickets}
+                  projectNames={{ [project.slug]: project.name }}
+                  label={messages.tickets.project.heading}
+                />
+              )}
+              <Stack navRow>
+                <Link
+                  href={ticketsHref}
+                >{`${messages.tickets.project.all} (${ticketCount}) →`}</Link>
+              </Stack>
+            </Stack>
+
+            <Stack gap={6}>
+              <Stack direction="row" gap={8} align="center" wrap navRow>
+                <Heading level={2}>{messages.projects.journal.heading}</Heading>
+                {project.status === "archived" ? null : (
+                  <Button href={newThreadHref} variant="primary">
+                    {messages.board.feed.newThread}
+                  </Button>
+                )}
+              </Stack>
+              {journal.length === 0 ? (
+                <Text role="hint">{messages.projects.journal.empty}</Text>
+              ) : (
+                <JournalRows
+                  board={project.slug}
+                  threads={journal}
+                  now={now}
+                  sectionPath={PROJECTS_PATH}
+                />
+              )}
+              <Stack navRow>
+                <Link href={journalHref}>
+                  {`${messages.projects.journal.allThreads} (${threadCount}) →`}
+                </Link>
+              </Stack>
+            </Stack>
+          </Stack>
+        }
       />
-
-      <Stack gap={6}>
-        <Stack direction="row" gap={8} align="center" wrap navRow>
-          <Heading level={2}>{messages.tickets.project.heading}</Heading>
-          {project.status === "archived" ? null : (
-            <Button href={newTicketHref} variant="primary">
-              {messages.tickets.project.newTicket}
-            </Button>
-          )}
-        </Stack>
-        {tickets.length === 0 ? (
-          <Text role="hint">{messages.tickets.project.empty}</Text>
-        ) : (
-          <TicketsTable
-            tickets={tickets}
-            projectNames={{ [project.slug]: project.name }}
-            label={messages.tickets.project.heading}
-          />
-        )}
-        <Stack navRow>
-          <Link href={ticketsHref}>{`${messages.tickets.project.all} (${ticketCount}) →`}</Link>
-        </Stack>
-      </Stack>
-
-      <Stack gap={6}>
-        <Stack direction="row" gap={8} align="center" wrap navRow>
-          <Heading level={2}>{messages.projects.journal.heading}</Heading>
-          {project.status === "archived" ? null : (
-            <Button href={newThreadHref} variant="primary">
-              {messages.board.feed.newThread}
-            </Button>
-          )}
-        </Stack>
-        {journal.length === 0 ? (
-          <Text role="hint">{messages.projects.journal.empty}</Text>
-        ) : (
-          <JournalRows
-            board={project.slug}
-            threads={journal}
-            now={now}
-            sectionPath={PROJECTS_PATH}
-          />
-        )}
-        <Stack navRow>
-          <Link href={journalHref}>
-            {`${messages.projects.journal.allThreads} (${threadCount}) →`}
-          </Link>
-        </Stack>
-      </Stack>
-
-      <ProjectCta />
     </Stack>
   );
 }

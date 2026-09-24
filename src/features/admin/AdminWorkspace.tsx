@@ -4,10 +4,18 @@ import { useState, type ReactNode } from "react";
 import { SegmentedControl, Stack } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 
-type AdminTab = "members" | "projects";
-const TAB_IDS = { members: "admin-tab-members", projects: "admin-tab-projects" } as const;
-const PANEL_IDS = { members: "admin-panel-members", projects: "admin-panel-projects" } as const;
-const TABS = (["members", "projects"] as const).map((tab) => ({
+type AdminTab = "members" | "projects" | "teams";
+const TAB_IDS = {
+  members: "admin-tab-members",
+  projects: "admin-tab-projects",
+  teams: "admin-tab-teams",
+} as const;
+const PANEL_IDS = {
+  members: "admin-panel-members",
+  projects: "admin-panel-projects",
+  teams: "admin-panel-teams",
+} as const;
+const TABS = (["members", "projects", "teams"] as const).map((tab) => ({
   value: tab,
   label: messages.admin.tabs[tab],
   id: TAB_IDS[tab],
@@ -17,9 +25,11 @@ const TABS = (["members", "projects"] as const).map((tab) => ({
 export function AdminWorkspace({
   memberQueue,
   projectQueue,
+  teamQueue,
 }: {
   memberQueue: ReactNode;
   projectQueue: ReactNode;
+  teamQueue: ReactNode;
 }) {
   const [active, setActive] = useState<AdminTab>("members");
 
@@ -47,6 +57,14 @@ export function AdminWorkspace({
         hidden={active !== "projects"}
       >
         {projectQueue}
+      </div>
+      <div
+        id={PANEL_IDS.teams}
+        role="tabpanel"
+        aria-labelledby={TAB_IDS.teams}
+        hidden={active !== "teams"}
+      >
+        {teamQueue}
       </div>
     </Stack>
   );

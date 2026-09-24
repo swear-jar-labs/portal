@@ -4,7 +4,7 @@ export type { MemberApplication } from "../applications";
 export type { Actor } from "../actor";
 export { listMemberApplications } from "../mock-applications";
 export { getActorSession } from "../mock-session.server";
-export { resolveAccount } from "../mock-accounts";
+export { listMemberUsers, resolveAccount } from "../mock-accounts";
 export { mockSessionEnabled } from "../mock-session";
 export { mockDecideMemberApplication } from "../mock-application-actions";
 export { ApplicationHistory } from "../ApplicationHistory";

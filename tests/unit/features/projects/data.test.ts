@@ -81,7 +81,9 @@ describe("projects fixtures", () => {
 
   it("names path-safe people", async () => {
     for (const project of await listProjects()) {
-      for (const person of [project.lead, ...project.maintainers]) {
+      for (const person of [project.lead, ...project.maintainers].filter(
+        (entry) => entry !== null,
+      )) {
         expect(
           userSchema.safeParse(person.user).success,
           `${project.slug} names an unknown person: ${person.user}`,

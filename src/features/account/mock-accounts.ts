@@ -16,6 +16,8 @@ import {
 const registry = createAccountRegistry([
   { user: "ada", level: "member" },
   { user: "grace", level: "member" },
+  { user: "ken", level: "member" },
+  { user: "lin", level: "member" },
   { user: "admin", level: "member", admin: true },
   { user: "coadmin", level: "member", admin: true },
   { user: "demo-candidate", level: "participant" },
@@ -26,6 +28,10 @@ const verifications = createVerificationStore();
 
 export function resolveAccount(user: string): Actor | null {
   return registry.resolve(user);
+}
+
+export function listMemberUsers(): string[] {
+  return registry.memberUsers();
 }
 
 export function ensureAccount(user: string): Actor {

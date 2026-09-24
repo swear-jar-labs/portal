@@ -215,6 +215,7 @@ test("the project entry opens a preselected composer and preserves the project f
   await page.goto(projectPath("compiler"));
   await waitForHydration(page);
   const project = page.getByRole("region", { name: "Compiler" });
+  await project.getByRole("tab", { name: "ACTIVITY" }).click();
   await expect(project.getByRole("heading", { name: "LAST UPDATES" })).toBeVisible();
   const updates = project.getByRole("table", { name: "LAST UPDATES" });
   await expect(updates).toBeVisible();

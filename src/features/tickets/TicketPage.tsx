@@ -32,6 +32,7 @@ export async function TicketPage({ params }: TicketPageProps) {
     slug: project.slug,
     name: project.name,
     maintainers: project.maintainers.map((person) => person.user),
+    assignmentsPaused: project.maintainers.length === 0,
     claimPolicy: project.claimPolicy,
   }));
   const now = new Date().toISOString();

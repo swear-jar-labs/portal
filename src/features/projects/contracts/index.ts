@@ -12,6 +12,7 @@ export {
   isFixtureProjectSlug,
   projectPath,
   projectSlugs,
+  projectTeamManagePath,
 } from "../projects";
 export {
   livePoliciesByProject,
@@ -22,6 +23,7 @@ export {
 } from "../project-store";
 export type { ClaimPolicy, FixtureProjectSlug, ProjectSlug } from "../projects";
 export type { ProjectPolicyBase } from "../project-store";
+export type { Project, ProjectPerson } from "../projects";
 export { decideProject, listProjectSubmissions } from "../mock-submissions";
 export { MAX_PROJECT_NOTE_LENGTH } from "../submissions";
 export type { ProjectSubmission, SubmissionError } from "../submissions";

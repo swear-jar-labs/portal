@@ -5,6 +5,7 @@ import {
   PROJECTS_CARD_ATTR,
   PROJECTS_PATH,
   projectPath,
+  projectTabPath,
 } from "../../src/features/projects/projects";
 import { expectAbove, expectNoViolations, logon, waitForHydration } from "./helpers";
 
@@ -71,6 +72,11 @@ test("opens a project layer and closes it back to the card", async ({ page }) =>
   await expect(panel.getByRole("heading", { level: 1, name: "Compiler" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "ABOUT" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "FORGE" })).toBeVisible();
+  await expect(panel.getByRole("heading", { level: 2, name: "RELATED THREADS" })).toHaveCount(0);
+  await panel.getByRole("tab", { name: "PROJECT" }).focus();
+  await page.keyboard.press("End");
+  await expect(panel.getByRole("tab", { name: "ACTIVITY" })).toBeFocused();
+  await expect(page).toHaveURL(projectTabPath("compiler", "activity"));
   await expect(panel.getByRole("heading", { level: 2, name: "RELATED THREADS" })).toBeVisible();
   await expect(page).toHaveTitle("Compiler — Swear Jar Labs");
 
@@ -102,6 +108,7 @@ test("reads the journal preview and follows ALL THREADS to the board", async ({ 
   await page.goto(projectPath("swearjar-dos"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
   await expect(panel.getByRole("link", { name: "[ NEW THREAD ]" })).toHaveAttribute(
     "href",
@@ -139,6 +146,7 @@ test("opens a thread composer with the project preselected", async ({ page }) =>
   await page.goto(projectPath("compiler"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Compiler" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
   await panel.getByRole("link", { name: "[ NEW THREAD ]" }).click();
   await expect(page).toHaveURL("/forum?board=compiler");
@@ -150,6 +158,7 @@ test("opens a journal thread and closes back to the project", async ({ page }) =
   await page.goto(projectPath("swearjar-dos"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
   await panel.getByRole("link", { name: "Boot sequence: CRT-on before first paint" }).click();
   await expect(page).toHaveURL("/forum/swearjar-boot");
@@ -161,7 +170,7 @@ test("opens a journal thread and closes back to the project", async ({ page }) =
   // and the project's own marker survives the nested push: Esc still lands on
   // the index.
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(projectPath("swearjar-dos"));
+  await expect(page).toHaveURL(projectTabPath("swearjar-dos", "activity"));
   await expect(page.getByRole("region", { name: "SWEARJAR.DOS" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(PROJECTS_PATH);
@@ -171,6 +180,7 @@ test("filters the board by tag inside the project scope", async ({ page }) => {
   await page.goto(projectPath("swearjar-dos"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
   await panel
     .getByRole("article")
@@ -185,6 +195,7 @@ test("votes in the journal", async ({ page }) => {
   await page.goto(projectPath("swearjar-dos"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
   // The journal shares the board's session store: the count grows in place.
   // (A plain cross-section link reloads and resets session state by design,
@@ -197,7 +208,9 @@ test("keeps an empty journal readable", async ({ page }) => {
   await page.goto(projectPath("flagship"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Flagship" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
   await expect(panel.getByText("No related threads yet.")).toBeVisible();
+  await panel.getByRole("tab", { name: "PROJECT" }).click();
   await expect(panel.getByText("No repository linked yet.")).toBeVisible();
 });
 
@@ -224,6 +237,7 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
   ).toHaveAttribute("target", "_blank");
 
   // Guests register before they can apply for project access.
+  await panel.getByRole("tab", { name: "TEAM" }).click();
   await expect(
     panel.getByText("Interested in project work? Register as a Participant first."),
   ).toBeVisible();
@@ -244,6 +258,7 @@ test("opens the journal for a member without an apply prompt", async ({ page }) 
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
+  await panel.getByRole("tab", { name: "ACTIVITY" }).click();
 
   await expect(
     panel.getByText("Interested in project work? Register as a Participant first."),
@@ -280,6 +295,7 @@ test("shows the claim ladder and lets a maintainer tune it", async ({ page }) =>
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
+  await panel.getByRole("tab", { name: "TEAM" }).click();
   await expect(
     panel.getByRole("heading", { level: 2, name: "ASSIGNEE REQUIREMENTS" }),
   ).toBeVisible();
@@ -321,6 +337,7 @@ test("Escape cancels the claim form first and closes the project next", async ({
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
+  await panel.getByRole("tab", { name: "TEAM" }).click();
 
   await panel.getByRole("button", { name: "[ EDIT ]" }).click();
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
@@ -328,7 +345,7 @@ test("Escape cancels the claim form first and closes the project next", async ({
   // stays open, and the keyboard is back on the trigger.
   await page.keyboard.press("Escape");
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
-  await expect(page).toHaveURL(projectPath("tooling"));
+  await expect(page).toHaveURL(projectTabPath("tooling", "team"));
   await expect(layers(page)).toHaveCount(2);
   await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toBeFocused();
   // The second Esc finds no form and closes the project as before.
@@ -344,6 +361,7 @@ test("shows the ladder read-only without a maintainer seat", async ({ page }) =>
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
+  await panel.getByRole("tab", { name: "TEAM" }).click();
   await expect(panel.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
   await expect(panel.getByText("EVERYONE")).toBeVisible();
   await expect(panel.getByText("TASKS NEED")).toHaveCount(2);
@@ -354,6 +372,7 @@ test("shows the ladder to a guest", async ({ page }) => {
   await page.goto(projectPath("tooling"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "Tooling" });
+  await panel.getByRole("tab", { name: "TEAM" }).click();
   await expect(panel.getByText("EVERYONE")).toBeVisible();
   await expect(panel.getByText("1 DONE")).toBeVisible();
   await expect(panel.getByRole("button", { name: "[ EDIT ]" })).toHaveCount(0);

@@ -35,7 +35,13 @@ export function ProjectsCard({ project, now, current = false, onActivate }: Proj
       metaInteractive
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
+          {project.lead ? (
+            <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
+          ) : (
+            <Text as="span" role="danger">
+              {messages.projects.team.leadVacant}
+            </Text>
+          )}
           <Text as="span" role="hint">
             {formatAge(project.createdAt, now, messages.projects.age)}
           </Text>

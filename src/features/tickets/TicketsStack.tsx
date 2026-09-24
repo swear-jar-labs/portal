@@ -306,6 +306,10 @@ export function TicketsStack({
             tickets={tickets}
             projectName={ticket.projectName}
             maintainers={maintainersByProject[ticket.ticket.project] ?? []}
+            assignmentsPaused={
+              projects.find((project) => project.slug === ticket.ticket.project)
+                ?.assignmentsPaused ?? true
+            }
             claimPolicy={policyByProject[ticket.ticket.project] ?? DEFAULT_CLAIM_POLICY}
             readrooms={ticket.readrooms}
             now={now}
@@ -325,6 +329,10 @@ export function TicketsStack({
             tickets={tickets}
             projectName={projectNames[localTicket.project] ?? localTicket.project}
             maintainers={maintainersByProject[localTicket.project] ?? []}
+            assignmentsPaused={
+              projects.find((project) => project.slug === localTicket.project)?.assignmentsPaused ??
+              true
+            }
             claimPolicy={policyByProject[localTicket.project] ?? DEFAULT_CLAIM_POLICY}
             readrooms={[]}
             now={now}

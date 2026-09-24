@@ -45,6 +45,7 @@ export type TicketPanelProps = {
   // The project's maintainers: they open the edit layer together with the
   // author and the assignee; the layer narrows the fields by seat.
   maintainers: readonly string[];
+  assignmentsPaused: boolean;
   // The project's claim ladder (RULES §15): ASSIGN TO ME gates on it.
   claimPolicy: ClaimPolicy;
   // The reverse list: readrooms reading this ticket's code (readroom-ticket-links).
@@ -69,6 +70,7 @@ export function TicketPanel({
   tickets,
   projectName,
   maintainers,
+  assignmentsPaused,
   claimPolicy,
   readrooms,
   now,
@@ -147,6 +149,7 @@ export function TicketPanel({
   }
 
   function handleAssign() {
+    if (assignmentsPaused) return;
     if (session === null) {
       requestLogin();
       return;
@@ -255,10 +258,15 @@ export function TicketPanel({
         )}
       </Stack>
 
+      {claimable && assignmentsPaused ? (
+        <Text role="danger">{messages.projects.team.noMaintainer}</Text>
+      ) : null}
       {claimable || canLeave ? (
         <Stack direction="row" gap={6} align="center" wrap navRow>
           {claimable ? (
-            <Button onClick={handleAssign}>{messages.tickets.dossier.claim.assign}</Button>
+            <Button onClick={handleAssign} disabled={assignmentsPaused}>
+              {messages.tickets.dossier.claim.assign}
+            </Button>
           ) : null}
           {canLeave ? (
             <Button onClick={handleLeave}>{messages.tickets.dossier.claim.leave}</Button>

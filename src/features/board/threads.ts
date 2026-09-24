@@ -19,7 +19,8 @@ import { formatAge as formatRelativeAge } from "@/shared/age";
 export const staticBoardIds = ["general", ERRATA_BOARD_ID] as const;
 
 export const boardIds = [...staticBoardIds, ...projectSlugs] as const;
-export type BoardId = (typeof boardIds)[number];
+export type BoardId = string;
+export type BoardOption = { id: BoardId; name: string; archived: boolean };
 
 // Archived journals stay readable but closed: the feed filters the full
 // taxonomy, the composer offers everything else.
@@ -31,7 +32,8 @@ export const composableBoardIds = boardIds.filter((id) => !archivedBoards.has(id
  * registry's name for the journals. */
 export function boardTitle(id: BoardId): string {
   if (isProjectSlug(id)) return projectName(id);
-  return messages.board.boards[id];
+  if (id === "general" || id === ERRATA_BOARD_ID) return messages.board.boards[id];
+  return id;
 }
 
 // Tags are the board's vocabulary: status tags carry a tone and read as chips,

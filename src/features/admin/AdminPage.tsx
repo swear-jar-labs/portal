@@ -8,8 +8,12 @@ import {
   listMemberApplications,
   mockDecideMemberApplication,
 } from "@/features/account/contracts";
+import { listProjectSubmissions } from "@/features/projects/contracts";
+import { ProjectAdminQueue } from "./AdminProjectQueue";
 import { ShellPanel } from "@/features/shell";
 import { AdminQueue } from "./AdminQueue";
+import { AdminWorkspace } from "./AdminWorkspace";
+import { mockDecideProject } from "./mock-project-actions";
 
 export const adminMetadata: Metadata = messages.admin.metadata;
 
@@ -18,12 +22,22 @@ export async function AdminPage() {
   return (
     <ShellPanel title={fileTitle("ADMIN")} closable>
       {actor?.admin ? (
-        <AdminQueue
-          items={listMemberApplications(actor).map((application) => ({
-            application,
-            history: <ApplicationHistory applications={[application]} headingLevel={3} />,
-          }))}
-          onDecide={mockDecideMemberApplication}
+        <AdminWorkspace
+          memberQueue={
+            <AdminQueue
+              items={listMemberApplications(actor).map((application) => ({
+                application,
+                history: <ApplicationHistory applications={[application]} headingLevel={3} />,
+              }))}
+              onDecide={mockDecideMemberApplication}
+            />
+          }
+          projectQueue={
+            <ProjectAdminQueue
+              submissions={listProjectSubmissions(actor)}
+              onDecide={mockDecideProject}
+            />
+          }
         />
       ) : (
         <Stack gap={8}>

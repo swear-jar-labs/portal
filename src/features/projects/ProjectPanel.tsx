@@ -21,7 +21,16 @@ export type ProjectPanelProps = {
 function ForgeBlock({ project, now }: { project: Project; now: string }) {
   const stats = project.stats;
   if (stats === undefined) {
-    return <Text role="hint">{messages.projects.forge.empty}</Text>;
+    return project.repoUrl ? (
+      <Stack gap={4}>
+        <Link href={project.repoUrl} external>
+          {project.repoUrl}
+        </Link>
+        <Text role="hint">{messages.projects.forge.pending}</Text>
+      </Stack>
+    ) : (
+      <Text role="hint">{messages.projects.forge.empty}</Text>
+    );
   }
   return (
     <Stack gap={4}>
@@ -104,6 +113,14 @@ export function ProjectPanel({
               ))}
             </Stack>
           )}
+          {project.contributors ? (
+            <Text>
+              <Text as="span" role="hint">
+                {messages.projects.about.contributors}:{" "}
+              </Text>
+              {project.contributors}
+            </Text>
+          ) : null}
           <Stack direction="row" gap={6} align="center" wrap navRow>
             <Text as="span" role="hint">
               {messages.projects.about.lead}

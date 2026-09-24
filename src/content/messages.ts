@@ -258,7 +258,7 @@ export const messages = {
         unavailable:
           "Sign-in is not available in this build. Demo sign-in works in development only.",
       },
-      registerPrompt: "New to the workshop?",
+      registerPrompt: "Don't have an account?",
       registerLink: "REGISTER",
     },
     register: {
@@ -352,6 +352,7 @@ export const messages = {
       description: "Demo administration for Swear Jar Labs.",
     },
     heading: "MEMBER APPLICATIONS",
+    tabs: { members: "MEMBER APPLICATIONS", projects: "PROJECT PROPOSALS" },
     intro: "Review applications in this demo server. Decisions remain available while it runs.",
     denied: "Admin access is required to open this file.",
     empty: "No member applications yet. New submissions appear here.",
@@ -362,6 +363,11 @@ export const messages = {
     request: "[ REQUEST DETAILS ]",
     approve: "[ APPROVE ]",
     reject: "[ DECLINE ]",
+    projects: {
+      heading: "PROJECT PROPOSALS",
+      intro: "Review proposed projects before they enter the registry.",
+      empty: "No project proposals yet.",
+    },
   },
   members: {
     metadata: {
@@ -632,9 +638,61 @@ export const messages = {
         archived: "ARCHIVE",
       },
     },
+    proposal: {
+      heading: "PROPOSE A PROJECT",
+      open: "[ PROPOSE PROJECT ]",
+      intro:
+        "Members can propose a project for admin review. Discuss ideas in FORUM first if useful.",
+      guest: "Register and become a Member to propose a project.",
+      participant: "Apply for Member access before proposing a project.",
+      apply: "[ APPLY FOR MEMBER → ]",
+      forum: "[ DISCUSS IN FORUM → ]",
+      submit: "[ SUBMIT PROPOSAL ]",
+      again: "[ SUBMIT AGAIN ]",
+      reply: "[ SEND REPLY ]",
+      stackHint:
+        "Search the technology list. Press Enter to add; select a chip below to remove it (up to 10).",
+      stackEmpty: "No matching technology.",
+      stackLimit: "Ten technologies is the limit. Remove a chip to add another.",
+      details: "PROJECT DETAILS",
+      history: "PROPOSAL HISTORY",
+      current: "YOUR PROPOSALS",
+      none: "—",
+      fields: {
+        name: "Project name",
+        slug: "Project URL slug",
+        goal: "Goal and scope",
+        repoUrl: "Repository URL (optional)",
+        stack: "Stack",
+        contributors: "What help or contributors are needed?",
+        answer: "Reply to admin",
+      },
+      states: {
+        pending: "Waiting for admin review.",
+        "needs-info": "Admin requested more detail. Reply below to continue this proposal.",
+        approved: "Approved and listed in PROJECTS.",
+        rejected: "Declined. You can revise and submit a new proposal; the history stays here.",
+      },
+      events: {
+        submitted: "Submitted",
+        "clarification-requested": "Details requested",
+        "clarification-sent": "Reply sent",
+        approved: "Approved",
+        rejected: "Declined",
+      },
+      errors: {
+        invalid: "Check the required fields and URL.",
+        forbidden: "Member access is required.",
+        conflict: "This proposal has changed. Reload and try again.",
+        missing: "Proposal not found.",
+        "slug-taken": "That project slug or ticket code is already in use.",
+        unavailable: "Demo actions are unavailable here.",
+      },
+    },
     about: {
       heading: "ABOUT",
       stack: "STACK",
+      contributors: "HELP NEEDED",
       lead: "LEAD",
       maintainers: "MAINTAINERS",
       claim: {
@@ -666,6 +724,7 @@ export const messages = {
       synced: "SYNCED",
       frozen: "FROZEN",
       empty: "No repository linked yet.",
+      pending: "Repository activity is not synced in this demo.",
     },
     journal: {
       heading: "RELATED THREADS",

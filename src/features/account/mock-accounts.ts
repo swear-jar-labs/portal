@@ -18,6 +18,8 @@ const registry = createAccountRegistry([
   { user: "grace", level: "member" },
   { user: "admin", level: "member", admin: true },
   { user: "coadmin", level: "member", admin: true },
+  { user: "demo-candidate", level: "participant" },
+  { user: "demo-second", level: "participant" },
 ]);
 
 const verifications = createVerificationStore();

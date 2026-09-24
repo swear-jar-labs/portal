@@ -47,6 +47,7 @@ test.describe("guest account chrome", () => {
     await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
 
+    await waitForHydration(page);
     await page.keyboard.press("F8");
     await expect(page).toHaveURL("/register");
   });
@@ -606,6 +607,7 @@ test.describe("apply form", () => {
   test("weekly hours dropdown works from the keyboard", async ({ page }) => {
     await logon(page, "quinn-hours");
     await page.goto("/apply");
+    await waitForHydration(page);
     const hours = page.getByLabel("Hours a week");
     await hours.focus();
 

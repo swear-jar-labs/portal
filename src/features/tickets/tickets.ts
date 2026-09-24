@@ -3,7 +3,12 @@
 // (contracts/index.ts) re-exports what other features consume.
 
 import type { Tone } from "@swearjar/dos";
-import { projectSlugs, type ProjectSlug } from "@/features/projects/contracts";
+import {
+  dynamicTicketPrefix,
+  fixtureTicketPrefixes,
+  projectSlugs,
+  type ProjectSlug,
+} from "@/features/projects/contracts";
 export type { ProjectSlug } from "@/features/projects/contracts";
 
 // The work queue reads as a chip; done and closed are neutral.
@@ -129,15 +134,9 @@ export type Ticket = {
 
 // The key canon: PREFIX-seq, the prefix pinned per project below. Phase 5
 // keeps the shape and generates the sequence.
-export const projectKeyPrefixes: Record<ProjectSlug, string> = {
-  "swearjar-dos": "DOS",
-  compiler: "CMP",
-  tooling: "TOOL",
-  "token-cache": "CACHE",
-  flagship: "FLAG",
-};
+export const projectKeyPrefixes: Record<string, string> = fixtureTicketPrefixes;
 
-const TICKET_KEY_PATTERN = /^([A-Z]{2,8})-(\d+)$/;
+const TICKET_KEY_PATTERN = /^([A-Z0-9]{2,8})-(\d+)$/;
 
 export function isTicketKey(value: string): boolean {
   return TICKET_KEY_PATTERN.test(value);
@@ -155,7 +154,7 @@ export function parseTicketKey(key: string): { prefix: string; seq: number } | n
 /** The next free key of a project: its prefix plus one past the max sequence
  * in the given tickets (fixtures and the session's composed ones). */
 export function nextTicketKey(project: ProjectSlug, tickets: readonly Ticket[]): string {
-  const prefix = projectKeyPrefixes[project];
+  const prefix = projectKeyPrefixes[project] ?? dynamicTicketPrefix(project);
   const seq = tickets.reduce((max, ticket) => {
     const parsed = parseTicketKey(ticket.key);
     if (parsed === null || parsed.prefix !== prefix) return max;

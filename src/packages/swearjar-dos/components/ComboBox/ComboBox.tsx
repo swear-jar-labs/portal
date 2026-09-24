@@ -24,6 +24,10 @@ export type ComboBoxProps<T extends string = string> = {
   onChange: (value: string) => void;
   options: readonly ComboBoxOption<T>[];
   onPick?: (option: ComboBoxOption<T>) => void;
+  // Multi-pick consumers keep focus in the search box for another choice.
+  advanceOnPick?: boolean;
+  // A catalog-only box must not submit its parent form on an unmatched Enter.
+  submitOnNoMatch?: boolean;
   // The committed value behind the text (a filter's slug behind the shown
   // label): Escape and an uncommitted close revert the text to its label.
   // Without it the text stays free and the form validates it.
@@ -44,6 +48,8 @@ export function ComboBox<T extends string = string>({
   onChange,
   options,
   onPick,
+  advanceOnPick = true,
+  submitOnNoMatch = true,
   committedValue,
   emptyText,
   error,
@@ -162,13 +168,14 @@ export function ComboBox<T extends string = string>({
         // No match: close and let the form submit natively, its validation
         // reports the bad text.
         if (matches.length === 0) {
+          if (!submitOnNoMatch) event.preventDefault();
           setOpen(false);
           return;
         }
         event.preventDefault();
         commit(active);
         // A pick advances like ArrowRight: the form's submit lands next.
-        if (inputRef.current !== null) focusNextControl(inputRef.current);
+        if (advanceOnPick && inputRef.current !== null) focusNextControl(inputRef.current);
         return;
       case "Tab":
         // Tab commits like the kit's Select — the highlighted match lands in

@@ -4,6 +4,7 @@
 
 import { avatarFor } from "@/shared/members";
 import { DEFAULT_CLAIM_POLICY } from "./projects";
+import { approvedProject, approvedProjects } from "./project-registry";
 import type { Project, ProjectPerson, ProjectSlug, ProjectStats } from "./projects";
 
 const ada: ProjectPerson = { user: "ada", avatar: avatarFor("ada") };
@@ -133,16 +134,20 @@ export const archivedProjectSlugs: readonly ProjectSlug[] = projects
 
 /** The display name behind a project slug (and behind the project boards). */
 export function projectName(slug: ProjectSlug): string {
-  const project = bySlug.get(slug);
+  const project = bySlug.get(slug) ?? approvedProject(slug);
   if (!project) throw new Error(`unknown project slug: ${slug}`);
   return project.name;
 }
 
 export async function listProjects(): Promise<Project[]> {
-  return [...projects];
+  return [...projects, ...approvedProjects()];
 }
 
 export async function getProject(slug: string): Promise<Project | null> {
-  const project = bySlug.get(slug as ProjectSlug);
+  const project = bySlug.get(slug) ?? approvedProject(slug);
   return project ?? null;
+}
+
+export function isKnownProjectSlug(slug: string): slug is ProjectSlug {
+  return bySlug.has(slug) || approvedProject(slug) !== null;
 }

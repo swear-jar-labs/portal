@@ -8,7 +8,13 @@ import { messages } from "@/content/messages";
 import { isPlainActivation } from "@/lib/activation";
 import { useMemberLayer } from "@/features/members/contracts";
 import { PanelStack, ShellPanel, stackMemory } from "@/features/shell";
-import { PROJECTS_PATH, projectPath, type Project } from "./projects";
+import {
+  PROJECTS_PATH,
+  PROJECT_PROPOSE_BUTTON_ID,
+  PROJECT_PROPOSE_PATH,
+  projectPath,
+  type Project,
+} from "./projects";
 import { projectCardId } from "./ProjectsCard";
 import { ProjectsFeed } from "./ProjectsFeed";
 
@@ -26,9 +32,10 @@ export type ProjectsStackProps = {
   // hydration (the feed order itself comes ranked from the page).
   now: string;
   project?: ProjectsProjectLayer;
+  proposalLayer?: ReactNode;
 };
 
-export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
+export function ProjectsStack({ projects, now, project, proposalLayer }: ProjectsStackProps) {
   const router = useRouter();
   const routedMemberLayer = useMemberLayer();
   // A close owns the navigation until the route changes: a second Esc (or [X])
@@ -40,17 +47,17 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
     closingRef.current = false;
-  }, [memberLayerOpen, project?.slug]);
+  }, [memberLayerOpen, project?.slug, proposalLayer]);
 
   // After a layer pops, focus returns to the card that opened it: the request
   // crosses the page remount in the SPA session memory.
   useEffect(() => {
     const id = stackMemory.takePendingCardFocus();
     if (!id) return;
-    const card = document.getElementById(projectCardId(id));
+    const card = document.getElementById(id) ?? document.getElementById(projectCardId(id));
     card?.focus();
     card?.scrollIntoView({ block: "nearest" });
-  }, [project?.slug]);
+  }, [project?.slug, proposalLayer]);
 
   // Unlike a project route, an intercepted profile keeps this ProjectsStack
   // and its author link mounted. The known id can therefore receive focus as
@@ -74,6 +81,11 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
     [router],
   );
 
+  const openProposal = useCallback(() => {
+    stackMemory.rememberPush(PROJECT_PROPOSE_PATH);
+    router.push(PROJECT_PROPOSE_PATH);
+  }, [router]);
+
   const closeProject = useCallback(() => {
     if (!project) return;
     if (closingRef.current) return;
@@ -85,6 +97,14 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
     else router.push(PROJECTS_PATH);
   }, [router, project]);
 
+  const closeProposal = useCallback(() => {
+    if (!proposalLayer || closingRef.current) return;
+    closingRef.current = true;
+    stackMemory.requestCardFocus(PROJECT_PROPOSE_BUTTON_ID);
+    if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
+    else router.push(PROJECTS_PATH);
+  }, [proposalLayer, router]);
+
   const closeMember = useCallback(() => {
     if (!memberLayerOpen) return;
     if (closingRef.current) return;
@@ -92,16 +112,20 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
     // An intercepted profile is only reached from a plain in-app activation.
     // A fallback preserves the project when an unusual router history omits it.
     if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
-    else router.push(project ? projectPath(project.slug) : PROJECTS_PATH);
-  }, [memberLayerOpen, router, project]);
+    else
+      router.push(
+        project ? projectPath(project.slug) : proposalLayer ? PROJECT_PROPOSE_PATH : PROJECTS_PATH,
+      );
+  }, [memberLayerOpen, router, project, proposalLayer]);
 
   const closeTop = useCallback(() => {
     if (memberLayerOpen) {
       closeMember();
       return;
     }
-    closeProject();
-  }, [closeMember, closeProject, memberLayerOpen]);
+    if (proposalLayer) closeProposal();
+    else closeProject();
+  }, [closeMember, closeProject, closeProposal, memberLayerOpen, proposalLayer]);
 
   return (
     <PanelStack onCloseTop={closeTop}>
@@ -111,6 +135,7 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
           now={now}
           currentSlug={project?.slug}
           onActivate={activateProject}
+          onPropose={openProposal}
         />
       </ShellPanel>
       {project ? (
@@ -119,6 +144,14 @@ export function ProjectsStack({ projects, now, project }: ProjectsStackProps) {
           actions={<CloseButton onClose={closeProject} label={messages.shell.window.closeLabel} />}
         >
           {project.layer}
+        </ShellPanel>
+      ) : null}
+      {proposalLayer ? (
+        <ShellPanel
+          title={messages.projects.proposal.heading}
+          actions={<CloseButton onClose={closeProposal} label={messages.shell.window.closeLabel} />}
+        >
+          {proposalLayer}
         </ShellPanel>
       ) : null}
       {memberLayerOpen ? (

@@ -27,6 +27,7 @@ import {
   FEED_PATH,
   threadPath,
   type BoardMember,
+  type BoardOption,
   type ThreadSummary,
 } from "./threads";
 import { avatarFor } from "@/shared/members";
@@ -54,6 +55,7 @@ export type BoardStackProps = {
   // identically at hydration.
   now: string;
   thread?: BoardThreadLayer;
+  projectBoards?: readonly BoardOption[];
 };
 
 /** The feed panel before the URL filters are known (the Suspense fallback). */
@@ -61,14 +63,15 @@ export function BoardFallback() {
   return <ShellPanel title={fileTitle("FORUM")}>{null}</ShellPanel>;
 }
 
-export function BoardStack({ threads, now, thread }: BoardStackProps) {
+export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardStackProps) {
   const router = useRouter();
   const pathname = usePathname();
   const routedMemberLayer = useMemberLayer();
   const searchParams = useSearchParams();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
-  const [query, setQuery] = useState<FeedQuery>(() => parseFeedQuery(searchParams));
+  const allowedBoards = [...composableBoardIds, ...projectBoards.map((board) => board.id)];
+  const [query, setQuery] = useState<FeedQuery>(() => parseFeedQuery(searchParams, allowedBoards));
   // The last search the state was synced from: UI-driven edits rewrite the URL
   // with replaceState (the router never reports those back), so only a new
   // search string resyncs — a section entry (ERRATA) or history step.
@@ -77,13 +80,14 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
   // Render-adjust, like the file cursor: no effect, no cascading subscription.
   if (syncedSearch !== liveSearch) {
     setSyncedSearch(liveSearch);
-    const next = parseFeedQuery(searchParams);
+    const next = parseFeedQuery(searchParams, allowedBoards);
     if (!sameFeedQuery(query, next)) setQuery(next);
   }
   const initialCompose =
     searchParams.get("new") === "1" &&
     query.board !== undefined &&
-    composableBoardIds.some((board) => board === query.board);
+    (composableBoardIds.some((board) => board === query.board) ||
+      projectBoards.some((board) => board.id === query.board && !board.archived));
   const [composing, setComposing] = useState(initialCompose);
   const [localThreadId, setLocalThreadId] = useState<string | null>(null);
   // The control a closed layer owes focus to (the compose button, a new card).
@@ -351,6 +355,7 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
             onActivateThread={activateThread}
             onVoteThread={voteThread}
             onCompose={openCompose}
+            projectBoards={projectBoards}
           />
         </ShellPanel>
         {thread ? (
@@ -384,6 +389,7 @@ export function BoardStack({ threads, now, thread }: BoardStackProps) {
           >
             <ComposePanel
               defaultBoard={query.board}
+              projectBoards={projectBoards}
               onSubmit={submitCompose}
               onCancel={() => closeCompose()}
             />

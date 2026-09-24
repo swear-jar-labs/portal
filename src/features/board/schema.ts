@@ -16,13 +16,17 @@ export const replySchema = z.object({
 
 export type ReplyInput = z.infer<typeof replySchema>;
 
-export const composeSchema = z.object({
-  // Archived journals are readable, not writable: the same set the composer
-  // offers.
-  board: z.enum(composableBoardIds),
-  tags: z.array(z.enum(tagIds)).max(MAX_TAGS),
-  title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
-  body: z.string().trim().min(1).max(MAX_BODY_LENGTH),
-});
+export function makeComposeSchema(allowedBoards: readonly string[] = composableBoardIds) {
+  return z.object({
+    // Archived journals are readable, not writable: the same set the composer
+    // offers.
+    board: z.string().refine((board) => allowedBoards.includes(board)),
+    tags: z.array(z.enum(tagIds)).max(MAX_TAGS),
+    title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
+    body: z.string().trim().min(1).max(MAX_BODY_LENGTH),
+  });
+}
+
+export const composeSchema = makeComposeSchema();
 
 export type ComposeInput = z.infer<typeof composeSchema>;

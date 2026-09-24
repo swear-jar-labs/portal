@@ -4,13 +4,21 @@ import type { MouseEvent } from "react";
 import { Button, Heading, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { boardIds, boardTitle, tagIds, tagTones, type TagId, type ThreadSummary } from "./threads";
+import {
+  boardIds,
+  boardTitle,
+  tagIds,
+  tagTones,
+  type BoardOption,
+  type TagId,
+  type ThreadSummary,
+} from "./threads";
 import { threadSorts, type FeedQuery } from "./feed";
 import { ThreadCard } from "./ThreadCard";
 import styles from "./board.module.css";
 
 const BOARD_FILTER_ALL = "all";
-type BoardFilter = (typeof boardIds)[number] | typeof BOARD_FILTER_ALL;
+type BoardFilter = string;
 
 /** The feed's compose control: closing the layer hands focus back to it. */
 export const composeButtonId = "board-compose";
@@ -27,6 +35,7 @@ export type FeedPanelProps = {
   onActivateThread: (threadId: string, event?: MouseEvent<HTMLElement>) => void;
   onVoteThread: (threadId: string) => void;
   onCompose: () => void;
+  projectBoards?: readonly BoardOption[];
 };
 
 export function FeedPanel({
@@ -40,6 +49,7 @@ export function FeedPanel({
   onActivateThread,
   onVoteThread,
   onCompose,
+  projectBoards = [],
 }: FeedPanelProps) {
   const boardOptions: SelectOption<BoardFilter>[] = [
     { value: BOARD_FILTER_ALL, label: messages.board.feed.allBoards },
@@ -47,6 +57,9 @@ export function FeedPanel({
       value: id,
       label: boardTitle(id),
     })),
+    ...projectBoards
+      .filter((board) => !boardIds.some((id) => id === board.id))
+      .map((board) => ({ value: board.id, label: board.name })),
   ];
 
   const toggleTag = (tag: TagId) => {

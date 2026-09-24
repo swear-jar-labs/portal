@@ -107,6 +107,17 @@ test("keeps a direct member URL standalone across reload", async ({ page }) => {
 });
 
 test("shows PATH NOT FOUND for an unknown member", async ({ page }) => {
-  await page.goto("/members/nobody");
+  await page.goto(`/members/never-registered-${Date.now().toString(36)}`);
+  await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
+});
+
+test("resolves a Member without posts but does not label a Participant as Member", async ({
+  page,
+}) => {
+  await page.goto("/members/admin");
+  await expect(page.getByRole("heading", { level: 1, name: "admin" })).toBeVisible();
+  await expect(page.getByText("MEMBER", { exact: true })).toBeVisible();
+
+  await page.goto("/members/demo-candidate");
   await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
 });

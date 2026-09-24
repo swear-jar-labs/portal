@@ -19,16 +19,20 @@ const MAX_BODY_LENGTH = 4000;
 const MAX_URL_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 
-export const ticketComposeSchema = z.object({
-  // The project is locked on the project page and chosen on the tracker:
-  // either way the value is a registry slug, never free text.
-  project: z.enum(projectSlugs),
-  title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
-  body: z.string().trim().min(1).max(MAX_BODY_LENGTH),
-  size: z.enum(ticketSizes),
-  priority: z.enum(ticketPriorities),
-  tags: z.array(z.enum(ticketTagIds)).max(MAX_TAGS),
-});
+export function makeTicketComposeSchema(allowedProjects: readonly string[] = projectSlugs) {
+  return z.object({
+    // The project is locked on the project page and chosen on the tracker:
+    // either way the value is a registry slug, never free text.
+    project: z.string().refine((project) => allowedProjects.includes(project)),
+    title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
+    body: z.string().trim().min(1).max(MAX_BODY_LENGTH),
+    size: z.enum(ticketSizes),
+    priority: z.enum(ticketPriorities),
+    tags: z.array(z.enum(ticketTagIds)).max(MAX_TAGS),
+  });
+}
+
+export const ticketComposeSchema = makeTicketComposeSchema();
 
 export type TicketComposeInput = z.infer<typeof ticketComposeSchema>;
 

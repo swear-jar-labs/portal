@@ -5,7 +5,7 @@ import { Button, Form, Heading, Select, Stack, Text, type SelectOption } from "@
 import { messages } from "@/content/messages";
 import type { ProjectSlug } from "@/features/projects/contracts";
 import { DEFAULT_TICKET_PROJECT } from "./tickets";
-import { ticketComposeSchema, type TicketComposeInput } from "./schema";
+import { makeTicketComposeSchema, type TicketComposeInput } from "./schema";
 import { TicketFields, type TicketFieldsErrors } from "./TicketFields";
 import type { TicketProjectOption } from "./TicketsFeed";
 
@@ -39,7 +39,9 @@ export function TicketCompose({
   }
 
   function handleSubmit() {
-    const parsed = ticketComposeSchema.safeParse(values);
+    const parsed = makeTicketComposeSchema(projects.map((project) => project.slug)).safeParse(
+      values,
+    );
     if (!parsed.success) {
       const hasError = (field: keyof TicketFieldsErrors) =>
         parsed.error.issues.some((issue) => issue.path[0] === field);

@@ -23,11 +23,34 @@ export const projectSlugs = [
   "token-cache",
   "flagship",
 ] as const;
-export type ProjectSlug = (typeof projectSlugs)[number];
+// Approved proposals add slugs at runtime; the fixture tuple remains the
+// compile-time inventory for static data and its consistency tests.
+export type ProjectSlug = string;
 
 export function isProjectSlug(value: string): value is ProjectSlug {
   return projectSlugs.some((slug) => slug === value);
 }
+
+// New projects need a stable ticket code before any tickets exist. The hash
+// keeps similarly named slugs distinct; approval checks it against all codes.
+export function dynamicTicketPrefix(slug: string): string {
+  const letters = slug
+    .replace(/[^a-z]/g, "")
+    .toUpperCase()
+    .slice(0, 5)
+    .padEnd(2, "X");
+  let hash = 0;
+  for (const char of slug) hash = (hash * 31 + char.charCodeAt(0)) % 46_656;
+  return `${letters}${hash.toString(36).toUpperCase().padStart(3, "0")}`;
+}
+
+export const fixtureTicketPrefixes = {
+  "swearjar-dos": "DOS",
+  compiler: "CMP",
+  tooling: "TOOL",
+  "token-cache": "CACHE",
+  flagship: "FLAG",
+} as const satisfies Record<(typeof projectSlugs)[number], string>;
 
 // The forges the UI block knows (v1): hosts are github.com and gitlab.com,
 // self-hosted and the smaller forges extend the union later.
@@ -62,6 +85,7 @@ export type Project = {
   // The stack as shared tech ids (labels in messages.readroom.tags): the card
   // shows chips, ABOUT joins them. A plan so far has none.
   techs: readonly TechId[];
+  contributors?: string;
   createdAt: string;
   repoUrl?: string;
   forge?: ForgeId;
@@ -92,6 +116,8 @@ export const MAX_POLICY_NEED = 10;
 
 // The projects' URL canon: the index and the project page build links from it.
 export const PROJECTS_PATH = "/projects";
+export const PROJECT_PROPOSE_PATH = `${PROJECTS_PATH}/propose`;
+export const PROJECT_PROPOSE_BUTTON_ID = "projects-propose-button";
 export const projectPath = (slug: ProjectSlug) => `${PROJECTS_PATH}/${slug}`;
 
 // How many journal entries the project page previews; the rest lives behind

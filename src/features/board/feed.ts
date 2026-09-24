@@ -1,5 +1,5 @@
 import { BOARD_QUERY_PARAM } from "@/lib/board";
-import { isBoardId, isTagId, type BoardId, type TagId } from "./threads";
+import { boardIds, isBoardId, isTagId, type BoardId, type TagId } from "./threads";
 
 export const threadSorts = ["hot", "new"] as const;
 export type ThreadSort = (typeof threadSorts)[number];
@@ -24,12 +24,15 @@ function isThreadSort(value: string): value is ThreadSort {
 }
 
 /** Reads the feed state out of the URL; unknown values fall back to defaults. */
-export function parseFeedQuery(params: URLSearchParams): FeedQuery {
+export function parseFeedQuery(
+  params: URLSearchParams,
+  allowedBoards: readonly BoardId[] = boardIds,
+): FeedQuery {
   const board = params.get(BOARD_QUERY_PARAM);
   const tag = params.get(TAG_PARAM);
   const sort = params.get(SORT_PARAM);
   return {
-    ...(board && isBoardId(board) ? { board } : {}),
+    ...(board && (isBoardId(board) || allowedBoards.includes(board)) ? { board } : {}),
     ...(tag && isTagId(tag) ? { tag } : {}),
     sort: sort && isThreadSort(sort) ? sort : DEFAULT_FEED_QUERY.sort,
   };

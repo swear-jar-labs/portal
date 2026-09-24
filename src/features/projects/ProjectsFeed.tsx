@@ -1,21 +1,34 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Heading, Stack, Text } from "@swearjar/dos";
+import { Button, Heading, Stack, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { PROJECTS_CARD_ATTR, projectStatuses, type Project } from "./projects";
+import {
+  PROJECTS_CARD_ATTR,
+  PROJECT_PROPOSE_BUTTON_ID,
+  projectStatuses,
+  type Project,
+} from "./projects";
 import { ProjectsCard } from "./ProjectsCard";
+import styles from "./ProjectsFeed.module.css";
 
 export type ProjectsFeedProps = {
   projects: readonly Project[];
   now: string;
   currentSlug?: string;
   onActivate: (slug: Project["slug"], event?: MouseEvent<HTMLElement>) => void;
+  onPropose: () => void;
 };
 
 /** The registry index: the ranked projects cut by lifecycle status. */
-export function ProjectsFeed({ projects, now, currentSlug, onActivate }: ProjectsFeedProps) {
+export function ProjectsFeed({
+  projects,
+  now,
+  currentSlug,
+  onActivate,
+  onPropose,
+}: ProjectsFeedProps) {
   const sections = projectStatuses
     .map((status) => ({
       status,
@@ -29,7 +42,14 @@ export function ProjectsFeed({ projects, now, currentSlug, onActivate }: Project
         {messages.projects.feed.heading}
       </Heading>
 
-      <Text role="hint">{formatCount(projects.length, pluralForms.project)}</Text>
+      <Stack direction="row" gap={8} align="center" wrap>
+        <Text role="hint">{formatCount(projects.length, pluralForms.project)}</Text>
+        <Stack navRow className={styles.proposeAction}>
+          <Button id={PROJECT_PROPOSE_BUTTON_ID} variant="primary" onClick={onPropose}>
+            {messages.projects.proposal.open}
+          </Button>
+        </Stack>
+      </Stack>
 
       {sections.length === 0 ? (
         <Text role="hint">{messages.projects.feed.empty}</Text>

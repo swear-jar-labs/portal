@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
-import { isProjectSlug, listProjects } from "@/features/projects/contracts";
+import { isKnownProjectSlug, listProjects } from "@/features/projects/contracts";
 import { listTickets } from "./data";
 import { parseTicketQuery } from "./tickets";
 import { TicketsStack } from "./TicketsStack";
@@ -17,7 +17,7 @@ export async function TicketsPage({ searchParams }: TicketsPageProps) {
     listProjects(),
     searchParams,
   ]);
-  const query = parseTicketQuery(params, isProjectSlug);
+  const query = parseTicketQuery(params, isKnownProjectSlug);
   const initialCompose = params.new === "1" && query.project !== "all";
   const options = projects.map((project) => ({
     slug: project.slug,

@@ -21,9 +21,10 @@ import {
   tagIds,
   tagTones,
   type BoardId,
+  type BoardOption,
   type TagId,
 } from "./threads";
-import { composeSchema, type ComposeInput } from "./schema";
+import { makeComposeSchema, type ComposeInput } from "./schema";
 
 const BODY_ROWS = 6;
 
@@ -35,20 +36,27 @@ type ComposeErrors = {
   body?: string;
 };
 
-const boardOptions = composableBoardIds.map((id): SelectOption<BoardId> => ({
-  value: id,
-  label: boardTitle(id),
-}));
-
 export type ComposePanelProps = {
   defaultBoard?: BoardId;
+  projectBoards?: readonly BoardOption[];
   onSubmit: (input: ComposeInput) => void;
   onCancel: () => void;
 };
 
 /** The new-thread layer: board, tags, title and the opening post. A mock submit
  * until the board has a backend (the thread lives in the session). */
-export function ComposePanel({ defaultBoard, onSubmit, onCancel }: ComposePanelProps) {
+export function ComposePanel({
+  defaultBoard,
+  projectBoards = [],
+  onSubmit,
+  onCancel,
+}: ComposePanelProps) {
+  const boardOptions: SelectOption<BoardId>[] = [
+    ...composableBoardIds.map((id) => ({ value: id, label: boardTitle(id) })),
+    ...projectBoards
+      .filter((board) => !board.archived && !composableBoardIds.some((id) => id === board.id))
+      .map((board) => ({ value: board.id, label: board.name })),
+  ];
   const [values, setValues] = useState<ComposeInput>(() => ({
     ...INITIAL_VALUES,
     board: defaultBoard ?? INITIAL_VALUES.board,
@@ -64,7 +72,7 @@ export function ComposePanel({ defaultBoard, onSubmit, onCancel }: ComposePanelP
   }
 
   function handleSubmit() {
-    const parsed = composeSchema.safeParse(values);
+    const parsed = makeComposeSchema(boardOptions.map((board) => board.value)).safeParse(values);
     if (!parsed.success) {
       const hasError = (field: keyof ComposeErrors) =>
         parsed.error.issues.some((issue) => issue.path[0] === field);

@@ -7,7 +7,7 @@ import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { useShellSession } from "@/features/shell";
 import { mockProjectTeamAction } from "./mock-team-actions";
-import { PROJECTS_PATH, type Project } from "./projects";
+import type { Project } from "./projects";
 import type { ProjectTeam, ProjectTeamActionId } from "./team-store";
 
 type Props = { project: Project; team: ProjectTeam; memberUsers: readonly string[] };
@@ -65,7 +65,7 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
           <Text as="span" role="hint">
             {messages.projects.about.lead}
           </Text>
-          <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
+          <MemberLink person={project.lead} />
         </Stack>
       ) : null}
       {team.maintainers.length === 0 ? <Text role="danger">{copy.noMaintainer}</Text> : null}
@@ -75,7 +75,7 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
         </Text>
         {team.maintainers.map((person) => (
           <Stack key={person.user} direction="row" gap={4} align="center" navRow>
-            <MemberLink person={person} sectionPath={PROJECTS_PATH} />
+            <MemberLink person={person} />
             {(isLead || isAdmin || person.user === session?.user) &&
             project.status !== "archived" ? (
               <Button
@@ -100,7 +100,7 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
         ) : (
           team.reviewers.map((person) => (
             <Stack key={person.user} direction="row" gap={4} align="center" navRow>
-              <MemberLink person={person} sectionPath={PROJECTS_PATH} />
+              <MemberLink person={person} />
               {canEditReviewers ? (
                 <Button
                   ariaLabel={unassignLabel(person.user, copy.reviewers)}

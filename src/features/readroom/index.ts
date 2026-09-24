@@ -4,3 +4,4 @@ export {
   generateReadroomMetadata,
   type ReadroomTaskPageProps,
 } from "./ReadroomTaskPage";
+export { InterceptedReadroomTaskPage, loadReadroomLayer } from "./ReadroomOverlay";

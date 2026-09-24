@@ -1,21 +1,13 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
-import { isPlainActivation } from "@/lib/activation";
 import { formatCount } from "@/lib/format";
-import { stackMemory } from "@/features/shell";
+import { useOverlayPush } from "@/features/shell";
 import { MemberLink } from "@/features/members/contracts";
-import {
-  boardTitle,
-  FEED_PATH,
-  formatAge,
-  tagTones,
-  threadPath,
-  type ThreadSummary,
-} from "./threads";
+import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
+import { threadCardId } from "./ThreadCard";
 import styles from "./board.module.css";
 
 type ThreadRowsProps = {
@@ -24,22 +16,17 @@ type ThreadRowsProps = {
 };
 
 /** A member's threads: read-only rows that open the board's thread panel
- * through a plain SPA push (modified clicks keep the native tab behavior).
- * Rows read like the feed's cards (byline first, black titles): the vote
- * button stays where the board's session store lives, and the byline is the
- * shared MemberLink — an ordinary route here, since the profile section is
- * not the board and has no layer to intercept into. */
+ * as an overlay layer through a plain SPA push (modified clicks keep the
+ * native tab behavior). Rows read like the feed's cards (byline first, black
+ * titles): the vote button stays where the board's session store lives, and
+ * the byline is the shared MemberLink. */
 export function ThreadRows({ threads, now }: ThreadRowsProps) {
-  const router = useRouter();
+  const pushOverlay = useOverlayPush();
 
   const activate = (thread: ThreadSummary) => (event?: MouseEvent<HTMLElement>) => {
-    if (!isPlainActivation(event)) return;
-    event?.preventDefault();
-    const route = threadPath(thread.id);
-    // The board reads this memory on close: the pushed thread returns to the
-    // profile with browser back, like a card in the feed returns to the feed.
-    stackMemory.rememberPush(route);
-    router.push(route);
+    // The profile stays mounted under the root-slot intercept, so the row
+    // card is a valid focus target when the overlay peels.
+    pushOverlay(threadPath(thread.id), threadCardId(thread.id))(event);
   };
 
   return (
@@ -47,6 +34,7 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
       {threads.map((thread) => (
         <Card
           key={thread.id}
+          id={threadCardId(thread.id)}
           title={thread.title}
           href={threadPath(thread.id)}
           onActivate={activate(thread)}
@@ -71,7 +59,7 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
           metaInteractive
           meta={
             <Stack direction="row" gap={6} align="center" wrap>
-              <MemberLink person={thread.author} sectionPath={FEED_PATH} />
+              <MemberLink person={thread.author} />
               <Text as="span" role="hint">
                 {[
                   boardTitle(thread.board),

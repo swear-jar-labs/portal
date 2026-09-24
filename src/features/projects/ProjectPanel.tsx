@@ -1,7 +1,7 @@
 import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { FEED_PATH, JournalRows, type ThreadSummary } from "@/features/board/contracts";
-import { TicketsTable, type Ticket } from "@/features/tickets/contracts";
+import { TicketsOverlayTable, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
 import { ProjectClaimSection } from "./ProjectClaimSection";
@@ -9,7 +9,7 @@ import { ProjectTeamSection } from "./ProjectTeamSection";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { ProjectCta } from "./ProjectCta";
 import type { ProjectTeam } from "./team-store";
-import { PROJECTS_PATH, projectStatusTones, type Project, type ProjectTab } from "./projects";
+import { projectStatusTones, type Project, type ProjectTab } from "./projects";
 import styles from "./projects.module.css";
 export type ProjectPanelProps = {
   project: Project;
@@ -166,7 +166,7 @@ export function ProjectPanel({
               {tickets.length === 0 ? (
                 <Text role="hint">{messages.tickets.project.empty}</Text>
               ) : (
-                <TicketsTable
+                <TicketsOverlayTable
                   tickets={tickets}
                   projectNames={{ [project.slug]: project.name }}
                   label={messages.tickets.project.heading}
@@ -191,12 +191,7 @@ export function ProjectPanel({
               {journal.length === 0 ? (
                 <Text role="hint">{messages.projects.journal.empty}</Text>
               ) : (
-                <JournalRows
-                  board={project.slug}
-                  threads={journal}
-                  now={now}
-                  sectionPath={PROJECTS_PATH}
-                />
+                <JournalRows board={project.slug} threads={journal} now={now} />
               )}
               <Stack navRow>
                 <Link href={journalHref}>

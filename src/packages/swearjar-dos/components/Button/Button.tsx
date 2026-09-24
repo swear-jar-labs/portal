@@ -1,6 +1,6 @@
 "use client";
 
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, MouseEventHandler, ReactNode } from "react";
 import { cx } from "../tone";
 import styles from "./Button.module.css";
 
@@ -25,7 +25,9 @@ type ButtonLinkProps = ButtonBaseProps & {
   href: string;
   // A link styled as a raised button still downloads (the viewer footer).
   download?: string;
-  onClick?: never;
+  // An in-app activation hook: the consumer decides when the native
+  // navigation is replaced (the shell's routed overlays).
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
   type?: never;
   disabled?: never;
 };
@@ -55,6 +57,7 @@ export function Button(props: ButtonProps) {
         id={id}
         href={href}
         download={download}
+        onClick={onClick}
         aria-label={ariaLabel}
         className={classes}
         style={style}

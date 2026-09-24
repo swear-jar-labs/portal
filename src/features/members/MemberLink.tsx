@@ -1,10 +1,8 @@
 "use client";
 
-import { useId, type KeyboardEvent, type MouseEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useId, type KeyboardEvent } from "react";
 import { Avatar, Link, Text } from "@swearjar/dos";
-import { stackMemory } from "@/features/shell";
-import { isPlainActivation } from "@/lib/activation";
+import { useOverlayPush } from "@/features/shell";
 import { memberPath } from "@/shared/members";
 import styles from "./members.module.css";
 
@@ -18,26 +16,14 @@ export type MemberPerson = {
 export type MemberLinkProps = {
   person: MemberPerson;
   avatarSize?: "sm" | "md";
-  // The section the link lives in: inside it the profile opens as the top
-  // layer of the existing stack, elsewhere the link stays an ordinary route.
-  sectionPath: string;
 };
 
 /** A byline's one target: avatar and user always navigate together. */
-export function MemberLink({ person, avatarSize = "md", sectionPath }: MemberLinkProps) {
+export function MemberLink({ person, avatarSize = "md" }: MemberLinkProps) {
   const id = useId();
-  const pathname = usePathname();
-  const router = useRouter();
-
-  function openMember(event?: MouseEvent<HTMLElement>) {
-    if (!isPlainActivation(event)) return;
-    event?.preventDefault();
-    const route = memberPath(person.user);
-    if (pathname === sectionPath || pathname.startsWith(`${sectionPath}/`)) {
-      stackMemory.rememberMemberPush(route, id);
-    }
-    router.push(route);
-  }
+  // Every in-app profile opens as an overlay layer above the current stack
+  // (the root slot intercepts it); the origin id returns focus on close.
+  const openMember = useOverlayPush()(memberPath(person.user), id);
 
   function activateOnSpace(event: KeyboardEvent<HTMLElement>) {
     if (event.key !== " ") return;

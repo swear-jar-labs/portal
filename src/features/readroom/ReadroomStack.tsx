@@ -13,15 +13,16 @@ import { useRouter } from "next/navigation";
 import { CloseButton, Stack } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { isPlainActivation } from "@/lib/activation";
 import {
+  overlayLayerPanels,
   PanelStack,
   ShellPanel,
   stackMemory,
   useLoginPrompt,
+  useOverlayPush,
+  useOverlayTop,
   useShellSession,
 } from "@/features/shell";
-import { useMemberLayer } from "@/features/members/contracts";
 import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { avatarFor } from "@/shared/members";
@@ -58,7 +59,7 @@ export type ReadroomStackProps = {
 
 export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: ReadroomStackProps) {
   const router = useRouter();
-  const routedMemberLayer = useMemberLayer();
+  const pushOverlay = useOverlayPush();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const { state, readrooms: visible } = useReadroomSession(readrooms);
@@ -70,8 +71,9 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   // A close owns the navigation until the route changes: a second Esc landing
   // in that window must not pop another layer.
   const closingRef = useRef(false);
-  const memberLayerOpen = routedMemberLayer !== null;
-  const wasMemberLayerOpen = useRef(memberLayerOpen);
+  // The stack claims the overlay host role while mounted (the fallback host
+  // yields) and renders the store layers as the top of this PanelStack.
+  const { overlayLayers, overlayOpen, closeOverlay } = useOverlayTop(closingRef);
 
   const localTask = useMemo(
     () =>
@@ -89,11 +91,12 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
     closingRef.current = false;
-  }, [memberLayerOpen, task?.id, composing, localTaskId]);
+  }, [overlayLayers, task?.id, composing, localTaskId]);
 
-  // After the layer pops, focus returns to the card that opened it: the request
-  // crosses the page remount in the SPA session memory, and a local close
-  // (state change, no remount) runs the same effect on the id change.
+  // After the direct-load layer pops, focus returns to the card that opened
+  // it: the request crosses the page remount in the SPA session memory, and
+  // a local close (state change, no remount) runs the same effect on the id
+  // change (the overlay focus return lives in the shared hook).
   useEffect(() => {
     const id = stackMemory.takePendingCardFocus();
     if (id === null) return;
@@ -101,17 +104,6 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     card?.focus();
     card?.scrollIntoView({ block: "nearest" });
   }, [localTaskId]);
-
-  // Unlike a task route, an intercepted profile keeps this ReadroomStack and
-  // its author link mounted. The known id can therefore receive focus as soon
-  // as the profile slot disappears.
-  useEffect(() => {
-    const closed = !memberLayerOpen && wasMemberLayerOpen.current;
-    wasMemberLayerOpen.current = memberLayerOpen;
-    if (!closed) return;
-    const id = stackMemory.takePendingMemberFocus();
-    if (id) document.getElementById(id)?.focus();
-  }, [memberLayerOpen]);
 
   // The compose layer hands focus back to the control that opened it.
   useEffect(() => {
@@ -143,13 +135,11 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
         setLocalTaskId(id);
         return;
       }
-      if (!isPlainActivation(event)) return;
-      event?.preventDefault();
-      const route = readroomPath(id);
-      stackMemory.rememberPush(route);
-      router.push(route);
+      // The root slot intercepts the task above the current stack: the card
+      // stays mounted and returns focus when the overlay peels.
+      pushOverlay(readroomPath(id), readroomCardId(id))(event);
     },
-    [localTaskIds, router],
+    [localTaskIds, pushOverlay],
   );
 
   const closeTask = useCallback(() => {
@@ -157,8 +147,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     if (closingRef.current) return;
     closingRef.current = true;
     stackMemory.requestCardFocus(task.id);
-    // Only the route we pushed has the feed behind it in history; a deep-linked
-    // task closes by pushing the feed.
+    // Direct-load only (an overlay task peels with browser back instead).
     if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(READROOM_PATH);
   }, [router, task]);
@@ -168,16 +157,6 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     stackMemory.requestCardFocus(localTask.id);
     setLocalTaskId(null);
   }, [localTask]);
-
-  const closeMember = useCallback(() => {
-    if (!memberLayerOpen) return;
-    if (closingRef.current) return;
-    closingRef.current = true;
-    // An intercepted profile is only reached from a plain in-app activation.
-    // A fallback preserves the task when an unusual router history omits it.
-    if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
-    else router.push(task ? readroomPath(task.id) : READROOM_PATH);
-  }, [memberLayerOpen, router, task]);
 
   // UI-first: any member may open the composer; the reviewer+ rule arrives
   // with roles in Phase 5 (a gating test comes with it).
@@ -207,8 +186,8 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   );
 
   const closeTop = useCallback(() => {
-    if (memberLayerOpen) {
-      closeMember();
+    if (overlayOpen) {
+      closeOverlay();
       return;
     }
     if (composing) {
@@ -220,7 +199,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
       return;
     }
     closeTask();
-  }, [closeCompose, closeLocalTask, closeMember, closeTask, composing, localTask, memberLayerOpen]);
+  }, [closeCompose, closeLocalTask, closeOverlay, closeTask, composing, localTask, overlayOpen]);
 
   return (
     <PanelStack onCloseTop={closeTop}>
@@ -277,14 +256,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
           />
         </ShellPanel>
       ) : null}
-      {memberLayerOpen ? (
-        <ShellPanel
-          title={messages.members.panelTitle}
-          actions={<CloseButton onClose={closeMember} label={messages.shell.window.closeLabel} />}
-        >
-          {routedMemberLayer}
-        </ShellPanel>
-      ) : null}
+      {overlayLayerPanels(overlayLayers, closeOverlay)}
     </PanelStack>
   );
 }

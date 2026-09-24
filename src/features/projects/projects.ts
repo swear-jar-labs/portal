@@ -3,6 +3,7 @@
 // (contracts/index.ts) re-exports what other features consume.
 
 import type { Tone } from "@swearjar/dos";
+import { messages } from "@/content/messages";
 import type { TechId } from "@/content/techs";
 
 // The lifecycle reads as a chip; the archive is neutral.
@@ -122,6 +123,8 @@ export const MAX_POLICY_NEED = 10;
 export const PROJECTS_PATH = "/projects";
 export const PROJECT_PROPOSE_PATH = `${PROJECTS_PATH}/propose`;
 export const PROJECT_PROPOSE_BUTTON_ID = "projects-propose-button";
+// The URL key of the manage panel; its value is PROJECT_TEAM_MANAGE_QUERY.
+export const PROJECT_MANAGE_QUERY_KEY = "manage";
 export const PROJECT_TEAM_MANAGE_QUERY = "team";
 export const PROJECT_TEAM_MANAGE_BUTTON_ID = "project-team-manage-button";
 export const PROJECT_TAB_QUERY = "tab";
@@ -131,7 +134,13 @@ export const projectPath = (slug: ProjectSlug) => `${PROJECTS_PATH}/${slug}`;
 export const projectTabPath = (slug: ProjectSlug, tab: ProjectTab) =>
   tab === "project" ? projectPath(slug) : `${projectPath(slug)}?${PROJECT_TAB_QUERY}=${tab}`;
 export const projectTeamManagePath = (slug: ProjectSlug) =>
-  `${projectTabPath(slug, "team")}&manage=${PROJECT_TEAM_MANAGE_QUERY}`;
+  `${projectTabPath(slug, "team")}&${PROJECT_MANAGE_QUERY_KEY}=${PROJECT_TEAM_MANAGE_QUERY}`;
+
+// The project's browser tab title: the direct page's metadata and the overlay
+// store (soft navigation skips the slot's metadata) share one string.
+export function projectDocumentTitle(name: string): string {
+  return `${name} — ${messages.metadata.title}`;
+}
 
 // How many journal entries the project page previews; the rest lives behind
 // ALL THREADS on the project's board.

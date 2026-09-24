@@ -5,7 +5,7 @@ import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { formatAge } from "@/shared/age";
-import { PROJECTS_PATH, projectPath, projectStatusTones, type Project } from "./projects";
+import { projectPath, projectStatusTones, type Project } from "./projects";
 import styles from "./projects.module.css";
 
 export const projectCardId = (slug: string) => `project-card-${slug}`;
@@ -36,7 +36,7 @@ export function ProjectsCard({ project, now, current = false, onActivate }: Proj
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
           {project.lead ? (
-            <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
+            <MemberLink person={project.lead} />
           ) : (
             <Text as="span" role="danger">
               {messages.projects.team.leadVacant}

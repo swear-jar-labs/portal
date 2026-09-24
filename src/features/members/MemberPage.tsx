@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
 import { resolveAccount } from "@/features/account/contracts";
 import { getBoardMember, listThreadSummariesByAuthor } from "@/features/board/contracts";
-import { ShellPanel } from "@/features/shell";
-import { MemberLayerOutlet } from "./MemberLayerContext";
+import { OverlayOutlet, ShellPanel } from "@/features/shell";
 import { MemberView } from "./MemberView";
 
 export type MemberPageProps = {
@@ -23,9 +22,14 @@ export async function generateMemberMetadata({ params }: MemberPageProps): Promi
   const { user } = await params;
   const member = await publicMember(user);
   return {
-    title: member ? `${member.user} — ${messages.metadata.title}` : messages.members.metadata.title,
+    title: member ? memberDocumentTitle(member.user) : messages.members.metadata.title,
     description: messages.members.metadata.description,
   };
+}
+
+/** The member's browser tab title (soft navigation skips slot metadata). */
+function memberDocumentTitle(user: string): string {
+  return `${user} — ${messages.metadata.title}`;
 }
 
 /** The RSC body shared by the standalone page and an intercepted Board layer. */
@@ -40,12 +44,14 @@ export async function MemberBody({ params }: MemberPageProps) {
   return <MemberView member={member} threads={threads} now={now} />;
 }
 
-/** The same profile body mounted into a section's intercepted route slot. */
+/** The same profile body mounted into the root overlay slot (any section). */
 export async function InterceptedMemberPage(props: MemberPageProps) {
+  const { user } = await props.params;
   return (
-    <MemberLayerOutlet>
-      <MemberBody {...props} />
-    </MemberLayerOutlet>
+    <OverlayOutlet
+      documentTitle={memberDocumentTitle(user)}
+      panels={[{ title: messages.members.panelTitle, body: <MemberBody {...props} /> }]}
+    />
   );
 }
 

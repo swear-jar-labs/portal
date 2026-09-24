@@ -6,8 +6,15 @@ import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
 import { MemberLink } from "@/features/members/contracts";
+import { useOverlayPush } from "@/features/shell";
 import { ticketPath } from "@/features/tickets/contracts";
-import { phaseOf, phaseTones, readroomPath, READROOM_PATH, type Readroom } from "./readrooms";
+import {
+  phaseOf,
+  phaseTones,
+  readroomCardTicketId,
+  readroomPath,
+  type Readroom,
+} from "./readrooms";
 import styles from "./readroom.module.css";
 
 export const readroomCardId = (id: string) => `readroom-card-${id}`;
@@ -30,6 +37,7 @@ export function ReadroomCard({
   onActivate,
 }: ReadroomCardProps) {
   const phase = phaseOf(readroom, now);
+  const openOverlay = useOverlayPush();
   // A composed task has no route: the card activates in place (the title is a
   // button, so a context menu or drag cannot open a page that does not exist).
   const activation = local ? { onActivate } : { href: readroomPath(readroom.id), onActivate };
@@ -50,7 +58,7 @@ export function ReadroomCard({
       metaInteractive
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <MemberLink person={readroom.lead} sectionPath={READROOM_PATH} />
+          <MemberLink person={readroom.lead} />
           <Text as="span" role="hint">
             {[
               formatAge(readroom.createdAt, now, messages.readroom.age),
@@ -63,7 +71,12 @@ export function ReadroomCard({
         <Stack direction="row" gap={6} align="center" wrap className={styles.cardDetails}>
           <Tag tone={phaseTones[phase]}>{messages.readroom.phases[phase]}</Tag>
           {readroom.ticket === undefined ? null : (
-            <Link href={ticketPath(readroom.ticket)} className={styles.ticket}>
+            <Link
+              id={readroomCardTicketId(readroom.id)}
+              href={ticketPath(readroom.ticket)}
+              className={styles.ticket}
+              onClick={openOverlay(ticketPath(readroom.ticket), readroomCardTicketId(readroom.id))}
+            >
               <Tag>{`${messages.readroom.task.ticket} #${readroom.ticket}`}</Tag>
             </Link>
           )}

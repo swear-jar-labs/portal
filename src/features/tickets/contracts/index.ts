@@ -8,5 +8,5 @@
 export { ticketPath } from "../tickets";
 export { listTickets, listTicketsByProject } from "../data";
 export { useMergedTickets } from "../useTicketSession";
-export { TicketsTable } from "../TicketsTable";
+export { TicketsOverlayTable } from "../TicketsOverlayTable";
 export type { Ticket } from "../tickets";

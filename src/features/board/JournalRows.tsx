@@ -4,20 +4,16 @@ import type { MouseEvent } from "react";
 import { useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Stack } from "@swearjar/dos";
-import { isPlainActivation } from "@/lib/activation";
-import { stackMemory, useLoginPrompt, useShellSession } from "@/features/shell";
+import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import * as boardStore from "./board-store";
 import { FEED_PATH, threadPath, type BoardId, type TagId, type ThreadSummary } from "./threads";
-import { ThreadCard } from "./ThreadCard";
+import { ThreadCard, threadCardId } from "./ThreadCard";
 
 export type JournalRowsProps = {
   board: BoardId;
   // The board's fixture summaries (preview-sized by the caller).
   threads: readonly ThreadSummary[];
   now: string;
-  // Where author profiles intercept: the board's feed by default, the hosting
-  // section (a project page) when the journal reads there.
-  sectionPath?: string;
 };
 
 /** One board's journal as the board's own cards: the same ThreadCard the feed
@@ -26,8 +22,9 @@ export type JournalRowsProps = {
  * reads. Threads composed in this session have no route yet, so the journal
  * skips them (the board opens them in place); tag filtering stays global, as
  * on the board. */
-export function JournalRows({ board, threads, now, sectionPath = FEED_PATH }: JournalRowsProps) {
+export function JournalRows({ board, threads, now }: JournalRowsProps) {
   const router = useRouter();
+  const pushOverlay = useOverlayPush();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const state = useSyncExternalStore(
@@ -55,11 +52,9 @@ export function JournalRows({ board, threads, now, sectionPath = FEED_PATH }: Jo
   );
 
   const activateThread = (threadId: string, event?: MouseEvent<HTMLElement>) => {
-    if (!isPlainActivation(event)) return;
-    event?.preventDefault();
-    const route = threadPath(threadId);
-    stackMemory.rememberPush(route);
-    router.push(route);
+    // The root slot intercepts the thread above the current stack: the
+    // journal card stays mounted and returns focus when the overlay peels.
+    pushOverlay(threadPath(threadId), threadCardId(threadId))(event);
   };
 
   const filterTag = (tag: TagId) => {
@@ -75,7 +70,6 @@ export function JournalRows({ board, threads, now, sectionPath = FEED_PATH }: Jo
             thread={thread}
             now={now}
             voted={state.votedThreads.has(thread.id)}
-            sectionPath={sectionPath}
             onActivate={(event) => activateThread(thread.id, event)}
             onVote={() => gate(() => boardStore.toggleThreadVote(thread.id))}
             onFilterTag={filterTag}

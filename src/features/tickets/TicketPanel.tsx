@@ -6,7 +6,7 @@ import { messages, pluralForms } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { projectPath, type ClaimPolicy } from "@/features/projects/contracts";
 import { type ReadroomRef } from "@/features/readroom/contracts";
-import { useLoginPrompt, useShellSession } from "@/features/shell";
+import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import { plural } from "@/lib/plural";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
@@ -19,10 +19,10 @@ import * as ticketStore from "./ticket-store";
 import { useMergedTickets, useTicketState } from "./useTicketSession";
 import { claimRefusal, countDoneBySize, ladderNeed } from "./claim";
 import {
-  TICKETS_PATH,
   isBlocked,
   openBlockers,
   ticketBlockedAddButtonId,
+  ticketProjectLinkId,
   ticketBlockedSectionId,
   ticketEditButtonId,
   ticketLinksAddButtonId,
@@ -78,6 +78,7 @@ export function TicketPanel({
 }: TicketPanelProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
+  const openOverlay = useOverlayPush();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
   const all = useMergedTickets(tickets);
@@ -175,20 +176,26 @@ export function TicketPanel({
           <Text as="span" role="hint">
             {messages.tickets.dossier.project}
           </Text>
-          <Link href={projectPath(live.project)}>{projectName}</Link>
+          <Link
+            id={ticketProjectLinkId(live.project)}
+            href={projectPath(live.project)}
+            onClick={openOverlay(projectPath(live.project), ticketProjectLinkId(live.project))}
+          >
+            {projectName}
+          </Link>
         </Stack>
         <Stack direction="row" gap={6} align="center" wrap navRow>
           <Text as="span" role="hint">
             {messages.tickets.dossier.author}
           </Text>
-          <MemberLink person={live.author} sectionPath={TICKETS_PATH} />
+          <MemberLink person={live.author} />
         </Stack>
         <Stack direction="row" gap={6} align="center" wrap navRow>
           <Text as="span" role="hint">
             {messages.tickets.dossier.assignee}
           </Text>
           {live.assignee ? (
-            <MemberLink person={live.assignee} sectionPath={TICKETS_PATH} />
+            <MemberLink person={live.assignee} />
           ) : (
             <Text as="span" role="hint">
               {messages.tickets.feed.unassigned}

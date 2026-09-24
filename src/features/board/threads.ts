@@ -67,6 +67,12 @@ export function isTagId(value: string): value is TagId {
 export const FEED_PATH = "/forum";
 export const threadPath = (id: string) => `${FEED_PATH}/${id}`;
 
+// The thread's browser tab title: the direct page's metadata and the overlay
+// store (soft navigation skips the slot's metadata) share one string.
+export function threadDocumentTitle(thread: { title: string }): string {
+  return `${thread.title} — ${messages.metadata.title}`;
+}
+
 export type BoardRoleId = "member" | "contributor" | "maintainer";
 
 export type BoardMember = {

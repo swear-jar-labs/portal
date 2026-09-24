@@ -13,15 +13,16 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CloseButton } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { isPlainActivation } from "@/lib/activation";
 import {
+  overlayLayerPanels,
   PanelStack,
   ShellPanel,
   stackMemory,
   useLoginPrompt,
+  useOverlayPush,
+  useOverlayTop,
   useShellSession,
 } from "@/features/shell";
-import { useMemberLayer } from "@/features/members/contracts";
 import {
   composableBoardIds,
   FEED_PATH,
@@ -65,8 +66,8 @@ export function BoardFallback() {
 
 export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardStackProps) {
   const router = useRouter();
+  const pushOverlay = useOverlayPush();
   const pathname = usePathname();
-  const routedMemberLayer = useMemberLayer();
   const searchParams = useSearchParams();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
@@ -95,8 +96,9 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
   // A close owns the navigation until the route changes: a second Esc (or [X])
   // landing in that window must not pop another layer.
   const closingRef = useRef(false);
-  const memberLayerOpen = routedMemberLayer !== null;
-  const wasMemberLayerOpen = useRef(memberLayerOpen);
+  // The stack claims the overlay host role while mounted (the fallback host
+  // yields) and renders the store layers as the top of this PanelStack.
+  const { overlayLayers, overlayOpen, closeOverlay } = useOverlayTop(closingRef);
 
   const activeThreadId = thread?.id ?? localThreadId ?? undefined;
 
@@ -125,7 +127,7 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
     closingRef.current = false;
-  }, [memberLayerOpen, thread?.id]);
+  }, [overlayLayers, thread?.id]);
 
   // Filters are client state; the URL keeps the feed deep-linkable without an
   // RSC refetch — replaceState rewrites the address only.
@@ -158,17 +160,6 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
     post?.focus();
     post?.scrollIntoView({ block: "center" });
   }, [localThreadId]);
-
-  // Unlike a thread route, an intercepted profile keeps this BoardStack and
-  // its author link mounted. The known id can therefore receive focus as soon
-  // as the profile slot disappears.
-  useEffect(() => {
-    const closed = !memberLayerOpen && wasMemberLayerOpen.current;
-    wasMemberLayerOpen.current = memberLayerOpen;
-    if (!closed) return;
-    const id = stackMemory.takePendingMemberFocus();
-    if (id) document.getElementById(id)?.focus();
-  }, [memberLayerOpen]);
 
   // The compose layer hands focus back to the control that opened it (or to the
   // card it just created). A card hidden by the active filters falls back to
@@ -240,13 +231,11 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
         setLocalThreadId(threadId);
         return;
       }
-      if (!isPlainActivation(event)) return;
-      event?.preventDefault();
-      const route = threadPath(threadId);
-      stackMemory.rememberPush(route);
-      router.push(route);
+      // The root slot intercepts the thread above the current stack: the card
+      // stays mounted and returns focus when the overlay peels.
+      pushOverlay(threadPath(threadId), threadCardId(threadId))(event);
     },
-    [router, state.addedThreads],
+    [pushOverlay, state.addedThreads],
   );
 
   const voteThread = useCallback(
@@ -261,8 +250,10 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
     if (closingRef.current) return;
     closingRef.current = true;
     stackMemory.requestCardFocus(thread.id);
-    // Only the route we pushed has the feed behind it in history; a deep-linked
-    // thread (or one history walked back to) closes by pushing the feed.
+    // Direct-load only (an overlay thread peels with browser back instead):
+    // only the route we pushed has the feed behind it in history; a
+    // deep-linked thread (or one history walked back to) closes by pushing
+    // the feed.
     if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(FEED_PATH);
   }, [router, thread]);
@@ -281,16 +272,6 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
     }
     setLocalThreadId(null);
   }, [openedLocalThread]);
-
-  const closeMember = useCallback(() => {
-    if (!memberLayerOpen) return;
-    if (closingRef.current) return;
-    closingRef.current = true;
-    // An intercepted profile is only reached from a plain in-app activation.
-    // A fallback preserves the thread when an unusual router history omits it.
-    if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
-    else router.push(thread ? threadPath(thread.id) : FEED_PATH);
-  }, [memberLayerOpen, router, thread]);
 
   const openCompose = useCallback(() => {
     gate(() => {
@@ -317,8 +298,8 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
   );
 
   const closeTop = useCallback(() => {
-    if (memberLayerOpen) {
-      closeMember();
+    if (overlayOpen) {
+      closeOverlay();
       return;
     }
     if (composing) {
@@ -333,11 +314,11 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
   }, [
     closeCompose,
     closeLocalThread,
-    closeMember,
+    closeOverlay,
     closeThread,
     composing,
-    memberLayerOpen,
     openedLocalThread,
+    overlayOpen,
   ]);
 
   return (
@@ -395,14 +376,7 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
             />
           </ShellPanel>
         ) : null}
-        {memberLayerOpen ? (
-          <ShellPanel
-            title={messages.members.panelTitle}
-            actions={<CloseButton onClose={closeMember} label={messages.shell.window.closeLabel} />}
-          >
-            {routedMemberLayer}
-          </ShellPanel>
-        ) : null}
+        {overlayLayerPanels(overlayLayers, closeOverlay)}
       </PanelStack>
     </ThreadActionsProvider>
   );

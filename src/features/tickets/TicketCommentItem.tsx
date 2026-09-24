@@ -10,7 +10,7 @@ import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { formatAge } from "@/shared/age";
 import { ticketCommentSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
-import { TICKETS_PATH, ticketCommentId, type TicketComment } from "./tickets";
+import { ticketCommentId, type TicketComment } from "./tickets";
 import styles from "./tickets.module.css";
 
 const EDIT_ROWS = 3;
@@ -141,7 +141,7 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
       tabIndex={0}
     >
       <Stack direction="row" gap={6} align="center" wrap>
-        <MemberLink person={comment.author} avatarSize="sm" sectionPath={TICKETS_PATH} />
+        <MemberLink person={comment.author} avatarSize="sm" />
         <Text as="span" role="hint">
           {meta.join(" · ")}
         </Text>

@@ -13,8 +13,17 @@ import { useRouter } from "next/navigation";
 import { CloseButton } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { isPlainActivation } from "@/lib/activation";
-import { useMemberLayer } from "@/features/members/contracts";
+import {
+  overlayLayerPanels,
+  PanelStack,
+  ShellPanel,
+  stackMemory,
+  useLoginPrompt,
+  useOverlayPush,
+  useOverlayTop,
+  useShellSession,
+} from "@/features/shell";
+import { type ReadroomRef } from "@/features/readroom/contracts";
 import {
   DEFAULT_CLAIM_POLICY,
   livePoliciesByProject,
@@ -22,20 +31,12 @@ import {
   projectStoreSnapshot,
   subscribeProjectStore,
 } from "@/features/projects/contracts";
-import { type ReadroomRef } from "@/features/readroom/contracts";
-import {
-  PanelStack,
-  ShellPanel,
-  stackMemory,
-  useLoginPrompt,
-  useShellSession,
-} from "@/features/shell";
 import { avatarFor } from "@/shared/members";
 import { TicketCompose } from "./TicketCompose";
 import { TicketEdit } from "./TicketEdit";
+import { submitTicketEdit } from "./edit-submit";
 import { TicketPanel } from "./TicketPanel";
 import { TicketsFeed, type TicketProjectOption } from "./TicketsFeed";
-import * as ticketStore from "./ticket-store";
 import { type TicketComposeInput, type TicketEditInput } from "./schema";
 import {
   composeButtonId,
@@ -77,9 +78,9 @@ export function TicketsStack({
   ticket,
 }: TicketsStackProps) {
   const router = useRouter();
+  const pushOverlay = useOverlayPush();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
-  const routedMemberLayer = useMemberLayer();
   const [query, setQuery] = useState(initialQuery);
   const [composing, setComposing] = useState(initialCompose);
   const [localKey, setLocalKey] = useState<string | null>(null);
@@ -87,8 +88,9 @@ export function TicketsStack({
   const [editing, setEditing] = useState<Ticket | null>(null);
   const closingRef = useRef(false);
   const returnFocusRef = useRef<string | null>(null);
-  const memberLayerOpen = routedMemberLayer !== null;
-  const wasMemberLayerOpen = useRef(memberLayerOpen);
+  // The stack claims the overlay host role while mounted (the fallback host
+  // yields) and renders the store layers as the top of this PanelStack.
+  const { overlayLayers, overlayOpen, closeOverlay } = useOverlayTop(closingRef);
   const { state, visible, localKeys, addTicket } = useTicketSession({ tickets, query });
   // The maintainers' tuned ladders: the dossier gates ASSIGN on the live one.
   const projectPolicies = useSyncExternalStore(
@@ -115,7 +117,7 @@ export function TicketsStack({
 
   useEffect(() => {
     closingRef.current = false;
-  }, [composing, localKey, memberLayerOpen, ticket?.ticket.key]);
+  }, [composing, localKey, overlayLayers, ticket?.ticket.key]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -137,14 +139,6 @@ export function TicketsStack({
     row?.focus();
     row?.scrollIntoView({ block: "nearest" });
   }, [localKey, ticket?.ticket.key]);
-
-  useEffect(() => {
-    const closed = !memberLayerOpen && wasMemberLayerOpen.current;
-    wasMemberLayerOpen.current = memberLayerOpen;
-    if (!closed) return;
-    const id = stackMemory.takePendingMemberFocus();
-    if (id) document.getElementById(id)?.focus();
-  }, [memberLayerOpen]);
 
   useEffect(() => {
     if (composing || editing) return;
@@ -174,13 +168,11 @@ export function TicketsStack({
         setLocalKey(key);
         return;
       }
-      if (!isPlainActivation(event)) return;
-      event?.preventDefault();
-      const route = ticketPath(key);
-      stackMemory.rememberPush(route);
-      router.push(route);
+      // The root slot intercepts the dossier above the current stack: the row
+      // stays mounted and returns focus when the overlay peels.
+      pushOverlay(ticketPath(key), ticketRowId(key))(event);
     },
-    [localKeys, router],
+    [localKeys, pushOverlay],
   );
 
   const openCompose = useCallback(() => {
@@ -217,6 +209,7 @@ export function TicketsStack({
     if (!ticket || closingRef.current) return;
     closingRef.current = true;
     stackMemory.requestCardFocus(ticket.ticket.key);
+    // Direct-load only (an overlay dossier peels with browser back instead).
     if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
     else router.push(TICKETS_PATH);
   }, [router, ticket]);
@@ -233,17 +226,7 @@ export function TicketsStack({
   const submitEdit = useCallback(
     (input: TicketEditInput, assignee: string | null | undefined) => {
       if (editing === null || session === null) return;
-      // Taking a ticket happens on its dossier (ASSIGN TO ME, gated by the
-      // ladder); the edit layer never claims. The assignee here is the
-      // maintainer's reassignment, ungated by design.
-      ticketStore.editTicket(editing.id, input, {
-        ...(assignee === undefined
-          ? {}
-          : {
-              assignee: assignee === null ? null : { user: assignee, avatar: avatarFor(assignee) },
-            }),
-        previousClosedAt: editing.closedAt,
-      });
+      submitTicketEdit(editing, input, assignee);
       returnFocusRef.current = ticketEditButtonId;
       setEditing(null);
     },
@@ -256,16 +239,12 @@ export function TicketsStack({
     setLocalKey(null);
   }, [localTicket]);
 
-  const closeMember = useCallback(() => {
-    if (!memberLayerOpen || closingRef.current) return;
-    closingRef.current = true;
-    if (stackMemory.wasMemberPushedFrom(window.location.pathname)) router.back();
-    else router.push(ticket ? ticketPath(ticket.ticket.key) : TICKETS_PATH);
-  }, [memberLayerOpen, router, ticket]);
-
   const closeTop = useCallback(() => {
-    if (memberLayerOpen) closeMember();
-    else if (editing) closeEdit();
+    if (overlayOpen) {
+      closeOverlay();
+      return;
+    }
+    if (editing) closeEdit();
     else if (composing) closeCompose();
     else if (localTicket) closeLocalTicket();
     else closeTicket();
@@ -273,12 +252,12 @@ export function TicketsStack({
     closeCompose,
     closeEdit,
     closeLocalTicket,
-    closeMember,
+    closeOverlay,
     closeTicket,
     composing,
     editing,
     localTicket,
-    memberLayerOpen,
+    overlayOpen,
   ]);
 
   return (
@@ -369,14 +348,7 @@ export function TicketsStack({
           />
         </ShellPanel>
       ) : null}
-      {memberLayerOpen ? (
-        <ShellPanel
-          title={messages.members.panelTitle}
-          actions={<CloseButton onClose={closeMember} label={messages.shell.window.closeLabel} />}
-        >
-          {routedMemberLayer}
-        </ShellPanel>
-      ) : null}
+      {overlayLayerPanels(overlayLayers, closeOverlay)}
     </PanelStack>
   );
 }

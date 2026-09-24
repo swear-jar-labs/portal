@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button, Heading, Select, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { useOverlayPush } from "@/features/shell";
 import { projectTeamManagePath, type Project } from "@/features/projects/contracts";
 import styles from "./AdminQueue.module.css";
 
@@ -17,8 +18,12 @@ const FILTER_LABELS: Record<TeamFilter, string> = {
   [FILTER_NO_MAINTAINER]: copy.filterNoMaintainer,
 };
 
+// The focus-return anchor of the queue row's MANAGE TEAM button.
+const adminManageButtonId = (slug: string) => `admin-manage-${slug}`;
+
 export function AdminProjectTeams({ projects }: { projects: readonly Project[] }) {
   const [filter, setFilter] = useState<TeamFilter>(FILTER_ALL);
+  const pushOverlay = useOverlayPush();
   const live = projects.filter((project) => project.status !== "archived");
   const visible =
     filter === FILTER_NO_MAINTAINER
@@ -54,7 +59,16 @@ export function AdminProjectTeams({ projects }: { projects: readonly Project[] }
             {project.lead === null ? (
               <Text role="danger">{messages.projects.team.leadVacant}</Text>
             ) : null}
-            <Button href={projectTeamManagePath(project.slug)}>
+            <Button
+              id={adminManageButtonId(project.slug)}
+              href={projectTeamManagePath(project.slug)}
+              // The management layer opens above the admin page (the fallback
+              // host renders it): the queue keeps its state behind.
+              onClick={pushOverlay(
+                projectTeamManagePath(project.slug),
+                adminManageButtonId(project.slug),
+              )}
+            >
               {messages.projects.team.manage}
             </Button>
           </Stack>

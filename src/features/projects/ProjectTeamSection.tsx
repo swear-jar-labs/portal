@@ -7,12 +7,8 @@ import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { stackMemory, useShellSession } from "@/features/shell";
 import { mockProjectTeamAction } from "./mock-team-actions";
-import {
-  PROJECTS_PATH,
-  PROJECT_TEAM_MANAGE_BUTTON_ID,
-  projectTeamManagePath,
-  type Project,
-} from "./projects";
+import { useProjectManageRequest } from "./project-manage-request";
+import { PROJECT_TEAM_MANAGE_BUTTON_ID, projectTeamManagePath, type Project } from "./projects";
 import type { ProjectTeam } from "./team-store";
 
 type Props = { project: Project; team: ProjectTeam };
@@ -20,6 +16,7 @@ const copy = messages.projects.team;
 
 export function ProjectTeamSection({ project, team }: Props) {
   const router = useRouter();
+  const requestManage = useProjectManageRequest();
   const session = useShellSession();
   const [error, setError] = useState<keyof typeof copy.errors | null>(null);
   const [pending, startTransition] = useTransition();
@@ -53,6 +50,12 @@ export function ProjectTeamSection({ project, team }: Props) {
           <Button
             id={PROJECT_TEAM_MANAGE_BUTTON_ID}
             onClick={() => {
+              if (requestManage !== null) {
+                requestManage(project.slug);
+                return;
+              }
+              // Hosted by another section's stack (a project overlay): the
+              // query navigation upserts the interceptor's second panel.
               const route = projectTeamManagePath(project.slug);
               stackMemory.rememberPush(route);
               router.push(route);
@@ -68,7 +71,7 @@ export function ProjectTeamSection({ project, team }: Props) {
           {messages.projects.about.lead}
         </Text>
         {project.lead ? (
-          <MemberLink person={project.lead} sectionPath={PROJECTS_PATH} />
+          <MemberLink person={project.lead} />
         ) : (
           <Text as="span" role="danger">
             {copy.leadVacant}
@@ -80,7 +83,7 @@ export function ProjectTeamSection({ project, team }: Props) {
           {messages.projects.about.maintainers}
         </Text>
         {team.maintainers.map((person) => (
-          <MemberLink key={person.user} person={person} sectionPath={PROJECTS_PATH} />
+          <MemberLink key={person.user} person={person} />
         ))}
       </Stack>
       {team.maintainers.length === 0 ? <Text role="danger">{copy.noMaintainer}</Text> : null}
@@ -93,9 +96,7 @@ export function ProjectTeamSection({ project, team }: Props) {
             {copy.empty}
           </Text>
         ) : (
-          team.members.map((person) => (
-            <MemberLink key={person.user} person={person} sectionPath={PROJECTS_PATH} />
-          ))
+          team.members.map((person) => <MemberLink key={person.user} person={person} />)
         )}
       </Stack>
       <Stack direction="row" gap={6} align="center" wrap navRow>
@@ -107,9 +108,7 @@ export function ProjectTeamSection({ project, team }: Props) {
             {copy.noReviewers}
           </Text>
         ) : (
-          team.reviewers.map((person) => (
-            <MemberLink key={person.user} person={person} sectionPath={PROJECTS_PATH} />
-          ))
+          team.reviewers.map((person) => <MemberLink key={person.user} person={person} />)
         )}
       </Stack>
       {canJoin || canLeave ? (

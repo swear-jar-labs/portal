@@ -8,7 +8,7 @@ import { useShellDialogs } from "@/features/shell";
 import { formatAge } from "@/shared/age";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { noteElementId, READROOM_CARD_ATTR, READROOM_PATH, type ReadroomNote } from "./readrooms";
+import { noteElementId, READROOM_CARD_ATTR, type ReadroomNote } from "./readrooms";
 import { noteSchema } from "./schema";
 import styles from "./readroom.module.css";
 
@@ -142,7 +142,7 @@ export function ReadroomNoteItem({
     >
       <Stack gap={4}>
         <Stack direction="row" gap={6} align="center" wrap>
-          <MemberLink person={note.author} avatarSize="sm" sectionPath={READROOM_PATH} />
+          <MemberLink person={note.author} avatarSize="sm" />
           {own ? (
             <Text as="span" role="accent">
               {messages.readroom.notes.yours}

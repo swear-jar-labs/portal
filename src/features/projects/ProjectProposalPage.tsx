@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
-import { getActorSession } from "@/features/account/contracts";
 import { collectActivity } from "./activity";
 import { listProjects } from "./data";
-import { projectSubmissionsFor } from "./mock-submissions";
-import { ProjectProposalForm } from "./ProjectProposalForm";
+import { loadProjectProposalLayer } from "./ProjectOverlay";
 import { rankProjects } from "./projects";
 import { ProjectsStack } from "./ProjectsStack";
 
@@ -14,7 +12,7 @@ export const projectProposalMetadata: Metadata = {
 };
 
 export async function ProjectProposalPage() {
-  const [actor, projects] = await Promise.all([getActorSession(), listProjects()]);
+  const [proposal, projects] = await Promise.all([loadProjectProposalLayer(), listProjects()]);
   const now = new Date().toISOString();
   const activity = await collectActivity(
     projects.map((project) => project.slug),
@@ -24,12 +22,7 @@ export async function ProjectProposalPage() {
     <ProjectsStack
       projects={rankProjects(projects, activity, now)}
       now={now}
-      proposalLayer={
-        <ProjectProposalForm
-          level={actor?.level ?? "guest"}
-          submissions={actor ? projectSubmissionsFor(actor.user) : []}
-        />
-      }
+      proposalLayer={proposal.layer}
     />
   );
 }

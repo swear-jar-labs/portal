@@ -4,17 +4,10 @@ import type { MemberLinkProps } from "@/features/members/contracts";
 
 describe("members contract", () => {
   it("publishes exactly the agreed surface", () => {
-    expect(Object.keys(membersContract).sort()).toEqual([
-      "EmptyMemberLayer",
-      "MemberLayerLayout",
-      "MemberLayerOutlet",
-      "MemberLayerProvider",
-      "MemberLink",
-      "useMemberLayer",
-    ]);
+    expect(Object.keys(membersContract).sort()).toEqual(["MemberLink"]);
   });
 
   it("keeps the published link props type importable", () => {
-    expectTypeOf<MemberLinkProps>().toHaveProperty("sectionPath");
+    expectTypeOf<MemberLinkProps>().toHaveProperty("person");
   });
 });

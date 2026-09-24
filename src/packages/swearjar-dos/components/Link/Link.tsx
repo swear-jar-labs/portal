@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type MouseEvent, type ReactNode } from "react";
 import { cx, toneStyle, type Tone } from "../tone";
 import styles from "./Link.module.css";
 
@@ -13,6 +13,9 @@ export type LinkProps = {
   download?: string;
   className?: string;
   id?: string;
+  // An in-app activation hook: the consumer decides when the native
+  // navigation is replaced (the shell's routed overlays).
+  onClick?: (event?: MouseEvent<HTMLElement>) => void;
 };
 
 export function Link({
@@ -24,6 +27,7 @@ export function Link({
   download,
   className,
   id,
+  onClick,
 }: LinkProps) {
   const externalProps = external ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
@@ -33,6 +37,7 @@ export function Link({
       href={href}
       className={cx(styles.link, underline && styles.underline, className)}
       style={toneStyle(tone)}
+      onClick={onClick}
       {...externalProps}
       {...(download === undefined ? {} : { download })}
     >

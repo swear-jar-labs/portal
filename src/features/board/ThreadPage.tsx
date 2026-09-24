@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
 import { getThread, listThreads } from "./data";
 import { BoardFallback, BoardStack } from "./BoardStack";
-import { ThreadPanel } from "./ThreadPanel";
+import { loadThreadLayer } from "./ThreadOverlay";
+import { threadDocumentTitle } from "./threads";
 
 export type ThreadPageProps = {
   params: Promise<{ id: string }>;
@@ -15,17 +15,15 @@ export async function generateThreadMetadata({ params }: ThreadPageProps): Promi
   const { id } = await params;
   const thread = await getThread(id);
   return {
-    title: thread ? `${thread.title} — ${messages.metadata.title}` : messages.board.metadata.title,
+    title: thread ? threadDocumentTitle(thread) : messages.board.metadata.title,
   };
 }
 
 export async function ThreadPage({ params }: ThreadPageProps) {
   const { id } = await params;
-  const thread = await getThread(id);
-  if (!thread) notFound();
-
-  const [threads, projects] = await Promise.all([listThreads(), listProjects()]);
   const now = new Date().toISOString();
+  const thread = await loadThreadLayer(id, now);
+  const [threads, projects] = await Promise.all([listThreads(), listProjects()]);
 
   return (
     <Suspense fallback={<BoardFallback />}>
@@ -37,11 +35,7 @@ export async function ThreadPage({ params }: ThreadPageProps) {
           name: project.name,
           archived: project.status === "archived",
         }))}
-        thread={{
-          id: thread.id,
-          title: thread.title,
-          layer: <ThreadPanel thread={thread} now={now} />,
-        }}
+        thread={thread}
       />
     </Suspense>
   );

@@ -4,6 +4,7 @@
 // projection of the same facts (TECH.md §5).
 
 import type { Tone } from "@swearjar/dos";
+import { messages } from "@/content/messages";
 import { techIds, type TechId } from "@/content/techs";
 
 export const readroomPhases = ["collecting", "reviewing", "published", "archived"] as const;
@@ -81,6 +82,17 @@ export const noteElementId = (id: string) => `readroom-note-${id}`;
 // The readroom's URL canon.
 export const READROOM_PATH = "/readroom";
 export const readroomPath = (id: string) => `${READROOM_PATH}/${id}`;
+
+// The task's browser tab title: the direct page's metadata and the overlay
+// store (soft navigation skips the slot's metadata) share one string.
+export function readroomDocumentTitle(task: { title: string }): string {
+  return `${task.title} — ${messages.metadata.title}`;
+}
+
+// Focus-return anchors of the cross-section ticket links: the ticket layer
+// hands the keyboard back to the control that opened it.
+export const readroomTaskTicketId = (key: string) => `readroom-task-ticket-${key}`;
+export const readroomCardTicketId = (id: string) => `readroom-card-ticket-${id}`;
 
 // The ticket dossier's reverse list (readroom-ticket-links): the cycles
 // reading one ticket's code. The full manifest arrives with that slice;

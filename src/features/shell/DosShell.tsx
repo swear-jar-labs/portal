@@ -53,6 +53,9 @@ import { useCommandRunner, type DialogState } from "./useCommandRunner";
 import { CMD_ZONE } from "./zones";
 import { SessionProvider } from "./SessionContext";
 import { ShellDialogsProvider, type ShellDialogs } from "./ShellDialogs";
+import { OverlayHost } from "./OverlayHost";
+import { OverlayDocumentTitle, useOverlayFocusReturn } from "./OverlayLayers";
+import { useOverlayHostClaimed, useOverlayLayers } from "./overlay-store";
 import { ShellControlsProvider } from "./ShellControls";
 import { FileManagerProvider } from "./FileManager/FileManagerContext";
 import { FileManagerPanel } from "./FileManager/FileManagerPanel";
@@ -70,6 +73,8 @@ export type ShellSession = { user: string; level: CommunityLevel; admin: boolean
 
 export type DosShellProps = {
   children: ReactNode;
+  /** The root `@overlay` slot: outlets register into the store, render null. */
+  overlay: ReactNode;
   session: ShellSession;
   logoff: () => Promise<void>;
 };
@@ -86,7 +91,22 @@ function ShellSearchSync({ onSearch }: { onSearch: (search: string) => void }) {
   return null;
 }
 
-export function DosShell({ children, session, logoff }: DosShellProps) {
+// Pages without a section stack (/admin, the standalone profile) have nobody
+// to render the overlay chain: when the store is non-empty and no stack
+// claimed the host role, the fallback host replaces the page. The host
+// unmounts the page underneath (admin tabs reset on close) — accepted.
+function ShellOverlayBody({ children }: { children: ReactNode }) {
+  const layers = useOverlayLayers();
+  const hostClaimed = useOverlayHostClaimed();
+  // The focus return lives on the always-mounted body: a fallback host
+  // unmounts together with its last layer, so its own effect would never run
+  // for the closing commit.
+  useOverlayFocusReturn(layers);
+  if (layers.length > 0 && !hostClaimed) return <OverlayHost />;
+  return <>{children}</>;
+}
+
+export function DosShell({ children, overlay, session, logoff }: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
@@ -339,7 +359,11 @@ export function DosShell({ children, session, logoff }: DosShellProps) {
             />
             <ShellControlsProvider enabled={controlsEnabled}>
               <SessionProvider session={session}>
-                <ShellDialogsProvider dialogs={shellDialogs}>{children}</ShellDialogsProvider>
+                <ShellDialogsProvider dialogs={shellDialogs}>
+                  {overlay}
+                  <OverlayDocumentTitle />
+                  <ShellOverlayBody>{children}</ShellOverlayBody>
+                </ShellDialogsProvider>
               </SessionProvider>
             </ShellControlsProvider>
           </Stack>

@@ -5,7 +5,7 @@ import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
 import { getActorSession, mockLogoff } from "@/features/account";
-import { DosShell } from "@/features/shell";
+import { ChildrenPathProvider, DosShell } from "@/features/shell";
 import { messages } from "@/content/messages";
 
 const greybeard18 = localFont({
@@ -35,16 +35,18 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children, overlay }: LayoutProps<"/">) {
   const session = await getActorSession();
 
   return (
     <html lang="en" className={`${greybeard18.variable} ${greybeard16.variable}`}>
       <body>
         <Crt>
-          <DosShell session={session} logoff={mockLogoff}>
-            {children}
-          </DosShell>
+          <ChildrenPathProvider>
+            <DosShell session={session} logoff={mockLogoff} overlay={overlay}>
+              {children}
+            </DosShell>
+          </ChildrenPathProvider>
         </Crt>
       </body>
     </html>

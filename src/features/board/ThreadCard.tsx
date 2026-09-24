@@ -5,14 +5,7 @@ import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { MemberLink } from "@/features/members/contracts";
-import {
-  formatAge,
-  tagTones,
-  threadPath,
-  FEED_PATH,
-  type TagId,
-  type ThreadSummary,
-} from "./threads";
+import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "./threads";
 import { VoteButton } from "./VoteButton";
 import styles from "./board.module.css";
 
@@ -26,9 +19,6 @@ export type ThreadCardProps = {
   // A thread composed in this session has no route: its card activates in
   // place instead of linking to a page that does not exist.
   local?: boolean;
-  // Where author profiles intercept: the board's feed by default, the hosting
-  // section when the card reads outside it (a project journal).
-  sectionPath?: string;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
   onVote: () => void;
   onFilterTag: (tag: TagId) => void;
@@ -40,7 +30,6 @@ export function ThreadCard({
   current = false,
   voted,
   local = false,
-  sectionPath = FEED_PATH,
   onActivate,
   onVote,
   onFilterTag,
@@ -73,7 +62,7 @@ export function ThreadCard({
       }
       meta={
         <Stack direction="row" gap={6} align="center" wrap>
-          <MemberLink person={thread.author} sectionPath={sectionPath} />
+          <MemberLink person={thread.author} />
           <Text as="span" role="hint">
             {[
               formatAge(thread.lastActivityAt, now),

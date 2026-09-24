@@ -20,18 +20,21 @@ export type StackMemory = {
   takePushedFrom: (route: string) => boolean;
   requestCardFocus: (threadId: string) => void;
   takePendingCardFocus: () => string | null;
-  rememberMemberPush: (route: string, originId: string) => void;
-  wasMemberPushedFrom: (route: string) => boolean;
-  takePendingMemberFocus: () => string | null;
+  rememberOverlayPush: (route: string, originId: string | null) => void;
+  takePendingOverlayFocus: () => string | null;
 };
 
 export function createStackMemory(): StackMemory {
   const pushedRoutes: string[] = [];
   let focusReturnId: string | null = null;
-  // A profile intercepted above a route keeps the thread mounted, so the
-  // known id that opened it remains a valid focus target when the layer pops.
-  let memberPushedRoute: string | null = null;
-  let memberFocusOriginId: string | null = null;
+  // The overlay chain of the same idea, keyed per pushed route: every store
+  // layer opens with a SPA push (an intercept never fires on direct load), so
+  // closing one is always router.back(). The origin id is the stable element
+  // that opened the layer (a card id, the MemberLink useId); links without a
+  // cheap stable id pass null and skip the focus return. The entries form a
+  // stack so a layer opened above another keeps its own marker — and its own
+  // focus origin — for its close.
+  const overlayEntries: { route: string; originId: string | null }[] = [];
 
   return {
     rememberPush(route) {
@@ -53,18 +56,12 @@ export function createStackMemory(): StackMemory {
       focusReturnId = null;
       return id;
     },
-    rememberMemberPush(route, originId) {
-      memberPushedRoute = route;
-      memberFocusOriginId = originId;
+    rememberOverlayPush(route, originId) {
+      if (overlayEntries.at(-1)?.route === route) return;
+      overlayEntries.push({ route, originId });
     },
-    wasMemberPushedFrom(route) {
-      return memberPushedRoute === route;
-    },
-    takePendingMemberFocus() {
-      const originId = memberFocusOriginId;
-      memberPushedRoute = null;
-      memberFocusOriginId = null;
-      return originId;
+    takePendingOverlayFocus() {
+      return overlayEntries.pop()?.originId ?? null;
     },
   };
 }

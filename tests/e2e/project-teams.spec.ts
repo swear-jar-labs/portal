@@ -26,6 +26,9 @@ test("a Participant sees the Member path without team controls", async ({ page }
 test("two Members join independently and a Maintainer grants and revokes a project Reviewer", async ({
   page,
 }) => {
+  // Five logon sessions and two admin-style layer visits: the scenario runs
+  // long under the full parallel suite.
+  test.setTimeout(60_000);
   await logon(page, "grace");
   await page.goto("/projects/tooling");
   await waitForHydration(page);
@@ -133,9 +136,11 @@ test("admin restores a project with no Maintainer through the responsibility que
   const manage = page.getByRole("region", { name: "MANAGE TEAM" });
   const memberSearch = manage.getByRole("combobox", { name: "Member" });
   // A full navigation can expose the server-rendered input before its client
-  // handler hydrates; wait for typing to open the actual search list.
+  // handler hydrates; clear the box each attempt so the post-hydration fill
+  // fires a change (a repeated fill of the same value is a no-op).
   await expect
     .poll(async () => {
+      await memberSearch.fill("");
       await memberSearch.fill("ken");
       return memberSearch.getAttribute("aria-expanded");
     })

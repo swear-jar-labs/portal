@@ -3,6 +3,7 @@
 // (contracts/index.ts) re-exports what other features consume.
 
 import type { Tone } from "@swearjar/dos";
+import { messages } from "@/content/messages";
 import {
   dynamicTicketPrefix,
   fixtureTicketPrefixes,
@@ -168,6 +169,23 @@ export function nextTicketKey(project: ProjectSlug, tickets: readonly Ticket[]):
 // first consumer.)
 export const TICKETS_PATH = "/tickets";
 export const ticketPath = (key: string) => `${TICKETS_PATH}/${key}`;
+// The overlay dossier's edit panel is a query of the same layer: opening it
+// upserts the two-panel record, closing it is browser back (the manage=team
+// canon on the projects side).
+export const TICKET_EDIT_QUERY = "edit";
+export const TICKET_EDIT_QUERY_VALUE = "1";
+export const ticketEditPath = (key: string) =>
+  `${ticketPath(key)}?${TICKET_EDIT_QUERY}=${TICKET_EDIT_QUERY_VALUE}`;
+
+// The ticket's browser tab title: the direct page's metadata and the overlay
+// store (soft navigation skips the slot's metadata) share one string.
+export function ticketDocumentTitle(ticket: { key: string; title: string }): string {
+  return `${ticket.key}: ${ticket.title} — ${messages.metadata.title}`;
+}
+
+// The dossier's project link: the focus-return anchor of the project layer
+// opened above the ticket.
+export const ticketProjectLinkId = (slug: ProjectSlug) => `ticket-project-${slug}`;
 
 // The tracker row's contract attribute: the stack marks its rows for focus
 // return, the same way board and project cards do.

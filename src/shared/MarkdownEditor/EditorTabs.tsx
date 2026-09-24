@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Stack } from "@swearjar/dos";
+import { SegmentedControl } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 
 export type EditorTab = "write" | "preview";
@@ -15,23 +15,15 @@ export type EditorTabsProps = {
 export function EditorTabs({ tab, onTab }: EditorTabsProps) {
   const copy = messages.editor;
   return (
-    <Stack direction="row" gap={4} wrap>
-      <Button
-        variant={tab === "write" ? "default" : "ghost"}
-        onClick={() => onTab("write")}
-        ariaLabel={copy.writeTab}
-        ariaPressed={tab === "write"}
-      >
-        {copy.writeTab}
-      </Button>
-      <Button
-        variant={tab === "preview" ? "default" : "ghost"}
-        onClick={() => onTab("preview")}
-        ariaLabel={copy.previewTab}
-        ariaPressed={tab === "preview"}
-      >
-        {copy.previewTab}
-      </Button>
-    </Stack>
+    <SegmentedControl
+      mode="buttons"
+      label={copy.modeLabel}
+      options={[
+        { value: "write", label: copy.writeTab },
+        { value: "preview", label: copy.previewTab },
+      ]}
+      value={tab}
+      onChange={onTab}
+    />
   );
 }

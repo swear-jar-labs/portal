@@ -19,8 +19,6 @@ type ButtonControlProps = ButtonBaseProps & {
   onClick?: ButtonHTMLAttributes<HTMLButtonElement>["onClick"];
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
-  // A toggle button (the editor's write/preview tabs) exposes its state.
-  ariaPressed?: boolean;
 };
 
 type ButtonLinkProps = ButtonBaseProps & {
@@ -30,7 +28,6 @@ type ButtonLinkProps = ButtonBaseProps & {
   onClick?: never;
   type?: never;
   disabled?: never;
-  ariaPressed?: never;
 };
 
 export type ButtonProps = ButtonControlProps | ButtonLinkProps;
@@ -45,7 +42,6 @@ export function Button(props: ButtonProps) {
     variant = "default",
     disabled = false,
     ariaLabel,
-    ariaPressed,
     className,
     style,
   } = props;
@@ -75,7 +71,6 @@ export function Button(props: ButtonProps) {
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      aria-pressed={ariaPressed}
       className={classes}
       style={style}
     >

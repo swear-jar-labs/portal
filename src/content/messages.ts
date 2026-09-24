@@ -933,6 +933,7 @@ export const messages = {
     },
   },
   editor: {
+    modeLabel: "Editor mode",
     writeTab: "[ WRITE ]",
     previewTab: "[ PREVIEW ]",
     previewEmpty: "Nothing to preview yet.",

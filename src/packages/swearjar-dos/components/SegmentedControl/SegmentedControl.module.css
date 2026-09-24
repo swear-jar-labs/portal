@@ -1,10 +1,10 @@
-.tabs {
+.control {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.tab {
+.segment {
   padding: 2px 10px;
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-raised);
@@ -13,12 +13,13 @@
   cursor: pointer;
 }
 
-.tab[aria-selected="true"] {
+.segment[aria-selected="true"],
+.segment[aria-pressed="true"] {
   background: var(--dos-silver);
   border-color: var(--dos-border-sunken);
 }
 
-.tab:focus-visible {
+.segment:focus-visible {
   outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
   outline-offset: calc(-1 * var(--dos-border-width));
 }

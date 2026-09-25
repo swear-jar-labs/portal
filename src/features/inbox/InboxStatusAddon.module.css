@@ -1,0 +1,17 @@
+.trayItem {
+  --dos-link: var(--dos-black);
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.trayLink {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trayIcon {
+  display: flex;
+  align-items: center;
+}

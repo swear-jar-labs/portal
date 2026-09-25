@@ -44,6 +44,7 @@ export const LOGIN_PATH = "/login";
 export const APPLY_PATH = "/apply";
 export const ADMIN_PATH = "/admin";
 export const REGISTER_PATH = "/register";
+export const INBOX_PATH = "/inbox";
 const LOGIN_RETURN_PARAM = "next";
 
 export function loginHref(returnTo?: string): `/${string}` {
@@ -150,6 +151,13 @@ const commandDefs = [
     href: ADMIN_PATH,
     audience: "admin",
     file: { group: "account", name: "ADMIN", ext: "EXE", size: 512, icon: "check" },
+  },
+  {
+    id: "INBOX",
+    description: messages.shell.registry.descriptions.INBOX,
+    href: INBOX_PATH,
+    audience: "account",
+    file: { group: "account", name: "INBOX", ext: "EXE", size: 512, icon: "mail" },
   },
   {
     id: "REGISTER",
@@ -351,6 +359,7 @@ const menuDefs: MenuDef[] = [
       { kind: "command", command: "REGISTER", label: messages.shell.menuBar.labels.REGISTER },
       { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
       { kind: "command", command: "ADMIN", label: messages.shell.menuBar.labels.ADMIN },
+      { kind: "command", command: "INBOX", label: messages.shell.menuBar.labels.INBOX },
       { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
       { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
       { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },

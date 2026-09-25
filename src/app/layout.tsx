@@ -5,6 +5,7 @@ import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
 import { getActorSession, mockLogoff } from "@/features/account";
+import { InboxStatusAddon, listInboxSeed } from "@/features/inbox";
 import { ChildrenPathProvider, DosShell } from "@/features/shell";
 import { messages } from "@/content/messages";
 
@@ -37,13 +38,23 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children, overlay }: LayoutProps<"/">) {
   const session = await getActorSession();
+  // The inbox counter arrives through the shell's generic slot: the frame
+  // never imports the section, the section never reaches into the frame.
+  const statusAddon = session ? (
+    <InboxStatusAddon user={session.user} seed={await listInboxSeed(session.user)} />
+  ) : undefined;
 
   return (
     <html lang="en" className={`${greybeard18.variable} ${greybeard16.variable}`}>
       <body>
         <Crt>
           <ChildrenPathProvider>
-            <DosShell session={session} logoff={mockLogoff} overlay={overlay}>
+            <DosShell
+              session={session}
+              logoff={mockLogoff}
+              overlay={overlay}
+              statusAddon={statusAddon}
+            >
               {children}
             </DosShell>
           </ChildrenPathProvider>

@@ -85,7 +85,7 @@ test.describe("member session", () => {
     await expect(files.getByRole("link", { name: "SETTINGS" })).toBeVisible();
     await expect(files.getByRole("button", { name: "LOGOFF" })).toBeVisible();
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Profile" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
@@ -336,7 +336,7 @@ test.describe("registration and levels", () => {
     await logon(page, "quinn-sees-apply");
     const files = page.getByRole("region", { name: FILES_REGION });
     await expect(files.getByRole("link", { name: "APPLY" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 14 FILES")).toBeVisible();
 
     await page.getByRole("menuitem", { name: "Account" }).click();
     await expect(page.getByRole("menu").getByRole("menuitem", { name: "Apply..." })).toBeVisible();
@@ -348,7 +348,7 @@ test.describe("registration and levels", () => {
 
     await logon(page);
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
   });
 
   test("provisions an unknown logon as a participant", async ({ page }) => {

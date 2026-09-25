@@ -77,6 +77,9 @@ export type DosShellProps = {
   overlay: ReactNode;
   session: ShellSession;
   logoff: () => Promise<void>;
+  // A generic chrome slot for section badges (the inbox unread counter): the
+  // layout composes the data owner here, so the shell never imports a section.
+  statusAddon?: ReactNode;
 };
 
 // The file highlight follows the query (FORUM vs ERRATA share a pathname),
@@ -106,7 +109,7 @@ function ShellOverlayBody({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-export function DosShell({ children, overlay, session, logoff }: DosShellProps) {
+export function DosShell({ children, overlay, session, logoff, statusAddon }: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
@@ -384,6 +387,7 @@ export function DosShell({ children, overlay, session, logoff }: DosShellProps) 
           scrollTrailingIntoView={isMobile}
           trailing={
             <>
+              {statusAddon}
               <Text as="span">{session ? session.user : messages.shell.keyBar.guest}</Text>
               <KeyBarClock />
             </>

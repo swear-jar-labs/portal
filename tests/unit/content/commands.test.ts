@@ -136,15 +136,15 @@ describe("commands content", () => {
     }
   });
 
-  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 13 as participant, 12 as member)", () => {
+  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 14 as participant, 13 as member)", () => {
     const count = (viewer: Viewer) => {
       const groups = fileGroupsFor(viewer);
       expect(groups).toHaveLength(3);
       return groups.reduce((total, group) => total + group.items.length, 0);
     };
     expect(count(null)).toBe(11);
-    expect(count({ level: "participant" })).toBe(13);
-    expect(count({ level: "member" })).toBe(12);
+    expect(count({ level: "participant" })).toBe(14);
+    expect(count({ level: "member" })).toBe(13);
   });
 
   it("names the COMMUNITY, ACCOUNT and GUIDE groups in order", () => {
@@ -230,11 +230,13 @@ describe("commands content", () => {
     expect(entryCommands("account", null)).toEqual(["LOGON", "REGISTER"]);
     expect(entryCommands("account", { level: "participant" })).toEqual([
       "APPLY",
+      "INBOX",
       "PROFILE",
       "SETTINGS",
       "LOGOFF",
     ]);
     expect(entryCommands("account", { level: "member" })).toEqual([
+      "INBOX",
       "PROFILE",
       "SETTINGS",
       "LOGOFF",
@@ -261,17 +263,20 @@ describe("commands content", () => {
     expect(guestFiles).toContain("REGISTER");
     expect(guestFiles).toContain("LOGON");
     expect(guestFiles).not.toContain("APPLY");
+    expect(guestFiles).not.toContain("INBOX");
     expect(guestFiles).not.toContain("PROFILE");
     expect(guestFiles).not.toContain("SETTINGS");
     expect(guestFiles).not.toContain("LOGOFF");
 
     expect(participantFiles).toContain("APPLY");
+    expect(participantFiles).toContain("INBOX");
     expect(participantFiles).toContain("PROFILE");
     expect(participantFiles).toContain("SETTINGS");
     expect(participantFiles).toContain("LOGOFF");
     expect(participantFiles).not.toContain("REGISTER");
     expect(participantFiles).not.toContain("LOGON");
 
+    expect(memberFiles).toContain("INBOX");
     expect(memberFiles).toContain("PROFILE");
     expect(memberFiles).toContain("SETTINGS");
     expect(memberFiles).toContain("LOGOFF");

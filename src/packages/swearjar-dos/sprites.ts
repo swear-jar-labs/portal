@@ -279,6 +279,30 @@ export const sprites = {
       "................",
     ],
   },
+  mail: {
+    palette: {
+      K: "#000000",
+      W: "#FFFFFF",
+    },
+    map: [
+      "................",
+      "................",
+      "................",
+      "................",
+      "..KKKKKKKKKKKK..",
+      "..KWWWWWWWWWWK..",
+      "..KWKWWWWWWKWK..",
+      "..KWWKWWWWKWWK..",
+      "..KWWWKWWKWWWK..",
+      "..KWWWWKKWWWWK..",
+      "..KWWWWWWWWWWK..",
+      "..KKKKKKKKKKKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+    ],
+  },
   person: {
     palette: {
       K: "#000000",

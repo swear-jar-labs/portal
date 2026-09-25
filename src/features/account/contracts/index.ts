@@ -7,4 +7,5 @@ export { getActorSession } from "../mock-session.server";
 export { listMemberUsers, resolveAccount } from "../mock-accounts";
 export { mockSessionEnabled } from "../mock-session";
 export { mockDecideMemberApplication } from "../mock-application-actions";
+export { AccountGate } from "../AccountGate";
 export { ApplicationHistory } from "../ApplicationHistory";

@@ -6,6 +6,7 @@ export { PanelStack, type PanelStackProps } from "./PanelStack/PanelStack";
 export { stackMemory, type StackMemory } from "./stack-memory";
 export { useOverlayPush } from "./useOverlayPush";
 export { OverlayOutlet } from "./OverlayOutlet";
+export type { WithDocumentTitle } from "./overlay-store";
 export { ChildrenPathProvider } from "./children-path";
 export { OverlayClear } from "./OverlayHost";
 export { overlayLayerPanels, useOverlayTop } from "./OverlayLayers";

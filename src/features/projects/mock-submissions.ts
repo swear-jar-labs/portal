@@ -1,6 +1,6 @@
 import type { Actor } from "@/features/account/contracts";
 import { isMockMode } from "@/shared/mock";
-import { createProjectSubmissionStore } from "./submissions";
+import { createProjectSubmissionStore, type ProjectSubmission } from "./submissions";
 
 // The proposal queue is a server-process mock (see mock-applications in the
 // account slice). The store is lazy: importing the module (also through the
@@ -60,11 +60,11 @@ function getStore(): ProjectSubmissionStore {
   return store;
 }
 
-export function projectSubmissionsFor(user: string) {
+export function projectSubmissionsFor(user: string): ProjectSubmission[] {
   return getStore().forUser(user);
 }
 
-export function listProjectSubmissions(actor: Actor | null) {
+export function listProjectSubmissions(actor: Actor | null): ProjectSubmission[] {
   return getStore().all(actor);
 }
 

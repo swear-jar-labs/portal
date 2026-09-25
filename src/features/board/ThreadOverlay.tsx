@@ -1,17 +1,13 @@
 import { notFound } from "next/navigation";
-import { OverlayOutlet } from "@/features/shell";
+import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { getThread } from "./data";
 import { threadDocumentTitle } from "./threads";
 import { ThreadOverlayActions } from "./ThreadOverlayActions";
 import { ThreadPanel } from "./ThreadPanel";
 import type { ThreadPageProps } from "./ThreadPage";
+import type { BoardThreadLayer } from "./BoardStack";
 
-export type ThreadLayerData = {
-  id: string;
-  title: string;
-  documentTitle: string;
-  layer: React.ReactNode;
-};
+export type ThreadLayerData = WithDocumentTitle<BoardThreadLayer>;
 
 /**
  * The shared thread panel builder: the direct-load page mounts it as the

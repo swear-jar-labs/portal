@@ -29,6 +29,10 @@ export type OverlayLayer = {
   documentTitle?: string;
 };
 
+// A stack layer plus the route's tab title: what the shared overlay loaders
+// return — the stack mounts the layer, the outlet registers the title.
+export type WithDocumentTitle<T> = T & { documentTitle: string };
+
 export type OverlayStore = {
   /** Push a layer, or truncate above and replace the panels of the same pathname. */
   register: (key: string, panels: readonly OverlayPanel[], documentTitle?: string) => void;

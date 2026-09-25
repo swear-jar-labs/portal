@@ -2,20 +2,27 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
 import { resolveAccount } from "@/features/account/contracts";
-import { getBoardMember, listThreadSummariesByAuthor } from "@/features/board/contracts";
+import {
+  getBoardMember,
+  listThreadSummariesByAuthor,
+  type BoardMember,
+} from "@/features/board/contracts";
 import { OverlayOutlet, ShellPanel } from "@/features/shell";
+import { avatarFor } from "@/shared/members";
 import { MemberView } from "./MemberView";
 
 export type MemberPageProps = {
   params: Promise<{ user: string }>;
 };
 
-async function publicMember(user: string) {
+async function publicMember(user: string): Promise<BoardMember | null> {
   const boardMember = await getBoardMember(user);
   if (boardMember) return boardMember;
   // Registered demo accounts can lead a new project before posting to a
   // fixture board. Their public profile still needs to resolve.
-  return resolveAccount(user)?.level === "member" ? { user, role: "member" as const } : null;
+  return resolveAccount(user)?.level === "member"
+    ? { user, role: "member", avatar: avatarFor(user) }
+    : null;
 }
 
 export async function generateMemberMetadata({ params }: MemberPageProps): Promise<Metadata> {

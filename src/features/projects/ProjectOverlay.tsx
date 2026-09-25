@@ -3,7 +3,7 @@ import { messages } from "@/content/messages";
 import { getActorSession, listMemberUsers } from "@/features/account/contracts";
 import { countThreadsByBoard, listRecentThreadSummariesByBoard } from "@/features/board/contracts";
 import { listTicketsByProject } from "@/features/tickets/contracts";
-import { OverlayOutlet } from "@/features/shell";
+import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { getProject } from "./data";
 import { projectSubmissionsFor } from "./mock-submissions";
 import {
@@ -20,10 +20,11 @@ import { ProjectPanel } from "./ProjectPanel";
 import { ProjectProposalForm } from "./ProjectProposalForm";
 import { ProjectTeamManage } from "./ProjectTeamManage";
 import type { ProjectPageProps } from "./ProjectPage";
+import type { ProjectsProjectLayer } from "./ProjectsStack";
 
 const PROJECT_TICKET_UPDATE_COUNT = 5;
 
-type ProjectOverlayQuery = Record<string, string | string[] | undefined>;
+type ProjectOverlayQuery = Awaited<ProjectPageProps["searchParams"]>;
 
 function activeTabFromQuery(query: ProjectOverlayQuery): ProjectTab {
   if (query[PROJECT_MANAGE_QUERY_KEY] === PROJECT_TEAM_MANAGE_QUERY) return "team";
@@ -36,12 +37,18 @@ export type LoadProjectOverlayOptions = {
   now: string;
 };
 
+export type ProjectLayerData = WithDocumentTitle<ProjectsProjectLayer>;
+
 /**
  * The shared project panel builder: the direct-load page and the overlay
  * interceptor build the same panels from the same detail data (no markup
  * duplication). The feed list stays the page's own concern.
  */
-export async function loadProjectOverlay({ slug, searchParams, now }: LoadProjectOverlayOptions) {
+export async function loadProjectOverlay({
+  slug,
+  searchParams,
+  now,
+}: LoadProjectOverlayOptions): Promise<ProjectLayerData> {
   const activeTab = activeTabFromQuery(searchParams);
   const project = await getProject(slug);
   if (!project) notFound();

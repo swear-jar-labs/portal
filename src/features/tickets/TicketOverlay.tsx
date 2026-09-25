@@ -1,34 +1,23 @@
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
-import { OverlayOutlet } from "@/features/shell";
+import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { DEFAULT_CLAIM_POLICY, listProjects, type Project } from "@/features/projects/contracts";
-import { listReadroomsByTicket, type ReadroomRef } from "@/features/readroom/contracts";
+import { listReadroomsByTicket } from "@/features/readroom/contracts";
 import { getTicketByKey, listTickets } from "./data";
-import { TicketOverlayDossier, TicketOverlayEditPanel } from "./TicketOverlayBody";
-import type { TicketPageProps } from "./TicketPage";
 import {
-  TICKET_EDIT_QUERY,
-  TICKET_EDIT_QUERY_VALUE,
-  ticketDocumentTitle,
-  type Ticket,
-} from "./tickets";
+  TicketOverlayDossier,
+  TicketOverlayEditPanel,
+  type TicketOverlayDossierProps,
+} from "./TicketOverlayBody";
+import type { TicketPageProps } from "./TicketPage";
+import { TICKET_EDIT_QUERY, TICKET_EDIT_QUERY_VALUE, ticketDocumentTitle } from "./tickets";
 
-export type TicketLayerData = {
-  ticket: Ticket;
-  tickets: readonly Ticket[];
-  projects: readonly Project[];
-  projectName: string;
-  documentTitle: string;
-  maintainers: readonly string[];
-  assignmentsPaused: boolean;
-  claimPolicy: Project["claimPolicy"];
-  readrooms: readonly ReadroomRef[];
-  now: string;
-};
-
-export type TicketOverlayPageProps = TicketPageProps & {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+// One loader feeds two consumers: the direct-load page builds its stack
+// options from `projects` + `tickets`, the overlay interceptor renders the
+// dossier (and the edit panel) from the dossier props.
+export type TicketLayerData = WithDocumentTitle<
+  TicketOverlayDossierProps & { projects: readonly Project[] }
+>;
 
 /**
  * The shared ticket detail loader: the direct-load page feeds its stack from
@@ -60,7 +49,7 @@ export async function loadTicketLayer(key: string, now: string): Promise<TicketL
 }
 
 /** The same ticket panels mounted into the root overlay slot (any section). */
-export async function InterceptedTicketPage({ params, searchParams }: TicketOverlayPageProps) {
+export async function InterceptedTicketPage({ params, searchParams }: TicketPageProps) {
   const { key } = await params;
   const query = await searchParams;
   const data = await loadTicketLayer(key, new Date().toISOString());

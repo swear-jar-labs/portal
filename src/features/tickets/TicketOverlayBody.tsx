@@ -21,6 +21,12 @@ export type TicketOverlayDossierProps = {
   now: string;
 };
 
+/** The `?edit=1` panel props: the dossier subset the edit form reads. */
+export type TicketOverlayEditProps = Pick<
+  TicketOverlayDossierProps,
+  "ticket" | "tickets" | "maintainers"
+>;
+
 /**
  * The intercepted ticket dossier: the same TicketPanel the section stack
  * renders, with the edit request routed into the overlay's own second panel
@@ -54,15 +60,7 @@ export function TicketOverlayDossier({
 }
 
 /** The `?edit=1` panel: the same TicketEdit the direct load's stack owns. */
-export function TicketOverlayEditPanel({
-  ticket,
-  tickets,
-  maintainers,
-}: {
-  ticket: Ticket;
-  tickets: readonly Ticket[];
-  maintainers: readonly string[];
-}) {
+export function TicketOverlayEditPanel({ ticket, tickets, maintainers }: TicketOverlayEditProps) {
   const router = useRouter();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);

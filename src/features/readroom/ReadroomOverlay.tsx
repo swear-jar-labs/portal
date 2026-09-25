@@ -1,17 +1,13 @@
 import { notFound } from "next/navigation";
-import { OverlayOutlet } from "@/features/shell";
+import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { listTickets } from "@/features/tickets/contracts";
 import { getReadroom } from "./data";
 import { ReadroomPanel } from "./ReadroomPanel";
 import type { ReadroomTaskPageProps } from "./ReadroomTaskPage";
-import { readroomDocumentTitle, type Readroom } from "./readrooms";
+import type { ReadroomLayer } from "./ReadroomStack";
+import { readroomDocumentTitle } from "./readrooms";
 
-export type ReadroomLayerData = {
-  id: Readroom["id"];
-  title: string;
-  documentTitle: string;
-  layer: React.ReactNode;
-};
+export type ReadroomLayerData = WithDocumentTitle<ReadroomLayer>;
 
 /**
  * The shared readroom panel builder: the direct-load page mounts it as the

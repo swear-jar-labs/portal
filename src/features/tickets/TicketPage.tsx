@@ -5,7 +5,10 @@ import { loadTicketLayer } from "./TicketOverlay";
 import { TicketsStack } from "./TicketsStack";
 import { ticketDocumentTitle } from "./tickets";
 
-export type TicketPageProps = { params: Promise<{ key: string }> };
+export type TicketPageProps = {
+  params: Promise<{ key: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateTicketMetadata({ params }: TicketPageProps): Promise<Metadata> {
   const { key } = await params;

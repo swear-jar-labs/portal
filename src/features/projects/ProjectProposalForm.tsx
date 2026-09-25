@@ -250,7 +250,7 @@ export function ProjectProposalForm({
                     rows={FIELD_ROWS}
                     required
                   />
-                  <Button type="submit" variant="primary">
+                  <Button type="submit" variant="primary" className={styles.submitButton}>
                     {previousForSlug?.status === "rejected" ? copy.again : copy.submit}
                   </Button>
                 </Stack>
@@ -302,7 +302,11 @@ export function ProjectProposalForm({
                                 rows={FIELD_ROWS}
                                 required
                               />
-                              <Button type="submit" variant="primary">
+                              <Button
+                                type="submit"
+                                variant="primary"
+                                className={styles.submitButton}
+                              >
                                 {copy.reply}
                               </Button>
                             </Stack>

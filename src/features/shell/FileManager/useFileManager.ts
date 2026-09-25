@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DOS_SCROLL_ATTR, isInScrollView, nextStepIndex } from "@swearjar/dos";
 import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import {
@@ -55,6 +55,7 @@ export type FileManagerOptions = {
   signedIn: boolean;
   onDocumentOpened: () => void;
   groups: readonly FileGroup[];
+  fileIcons?: Partial<Record<CommandId, ReactNode>>;
   // Every file row runs through the command runner: it opens documents, pushes
   // routes in the SPA or runs actions (e.g. LOGOFF).
   onCommand: (commandId: CommandId) => void;
@@ -67,6 +68,7 @@ export function useFileManager({
   signedIn,
   onDocumentOpened,
   groups,
+  fileIcons,
   onCommand,
 }: FileManagerOptions) {
   const location = joinLocation(pathname, search);
@@ -204,6 +206,7 @@ export function useFileManager({
           size: formatSize(item.size),
           kind: item.ext === "EXE" ? "exe" : "file",
           icon: item.icon,
+          iconNode: fileIcons?.[item.command],
           nested: true,
           selected: activeCursorId === rowId,
           // Documents are current only where they are shown (the home panel);
@@ -226,6 +229,7 @@ export function useFileManager({
   }, [
     activeCursorId,
     collapsedGroups,
+    fileIcons,
     groups,
     location,
     onCommand,

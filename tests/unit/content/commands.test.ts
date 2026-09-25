@@ -288,6 +288,14 @@ describe("commands content", () => {
     expect(filesFor({ level: "participant", admin: false })).not.toContain("ADMIN");
   });
 
+  it("places PROFILE before INBOX in the account file list", () => {
+    for (const viewer of [{ level: "participant" }, { level: "member" }] as const) {
+      const account = fileGroupsFor(viewer).find((group) => group.id === "account");
+      const ids = account?.items.map((item) => item.command) ?? [];
+      expect(ids.indexOf("PROFILE")).toBeLessThan(ids.indexOf("INBOX"));
+    }
+  });
+
   it("resolves every doc command to a document", () => {
     for (const command of commands) {
       if (!command.doc) continue;

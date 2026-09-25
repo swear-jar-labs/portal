@@ -24,6 +24,27 @@ describe("FileTable", () => {
     expect(html).toContain('class="row rowAction nested"');
   });
 
+  it("replaces the default sprite with a section-owned icon node", () => {
+    const html = renderToStaticMarkup(
+      <FileTable
+        columns={COLUMNS}
+        items={[
+          {
+            id: "file-inbox",
+            name: "INBOX",
+            type: "EXE",
+            kind: "exe",
+            icon: "mail",
+            iconNode: <span data-marked="true" />,
+          },
+        ]}
+      />,
+    );
+
+    expect(html).toContain('data-marked="true"');
+    expect(html).not.toContain('data-file-icon="mail"');
+  });
+
   it("keeps the file name as the primary row control", () => {
     const html = renderToStaticMarkup(
       <FileTable

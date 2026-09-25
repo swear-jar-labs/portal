@@ -1,5 +1,6 @@
 .fileControl {
   min-width: 0;
+  align-items: center;
 }
 
 .nested .fileControl {

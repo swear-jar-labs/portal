@@ -40,3 +40,8 @@ export function InboxStatusAddon({ user, seed }: InboxStatusAddonProps) {
     </Text>
   );
 }
+
+export function InboxFileIcon({ user, seed }: InboxStatusAddonProps) {
+  const { unread } = useInboxSession(user, seed);
+  return <FileIcon kind="exe" icon={unread > 0 ? "mailUnread" : "mail"} />;
+}

@@ -1,4 +1,5 @@
 export { DosShell, type DosShellProps, type ShellSession } from "./DosShell";
+export type { ShellAddon } from "./addons";
 export { useShellSession } from "./SessionContext";
 export { useLoginPrompt, useShellDialogs } from "./ShellDialogs";
 export { ShellPanel, type ShellPanelProps } from "./ShellPanel/ShellPanel";

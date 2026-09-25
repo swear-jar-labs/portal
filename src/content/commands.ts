@@ -153,13 +153,6 @@ const commandDefs = [
     file: { group: "account", name: "ADMIN", ext: "EXE", size: 512, icon: "check" },
   },
   {
-    id: "INBOX",
-    description: messages.shell.registry.descriptions.INBOX,
-    href: INBOX_PATH,
-    audience: "account",
-    file: { group: "account", name: "INBOX", ext: "EXE", size: 512, icon: "mail" },
-  },
-  {
     id: "REGISTER",
     description: messages.shell.registry.descriptions.REGISTER,
     href: REGISTER_PATH,
@@ -179,6 +172,13 @@ const commandDefs = [
     href: "/profile",
     audience: "account",
     file: { group: "account", name: "PROFILE", ext: "EXE", size: 512, icon: "person" },
+  },
+  {
+    id: "INBOX",
+    description: messages.shell.registry.descriptions.INBOX,
+    href: INBOX_PATH,
+    audience: "account",
+    file: { group: "account", name: "INBOX", ext: "EXE", size: 512, icon: "mail" },
   },
   {
     id: "SETTINGS",

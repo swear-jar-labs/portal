@@ -56,10 +56,12 @@ test("returns focus to the feed when a read message leaves the unread filter", a
   await expectNoViolations(page, "inbox unread filter close");
 });
 
-test("reports finished states for all-read mail and an empty archive", async ({ page }) => {
+test("marks the inbox file while mail is unread and reports finished states", async ({ page }) => {
   await logon(page, "ada");
   const badge = page.getByRole("toolbar", { name: "Function keys" }).locator('a[href="/inbox"]');
+  const inboxIcon = page.locator("#file-INBOX [data-file-icon]");
   await expect(badge).toBeVisible();
+  await expect(inboxIcon).toHaveAttribute("data-file-icon", "mailUnread");
 
   await page.locator("#file-INBOX").click();
   await page.getByRole("button", { name: "MARK ALL READ" }).click();
@@ -67,8 +69,19 @@ test("reports finished states for all-read mail and an empty archive", async ({ 
   await page.getByRole("checkbox", { name: "UNREAD ONLY" }).check();
   await expect(page.getByText("All caught up. Nothing unread.")).toBeVisible();
   await expect(badge).toHaveCount(0);
+  await expect(inboxIcon).toHaveAttribute("data-file-icon", "mail");
 
   await page.getByRole("checkbox", { name: "UNREAD ONLY" }).uncheck();
+  await page.getByRole("button", { name: "DOS-3 moved to REVIEW" }).click();
+  await page.getByRole("button", { name: "MARK UNREAD" }).click();
+  await expect(inboxIcon).toHaveAttribute("data-file-icon", "mailUnread");
+  await expect(badge).toBeVisible();
+  await page
+    .locator(`[${DOC_TOP_ATTR}]`)
+    .getByRole("region", { name: "DOS-3" })
+    .getByRole("button", { name: "Close" })
+    .click();
+
   await page.getByRole("button", { name: /^ARCHIVE/ }).click();
   await expect(page.getByText("Nothing archived yet. Archived mail waits here.")).toBeVisible();
   await expectNoViolations(page, "inbox finished states");

@@ -19,6 +19,7 @@ export type FileTableItem = {
   size?: string;
   kind?: "file" | "dir" | "exe";
   icon?: SpriteName;
+  iconNode?: ReactNode;
   expanded?: boolean;
   nested?: boolean;
   selected?: boolean;
@@ -78,7 +79,9 @@ export function FileTable({
             id: item.id,
             content: (
               <>
-                <FileIcon kind={item.kind ?? "file"} expanded={item.expanded} icon={item.icon} />
+                {item.iconNode ?? (
+                  <FileIcon kind={item.kind ?? "file"} expanded={item.expanded} icon={item.icon} />
+                )}
                 <span className={styles.name}>{item.name}</span>
               </>
             ),

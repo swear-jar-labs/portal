@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -57,6 +58,7 @@ import { OverlayHost } from "./OverlayHost";
 import { OverlayDocumentTitle, useOverlayFocusReturn } from "./OverlayLayers";
 import { useOverlayHostClaimed, useOverlayLayers } from "./overlay-store";
 import { ShellControlsProvider } from "./ShellControls";
+import { resolveShellAddons, type ShellAddon } from "./addons";
 import { FileManagerProvider } from "./FileManager/FileManagerContext";
 import { FileManagerPanel } from "./FileManager/FileManagerPanel";
 import { useFileCursorKeys } from "./FileManager/useFileCursorKeys";
@@ -77,9 +79,9 @@ export type DosShellProps = {
   overlay: ReactNode;
   session: ShellSession;
   logoff: () => Promise<void>;
-  // A generic chrome slot for section badges (the inbox unread counter): the
-  // layout composes the data owner here, so the shell never imports a section.
-  statusAddon?: ReactNode;
+  // Section-owned chrome (the inbox unread counter and its file icon): the
+  // layout composes the addons, so the shell never imports a section.
+  addons?: readonly ShellAddon[];
 };
 
 // The file highlight follows the query (FORUM vs ERRATA share a pathname),
@@ -109,7 +111,7 @@ function ShellOverlayBody({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-export function DosShell({ children, overlay, session, logoff, statusAddon }: DosShellProps) {
+export function DosShell({ children, overlay, session, logoff, addons }: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
@@ -166,6 +168,7 @@ export function DosShell({ children, overlay, session, logoff, statusAddon }: Do
   const commandList = useMemo(() => visibleCommands(session), [session]);
   const groups = useMemo(() => fileGroupsFor(session), [session]);
   const functionKeys = useMemo(() => keyDefsFor(session), [session]);
+  const { tray: trayAddons, fileIcons } = useMemo(() => resolveShellAddons(addons), [addons]);
 
   // The runner needs the file manager (to open docs) and the file manager needs
   // the runner (to run LOGOFF): the ref breaks the cycle.
@@ -198,6 +201,7 @@ export function DosShell({ children, overlay, session, logoff, statusAddon }: Do
     signedIn,
     onDocumentOpened: goHome,
     groups,
+    fileIcons,
     onCommand: runFromFiles,
   });
 
@@ -387,7 +391,9 @@ export function DosShell({ children, overlay, session, logoff, statusAddon }: Do
           scrollTrailingIntoView={isMobile}
           trailing={
             <>
-              {statusAddon}
+              {trayAddons.map(({ id, node }) => (
+                <Fragment key={id}>{node}</Fragment>
+              ))}
               <Text as="span">{session ? session.user : messages.shell.keyBar.guest}</Text>
               <KeyBarClock />
             </>

@@ -303,6 +303,32 @@ export const sprites = {
       "................",
     ],
   },
+  // The inbox file uses this marked envelope while it has unread mail.
+  mailUnread: {
+    palette: {
+      K: "#000000",
+      W: "#FFFFFF",
+      r: "#FF5555",
+    },
+    map: [
+      "................",
+      "................",
+      "................",
+      "................",
+      "..KKKKKrrKKKKK..",
+      "..KWWWWrrWWWWK..",
+      "..KWKWWrrWWKWK..",
+      "..KWWKWrrWKWWK..",
+      "..KWWWKrrWWWWK..",
+      "..KWWWWWWWWWWK..",
+      "..KWWWWrrWWWWK..",
+      "..KKKKKrrKKKKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+    ],
+  },
   person: {
     palette: {
       K: "#000000",

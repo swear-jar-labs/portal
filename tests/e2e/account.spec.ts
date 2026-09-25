@@ -652,6 +652,7 @@ test.describe("apply form", () => {
   }) => {
     await logon(page, "quinn-hours-type");
     await page.goto("/apply");
+    await waitForHydration(page);
     const hours = page.getByLabel("Hours a week");
     await hours.focus();
     await expect(hours).toContainText("5 to 10");

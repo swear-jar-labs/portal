@@ -712,6 +712,12 @@ export const messages = {
       },
       heading: "PROPOSE A PROJECT",
       open: "PROPOSE PROJECT",
+      tabsLabel: "Proposal sections",
+      tabs: {
+        new: "NEW PROPOSAL",
+        mine: "MY PROPOSALS",
+      },
+      mineEmpty: "No proposals yet. New submissions appear here.",
       intro:
         "Members can propose a project for admin review. Discuss ideas in FORUM first if useful.",
       guest: "Register and become a Member to propose a project.",
@@ -728,7 +734,6 @@ export const messages = {
       removeTech: "Remove",
       details: "PROJECT DETAILS",
       history: "PROPOSAL HISTORY",
-      current: "YOUR PROPOSALS",
       none: "—",
       fields: {
         name: "Project name",

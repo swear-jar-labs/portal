@@ -77,6 +77,13 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await logon(page, "ada");
   await page.goto("/projects/propose");
   await waitForHydration(page);
+  await page.getByRole("tab", { name: "NEW PROPOSAL" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "MY PROPOSALS" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expectNoViolations(page, "project proposal tabs");
   await expect(
     page.getByRole("region", { name: new RegExp(name) }).getByText("Who will review releases?"),
   ).toBeVisible();

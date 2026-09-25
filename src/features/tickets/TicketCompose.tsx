@@ -21,7 +21,7 @@ export function TicketCompose({
 }: {
   projects: readonly TicketProjectOption[];
   defaultProject?: ProjectSlug;
-  onSubmit: (input: TicketComposeInput) => void;
+  onSubmit: (input: TicketComposeInput) => Promise<string | null>;
   onCancel: () => void;
 }) {
   const [values, setValues] = useState<TicketComposeInput>({
@@ -33,12 +33,15 @@ export function TicketCompose({
     tags: [],
   });
   const [errors, setErrors] = useState<TicketFieldsErrors>({});
+  const [accessError, setAccessError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   function update(patch: Partial<TicketComposeInput>) {
     setValues((current) => ({ ...current, ...patch }));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (pending) return;
     const parsed = makeTicketComposeSchema(projects.map((project) => project.slug)).safeParse(
       values,
     );
@@ -53,7 +56,9 @@ export function TicketCompose({
       return;
     }
     setErrors({});
-    onSubmit(parsed.data);
+    setPending(true);
+    setAccessError(await onSubmit(parsed.data));
+    setPending(false);
   }
 
   const projectOptions: SelectOption<ProjectSlug>[] = projects.map((project) => ({
@@ -75,10 +80,11 @@ export function TicketCompose({
         />
 
         <TicketFields values={values} errors={errors} onChange={update} />
+        {accessError ? <Text role="danger">{accessError}</Text> : null}
 
         {/* The submit pair walks as one row, like the board composer's. */}
         <Stack direction="row" gap={10} wrap navRow>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" disabled={pending}>
             {messages.tickets.compose.submit}
           </Button>
           <Button onClick={onCancel}>{messages.tickets.compose.cancel}</Button>

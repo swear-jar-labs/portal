@@ -25,14 +25,17 @@ export async function TicketPage({ params }: TicketPageProps) {
   const options = layer.projects.map((project) => ({
     slug: project.slug,
     name: project.name,
-    maintainers: project.maintainers.map((person) => person.user),
-    assignmentsPaused: project.maintainers.length === 0,
+    status: project.status,
+    lead: project.lead,
+    maintainers: project.maintainers,
+    reviewers: project.reviewers ?? [],
     claimPolicy: project.claimPolicy,
   }));
 
   return (
     <TicketsStack
       tickets={layer.tickets}
+      memberUsers={layer.memberUsers}
       projects={options}
       now={now}
       ticket={{

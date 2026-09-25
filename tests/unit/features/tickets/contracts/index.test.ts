@@ -7,6 +7,8 @@ describe("tickets contract", () => {
       "TicketsOverlayTable",
       "listTickets",
       "listTicketsByProject",
+      "subscribeTicketEvents",
+      "ticketEventsSnapshot",
       "ticketPath",
       "useMergedTickets",
     ]);

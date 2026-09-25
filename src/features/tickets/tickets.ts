@@ -123,6 +123,7 @@ export type Ticket = {
   tags: readonly TicketTagId[];
   author: TicketPerson;
   assignee?: TicketPerson;
+  reviewer?: TicketPerson;
   links: readonly TicketLink[];
   comments: readonly TicketComment[];
   // The blocker ids: this ticket starts only after they finish. The database
@@ -130,6 +131,9 @@ export type Ticket = {
   blockedBy: readonly string[];
   createdAt: string;
   updatedAt: string;
+  // Meaningful work (claim, comment, code link or edit), separate from the
+  // queue's general update stamp. Fixture tickets fall back to updatedAt.
+  lastActivityAt?: string;
   closedAt?: string;
 };
 

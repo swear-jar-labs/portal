@@ -10,3 +10,5 @@ export { listTickets, listTicketsByProject } from "../data";
 export { useMergedTickets } from "../useTicketSession";
 export { TicketsOverlayTable } from "../TicketsOverlayTable";
 export type { Ticket } from "../tickets";
+export { subscribeTicketEvents, ticketEventsSnapshot } from "../ticket-events";
+export type { TicketEvent, TicketEventKind } from "../ticket-events";

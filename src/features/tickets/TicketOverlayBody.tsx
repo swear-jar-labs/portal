@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { ClaimPolicy } from "@/features/projects/contracts";
 import type { ReadroomRef } from "@/features/readroom/contracts";
 import { submitTicketEdit } from "./edit-submit";
 import * as ticketStore from "./ticket-store";
@@ -9,14 +8,13 @@ import { TicketEdit } from "./TicketEdit";
 import { TicketPanel } from "./TicketPanel";
 import { ticketEditPath, type Ticket } from "./tickets";
 import { useTicketState } from "./useTicketSession";
+import type { TicketProject } from "./workflow";
 
 export type TicketOverlayDossierProps = {
   ticket: Ticket;
   tickets: readonly Ticket[];
   projectName: string;
-  maintainers: readonly string[];
-  assignmentsPaused: boolean;
-  claimPolicy: ClaimPolicy;
+  project: TicketProject;
   readrooms: readonly ReadroomRef[];
   now: string;
 };
@@ -24,8 +22,8 @@ export type TicketOverlayDossierProps = {
 /** The `?edit=1` panel props: the dossier subset the edit form reads. */
 export type TicketOverlayEditProps = Pick<
   TicketOverlayDossierProps,
-  "ticket" | "tickets" | "maintainers"
->;
+  "ticket" | "tickets" | "project"
+> & { memberUsers: readonly string[] };
 
 /**
  * The intercepted ticket dossier: the same TicketPanel the section stack
@@ -36,9 +34,7 @@ export function TicketOverlayDossier({
   ticket,
   tickets,
   projectName,
-  maintainers,
-  assignmentsPaused,
-  claimPolicy,
+  project,
   readrooms,
   now,
 }: TicketOverlayDossierProps) {
@@ -49,9 +45,7 @@ export function TicketOverlayDossier({
       ticket={ticket}
       tickets={tickets}
       projectName={projectName}
-      maintainers={maintainers}
-      assignmentsPaused={assignmentsPaused}
-      claimPolicy={claimPolicy}
+      project={project}
       readrooms={readrooms}
       now={now}
       onEdit={(live) => router.push(ticketEditPath(live.key))}
@@ -60,7 +54,12 @@ export function TicketOverlayDossier({
 }
 
 /** The `?edit=1` panel: the same TicketEdit the direct load's stack owns. */
-export function TicketOverlayEditPanel({ ticket, tickets, maintainers }: TicketOverlayEditProps) {
+export function TicketOverlayEditPanel({
+  ticket,
+  tickets,
+  project,
+  memberUsers,
+}: TicketOverlayEditProps) {
   const router = useRouter();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
@@ -69,10 +68,13 @@ export function TicketOverlayEditPanel({ ticket, tickets, maintainers }: TicketO
     <TicketEdit
       ticket={live}
       tickets={tickets}
-      maintainers={maintainers}
-      onSubmit={(input, assignee) => {
-        submitTicketEdit(live, input, assignee);
+      project={project}
+      memberUsers={memberUsers}
+      onSubmit={async (input, changes) => {
+        const result = await submitTicketEdit(live, tickets, input, changes);
+        if (result) return result;
         router.back();
+        return null;
       }}
       onCancel={() => router.back()}
     />

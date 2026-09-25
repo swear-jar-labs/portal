@@ -9,14 +9,17 @@ import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { formatAge } from "@/shared/age";
 import { ticketCommentSchema } from "./schema";
+import { freshTicketAccess } from "./mock-ticket-access";
 import * as ticketStore from "./ticket-store";
-import { ticketCommentId, type TicketComment } from "./tickets";
+import { ticketCommentId, type Ticket, type TicketComment } from "./tickets";
+import { canWriteTicket, type TicketProject } from "./workflow";
 import styles from "./tickets.module.css";
 
 const EDIT_ROWS = 3;
 
 export type TicketCommentItemProps = {
-  ticketId: string;
+  ticket: Ticket;
+  project: TicketProject;
   comment: TicketComment;
   now: string;
   // The logged-on member wrote this comment: only the author edits or deletes.
@@ -39,7 +42,13 @@ function DeleteConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCance
 
 /** One dossier comment: the author may edit it inline or leave a tombstone;
  * everyone else only reads it (the board's post pattern). */
-export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCommentItemProps) {
+export function TicketCommentItem({
+  ticket,
+  project,
+  comment,
+  now,
+  canEdit,
+}: TicketCommentItemProps) {
   const dialogs = useShellDialogs();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
@@ -65,14 +74,27 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
     setEditing(true);
   }
 
-  function saveEdit() {
+  async function authorStillAllowed(): Promise<boolean> {
+    const access = await freshTicketAccess(project.slug);
+    return (
+      !!access &&
+      canWriteTicket(access.actor, access.project) &&
+      access.actor?.user === comment.author.user
+    );
+  }
+
+  async function saveEdit() {
     const parsed = ticketCommentSchema.safeParse({ body: draft });
     if (!parsed.success) {
       setError(messages.tickets.dossier.comments.error);
       return;
     }
+    if (!(await authorStillAllowed())) {
+      setError(messages.tickets.edit.denied);
+      return;
+    }
     setEditing(false);
-    ticketStore.editTicketComment(ticketId, comment.id, parsed.data.body);
+    ticketStore.editTicketComment(ticket.id, comment.id, parsed.data.body, comment.author.user);
   }
 
   function cancelEdit() {
@@ -84,9 +106,13 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
       title: messages.tickets.dossier.comments.deleteTitle,
       body: (
         <DeleteConfirm
-          onConfirm={() => {
+          onConfirm={async () => {
             dialogs.close();
-            ticketStore.deleteTicketComment(ticketId, comment.id);
+            if (!(await authorStillAllowed())) {
+              setError(messages.tickets.edit.denied);
+              return;
+            }
+            ticketStore.deleteTicketComment(ticket.id, comment.id, comment.author.user);
           }}
           onCancel={dialogs.close}
         />
@@ -157,6 +183,9 @@ export function TicketCommentItem({ ticketId, comment, now, canEdit }: TicketCom
         ) : null}
       </Stack>
       {content}
+      {!editing && error === messages.tickets.edit.denied ? (
+        <Text role="danger">{error}</Text>
+      ) : null}
     </Stack>
   );
 }

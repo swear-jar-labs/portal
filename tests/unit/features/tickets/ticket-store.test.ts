@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as store from "@/features/tickets/ticket-store";
+import { ticketEventsSnapshot } from "@/features/tickets/ticket-events";
 import type { TicketComposeInput, TicketEditInput } from "@/features/tickets/schema";
 import type { Ticket } from "@/features/tickets/tickets";
 
@@ -131,6 +132,23 @@ describe("ticket store", () => {
     store.resetTicketsStore();
     store.editTicket(base.id, { ...draft, status: "in_progress" });
     expect(live().assignee).toBeUndefined();
+  });
+
+  it("records a manual reviewer change and clearing without moving the rotation cursor", () => {
+    const assigned: Ticket = { ...base, assignee: { user: "ken" } };
+    store.editTicket(base.id, draft, { reviewer: ada, actor: "grace", before: assigned });
+    expect(live(assigned).reviewer).toEqual(ada);
+    expect(ticketEventsSnapshot().at(-1)).toMatchObject({
+      kind: "reviewer",
+      actor: "grace",
+      subject: "ada",
+    });
+    expect(store.ticketsSnapshot().lastReviewerByProject).toEqual({});
+
+    store.editTicket(base.id, draft, { reviewer: null, actor: "grace", before: live(assigned) });
+    expect(live(assigned).reviewer).toBeUndefined();
+    expect(ticketEventsSnapshot().at(-1)).toMatchObject({ kind: "reviewer", actor: "grace" });
+    expect(ticketEventsSnapshot().at(-1)?.subject).toBeUndefined();
   });
 
   it("clears the assignee on null and assigns from the dossier", () => {

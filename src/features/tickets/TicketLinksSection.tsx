@@ -15,6 +15,7 @@ import {
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { avatarFor } from "@/shared/members";
+import { freshTicketAccess } from "./mock-ticket-access";
 import { ticketLinkSchema, type TicketLinkInput } from "./schema";
 import * as ticketStore from "./ticket-store";
 import {
@@ -22,7 +23,9 @@ import {
   ticketLinksAddButtonId,
   type TicketLink,
   type TicketLinkKind,
+  type Ticket,
 } from "./tickets";
+import { canEditTicket, type TicketProject } from "./workflow";
 
 const kindOptions: SelectOption<TicketLinkKind>[] = ticketLinkKinds.map((kind) => ({
   value: kind,
@@ -32,22 +35,25 @@ const kindOptions: SelectOption<TicketLinkKind>[] = ticketLinkKinds.map((kind) =
 const emptyLinkInput: TicketLinkInput = { kind: "pr", url: "", label: "" };
 
 export type TicketLinksSectionProps = {
-  ticketId: string;
+  ticket: Ticket;
   initialLinks: readonly TicketLink[];
   composing: boolean;
   onComposeChange: (composing: boolean) => void;
   // The author, the assignee and the maintainers pin and unpin; the remove
   // controls stay hidden for everyone else.
   canManage: boolean;
+  project: TicketProject;
 };
 
 export function TicketLinksSection({
-  ticketId,
+  ticket,
   initialLinks,
   composing,
   onComposeChange: setComposing,
   canManage,
+  project,
 }: TicketLinksSectionProps) {
+  const ticketId = ticket.id;
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const state = useSyncExternalStore(
@@ -63,14 +69,21 @@ export function TicketLinksSection({
   }, [initialLinks, state.sessionLinks, state.removedLinks, ticketId]);
   const [values, setValues] = useState<TicketLinkInput>(emptyLinkInput);
   const [errors, setErrors] = useState<{ url?: string; label?: string }>({});
+  const [accessError, setAccessError] = useState<string | null>(null);
 
-  function submit() {
+  async function submit() {
     if (session === null) {
       requestLogin();
       return;
     }
     // The trigger hides for outsiders; the guard stays for a forced submit.
     if (!canManage) return;
+    const access = await freshTicketAccess(project.slug);
+    if (!access || !canEditTicket(access.actor, ticket, access.project)) {
+      setAccessError(messages.tickets.edit.denied);
+      return;
+    }
+    setAccessError(null);
     const parsed = ticketLinkSchema.safeParse(values);
     if (!parsed.success) {
       setErrors({
@@ -106,6 +119,16 @@ export function TicketLinksSection({
     document.getElementById(ticketLinksAddButtonId)?.focus();
   }
 
+  async function remove(linkId: string) {
+    const access = await freshTicketAccess(project.slug);
+    if (!access || !canEditTicket(access.actor, ticket, access.project)) {
+      setAccessError(messages.tickets.edit.denied);
+      return;
+    }
+    setAccessError(null);
+    ticketStore.removeTicketLink(ticketId, linkId, access.actor?.user);
+  }
+
   return (
     <Stack gap={6}>
       {links.length === 0 ? (
@@ -123,13 +146,14 @@ export function TicketLinksSection({
               {canManage ? (
                 <RemoveButton
                   ariaLabel={`${messages.tickets.dossier.links.remove} ${entry.label}`}
-                  onClick={() => ticketStore.removeTicketLink(ticketId, entry.id)}
+                  onClick={() => remove(entry.id)}
                 />
               ) : null}
             </Stack>
           ))}
         </Stack>
       )}
+      {accessError ? <Text role="danger">{accessError}</Text> : null}
       {composing ? (
         <Form onSubmit={submit} onCancel={cancel} ariaLabel={messages.tickets.dossier.links.add}>
           <Stack gap={6}>

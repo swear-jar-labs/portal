@@ -885,6 +885,7 @@ export const messages = {
         tags: "Ten tags is the limit.",
       },
       submit: "OPEN TICKET",
+      memberRequired: "Member access and an active project are required to open a ticket.",
       cancel: "CANCEL",
       hint: demoSessionHint,
     },
@@ -892,6 +893,11 @@ export const messages = {
       project: "PROJECT",
       author: "AUTHOR",
       assignee: "ASSIGNEE",
+      assigneeUnassigned: "NOT ASSIGNED",
+      reviewer: "REVIEWER",
+      reviewerUnassigned: "NOT ASSIGNED",
+      checkIn:
+        "Three days without a work update. Check in with the assignee; the ticket stays assigned.",
       status: "STATUS",
       size: "SIZE",
       priority: "PRIORITY",
@@ -903,6 +909,17 @@ export const messages = {
       claim: {
         assign: "ASSIGN TO ME",
         leave: "UNASSIGN ME",
+        archived: "This project is archived. New assignments are closed.",
+        errors: {
+          login: "Log on to take a ticket.",
+          member: "Apply for Member access to work on project tickets.",
+          archived: "This project is archived.",
+          paused: "This project needs a Maintainer before assignments resume.",
+          assigned: "Someone has already taken this ticket.",
+          status: "This ticket is no longer available.",
+          blocked: "Finish the blockers before taking this ticket.",
+          active: "Finish or leave your current active ticket first.",
+        },
         // The ladder rows name the rung; the numbers land from the policy.
         // EVERYONE and N DONE read in magenta (a documented exception to the
         // tone rule: every role hue is taken by the rung chips or lies).
@@ -930,7 +947,6 @@ export const messages = {
         duplicate: "This ticket is already listed as a blocker.",
         cycle: "The tickets would wait for each other.",
         remove: "Remove blocker",
-        startHint: "Waiting for the blockers:",
         hint: demoSessionHint,
       },
       links: {
@@ -954,6 +970,7 @@ export const messages = {
         label: "COMMENT",
         submit: "POST COMMENT",
         error: "Write a comment.",
+        memberRequired: "Member access and an active project are required to comment on a ticket.",
         edited: "[EDITED]",
         deleted: "This comment was deleted.",
         edit: "EDIT",
@@ -974,8 +991,15 @@ export const messages = {
       hint: demoSessionHint,
       blocked: "The blockers must finish first:",
       assignee: "ASSIGNEE",
-      assigneeHint: "Maintainers only: name a member, or clear the field to unassign.",
-      badAssignee: "Name a member: 2-32 letters, digits, _ or -.",
+      assigneeNoMatch: "NO MATCHING MEMBERS",
+      reviewer: "REVIEWER",
+      reviewerNone: "NOT ASSIGNED",
+      reviewerNoMatch: "NO MATCHING PROJECT REVIEWERS",
+      reviewerHint: "Project Reviewer or Maintainer. Assigned automatically on claim.",
+      reviewerInvalid: "Choose a project Reviewer or Maintainer other than the assignee.",
+      activeAssignee: "This member already has an active ticket.",
+      denied: "Your access to this ticket has changed. Reopen it to see the current project roles.",
+      badAssignee: "Choose a current Member.",
       statusRefused: "You can't make this status change. Ask a project maintainer.",
     },
     project: {

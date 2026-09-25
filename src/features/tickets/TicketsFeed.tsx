@@ -14,7 +14,8 @@ import {
 } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import type { ClaimPolicy, ProjectSlug } from "@/features/projects/contracts";
+import type { ProjectSlug } from "@/features/projects/contracts";
+import type { TicketProject } from "./workflow";
 import {
   composeButtonId,
   isDefaultTicketQuery,
@@ -32,14 +33,8 @@ import {
 } from "./tickets";
 import { TicketsTable, type TicketTableAction } from "./TicketsTable";
 
-export type TicketProjectOption = {
-  slug: ProjectSlug;
+export type TicketProjectOption = TicketProject & {
   name: string;
-  // The project's maintainers: they edit its tickets and reassign anyone.
-  maintainers: readonly string[];
-  assignmentsPaused: boolean;
-  // The claim ladder of the project (RULES §15): the dossier gates ASSIGN on it.
-  claimPolicy: ClaimPolicy;
 };
 
 export type TicketsFeedProps = {

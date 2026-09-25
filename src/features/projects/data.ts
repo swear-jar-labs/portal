@@ -151,7 +151,7 @@ export async function getProject(slug: string): Promise<Project | null> {
 
 function withLiveTeam(project: Project): Project {
   const team = projectTeams.view(project);
-  return { ...project, lead: team.lead, maintainers: team.maintainers };
+  return { ...project, lead: team.lead, maintainers: team.maintainers, reviewers: team.reviewers };
 }
 
 export function isKnownProjectSlug(slug: string): boolean {

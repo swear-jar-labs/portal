@@ -97,6 +97,9 @@ export type Project = {
   status: ProjectStatus;
   lead: ProjectPerson | null;
   maintainers: readonly ProjectPerson[];
+  // The team registry fills this for live project views. Reviewers have no
+  // global rank and need not be subscribed to the team.
+  reviewers?: readonly ProjectPerson[];
   // The claim ladder of this project (RULES §15): the fixtures carry the
   // default, the maintainers tune it per project.
   claimPolicy: ClaimPolicy;

@@ -14,6 +14,7 @@ import {
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
+import { freshTicketAccess } from "./mock-ticket-access";
 import { ticketBlockSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
 import {
@@ -26,6 +27,7 @@ import {
   wouldCycle,
   type Ticket,
 } from "./tickets";
+import { canManageTicketBlockers, type TicketProject } from "./workflow";
 
 export type TicketBlockedSectionProps = {
   ticket: Ticket;
@@ -33,9 +35,9 @@ export type TicketBlockedSectionProps = {
   tickets: readonly Ticket[];
   composing: boolean;
   onComposeChange: (composing: boolean) => void;
-  // The author, the assignee and the maintainers pin and unpin; the form and
-  // the remove controls stay hidden for everyone else.
+  // Only project Maintainers can pin or unpin; everyone sees the section.
   canManage: boolean;
+  project: TicketProject;
 };
 
 /** The dossier's BLOCKED BY section: the blockers as status chips with links,
@@ -48,6 +50,7 @@ export function TicketBlockedSection({
   composing,
   onComposeChange: setComposing,
   canManage,
+  project,
 }: TicketBlockedSectionProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
@@ -65,13 +68,18 @@ export function TicketBlockedSection({
   const [key, setKey] = useState("");
   const [error, setError] = useState<string | undefined>();
 
-  function submit() {
+  async function submit() {
     if (session === null) {
       requestLogin();
       return;
     }
     // The trigger hides for outsiders; the guard stays for a forced submit.
     if (!canManage) return;
+    const access = await freshTicketAccess(project.slug);
+    if (!access || !canManageTicketBlockers(access.actor, access.project)) {
+      setError(messages.tickets.edit.denied);
+      return;
+    }
     const parsed = ticketBlockSchema.safeParse({ key });
     if (!parsed.success || !isTicketKey(parsed.data.key.toUpperCase())) {
       setError(messages.tickets.dossier.blocked.badKey);
@@ -94,7 +102,7 @@ export function TicketBlockedSection({
       setError(messages.tickets.dossier.blocked.cycle);
       return;
     }
-    ticketStore.setTicketBlockers(ticket.id, [...ticket.blockedBy, target.id]);
+    ticketStore.setTicketBlockers(ticket.id, [...ticket.blockedBy, target.id], access.actor?.user);
     setKey("");
     setError(undefined);
     setComposing(false);
@@ -108,10 +116,17 @@ export function TicketBlockedSection({
     document.getElementById(ticketBlockedAddButtonId)?.focus();
   }
 
-  function remove(blockerId: string) {
+  async function remove(blockerId: string) {
+    if (!canManage) return;
+    const access = await freshTicketAccess(project.slug);
+    if (!access || !canManageTicketBlockers(access.actor, access.project)) {
+      setError(messages.tickets.edit.denied);
+      return;
+    }
     ticketStore.setTicketBlockers(
       ticket.id,
       ticket.blockedBy.filter((id) => id !== blockerId),
+      access.actor?.user,
     );
   }
 
@@ -141,7 +156,8 @@ export function TicketBlockedSection({
           ))}
         </Stack>
       )}
-      {composing ? (
+      {error && !composing ? <Text role="danger">{error}</Text> : null}
+      {composing && canManage ? (
         <Form onSubmit={submit} onCancel={cancel} ariaLabel={messages.tickets.dossier.blocked.add}>
           <Stack gap={6}>
             <ComboBox

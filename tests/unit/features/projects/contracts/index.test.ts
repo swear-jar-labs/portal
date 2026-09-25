@@ -12,6 +12,7 @@ describe("projects contract", () => {
       "decideProject",
       "dynamicTicketPrefix",
       "fixtureTicketPrefixes",
+      "getProject",
       "isFixtureProjectSlug",
       "isKnownProjectSlug",
       "listProjectSubmissions",

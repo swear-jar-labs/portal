@@ -4,6 +4,7 @@ import { listReadroomsByTicket } from "@/features/readroom/contracts";
 import { listReadrooms } from "@/features/readroom/data";
 import { readroomPath } from "@/features/readroom/readrooms";
 import { getTicketByKey, listTickets, listTicketsByProject } from "@/features/tickets/data";
+import { isActiveTicket } from "@/features/tickets/workflow";
 import {
   blockEdges,
   isTicketKey,
@@ -50,6 +51,12 @@ describe("tickets fixtures", () => {
     const tickets = await listTickets();
     expect(tickets.filter((ticket) => ticket.priority === "high")).toHaveLength(2);
     expect(tickets.filter((ticket) => ticket.priority === "low")).toHaveLength(2);
+  });
+
+  it("starts with at most one active assignment per member", async () => {
+    const active = (await listTickets()).filter(isActiveTicket);
+    const assigned = active.flatMap((ticket) => ticket.assignee?.user ?? []);
+    expect(new Set(assigned).size).toBe(assigned.length);
   });
 
   it("keeps code links valid and the reverse readroom list in sync", async () => {

@@ -44,7 +44,12 @@ type FixtureTicketInput = Pick<
   | "createdAt"
   | "updatedAt"
 > &
-  Partial<Pick<Ticket, "assignee" | "closedAt" | "links" | "comments" | "blockedBy" | "priority">>;
+  Partial<
+    Pick<
+      Ticket,
+      "assignee" | "reviewer" | "closedAt" | "links" | "comments" | "blockedBy" | "priority"
+    >
+  >;
 
 function fixtureTicket(input: FixtureTicketInput): Ticket {
   return {
@@ -126,6 +131,7 @@ const tickets: readonly Ticket[] = [
     tags: ["feature"],
     author: ada,
     assignee: grace,
+    reviewer: ada,
     links: [
       link(
         "dos-3-pr-51",
@@ -212,6 +218,7 @@ const tickets: readonly Ticket[] = [
     tags: ["testing"],
     author: ada,
     assignee: lin,
+    reviewer: ada,
     links: [
       link(
         "tool-2-commit-1",
@@ -297,12 +304,11 @@ const tickets: readonly Ticket[] = [
     project: "compiler",
     title: "Recover after a malformed expression",
     body: "The parser should report one useful error and resume at a statement boundary instead of turning the rest of the file into noise.",
-    status: "in_progress",
+    status: "open",
     size: "M",
     priority: "high",
     tags: ["bug"],
     author: grace,
-    assignee: ada,
     createdAt: "2026-09-10T09:00:00.000Z",
     updatedAt: "2026-09-14T18:00:00.000Z",
   }),
@@ -311,11 +317,10 @@ const tickets: readonly Ticket[] = [
     project: "compiler",
     title: "Golden tests for Unicode escapes",
     body: "Pin valid and invalid escapes as golden lexer output, including truncated code points and characters outside the scalar range.",
-    status: "review",
+    status: "open",
     size: "S",
     tags: ["testing"],
     author: ada,
-    assignee: ken,
     createdAt: "2026-09-09T09:00:00.000Z",
     updatedAt: "2026-09-13T14:00:00.000Z",
   }),
@@ -352,12 +357,11 @@ const tickets: readonly Ticket[] = [
     project: "tooling",
     title: "Generate the dependency license manifest",
     body: "Produce a deterministic license inventory in CI and fail when a dependency arrives without an approved license classification.",
-    status: "in_progress",
+    status: "open",
     size: "S",
     priority: "low",
     tags: ["docs"],
     author: ada,
-    assignee: lin,
     createdAt: "2026-09-07T09:00:00.000Z",
     updatedAt: "2026-09-12T16:00:00.000Z",
   }),
@@ -393,11 +397,10 @@ const tickets: readonly Ticket[] = [
     project: "flagship",
     title: "Record build constraints for the shortlist",
     body: "Each candidate needs a bounded first milestone, a runnable artifact and enough room for contributors to work independently.",
-    status: "review",
+    status: "open",
     size: "M",
     tags: ["feature"],
     author: grace,
-    assignee: ada,
     createdAt: "2026-09-13T09:00:00.000Z",
     updatedAt: "2026-09-16T12:00:00.000Z",
   }),

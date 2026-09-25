@@ -34,10 +34,13 @@ import {
 import { avatarFor } from "@/shared/members";
 import { TicketCompose } from "./TicketCompose";
 import { TicketEdit } from "./TicketEdit";
-import { submitTicketEdit } from "./edit-submit";
+import { submitTicketEdit, type TicketEditChanges } from "./edit-submit";
+import { freshTicketAccess } from "./mock-ticket-access";
+import { canWriteTicket } from "./workflow";
 import { TicketPanel } from "./TicketPanel";
 import { TicketsFeed, type TicketProjectOption } from "./TicketsFeed";
 import { type TicketComposeInput, type TicketEditInput } from "./schema";
+import type { TicketProject } from "./workflow";
 import {
   composeButtonId,
   DEFAULT_TICKET_QUERY,
@@ -62,6 +65,7 @@ export type TicketLayer = {
 
 export type TicketsStackProps = {
   tickets: readonly Ticket[];
+  memberUsers: readonly string[];
   projects: readonly TicketProjectOption[];
   initialQuery?: TicketQuery;
   initialCompose?: boolean;
@@ -71,6 +75,7 @@ export type TicketsStackProps = {
 
 export function TicketsStack({
   tickets,
+  memberUsers,
   projects,
   initialQuery = DEFAULT_TICKET_QUERY,
   initialCompose = false,
@@ -106,14 +111,26 @@ export function TicketsStack({
     () => Object.fromEntries(projects.map((project) => [project.slug, project.name])),
     [projects],
   );
-  const maintainersByProject = useMemo(
-    () => Object.fromEntries(projects.map((project) => [project.slug, project.maintainers])),
+  const projectBySlug = useMemo(
+    () => new Map(projects.map((project) => [project.slug, project])),
     [projects],
   );
   const policyByProject = useMemo(
     () => livePoliciesByProject(projects, projectPolicies),
     [projects, projectPolicies],
   );
+
+  const accessFor = (slug: Ticket["project"]): TicketProject => {
+    const found = projectBySlug.get(slug);
+    return {
+      slug,
+      status: found?.status ?? "archived",
+      lead: found?.lead ?? null,
+      maintainers: found?.maintainers ?? [],
+      reviewers: found?.reviewers ?? [],
+      claimPolicy: policyByProject[slug] ?? DEFAULT_CLAIM_POLICY,
+    };
+  };
 
   useEffect(() => {
     closingRef.current = false;
@@ -190,10 +207,18 @@ export function TicketsStack({
   }, [query, replaceTrackerUrl]);
 
   const submitCompose = useCallback(
-    (input: TicketComposeInput) => {
+    async (input: TicketComposeInput) => {
       if (session === null) {
         requestLogin();
-        return;
+        return messages.tickets.compose.memberRequired;
+      }
+      const access = await freshTicketAccess(input.project);
+      if (
+        !access ||
+        access.actor?.user !== session.user ||
+        !canWriteTicket(access.actor, access.project)
+      ) {
+        return messages.tickets.compose.memberRequired;
       }
       const created = addTicket(input, { user: session.user, avatar: avatarFor(session.user) });
       const nextQuery = { ...DEFAULT_TICKET_QUERY, project: input.project };
@@ -201,6 +226,7 @@ export function TicketsStack({
       setComposing(false);
       replaceTrackerUrl(nextQuery);
       setLocalKey(created.key);
+      return null;
     },
     [addTicket, replaceTrackerUrl, requestLogin, session],
   );
@@ -224,13 +250,15 @@ export function TicketsStack({
   }, []);
 
   const submitEdit = useCallback(
-    (input: TicketEditInput, assignee: string | null | undefined) => {
-      if (editing === null || session === null) return;
-      submitTicketEdit(editing, input, assignee);
+    async (input: TicketEditInput, changes: TicketEditChanges) => {
+      if (editing === null || session === null) return "denied" as const;
+      const result = await submitTicketEdit(editing, tickets, input, changes);
+      if (result) return result;
       returnFocusRef.current = ticketEditButtonId;
       setEditing(null);
+      return null;
     },
-    [editing, session],
+    [editing, session, tickets],
   );
 
   const closeLocalTicket = useCallback(() => {
@@ -284,12 +312,7 @@ export function TicketsStack({
             ticket={ticket.ticket}
             tickets={tickets}
             projectName={ticket.projectName}
-            maintainers={maintainersByProject[ticket.ticket.project] ?? []}
-            assignmentsPaused={
-              projects.find((project) => project.slug === ticket.ticket.project)
-                ?.assignmentsPaused ?? true
-            }
-            claimPolicy={policyByProject[ticket.ticket.project] ?? DEFAULT_CLAIM_POLICY}
+            project={accessFor(ticket.ticket.project)}
             readrooms={ticket.readrooms}
             now={now}
             onEdit={openEdit}
@@ -307,12 +330,7 @@ export function TicketsStack({
             ticket={localTicket}
             tickets={tickets}
             projectName={projectNames[localTicket.project] ?? localTicket.project}
-            maintainers={maintainersByProject[localTicket.project] ?? []}
-            assignmentsPaused={
-              projects.find((project) => project.slug === localTicket.project)?.assignmentsPaused ??
-              true
-            }
-            claimPolicy={policyByProject[localTicket.project] ?? DEFAULT_CLAIM_POLICY}
+            project={accessFor(localTicket.project)}
             readrooms={[]}
             now={now}
             onEdit={openEdit}
@@ -342,7 +360,8 @@ export function TicketsStack({
           <TicketEdit
             ticket={editing}
             tickets={tickets}
-            maintainers={maintainersByProject[editing.project] ?? []}
+            project={accessFor(editing.project)}
+            memberUsers={memberUsers}
             onSubmit={submitEdit}
             onCancel={closeEdit}
           />

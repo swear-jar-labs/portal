@@ -3,17 +3,19 @@
 import { useMemo, useState } from "react";
 import {
   Button,
-  Field,
+  ComboBox,
   Form,
   Heading,
   Select,
   Stack,
   Text,
+  type ComboBoxOption,
   type SelectOption,
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
-import { ticketAssigneeSchema, ticketEditSchema, type TicketEditInput } from "./schema";
+import type { TicketEditChanges, TicketEditFailure } from "./edit-submit";
+import { ticketEditSchema, type TicketEditInput } from "./schema";
 import { TicketFields, type TicketFieldsErrors } from "./TicketFields";
 import * as ticketStore from "./ticket-store";
 import { useMergedTickets, useTicketState } from "./useTicketSession";
@@ -24,23 +26,28 @@ import {
   type Ticket,
   type TicketStatus,
 } from "./tickets";
+import {
+  canWriteTicket,
+  canChangeTicketStatus,
+  isProjectManager,
+  reviewerCandidates,
+  type TicketProject,
+} from "./workflow";
 
-// The statuses an assignee (not a maintainer) may move between: starting and
-// reviewing their work. done/closed and reopening to open belong to the
-// maintainers; the submit guard enforces it, the options only suggest it.
-const ASSIGNEE_STATUSES: readonly TicketStatus[] = ["in_progress", "review"];
-
-type EditErrors = TicketFieldsErrors & { assignee?: string };
+type EditErrors = TicketFieldsErrors & { assignee?: string; reviewer?: string; general?: string };
 
 export type TicketEditProps = {
   ticket: Ticket;
   // The whole queue: the gate resolves the open blockers against it.
   tickets: readonly Ticket[];
-  // The project's maintainers: only they see every field and reassign anyone.
-  maintainers: readonly string[];
-  // The maintainer's reassignment: a user sets it, null clears it, undefined
-  // leaves it alone. Never gated by the claim ladder, by design.
-  onSubmit: (input: TicketEditInput, assignee: string | null | undefined) => void;
+  project: TicketProject;
+  memberUsers: readonly string[];
+  // Manager changes to assignee and reviewer use set/null/unchanged semantics.
+  // Reassigning assignee is never gated by the claim ladder.
+  onSubmit: (
+    input: TicketEditInput,
+    changes: TicketEditChanges,
+  ) => Promise<TicketEditFailure | null>;
   onCancel: () => void;
 };
 
@@ -74,7 +81,14 @@ function isContentDirty(values: TicketEditInput, ticket: Ticket): boolean {
  * maintainers see everything and reassign, authors fix title/body/tags, the
  * assignee moves open → in_progress ↔ review. Starting a blocked ticket is
  * refused with the list. */
-export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }: TicketEditProps) {
+export function TicketEdit({
+  ticket,
+  tickets,
+  project,
+  memberUsers,
+  onSubmit,
+  onCancel,
+}: TicketEditProps) {
   const session = useShellSession();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
@@ -82,28 +96,49 @@ export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }:
   const byId = useMemo(() => ticketsById(all), [all]);
   const [values, setValues] = useState<TicketEditInput>(() => draftOf(live));
   const [assigneeText, setAssigneeText] = useState(live.assignee?.user ?? "");
+  const [assigneeQuery, setAssigneeQuery] = useState(
+    live.assignee?.user ?? messages.tickets.dossier.assigneeUnassigned,
+  );
+  const [reviewerText, setReviewerText] = useState(live.reviewer?.user ?? "");
+  const [reviewerQuery, setReviewerQuery] = useState(
+    live.reviewer?.user ?? messages.tickets.edit.reviewerNone,
+  );
+  const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<EditErrors>({});
 
-  const isMaintainer = session !== null && maintainers.includes(session.user);
-  const isAuthor = session !== null && session.user === live.author.user;
-  const isAssignee = session !== null && session.user === live.assignee?.user;
+  const canWrite = canWriteTicket(session, project);
+  const isMaintainer = isProjectManager(session, project) && canWrite;
+  const isAuthor = canWrite && session?.user === live.author.user;
+  const isAssignee = canWrite && session?.user === live.assignee?.user;
+  const assigneeOptions: ComboBoxOption<string>[] = [
+    { value: "", label: messages.tickets.dossier.assigneeUnassigned },
+    ...memberUsers.map((user) => ({ value: user, label: user })),
+  ];
+  const reviewerOptions: ComboBoxOption<string>[] = [
+    { value: "", label: messages.tickets.edit.reviewerNone },
+    ...reviewerCandidates(project, assigneeText).map((user) => ({
+      value: user,
+      label: user,
+    })),
+  ];
 
   const statusOptions: SelectOption<TicketStatus>[] = useMemo(() => {
     const allowed = isMaintainer
       ? ticketStatuses
-      : ASSIGNEE_STATUSES.includes(live.status) || live.status === "open"
-        ? (["open", ...ASSIGNEE_STATUSES] as const)
-        : ASSIGNEE_STATUSES;
-    const listed = allowed.includes(live.status) ? allowed : [...allowed, live.status];
-    return listed.map((status) => ({ value: status, label: messages.tickets.statuses[status] }));
-  }, [isMaintainer, live.status]);
+      : ticketStatuses.filter((status) => canChangeTicketStatus(session, live, status));
+    return allowed.map((status) => ({ value: status, label: messages.tickets.statuses[status] }));
+  }, [isMaintainer, live, session]);
 
   const contentChanged = isMaintainer || isAuthor ? isContentDirty(values, live) : false;
   const statusChanged = values.status !== live.status;
-  const assigneeChanged = isMaintainer && assigneeText.trim() !== (live.assignee?.user ?? "");
+  const assigneeChanged = isMaintainer && assigneeText !== (live.assignee?.user ?? "");
+  const reviewerChanged = isMaintainer && reviewerText !== (live.reviewer?.user ?? "");
   // The author's seat never dirties the status; the assignee's never the content.
   const dirty =
-    contentChanged || (statusChanged && (isMaintainer || isAssignee)) || assigneeChanged;
+    contentChanged ||
+    (statusChanged && (isMaintainer || isAssignee)) ||
+    assigneeChanged ||
+    reviewerChanged;
 
   function update(patch: Partial<TicketEditInput>) {
     // The refusals explain the chosen value: changing it clears the stale error.
@@ -111,7 +146,8 @@ export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }:
     setValues((current) => ({ ...current, ...patch }));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (pending) return;
     const parsed = ticketEditSchema.safeParse(values);
     if (!parsed.success) {
       const hasError = (field: keyof TicketFieldsErrors) =>
@@ -123,7 +159,10 @@ export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }:
       });
       return;
     }
-    if (!isMaintainer && !isAuthor && !isAssignee) return;
+    if (!isMaintainer && !isAuthor && !isAssignee) {
+      setErrors({ general: messages.tickets.edit.denied });
+      return;
+    }
     // The content fields the role cannot see stay at the live values.
     const input: TicketEditInput =
       isMaintainer || isAuthor
@@ -139,9 +178,7 @@ export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }:
     if (!isMaintainer) {
       // Authors never touch the status; assignees stay inside their range
       // (open → in_progress ↔ review, never done/closed, never back to open).
-      const changed = input.status !== live.status;
-      const allowed = !changed || (isAssignee && ASSIGNEE_STATUSES.includes(input.status));
-      if (!allowed) {
+      if (!canChangeTicketStatus(session, live, input.status)) {
         setErrors({ status: messages.tickets.edit.statusRefused });
         return;
       }
@@ -152,26 +189,30 @@ export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }:
       setErrors({ status: `${messages.tickets.edit.blocked} ${blockers.join(", ")}` });
       return;
     }
-    if (isMaintainer) {
-      const previous = live.assignee?.user ?? "";
-      if (assigneeText.trim() !== previous) {
-        if (assigneeText.trim() === "") {
-          setErrors({});
-          onSubmit(input, null);
-          return;
-        }
-        const named = ticketAssigneeSchema.safeParse(assigneeText);
-        if (!named.success) {
-          setErrors({ assignee: messages.tickets.edit.badAssignee });
-          return;
-        }
-        setErrors({});
-        onSubmit(input, named.data);
-        return;
-      }
+    const assignee = assigneeText === "" ? null : assigneeText;
+    if (
+      isMaintainer &&
+      reviewerChanged &&
+      reviewerText !== "" &&
+      !reviewerCandidates(project, assigneeText).includes(reviewerText)
+    ) {
+      setErrors({ reviewer: messages.tickets.edit.reviewerInvalid });
+      return;
     }
-    setErrors({});
-    onSubmit(input, undefined);
+    const changes: TicketEditChanges = {
+      assignee: isMaintainer && assigneeChanged ? assignee : undefined,
+      reviewer: reviewerChanged ? reviewerText || null : undefined,
+    };
+    setPending(true);
+    const failure = await onSubmit(input, changes);
+    setPending(false);
+    if (failure === "assignee") setErrors({ assignee: messages.tickets.edit.badAssignee });
+    else if (failure === "active") setErrors({ assignee: messages.tickets.edit.activeAssignee });
+    else if (failure === "reviewer") setErrors({ reviewer: messages.tickets.edit.reviewerInvalid });
+    else if (failure === "status") setErrors({ status: messages.tickets.edit.statusRefused });
+    else if (failure === "blocked") setErrors({ status: messages.tickets.edit.blocked });
+    else if (failure === "denied") setErrors({ general: messages.tickets.edit.denied });
+    else setErrors({});
   }
 
   return (
@@ -210,22 +251,50 @@ export function TicketEdit({ ticket, tickets, maintainers, onSubmit, onCancel }:
 
         {isMaintainer ? (
           <Stack gap={4}>
-            <Field
+            <ComboBox
               label={messages.tickets.edit.assignee}
               name="assignee"
-              value={assigneeText}
-              onChange={(next) => {
-                setAssigneeText(next);
-                setErrors((current) => ({ ...current, assignee: undefined }));
+              value={assigneeQuery}
+              onChange={setAssigneeQuery}
+              onPick={(option) => {
+                setAssigneeText(option.value);
+                setAssigneeQuery(option.label);
+                if (reviewerText === option.value) {
+                  setReviewerText("");
+                  setReviewerQuery(messages.tickets.edit.reviewerNone);
+                }
+                setErrors((current) => ({ ...current, assignee: undefined, reviewer: undefined }));
               }}
+              options={assigneeOptions}
+              committedValue={assigneeText}
+              emptyText={messages.tickets.edit.assigneeNoMatch}
+              submitOnNoMatch={false}
               error={errors.assignee}
             />
-            <Text role="hint">{messages.tickets.edit.assigneeHint}</Text>
+            <ComboBox
+              label={messages.tickets.edit.reviewer}
+              name="reviewer"
+              value={reviewerQuery}
+              onChange={setReviewerQuery}
+              onPick={(option) => {
+                setReviewerText(option.value);
+                setReviewerQuery(option.label);
+                setErrors((current) => ({ ...current, reviewer: undefined }));
+              }}
+              options={reviewerOptions}
+              committedValue={reviewerText}
+              emptyText={messages.tickets.edit.reviewerNoMatch}
+              submitOnNoMatch={false}
+              error={errors.reviewer}
+            />
+            <Text role="hint">{messages.tickets.edit.reviewerHint}</Text>
           </Stack>
         ) : null}
 
+        {errors.general ? <Text role="danger">{errors.general}</Text> : null}
+
         <Stack direction="row" gap={10} wrap navRow>
-          <Button type="submit" variant="primary" disabled={!dirty}>
+          <Button type="submit" variant="primary" disabled={!dirty || pending}>
             {messages.tickets.edit.save}
           </Button>
           <Button onClick={onCancel}>{messages.tickets.edit.cancel}</Button>

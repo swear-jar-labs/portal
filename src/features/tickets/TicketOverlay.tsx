@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
+import { listMemberUsers } from "@/features/account/contracts";
 import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { DEFAULT_CLAIM_POLICY, listProjects, type Project } from "@/features/projects/contracts";
 import { listReadroomsByTicket } from "@/features/readroom/contracts";
@@ -16,7 +17,7 @@ import { TICKET_EDIT_QUERY, TICKET_EDIT_QUERY_VALUE, ticketDocumentTitle } from 
 // options from `projects` + `tickets`, the overlay interceptor renders the
 // dossier (and the edit panel) from the dossier props.
 export type TicketLayerData = WithDocumentTitle<
-  TicketOverlayDossierProps & { projects: readonly Project[] }
+  TicketOverlayDossierProps & { projects: readonly Project[]; memberUsers: readonly string[] }
 >;
 
 /**
@@ -37,12 +38,18 @@ export async function loadTicketLayer(key: string, now: string): Promise<TicketL
   return {
     ticket,
     tickets,
+    memberUsers: listMemberUsers(),
     projects,
     projectName: project?.name ?? ticket.project,
     documentTitle: ticketDocumentTitle(ticket),
-    maintainers: project?.maintainers.map((person) => person.user) ?? [],
-    assignmentsPaused: (project?.maintainers.length ?? 0) === 0,
-    claimPolicy: project?.claimPolicy ?? DEFAULT_CLAIM_POLICY,
+    project: {
+      slug: ticket.project,
+      status: project?.status ?? "archived",
+      lead: project?.lead ?? null,
+      maintainers: project?.maintainers ?? [],
+      reviewers: project?.reviewers ?? [],
+      claimPolicy: project?.claimPolicy ?? DEFAULT_CLAIM_POLICY,
+    },
     readrooms,
     now,
   };
@@ -66,9 +73,7 @@ export async function InterceptedTicketPage({ params, searchParams }: TicketPage
               ticket={data.ticket}
               tickets={data.tickets}
               projectName={data.projectName}
-              maintainers={data.maintainers}
-              assignmentsPaused={data.assignmentsPaused}
-              claimPolicy={data.claimPolicy}
+              project={data.project}
               readrooms={data.readrooms}
               now={data.now}
             />
@@ -82,7 +87,8 @@ export async function InterceptedTicketPage({ params, searchParams }: TicketPage
                   <TicketOverlayEditPanel
                     ticket={data.ticket}
                     tickets={data.tickets}
-                    maintainers={data.maintainers}
+                    project={data.project}
+                    memberUsers={data.memberUsers}
                   />
                 ),
               },

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
+import { listMemberUsers } from "@/features/account/contracts";
 import { isKnownProjectSlug, listProjects } from "@/features/projects/contracts";
 import { listTickets } from "./data";
 import { parseTicketQuery } from "./tickets";
@@ -22,14 +23,17 @@ export async function TicketsPage({ searchParams }: TicketsPageProps) {
   const options = projects.map((project) => ({
     slug: project.slug,
     name: project.name,
-    maintainers: project.maintainers.map((person) => person.user),
-    assignmentsPaused: project.maintainers.length === 0,
+    status: project.status,
+    lead: project.lead,
+    maintainers: project.maintainers,
+    reviewers: project.reviewers ?? [],
     claimPolicy: project.claimPolicy,
   }));
 
   return (
     <TicketsStack
       tickets={tickets}
+      memberUsers={listMemberUsers()}
       projects={options}
       initialQuery={query}
       initialCompose={initialCompose}

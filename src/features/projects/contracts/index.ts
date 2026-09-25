@@ -2,7 +2,13 @@
 // manifest, not an implementation: explicit re-exports of the slice's
 // internals, nothing else. The contract test pins the published list.
 
-export { archivedProjectSlugs, isKnownProjectSlug, listProjects, projectName } from "../data";
+export {
+  archivedProjectSlugs,
+  getProject,
+  isKnownProjectSlug,
+  listProjects,
+  projectName,
+} from "../data";
 export {
   DEFAULT_CLAIM_POLICY,
   dynamicTicketPrefix,

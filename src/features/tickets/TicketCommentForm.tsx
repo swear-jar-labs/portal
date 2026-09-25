@@ -1,25 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Form, Stack } from "@swearjar/dos";
+import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { avatarFor } from "@/shared/members";
+import { freshTicketAccess } from "./mock-ticket-access";
 import { ticketCommentSchema } from "./schema";
 import * as ticketStore from "./ticket-store";
+import type { Ticket } from "./tickets";
+import { canWriteTicket, isProjectManager, type TicketProject } from "./workflow";
 
 const COMMENT_ROWS = 3;
 
 /** The dossier's comment composer: a guest keeps the draft and gets the login
  * prompt (the board's reply pattern). */
-export function TicketCommentForm({ ticketId }: { ticketId: string }) {
+export function TicketCommentForm({ ticket, project }: { ticket: Ticket; project: TicketProject }) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | undefined>();
 
-  function submit() {
+  async function submit() {
     const parsed = ticketCommentSchema.safeParse({ body: draft });
     if (!parsed.success) {
       setError(messages.tickets.dossier.comments.error);
@@ -29,11 +32,27 @@ export function TicketCommentForm({ ticketId }: { ticketId: string }) {
       requestLogin();
       return;
     }
-    ticketStore.addTicketComment(ticketId, {
-      author: { user: session.user, avatar: avatarFor(session.user) },
-      body: parsed.data.body,
-      createdAt: new Date().toISOString(),
-    });
+    const access = await freshTicketAccess(project.slug);
+    if (
+      !access ||
+      access.actor?.user !== session.user ||
+      !canWriteTicket(access.actor, access.project)
+    ) {
+      setError(messages.tickets.dossier.comments.memberRequired);
+      return;
+    }
+    ticketStore.addTicketComment(
+      ticket.id,
+      {
+        author: { user: session.user, avatar: avatarFor(session.user) },
+        body: parsed.data.body,
+        createdAt: new Date().toISOString(),
+      },
+      session.user === ticket.assignee?.user ||
+        session.user === ticket.author.user ||
+        isProjectManager(access.actor, access.project) ||
+        (access.project.reviewers ?? []).some((person) => person.user === session.user),
+    );
     setDraft("");
     setError(undefined);
   }
@@ -54,6 +73,9 @@ export function TicketCommentForm({ ticketId }: { ticketId: string }) {
             {messages.tickets.dossier.comments.submit}
           </Button>
         </Stack>
+        {error === messages.tickets.dossier.comments.memberRequired ? (
+          <Text role="danger">{error}</Text>
+        ) : null}
       </Stack>
     </Form>
   );

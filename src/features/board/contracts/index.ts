@@ -12,3 +12,7 @@ export {
 } from "../data";
 export { JournalRows } from "../JournalRows";
 export { ThreadRows } from "../ThreadRows";
+// The upvote chip: the readroom's cards and task view vote with the same
+// affordance (a leaf — kit, content and lib only, no feature imports).
+export { VoteButton } from "../VoteButton";
+export type { VoteButtonProps } from "../VoteButton";

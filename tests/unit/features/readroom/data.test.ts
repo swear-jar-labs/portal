@@ -63,6 +63,12 @@ describe("readroom fixtures", () => {
   it("keeps every person on the member registry", async () => {
     for (const readroom of await listReadrooms()) {
       expect(KNOWN_USERS, `${readroom.id} has an unknown lead`).toContain(readroom.lead.user);
+      expect(new Set(readroom.upvotes).size, `${readroom.id} repeats a voter`).toBe(
+        readroom.upvotes.length,
+      );
+      for (const voter of readroom.upvotes) {
+        expect(KNOWN_USERS, `${readroom.id} has an unknown voter`).toContain(voter);
+      }
       expect(readroom.lead.avatar).toBe(avatarFor(readroom.lead.user));
 
       const noteIds = readroom.notes.map((note) => note.id);

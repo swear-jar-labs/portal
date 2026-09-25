@@ -30,6 +30,9 @@ const readrooms: readonly Readroom[] = [
     id: "bump-allocator",
     title: "Dissect the allocator that hides a free list behind a bump pointer",
     tags: [],
+    // The seeded order behind the Top mode: retry-loop (2) first, this one (1)
+    // next, the rest ties at zero broken by freshness.
+    upvotes: ["lin"],
     description: [
       "The surface is a textbook bump allocator: one pointer, one bound, no free.",
       "",
@@ -66,6 +69,7 @@ const readrooms: readonly Readroom[] = [
     id: "lookahead-table",
     title: "Read the lookahead table a generator wrote: 4,096 states, no comments",
     tags: ["c"],
+    upvotes: [],
     description: [
       "This one is machine-written: an LL(1) table emitted by a parser generator, provenance left at the grammar file. An excerpt is pasted below — 4,096 rows in the full table, no comments.",
       "",
@@ -89,6 +93,7 @@ const readrooms: readonly Readroom[] = [
     id: "recursive-descent",
     title: "The hand-written parser: where the precedence table lies",
     tags: ["c"],
+    upvotes: [],
     description: [
       "Four hundred lines, no generator, and one table that disagrees with the `switch` beside it. The function below is the whole grammar — the table it consults is not.",
       "",
@@ -134,6 +139,7 @@ const readrooms: readonly Readroom[] = [
     id: "retry-loop",
     title: "Postmortem read: the retry loop that never slept",
     tags: ["go", "linux"],
+    upvotes: ["ada", "grace"],
     description: [
       "A queue worker with exponential backoff — except the exponent was an `int` and the jitter was added *after* the cap.",
       "",
@@ -190,6 +196,7 @@ const readrooms: readonly Readroom[] = [
     id: "token-cache",
     title: "Archived: the token cache that remembered everything",
     tags: ["go"],
+    upvotes: [],
     description: [
       "A cache with a TTL — and a map that never forgot the keys. We read it once, published the write-up, and archived the task when the service was retired.",
     ].join("\n"),

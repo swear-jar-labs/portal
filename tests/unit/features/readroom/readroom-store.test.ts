@@ -14,6 +14,7 @@ import {
   resetReadroomStore,
   sessionReadroom,
   stopReadroom,
+  toggleReadroomUpvote,
   withSession,
 } from "@/features/readroom/readroom-store";
 import type { ReadroomDraft } from "@/features/readroom/datetime";
@@ -34,6 +35,7 @@ function readroom(overrides: Partial<Readroom> = {}): Readroom {
     id: "task",
     title: "Task",
     tags: [],
+    upvotes: [],
     description: "Description",
     lead: { user: "ada" },
     createdAt: "2026-09-19T12:00:00.000Z",
@@ -122,6 +124,34 @@ describe("attachments", () => {
   it("keeps an empty batch out of the state", () => {
     addAttachments("task", []);
     expect(readroomSnapshot().tasks).toEqual({});
+  });
+});
+
+describe("upvotes", () => {
+  it("votes once per account and keeps the other accounts' state", () => {
+    const base = readroom({ upvotes: ["lin"] });
+    toggleReadroomUpvote(base.id, "ada", base.upvotes);
+    toggleReadroomUpvote(base.id, "grace", sessionReadroom(base, readroomSnapshot()).upvotes);
+    expect(sessionReadroom(base, readroomSnapshot()).upvotes).toEqual(["lin", "ada", "grace"]);
+    expect(base.upvotes).toEqual(["lin"]);
+  });
+
+  it("withdraws on the second press, including a seeded vote", () => {
+    const base = readroom({ upvotes: ["lin", "ada"] });
+    toggleReadroomUpvote(base.id, "ada", base.upvotes);
+    expect(sessionReadroom(base, readroomSnapshot()).upvotes).toEqual(["lin"]);
+
+    toggleReadroomUpvote(base.id, "ada", sessionReadroom(base, readroomSnapshot()).upvotes);
+    expect(sessionReadroom(base, readroomSnapshot()).upvotes).toEqual(["lin", "ada"]);
+  });
+
+  it("never duplicates a vote pressed twice through two cards", () => {
+    const base = readroom();
+    toggleReadroomUpvote(base.id, "ada", base.upvotes);
+    const merged = sessionReadroom(base, readroomSnapshot()).upvotes;
+    toggleReadroomUpvote(base.id, "ada", merged);
+    // The second press is the withdrawal: the merge is not a second vote.
+    expect(sessionReadroom(base, readroomSnapshot()).upvotes).toEqual([]);
   });
 });
 

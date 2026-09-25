@@ -3,13 +3,17 @@ import { messages } from "@/content/messages";
 import {
   formatDeadlineDate,
   hasNoteBy,
+  hasUpvoted,
   isLead,
   phaseOf,
   phaseTones,
-  rankReadrooms,
+  rankReadroomMode,
+  readroomModes,
   readroomPath,
   readroomPhases,
   readroomTagIds,
+  toggledUpvoters,
+  upvoteCount,
   visibleNotes,
   type Readroom,
   type ReadroomNote,
@@ -27,6 +31,7 @@ function readroom(overrides: Partial<Readroom> = {}): Readroom {
     id: "task",
     title: "Task",
     tags: [],
+    upvotes: [],
     description: "Description",
     lead: { user: "ada" },
     createdAt: "2026-09-15T12:00:00.000Z",
@@ -105,64 +110,127 @@ describe("visibleNotes", () => {
   });
 });
 
-describe("rankReadrooms", () => {
+describe("upvotes", () => {
+  it("counts one vote per account and reads the voter's own", () => {
+    expect(upvoteCount([])).toBe(0);
+    expect(upvoteCount(["ada", "grace"])).toBe(2);
+    expect(hasUpvoted(["ada"], "ada")).toBe(true);
+    expect(hasUpvoted(["ada"], "ken")).toBe(false);
+    expect(hasUpvoted(["ada"], null)).toBe(false);
+  });
+
+  it("adds on the first press and drops on the second, without duplicates", () => {
+    expect(toggledUpvoters([], "ada")).toEqual(["ada"]);
+    expect(toggledUpvoters(["ada", "grace"], "ada")).toEqual(["grace"]);
+    expect(toggledUpvoters(["ada", "ada"], "grace")).toEqual(["ada", "ada", "grace"]);
+  });
+});
+
+describe("rankReadroomMode", () => {
   const now = "2026-09-16T12:00:00.000Z";
   const at = (iso: string) => iso;
 
   const collectingLate = readroom({
     id: "collecting-late",
+    createdAt: at("2026-09-14T12:00:00.000Z"),
     deadlineAt: at("2026-09-20T12:00:00.000Z"),
   });
   const collectingSoon = readroom({
     id: "collecting-soon",
+    createdAt: at("2026-09-15T12:00:00.000Z"),
     deadlineAt: at("2026-09-18T12:00:00.000Z"),
+    upvotes: ["lin"],
   });
-  const reviewing = readroom({ id: "reviewing", deadlineAt: at("2026-09-10T12:00:00.000Z") });
-  const publishedOld = readroom({
-    id: "published-old",
+  const reviewing = readroom({
+    id: "reviewing",
+    createdAt: at("2026-09-09T12:00:00.000Z"),
+    deadlineAt: at("2026-09-10T12:00:00.000Z"),
+  });
+  const publishedQuiet = readroom({
+    id: "published-quiet",
+    createdAt: at("2026-09-13T12:00:00.000Z"),
     report: "Report",
     reportAt: at("2026-09-12T12:00:00.000Z"),
   });
-  const publishedFresh = readroom({
-    id: "published-fresh",
+  const publishedLoved = readroom({
+    id: "published-loved",
+    createdAt: at("2026-09-11T12:00:00.000Z"),
     report: "Report",
     reportAt: at("2026-09-15T12:00:00.000Z"),
+    upvotes: ["ada", "grace"],
   });
-  const archivedOld = readroom({
-    id: "archived-old",
+  const publishedTieNew = readroom({
+    id: "published-tie-new",
+    createdAt: at("2026-09-14T12:00:00.000Z"),
+    report: "Report",
+    reportAt: at("2026-09-14T12:00:00.000Z"),
+    upvotes: ["ken"],
+  });
+  const publishedTieOld = readroom({
+    id: "published-tie-old",
+    createdAt: at("2026-09-10T12:00:00.000Z"),
+    report: "Report",
+    reportAt: at("2026-09-14T12:00:00.000Z"),
+    upvotes: ["ken"],
+  });
+  const archived = readroom({
+    id: "archived",
+    createdAt: at("2026-07-20T12:00:00.000Z"),
     report: "Report",
     reportAt: at("2026-08-01T12:00:00.000Z"),
     archivedAt: at("2026-08-05T12:00:00.000Z"),
+    upvotes: ["ada", "grace", "ken", "lin"],
   });
-  const archivedFresh = readroom({
-    id: "archived-fresh",
-    report: "Report",
-    reportAt: at("2026-08-20T12:00:00.000Z"),
-    archivedAt: at("2026-08-25T12:00:00.000Z"),
-  });
+  const all = [
+    archived,
+    publishedQuiet,
+    collectingLate,
+    reviewing,
+    publishedLoved,
+    publishedTieOld,
+    publishedTieNew,
+    collectingSoon,
+  ];
 
-  it("orders by phase, then by the phase's own key", () => {
-    const ranked = rankReadrooms(
-      [
-        archivedOld,
-        publishedOld,
-        collectingLate,
-        reviewing,
-        archivedFresh,
-        publishedFresh,
-        collectingSoon,
-      ],
-      now,
-    );
-    expect(ranked.map((entry) => entry.id)).toEqual([
+  it("collects the open note collections by the closest deadline", () => {
+    expect(rankReadroomMode(all, "active", now).map((entry) => entry.id)).toEqual([
       "collecting-soon",
       "collecting-late",
-      "reviewing",
-      "published-fresh",
-      "published-old",
-      "archived-fresh",
-      "archived-old",
     ]);
+  });
+
+  it("ranks every cycle by upvotes, newest breaking ties", () => {
+    expect(rankReadroomMode(all, "top", now).map((entry) => entry.id)).toEqual([
+      "archived",
+      "published-loved",
+      "collecting-soon",
+      "published-tie-new",
+      "published-tie-old",
+      "collecting-late",
+      "published-quiet",
+      "reviewing",
+    ]);
+  });
+
+  it("ranks every cycle by freshness", () => {
+    expect(rankReadroomMode(all, "new", now).map((entry) => entry.id)).toEqual([
+      "collecting-soon",
+      "collecting-late",
+      "published-tie-new",
+      "published-quiet",
+      "published-loved",
+      "published-tie-old",
+      "reviewing",
+      "archived",
+    ]);
+  });
+
+  it("keeps stopped cycles out of Active only", () => {
+    expect(rankReadroomMode(all, "active", now).map((entry) => entry.id)).not.toContain("archived");
+    for (const mode of ["top", "new"] as const) {
+      expect(rankReadroomMode(all, mode, now).map((entry) => entry.id)).toContain("archived");
+    }
+    expect(readroomModes).toEqual(["top", "new", "active"]);
   });
 });
 
@@ -187,6 +255,10 @@ describe("stamps", () => {
 
   it("gives every tag id a label and no stranger", () => {
     expect(Object.keys(messages.readroom.tags).sort()).toEqual([...readroomTagIds].sort());
+  });
+
+  it("gives every feed mode a label and no stranger", () => {
+    expect(Object.keys(messages.readroom.feed.modes).sort()).toEqual([...readroomModes].sort());
   });
 
   it("reads the lead by authorship", () => {

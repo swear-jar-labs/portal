@@ -41,42 +41,41 @@ test("opens the readroom from the file manager and keeps its file current", asyn
   await expect(files.locator("#file-READROOM")).toHaveAttribute("aria-current", "true");
 });
 
-test("ranks the feed with every phase and the archive section", async ({ page }) => {
+test("ranks the top feed with the stopped task in the list", async ({ page }) => {
   await page.goto(READROOM_PATH);
   await waitForHydration(page);
   const feed = page.getByRole("region", { name: FEED_REGION });
   const cards = feed.getByRole("article");
 
-  await expect(cards).toHaveCount(5);
+  // Top leads by default (most-voted task first); the stopped cycle sinks
+  // with the rest under its ARCHIVED chip — no separate shelf.
   await expect(feed.getByText("5 TASKS")).toBeVisible();
-
-  // Collecting (closest deadline first), reviewing, published, archive last.
-  await expect(cards.nth(0)).toContainText(BUMP);
-  await expect(cards.nth(0)).toContainText("2D AGO");
-  await expect(cards.nth(0)).toContainText("COLLECTING");
-  await expect(cards.nth(0)).not.toContainText(/IN \d+[DWM]/);
-  await expect(cards.nth(0)).toContainText("3 NOTES");
-  await expect(cards.nth(0).getByRole("link", { name: TICKET_CHIP })).toBeVisible();
+  await expect(cards).toHaveCount(5);
+  await expect(cards.nth(0)).toContainText(RETRY);
+  await expect(cards.nth(0)).toContainText("PUBLISHED");
+  await expect(cards.nth(0)).toContainText("4W AGO");
+  await expect(cards.nth(0).getByRole("button", { name: "▲ 2 VOTES" })).toBeVisible();
+  await expect(cards.nth(1)).toContainText(BUMP);
+  await expect(cards.nth(1)).toContainText("2D AGO");
+  await expect(cards.nth(1)).toContainText("COLLECTING");
+  await expect(cards.nth(1)).not.toContainText(/IN \d+[DWM]/);
+  await expect(cards.nth(1)).toContainText("3 NOTES");
+  await expect(cards.nth(1).getByRole("link", { name: TICKET_CHIP })).toBeVisible();
+  await expect(cards.nth(1).getByRole("button", { name: "▲ 1 VOTE" })).toBeVisible();
   // Every feed card carries its section icon in the title row.
-  await expect(cards.nth(0).locator('[data-file-icon="book"]')).toBeVisible();
+  await expect(cards.nth(1).locator('[data-file-icon="book"]')).toBeVisible();
   await expectSameVerticalCenter(
-    cards.nth(0).getByRole("link", { name: "grace" }),
-    cards.nth(0).getByText("2D AGO · 3 NOTES", { exact: true }),
+    cards.nth(1).getByRole("link", { name: "grace" }),
+    cards.nth(1).getByText("2D AGO · 3 NOTES", { exact: true }),
   );
   // The byline reads above the title on screen through the CSS slot order,
   // while the title leads the DOM: the walk enters the row on it.
   await expectAbove(
-    cards.nth(0).getByRole("link", { name: "grace" }),
-    cards.nth(0).getByRole("link").first(),
+    cards.nth(1).getByRole("link", { name: "grace" }),
+    cards.nth(1).getByRole("link").first(),
   );
-  await expect(cards.nth(1)).toContainText("0 NOTES");
-  await expect(cards.nth(2)).toContainText("REVIEWING");
-  await expect(cards.nth(2)).toContainText("1W AGO");
-  await expect(cards.nth(2)).not.toContainText("CLOSED");
-  await expect(cards.nth(3)).toContainText("PUBLISHED");
-  await expect(cards.nth(3)).toContainText("4W AGO");
 
-  await expect(feed.getByRole("heading", { name: "ARCHIVE", exact: true })).toBeVisible();
+  await expect(feed.getByRole("heading", { name: "ARCHIVE", exact: true })).toHaveCount(0);
   await expect(cards.nth(4)).toContainText(ARCHIVED);
   await expect(cards.nth(4)).toContainText("ARCHIVED");
   await expect(cards.nth(4)).toContainText("7W AGO");
@@ -85,6 +84,14 @@ test("ranks the feed with every phase and the archive section", async ({ page })
 test("opens a task over the feed and pops back to the focused card", async ({ page }) => {
   await page.goto(READROOM_PATH);
   await waitForHydration(page);
+  // Reviewing reads through Top, not Active.
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("button", {
+      name: "TOP",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: RECURSIVE })
@@ -126,6 +133,13 @@ test("a second Esc does not pop another layer while the close is in flight", asy
 
   await page
     .getByRole("region", { name: FEED_REGION })
+    .getByRole("button", {
+      name: "TOP",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: RECURSIVE })
     .click();
   await expect(page).toHaveURL(readroomPath("recursive-descent"));
@@ -140,6 +154,13 @@ test("a second Esc does not pop another layer while the close is in flight", asy
 test("the task [X] closes back to the feed", async ({ page }) => {
   await page.goto(READROOM_PATH);
   await waitForHydration(page);
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("button", {
+      name: "TOP",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: RECURSIVE })
@@ -163,6 +184,13 @@ test("lays a lone panel flush and steps the stacked task down", async ({ page })
 
   expect(await margins(page)).toEqual([{ left: "0px", top: "0px" }]);
 
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("button", {
+      name: "TOP",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: RECURSIVE })
@@ -189,6 +217,14 @@ test("stacks the member layer flush on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 700 });
   await page.goto(READROOM_PATH);
   await waitForHydration(page);
+  // Grace leads the first Active task.
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("button", {
+      name: "ACTIVE",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("region", { name: FEED_REGION })
     .getByRole("article")
@@ -318,14 +354,21 @@ test("walks the feed and the task by rows", async ({ page }) => {
   const feed = page.getByRole("region", { name: FEED_REGION });
   const first = feed.getByRole("article").first();
 
+  // Walk the collecting task: Active leads with the bump allocator and its
+  // ticket chip.
+  await feed.getByRole("button", { name: "ACTIVE", exact: true }).click();
   // ▲/▼ enter the card rows on the card title (it leads the DOM while the
   // byline reads above it on screen); the first step retries until the
   // island's listeners answer (the feed hydrates after the shell clock). The
-  // compose row leads the feed, the cards follow.
+  // compose row leads the feed, the mode switch follows, then the cards.
   await expect(async () => {
     await focusedBody(page).focus();
     await page.keyboard.press("ArrowDown");
     await expect(feed.getByRole("button", { name: "NEW TASK" })).toBeFocused({
+      timeout: 1_000,
+    });
+    await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("button", { name: "TOP", exact: true })).toBeFocused({
       timeout: 1_000,
     });
     await page.keyboard.press("ArrowDown");
@@ -365,6 +408,7 @@ test("keeps the feed and the task legible", async ({ page }) => {
   await expectMinimumContrast(feed.getByText("COLLECTING").first());
   await expectMinimumContrast(feed.getByText("2D AGO · 3 NOTES", { exact: true }));
 
+  await feed.getByRole("button", { name: "TOP", exact: true }).click();
   await feed.getByRole("link", { name: RETRY }).click();
   const task = page.getByRole("region", { name: RETRY });
   await expectMinimumContrast(task.getByText(/DEADLINE \d{4}/));
@@ -383,6 +427,13 @@ test("has no accessibility violations", async ({ page }) => {
   await waitForHydration(page);
   await expectNoViolations(page, READROOM_PATH);
 
+  await page
+    .getByRole("region", { name: FEED_REGION })
+    .getByRole("button", {
+      name: "TOP",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: RECURSIVE })
@@ -406,6 +457,8 @@ test("opens a lead profile over the feed and closes back to the card", async ({ 
   await page.goto(READROOM_PATH);
   await waitForHydration(page);
   const feed = page.getByRole("region", { name: FEED_REGION });
+  // Grace leads the first Active task.
+  await feed.getByRole("button", { name: "ACTIVE", exact: true }).click();
   const lead = feed.getByRole("article").first().getByRole("link", { name: "grace" });
   await expect(lead).toHaveAttribute("href", "/members/grace");
 

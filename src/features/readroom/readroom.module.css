@@ -7,12 +7,14 @@
 }
 
 /* Passive card details let the stretched title link own their gaps and text;
-   only the optional ticket link rises above it as its own target. */
+   only the ticket link and the vote chip rise above it as their own targets
+   (the kit's metaInteractive pattern: the wrapper stays click-through). */
 .cardTitle .cardDetails {
   pointer-events: none;
 }
 
-.cardTitle .cardDetails a {
+.cardTitle .cardDetails a,
+.cardTitle .cardDetails button {
   pointer-events: auto;
 }
 

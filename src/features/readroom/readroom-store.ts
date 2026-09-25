@@ -1,4 +1,5 @@
 import type { ReadroomAttachment, ReadroomPerson, Readroom, ReadroomNote } from "./readrooms";
+import { toggledUpvoters } from "./readrooms";
 import type { ReadroomDraft } from "./datetime";
 
 // The readroom's session memory: the mock state outlives the route remount
@@ -31,6 +32,11 @@ export type ReadroomTaskState = {
   report?: ReadroomReport;
   deadlineAt?: string;
   archivedAt?: string;
+  // The task's voter list once this session touches it: the first toggle
+  // snapshots the effective list (fixture seeds included) and every later one
+  // edits the snapshot, so toggling needs no base — the card passes whatever
+  // list it holds. Absent means the base list stands.
+  upvoteOverride?: readonly string[];
 };
 
 export type ReadroomState = {
@@ -145,12 +151,28 @@ export function stopReadroom(readroomId: string): void {
   updateTask(readroomId, (current) => ({ ...current, archivedAt: new Date().toISOString() }));
 }
 
-/** A task opened in this session: the lead is its author, no notes yet. */
+/** One upvote per account with a withdrawal: the caller's list is the
+ * effective one, the guard is the toggle itself (a duplicate press drops the
+ * vote instead of doubling it). Guests never reach it — the UI gates on the
+ * logon prompt, like the board's votes. */
+export function toggleReadroomUpvote(
+  readroomId: string,
+  user: string,
+  voters: readonly string[],
+): void {
+  updateTask(readroomId, (current) => ({
+    ...current,
+    upvoteOverride: toggledUpvoters(current.upvoteOverride ?? voters, user),
+  }));
+}
+
+/** A task opened in this session: the lead is its author, no notes or votes yet. */
 export function createReadroom(draft: ReadroomDraft, lead: ReadroomPerson): Readroom {
   const readroom: Readroom = {
     id: localId(LOCAL_READROOM_ID_PREFIX),
     title: draft.title,
     tags: draft.tags,
+    upvotes: [],
     description: draft.description,
     ...(draft.sourceUrl === undefined ? {} : { sourceUrl: draft.sourceUrl }),
     ...(draft.ticket === undefined ? {} : { ticket: draft.ticket }),
@@ -187,6 +209,7 @@ export function sessionReadroom(readroom: Readroom, snapshot: ReadroomState): Re
     deadlineAt: task.deadlineAt ?? readroom.deadlineAt,
     ...(task.report === undefined ? {} : { report: task.report.body, reportAt: task.report.at }),
     ...(task.archivedAt === undefined ? {} : { archivedAt: task.archivedAt }),
+    ...(task.upvoteOverride === undefined ? {} : { upvotes: task.upvoteOverride }),
     notes,
   };
 }

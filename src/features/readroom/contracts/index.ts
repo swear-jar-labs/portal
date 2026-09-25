@@ -5,4 +5,5 @@
 // the slice graph (see AGENTS.md). The contract test pins the published list.
 
 export { listReadroomsByTicket } from "../data";
-export type { ReadroomRef } from "../readrooms";
+export { hasNoteBy, hasUpvoted, isLead, phaseOf, upvoteCount, visibleNotes } from "../readrooms";
+export type { ReadroomMode, ReadroomPhase, ReadroomRef, VisibleNotes } from "../readrooms";

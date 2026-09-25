@@ -7,6 +7,7 @@ import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
 import { MemberLink } from "@/features/members/contracts";
 import { useOverlayPush } from "@/features/shell";
+import { VoteButton } from "@/features/board/contracts";
 import { ticketPath } from "@/features/tickets/contracts";
 import {
   phaseOf,
@@ -26,6 +27,9 @@ export type ReadroomCardProps = {
   // A task composed in this session has no route: its card activates in place
   // instead of linking to a page that does not exist.
   local?: boolean;
+  // The session's vote on this task (one per account, withdrawable).
+  voted: boolean;
+  onVote: () => void;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
 };
 
@@ -34,6 +38,8 @@ export function ReadroomCard({
   now,
   current = false,
   local = false,
+  voted,
+  onVote,
   onActivate,
 }: ReadroomCardProps) {
   const phase = phaseOf(readroom, now);
@@ -83,6 +89,7 @@ export function ReadroomCard({
           {readroom.tags.map((tag) => (
             <Tag key={tag}>{messages.readroom.tags[tag]}</Tag>
           ))}
+          <VoteButton votes={readroom.upvotes.length} voted={voted} onToggle={onVote} />
         </Stack>
       }
     />

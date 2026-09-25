@@ -52,6 +52,10 @@ export type Readroom = {
   // The curiosity tags of the cycle: what the reading exercises. Empty is a
   // valid answer — the taxonomy lives beside the tags, not in the title.
   tags: readonly ReadroomTagId[];
+  // The task's upvoters by handle: one vote per account, withdrawable.
+  // Fixtures seed the demo order; the session layers its toggles on top.
+  // Phase 5 moves the list to the votes table — the helpers below stay pure.
+  upvotes: readonly string[];
   // The opening description: rendered as a white card under the source block.
   description: string;
   // The source is link-first: `sourceUrl` is a revision-pinned permalink and
@@ -116,9 +120,10 @@ export function phaseOf(
   return Date.parse(nowIso) < Date.parse(readroom.deadlineAt) ? "collecting" : "reviewing";
 }
 
-/** The lead owns the cycle: the write-up, the deadline moves and the stop.
- * UI-first slices have no roles yet — the mock reads the lead by authorship;
- * Phase 5 keeps the check and adds the reviewer+ rule on top. */
+/** The author owns the cycle: the write-up, the deadline moves and the
+ * stop. Authorship is the whole rule (community-participation): a ticket or
+ * project link is context and grants no rights on someone else's cycle, and
+ * there is no reviewer+ gate. Phase 5 keeps the check on the server. */
 export function isLead(readroom: Pick<Readroom, "lead">, user: string | null): boolean {
   return user !== null && readroom.lead.user === user;
 }
@@ -152,12 +157,14 @@ export function visibleNotes(
   return { notes: own, sealed: all.length - own.length };
 }
 
-const PHASE_ORDER: Record<ReadroomPhase, number> = {
-  collecting: 0,
-  reviewing: 1,
-  published: 2,
-  archived: 3,
-};
+// The feed's modes (community-participation), TOP first: TOP ranks the
+// cycles by interest, NEW by freshness, ACTIVE takes the ones with an open
+// note collection. Stopped cycles carry the ARCHIVED chip and sink with the
+// rest — there is no separate archive shelf. The Top window is a reversible
+// UI default: all-time on the mocks (no per-period timestamps yet); the
+// server cut with real windows arrives with the backend.
+export const readroomModes = ["top", "new", "active"] as const;
+export type ReadroomMode = (typeof readroomModes)[number];
 
 function byId(a: Readroom, b: Readroom): number {
   if (a.id === b.id) return 0;
@@ -168,30 +175,49 @@ function byDeadline(a: Readroom, b: Readroom): number {
   return Date.parse(a.deadlineAt) - Date.parse(b.deadlineAt) || byId(a, b);
 }
 
-/** The list order: collecting by the closest deadline, reviewing by the
- * longest wait for a report, published by the freshest report, the archive
- * last (its own section) by the archive date. */
-export function rankReadrooms(readrooms: readonly Readroom[], nowIso: string): Readroom[] {
-  return [...readrooms].sort((a, b) => {
-    const phase = phaseOf(a, nowIso);
-    const other = phaseOf(b, nowIso);
-    if (phase !== other) return PHASE_ORDER[phase] - PHASE_ORDER[other];
-    switch (phase) {
-      case "collecting":
-      case "reviewing":
-        return byDeadline(a, b);
-      case "published":
-        return (
-          Date.parse(b.reportAt ?? b.deadlineAt) - Date.parse(a.reportAt ?? a.deadlineAt) ||
-          byId(a, b)
-        );
-      case "archived":
-        return (
-          Date.parse(b.archivedAt ?? b.deadlineAt) - Date.parse(a.archivedAt ?? a.deadlineAt) ||
-          byId(a, b)
-        );
-    }
-  });
+function byCreatedDesc(a: Readroom, b: Readroom): number {
+  return Date.parse(b.createdAt) - Date.parse(a.createdAt) || byId(a, b);
+}
+
+/** One vote per account, withdrawable: the author's own counts. Notes carry
+ * no votes and the count never touches roles. */
+export function hasUpvoted(voters: readonly string[], user: string | null): boolean {
+  return user !== null && voters.includes(user);
+}
+
+export function upvoteCount(voters: readonly string[]): number {
+  return voters.length;
+}
+
+/** The toggle behind the mock action: add the handle, or drop it on a second
+ * press. The list stays duplicate-free, so a merged list toggles exactly like
+ * its base (the store passes whatever the card holds). */
+export function toggledUpvoters(voters: readonly string[], user: string): string[] {
+  if (voters.includes(user)) return voters.filter((voter) => voter !== user);
+  return [...voters, user];
+}
+
+/** The mode's entries: top takes every cycle by upvotes (newest breaks the
+ * tie), new by creation, active the collecting ones by the closest deadline.
+ * Stopped cycles are plain entries with the ARCHIVED chip, sorted like the
+ * rest — the feed has no separate shelf for them. */
+export function rankReadroomMode(
+  readrooms: readonly Readroom[],
+  mode: ReadroomMode,
+  nowIso: string,
+): Readroom[] {
+  switch (mode) {
+    case "top":
+      return [...readrooms].sort(
+        (a, b) => b.upvotes.length - a.upvotes.length || byCreatedDesc(a, b),
+      );
+    case "new":
+      return [...readrooms].sort(byCreatedDesc);
+    case "active":
+      return readrooms
+        .filter((readroom) => phaseOf(readroom, nowIso) === "collecting")
+        .sort(byDeadline);
+  }
 }
 
 // One exact stamp format for every fact (deadline, report, archive): UTC keeps

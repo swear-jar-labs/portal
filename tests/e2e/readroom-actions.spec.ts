@@ -168,7 +168,7 @@ test("the lead attaches and removes a file on a task", async ({ page }) => {
   await expect(file).toHaveCount(0);
 });
 
-test("the lead stops a cycle: the archive appears and the notes close", async ({ page }) => {
+test("the lead stops a cycle: the task closes read-only and the notes close", async ({ page }) => {
   await logon(page, "ken");
   await page.goto(readroomPath("lookahead-table"));
   await waitForHydration(page);
@@ -211,9 +211,9 @@ test("a member opens a task in this session", async ({ page }) => {
   await waitForHydration(page);
   await expect(feed(page).getByText("5 TASKS")).toBeVisible();
 
-  // The fixture tags read on the card.
+  // The fixture tags read on the card (Top shows every task).
   await expect(
-    feed(page).getByRole("article").filter({ hasText: RECURSIVE }).getByText("C", { exact: true }),
+    feed(page).getByRole("article").filter({ hasText: LOOKAHEAD }).getByText("C", { exact: true }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "NEW TASK" }).click();
@@ -250,7 +250,8 @@ test("a member opens a task in this session", async ({ page }) => {
   await task.getByRole("button", { name: "POST NOTE" }).click();
   await expect(task.getByText("The CAS loop drops the notify.")).toBeVisible();
 
-  // Closing the layer lands on the feed: six tasks, the card carries the tag.
+  // Closing the layer lands on the feed: the composed task joins Top,
+  // the card carries the tag.
   await task.getByRole("button", { name: "Close" }).click();
   await expect(page.getByRole("region", { name: FEED_REGION })).toBeVisible();
   await expect(feed(page).getByText("6 TASKS")).toBeVisible();
@@ -278,7 +279,7 @@ test("refuses an unknown ticket key", async ({ page }) => {
   await form.getByLabel("DEADLINE").fill("2026-12-24T18:00");
   await form.getByRole("button", { name: "OPEN TASK" }).click();
   await expect(form.getByText("No ticket with this key.")).toBeVisible();
-  // Nothing was composed: the feed still lists five tasks.
+  // Nothing was composed: Top still lists its five fixtures.
   await expect(feed(page).getByText("5 TASKS")).toBeVisible();
 });
 

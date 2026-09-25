@@ -27,8 +27,8 @@ import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { avatarFor } from "@/shared/members";
 import type { ReadroomDraft } from "./datetime";
-import { READROOM_PATH, readroomPath, type Readroom } from "./readrooms";
-import { createReadroom } from "./readroom-store";
+import { READROOM_PATH, readroomPath, type Readroom, type ReadroomMode } from "./readrooms";
+import { createReadroom, toggleReadroomUpvote } from "./readroom-store";
 import { useReadroomSession } from "./useReadroomSession";
 import { ReadroomComposePanel } from "./ReadroomComposePanel";
 import { ReadroomFeed, readroomComposeButtonId } from "./ReadroomFeed";
@@ -64,6 +64,9 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   const requestLogin = useLoginPrompt();
   const { state, readrooms: visible } = useReadroomSession(readrooms);
   const allTickets = useMergedTickets(tickets);
+  // The selected mode is session UI state, kept across actor switches like
+  // the composed tasks. Ranking reads off the page-open stamp beside it.
+  const [mode, setMode] = useState<ReadroomMode>("top");
   const [composing, setComposing] = useState(false);
   const [localTaskId, setLocalTaskId] = useState<string | null>(null);
   // The control a closed layer owes focus to (the compose button, a new card).
@@ -115,7 +118,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     target?.focus();
   }, [composing]);
 
-  // The guest gate: an action that needs a member prompts for logon instead.
+  // The guest gate: an action that needs an account prompts for logon instead.
   const gate = useCallback(
     (action: () => void) => {
       if (session === null) {
@@ -158,11 +161,25 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     setLocalTaskId(null);
   }, [localTask]);
 
-  // UI-first: any member may open the composer; the reviewer+ rule arrives
-  // with roles in Phase 5 (a gating test comes with it).
+  // Participant and Member open the composer (community-participation); a
+  // ticket or project link pinned in the draft grants no rights later.
   const openCompose = useCallback(() => {
     gate(() => setComposing(true));
   }, [gate]);
+
+  // One upvote per account with a withdrawal; the card hands the effective
+  // list it holds (the store snapshots it on the first press).
+  const toggleVote = useCallback(
+    (id: string) => {
+      gate(() => {
+        if (session === null) return;
+        const target = visible.find((entry) => entry.id === id);
+        if (target === undefined) return;
+        toggleReadroomUpvote(id, session.user, target.upvotes);
+      });
+    },
+    [gate, session, visible],
+  );
 
   const closeCompose = useCallback(() => {
     returnFocusRef.current = readroomComposeButtonId;
@@ -208,8 +225,12 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
           readrooms={visible}
           now={now}
           currentId={task?.id ?? localTask?.id}
+          mode={mode}
+          onModeChange={setMode}
+          voter={session?.user ?? null}
           localReadroomIds={localTaskIds}
           onActivate={activateTask}
+          onToggleVote={toggleVote}
           onCompose={openCompose}
         />
       </ShellPanel>

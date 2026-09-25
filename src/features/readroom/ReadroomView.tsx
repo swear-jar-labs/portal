@@ -4,12 +4,14 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
-import { useShellSession } from "@/features/shell";
+import { useLoginPrompt, useShellSession } from "@/features/shell";
+import { VoteButton } from "@/features/board/contracts";
 import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import {
   formatDeadlineDate,
   hasNoteBy,
+  hasUpvoted,
   isLead,
   phaseOf,
   READROOM_CARD_ATTR,
@@ -24,6 +26,7 @@ import {
   readroomStateOf,
   removeAttachment,
   sessionReadroom,
+  toggleReadroomUpvote,
 } from "./readroom-store";
 import { attachmentsFromFiles, releaseAttachments } from "./attachments";
 import { useReadroomStore } from "./useReadroomSession";
@@ -65,6 +68,9 @@ export function ReadroomView({
 }: ReadroomViewProps) {
   const state = useReadroomStore();
   const session = useShellSession();
+  const requestLogin = useLoginPrompt();
+  // The phase reads off the page-open stamp: a deadline passing on an open
+  // screen applies on the next navigation, not mid-read.
   const effective = sessionReadroom(readroom, state);
   const task = readroomStateOf(state, readroom.id);
   const phase = phaseOf(effective, now);
@@ -98,6 +104,16 @@ export function ReadroomView({
     removeAttachment(readroom.id, attachment.id);
   }
 
+  // One upvote per account with a withdrawal, Participant and Member alike; a
+  // guest meets the logon prompt instead (the board's vote gate).
+  function toggleVote() {
+    if (session === null) {
+      requestLogin();
+      return;
+    }
+    toggleReadroomUpvote(effective.id, session.user, effective.upvotes);
+  }
+
   return (
     <Stack gap={12}>
       <ReadroomFilesRow
@@ -125,6 +141,14 @@ export function ReadroomView({
         {lead && (phase === "collecting" || phase === "reviewing") ? (
           <ReadroomLeadControls readroom={effective} />
         ) : null}
+      </Stack>
+
+      <Stack direction="row" gap={6} navRow>
+        <VoteButton
+          votes={effective.upvotes.length}
+          voted={hasUpvoted(effective.upvotes, session?.user ?? null)}
+          onToggle={toggleVote}
+        />
       </Stack>
 
       <div className={styles.task} {...{ [READROOM_CARD_ATTR]: "" }}>

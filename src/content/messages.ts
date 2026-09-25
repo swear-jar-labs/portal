@@ -497,8 +497,14 @@ export const messages = {
     feed: {
       heading: "READROOM",
       empty: "No reading tasks yet. Bring some code and a question.",
-      archiveHeading: "ARCHIVE",
+      emptyMode: "No tasks in this view yet.",
       newTask: "NEW TASK",
+      modeLabel: "READROOM MODE",
+      modes: {
+        active: "ACTIVE",
+        top: "TOP",
+        new: "NEW",
+      },
     },
     tags: {
       c: "C",

@@ -8,8 +8,8 @@ import {
   createProjectSubmissionStore,
   projectSubmissionSchema,
 } from "@/features/projects/submissions";
-import { makeTicketComposeSchema } from "@/features/tickets/schema";
-import { nextTicketKey } from "@/features/tickets/tickets";
+import { makeTicketComposeSchema } from "@/features/tickets/model/schema";
+import { nextTicketKey } from "@/features/tickets/model/tickets";
 
 const member: Actor = {
   user: "builder",

@@ -7,7 +7,7 @@ import {
   READROOM_PATH,
   readroomPath,
 } from "../../src/features/readroom/readrooms";
-import { ticketPath } from "../../src/features/tickets/tickets";
+import { ticketPath } from "../../src/features/tickets/model/tickets";
 import {
   enterShell,
   expectAbove,

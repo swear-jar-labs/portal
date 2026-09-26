@@ -5,12 +5,12 @@
 // stay out, or the barrel would loop the slice graph (see AGENTS.md). The
 // contract test pins the published list.
 
-export { ticketPath } from "../tickets";
-export { listTickets, listTicketsByProject } from "../data";
-export { useMergedTickets } from "../useTicketSession";
-export { countDoneBySize } from "../claim";
-export type { TrackRecord } from "../claim";
-export { TicketsOverlayTable } from "../TicketsOverlayTable";
-export type { Ticket } from "../tickets";
-export { subscribeTicketEvents, ticketEventsSnapshot } from "../ticket-events";
-export type { TicketEvent, TicketEventKind } from "../ticket-events";
+export { ticketPath } from "../model/tickets";
+export { listTickets, listTicketsByProject } from "../data/queries";
+export { useMergedTickets } from "../data/useTicketSession";
+export { countDoneBySize } from "../model/claim";
+export type { TrackRecord } from "../model/claim";
+export { TicketsOverlayTable } from "../list/TicketsOverlayTable";
+export type { Ticket } from "../model/tickets";
+export { subscribeTicketEvents, ticketEventsSnapshot } from "../data/ticket-events";
+export type { TicketEvent, TicketEventKind } from "../data/ticket-events";

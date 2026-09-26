@@ -3,7 +3,7 @@ import { MAX_TAGS } from "../../src/lib/tags";
 import { messages } from "../../src/content/messages";
 import { tagIds } from "../../src/features/board/threads";
 import { readroomTagIds } from "../../src/features/readroom/readrooms";
-import { ticketTagIds } from "../../src/features/tickets/tickets";
+import { ticketTagIds } from "../../src/features/tickets/model/tickets";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const cases = [

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RUNG_TONES } from "@/features/projects/ProjectClaimSection";
-import { ticketSizeTones } from "@/features/tickets/tickets";
+import { ticketSizeTones } from "@/features/tickets/model/tickets";
 
 describe("claim rung tones", () => {
   it("keeps the ABOUT table in sync with the tickets' canon", () => {

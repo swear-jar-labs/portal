@@ -297,8 +297,22 @@ export function DosShell({ children, overlay, session, logoff, addons }: DosShel
   });
 
   const openWelcome = useCallback(() => {
-    openDialog({ title: welcome.title, body: <WelcomeBody /> });
-  }, [openDialog]);
+    openDialog({
+      title: welcome.title,
+      body: (
+        <WelcomeBody
+          onExplore={() => {
+            closeDialog();
+            runFromFiles("FORUM");
+          }}
+          onHow={() => {
+            closeDialog();
+            runFromFiles("HOW");
+          }}
+        />
+      ),
+    });
+  }, [closeDialog, openDialog, runFromFiles]);
   // Welcome belongs to the boot: without a boot (deep link into an inner
   // route) entering home must not greet the guest out of nowhere.
   useWelcomeDialog(isHome && booted && bootFired && !signedIn && welcomeEligible, openWelcome);

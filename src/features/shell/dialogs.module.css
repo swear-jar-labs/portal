@@ -15,3 +15,30 @@
   column-width: 22em;
   column-gap: 2em;
 }
+
+.welcome {
+  max-width: 100%;
+}
+
+.welcomeHeader {
+  min-width: 0;
+}
+
+.welcomePlaces {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcomePlace {
+  display: grid;
+  grid-template-columns: 10ch minmax(0, 1fr);
+  gap: 1ch;
+}
+
+@media (max-width: 420px) {
+  .welcomePlace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}

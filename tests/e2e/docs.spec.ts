@@ -33,9 +33,9 @@ test("puts the document on the white paper surface", async ({ page }) => {
 
 test("renders the about hero and tone formatting", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
-  await expect(page.getByText("SIDE BY SIDE, LINE BY LINE", { exact: true })).toBeVisible();
+  await expect(page.getByText("A WORKSHOP FOR CURIOUS DEVELOPERS", { exact: true })).toBeVisible();
 
-  const phrase = page.getByText("A small software workshop", { exact: true });
+  const phrase = page.getByText("A software workshop", { exact: true });
   await expect(phrase).toBeVisible();
 
   await expect(phrase).toHaveCSS("color", await resolveTone(page, "--dos-tone-cyan"));

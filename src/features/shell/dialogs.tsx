@@ -120,26 +120,35 @@ export function LoginPromptBody({
   );
 }
 
-export function WelcomeBody() {
+export function WelcomeBody({ onExplore, onHow }: { onExplore: () => void; onHow: () => void }) {
   return (
-    <Stack direction="row" align="start" gap={18} wrap>
-      <Sprite name="jar" cell={4} decorative />
-      <Stack gap={6}>
-        <Heading level={2}>
-          <Text as="span" tone="blue">
-            {welcome.heading}
-          </Text>
-        </Heading>
-        <Text>{welcome.intro}</Text>
-        {welcome.lines.map((line) => (
-          <Text key={line}>
-            <Text as="span" tone="green">
-              {"> "}
+    <Stack gap={16} className={styles.welcome}>
+      <Stack direction="row" align="center" gap={16} className={styles.welcomeHeader}>
+        <Sprite name="jar" cell={4} decorative />
+        <Stack gap={4}>
+          <Heading level={2}>{welcome.heading}</Heading>
+          <Text>{welcome.intro}</Text>
+        </Stack>
+      </Stack>
+      <Text>{welcome.description}</Text>
+      <Stack as="ul" gap={4} className={styles.welcomePlaces}>
+        {welcome.places.map((place) => (
+          <li key={place.name} className={styles.welcomePlace}>
+            <Text as="span" role="accent">
+              {place.name}
             </Text>
-            {line}
-          </Text>
+            <Text as="span">{place.description}</Text>
+          </li>
         ))}
-        <Text role="hint">{welcome.footer}</Text>
+      </Stack>
+      <Text role="hint">{welcome.footer}</Text>
+      <Stack direction="row" gap={10} wrap>
+        <Button variant="primary" className={styles.action} onClick={onExplore}>
+          {welcome.explore}
+        </Button>
+        <Button className={styles.action} onClick={onHow}>
+          {welcome.how}
+        </Button>
       </Stack>
     </Stack>
   );

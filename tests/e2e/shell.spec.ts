@@ -194,25 +194,60 @@ test.describe("file tree", () => {
 });
 
 test.describe("welcome", () => {
-  test("uses the silver surface with readable blue and green accents", async ({ page }) => {
+  test("presents the workshop and places on a readable silver surface", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
     await page.keyboard.press("Enter");
 
     const dialog = page.getByRole("dialog");
     const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
-    const heading = dialog.getByRole("heading", { name: "WELCOME TO SWEARJAR.DOS" });
-    // The heading role colors the h2; the welcome override sits on its span.
-    const headingText = heading.locator("span");
-    const prompt = dialog.getByText("> ", { exact: true }).first();
+    const heading = dialog.getByRole("heading", { name: "SWEAR JAR LABS" });
+    const place = dialog.getByText("FORUM", { exact: true });
     await expect(body).toHaveAttribute(DOS_SURFACE_ATTR, "light");
-    await expect(headingText).toHaveCSS("color", "rgb(0, 0, 204)");
-    await expect(prompt).toHaveCSS("color", "rgb(0, 90, 0)");
-    await expectMinimumContrast(headingText);
-    await expectMinimumContrast(prompt);
-    await expectMinimumContrast(
-      dialog.getByText("A workshop for people who want to understand how software works"),
-    );
+    await expectMinimumContrast(heading);
+    await expectMinimumContrast(place);
+    await expect(dialog.getByText("A workshop for curious developers")).toBeVisible();
+    await expect(dialog.getByText("Build something together.")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test("opens HOW with the keyboard", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
+    await page.keyboard.press("Enter");
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("button", { name: "Explore the forum" })).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(dialog.getByRole("button", { name: "How it works" })).toBeFocused();
+    await page.keyboard.press("Enter");
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("region", { name: "HOW-IT-WORKS.TXT" })).toBeVisible();
+  });
+
+  test("opens the forum from the primary action", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
+    await page.keyboard.press("Enter");
+
+    await page.getByRole("dialog").getByRole("button", { name: "Explore the forum" }).click();
+    await expect(page).toHaveURL("/forum");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();
+  });
+
+  test("fits the welcome actions on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 780 });
+    await page.goto("/");
+    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
+    await page.keyboard.press("Enter");
+
+    const dialog = page.getByRole("dialog");
+    const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
+    await expect(dialog.getByRole("button", { name: "How it works" })).toBeVisible();
+    expect(await body.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   });
 
   test("does not greet again when a routed file leads back home", async ({ page }) => {

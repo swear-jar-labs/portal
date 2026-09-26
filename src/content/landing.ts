@@ -41,15 +41,15 @@ export const bootSkip = "[ CLICK OR PRESS ANY KEY TO SKIP ]";
 
 export const welcome = {
   title: "WELCOME.TXT",
-  heading: "WELCOME TO SWEARJAR.DOS",
-  intro:
-    "A workshop for people who want to understand how software works — and how to build it well.",
-  lines: [
-    "We write code, question it, and help each other fix what we were sure would work.",
-    "Bring a question to FORUM, a mistake to ERRATA, or some code to READROOM.",
-    "Open HOW-IT-WORKS.TXT to learn about participation and project work.",
-    "Pick a file on the left to get started.",
-    "Type HELP for commands. Tab completes commands while you type.",
+  heading: "SWEAR JAR LABS",
+  intro: "A workshop for curious developers",
+  description: "We write code, question it, and help each other fix what we were sure would work.",
+  places: [
+    { name: "FORUM", description: "Ask questions. Share what you know." },
+    { name: "READROOM", description: "Read code. Compare notes." },
+    { name: "PROJECTS", description: "Build something together." },
   ],
   footer: "Mistakes happen. Keep the lessons.",
+  explore: "Explore the forum",
+  how: "How it works",
 };

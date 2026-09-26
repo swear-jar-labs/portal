@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applySchema } from "@/features/account/schema";
+import { applySchema } from "@/features/account/model/schema";
 
 const VALID = {
   experience: "",

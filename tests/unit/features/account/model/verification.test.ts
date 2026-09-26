@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { OTP_LENGTH } from "@/features/account/schema";
+import { OTP_LENGTH } from "@/features/account/model/schema";
 import {
   checkVerification,
   createVerificationStore,
   generateOtpCode,
   OTP_TTL_MS,
-} from "@/features/account/verification";
+} from "@/features/account/model/verification";
 
 describe("otp codes", () => {
   it("generates numeric codes of the expected length", () => {

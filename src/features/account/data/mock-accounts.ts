@@ -1,11 +1,11 @@
 import type { SocialProvider } from "./mock-session";
-import { createAccountRegistry, type Actor } from "./actor";
+import { createAccountRegistry, type Actor } from "../model/actor";
 import {
   createVerificationStore,
   type PendingVerification,
   type VerificationCheck,
   type VerificationStart,
-} from "./verification";
+} from "../model/verification";
 
 // The demo roster: ada and grace back the social buttons and the existing
 // member-path specs; admin and coadmin review the application queue. Every

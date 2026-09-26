@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { messages } from "@/content/messages";
-import { userSchema } from "@/features/account/schema";
+import { userSchema } from "@/features/account/model/schema";
 import { listThreads } from "@/features/board/data/queries";
 import {
   archivedProjectSlugs,

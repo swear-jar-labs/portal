@@ -25,7 +25,7 @@ export type Audience = "any" | "guest" | "account" | "admin" | CommunityLevel;
 
 // Who is looking: nobody (guest) or a signed-in account with its level.
 // The shell passes its session straight through; the account slice resolves
-// the level from the mock registry (see features/account/actor.ts).
+// the level from the mock registry (see features/account/model/actor.ts).
 export type Viewer = { level: CommunityLevel; admin?: boolean } | null;
 
 // The shell home: docs open here, so no route command matches it.
@@ -39,7 +39,7 @@ export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID
 // Guest-only entries: LOGON carries the return location (?next=) so a logon
 // started on a page lands back there; a direct visit falls back to FORUM.
 // REGISTER creates a demo Participant account on the mocks (see
-// features/account/actor.ts); auth pages never serve as ?next= targets.
+// features/account/model/actor.ts); auth pages never serve as ?next= targets.
 export const LOGIN_PATH = "/login";
 export const APPLY_PATH = "/apply";
 export const ADMIN_PATH = "/admin";

@@ -7,12 +7,12 @@ import type { ZodError } from "zod";
 import { messages } from "@/content/messages";
 import { useClientInteractive } from "@/shared/useClientInteractive";
 import { ApplicationHistory } from "./ApplicationHistory";
-import type { MemberApplication } from "./applications";
+import type { MemberApplication } from "../model/applications";
 import {
   mockRespondToMemberApplication,
   mockSubmitMemberApplication,
-} from "./mock-application-actions";
-import { applySchema, weeklyHourIds, type ApplyInput } from "./schema";
+} from "../data/mock-application-actions";
+import { applySchema, weeklyHourIds, type ApplyInput } from "../model/schema";
 import styles from "./ApplyForm.module.css";
 
 const EXPERIENCE_ROWS = 3;

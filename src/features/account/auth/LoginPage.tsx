@@ -4,7 +4,7 @@ import { fileTitle, FORUM_PATH, parseLoginReturn } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 import { LogonForm } from "./LogonForm";
-import { getActorSession } from "./mock-session.server";
+import { getActorSession } from "../data/mock-session.server";
 
 export const loginMetadata: Metadata = messages.account.login.metadata;
 

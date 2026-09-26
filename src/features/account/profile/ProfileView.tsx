@@ -10,7 +10,7 @@ import {
 } from "@/features/board/contracts";
 import type { Readroom } from "@/features/readroom/contracts";
 import type { Ticket } from "@/features/tickets/contracts";
-import type { MemberProfile } from "./data";
+import type { MemberProfile } from "../data/queries";
 import { ProfileActivity } from "./ProfileActivity";
 
 export type ProfileViewProps = {

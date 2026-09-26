@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import type { Actor } from "./actor";
+import type { Actor } from "../model/actor";
 import { resolveAccount } from "./mock-accounts";
 import {
   MOCK_SESSION_COOKIE,

@@ -4,8 +4,8 @@ import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 import { ApplyForm } from "./ApplyForm";
-import { memberApplicationsFor } from "./mock-applications";
-import { getActorSession } from "./mock-session.server";
+import { memberApplicationsFor } from "../data/mock-applications";
+import { getActorSession } from "../data/mock-session.server";
 
 export const applyMetadata: Metadata = messages.account.apply.metadata;
 

@@ -4,13 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Field, Form, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { mockRegisterConfirmSchema, mockRegisterStartSchema } from "./mock-session";
-import type { SocialProvider } from "./mock-session";
+import { mockRegisterConfirmSchema, mockRegisterStartSchema } from "../data/mock-session";
+import type { SocialProvider } from "../data/mock-session";
 import {
   mockConfirmRegistration,
   mockSocialRegister,
   mockStartRegistration,
-} from "./mock-session-actions";
+} from "../data/mock-session-actions";
 import styles from "./LogonForm.module.css";
 
 type RegisterErrors = {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAccountRegistry } from "@/features/account/actor";
+import { createAccountRegistry } from "@/features/account/model/actor";
 
 function roster() {
   return createAccountRegistry([

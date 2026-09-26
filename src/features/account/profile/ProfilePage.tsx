@@ -4,10 +4,10 @@ import { messages } from "@/content/messages";
 import { forumActivitySeed, listThreadSummariesByAuthor } from "@/features/board/contracts";
 import { listReadrooms } from "@/features/readroom/contracts";
 import { listTickets } from "@/features/tickets/contracts";
-import { AccountGate } from "./AccountGate";
-import { getOwnProfile } from "./data";
-import { memberApplicationsFor } from "./mock-applications";
-import { getActorSession } from "./mock-session.server";
+import { AccountGate } from "../auth/AccountGate";
+import { getOwnProfile } from "../data/queries";
+import { memberApplicationsFor } from "../data/mock-applications";
+import { getActorSession } from "../data/mock-session.server";
 import { ProfileStack } from "./ProfileStack";
 
 export const profileMetadata: Metadata = messages.account.profile.metadata;

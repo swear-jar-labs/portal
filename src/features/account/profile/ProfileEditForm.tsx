@@ -37,10 +37,10 @@ import {
   encodeAvatar,
   panCrop,
   type Crop,
-} from "./avatar-image";
-import { mockSaveProfile } from "./mock-profile-actions";
-import { profileSchema } from "./schema";
-import type { MemberProfile } from "./data";
+} from "../model/avatar-image";
+import { mockSaveProfile } from "../data/mock-profile-actions";
+import { profileSchema } from "../model/schema";
+import type { MemberProfile } from "../data/queries";
 import styles from "./ProfileEditForm.module.css";
 
 const copy = messages.account.profile.edit;

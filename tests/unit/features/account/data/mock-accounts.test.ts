@@ -3,7 +3,7 @@ import {
   confirmRegistration,
   ensureAccount,
   startRegistration,
-} from "@/features/account/mock-accounts";
+} from "@/features/account/data/mock-accounts";
 
 // The flow is a singleton over the server-process module state: every case
 // works on a handle and a mailbox of its own.

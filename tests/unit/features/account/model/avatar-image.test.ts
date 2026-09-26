@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adjustAvatarZoom, cropRect, panCrop } from "@/features/account/avatar-image";
+import { adjustAvatarZoom, cropRect, panCrop } from "@/features/account/model/avatar-image";
 
 describe("avatar crop", () => {
   it("moves the source image under a square viewport and clamps to its edges", () => {

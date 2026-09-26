@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { applySchema } from "./schema";
-import { MAX_NOTE_LENGTH, type ApplicationError } from "./applications";
+import { applySchema } from "../model/schema";
+import { MAX_NOTE_LENGTH, type ApplicationError } from "../model/applications";
 import { getActorSession } from "./mock-session.server";
 import { mockSessionEnabled } from "./mock-session";
 import {

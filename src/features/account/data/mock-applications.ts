@@ -1,7 +1,7 @@
-import { createApplicationStore } from "./applications";
+import { createApplicationStore } from "../model/applications";
 import { promoteAccount, resolveAccount } from "./mock-accounts";
 import { mockSessionEnabled } from "./mock-session";
-import type { Actor } from "./actor";
+import type { Actor } from "../model/actor";
 
 // Shared with the account and admin slices through the account contract.
 // LOGOFF preserves it; a server restart clears it along with demo accounts.

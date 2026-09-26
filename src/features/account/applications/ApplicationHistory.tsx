@@ -2,7 +2,7 @@ import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberName } from "@/shared/MemberIdentity";
 import { formatTimestamp } from "@/lib/format";
-import type { MemberApplication } from "./applications";
+import type { MemberApplication } from "../model/applications";
 import styles from "./ApplicationHistory.module.css";
 
 const copy = messages.account.apply.history;

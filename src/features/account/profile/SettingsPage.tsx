@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { SettingsForm, ShellPanel } from "@/features/shell";
-import { AccountGate } from "./AccountGate";
-import { getActorSession } from "./mock-session.server";
+import { AccountGate } from "../auth/AccountGate";
+import { getActorSession } from "../data/mock-session.server";
 
 export const settingsMetadata: Metadata = messages.account.settings.metadata;
 

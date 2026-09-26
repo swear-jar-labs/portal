@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button, Field, Form, Heading, Link, Stack, Text } from "@swearjar/dos";
 import { FORUM_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { mockLogonSchema, socialProviders, type SocialProvider } from "./mock-session";
-import { mockLogon, mockSocialLogon } from "./mock-session-actions";
+import { mockLogonSchema, socialProviders, type SocialProvider } from "../data/mock-session";
+import { mockLogon, mockSocialLogon } from "../data/mock-session-actions";
 import styles from "./LogonForm.module.css";
 
 type LogonErrors = {

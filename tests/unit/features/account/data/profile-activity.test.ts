@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readroomActivityCounts } from "@/features/account/profile-activity";
+import { readroomActivityCounts } from "@/features/account/data/profile-activity";
 import type { Readroom } from "@/features/readroom/model/readrooms";
 import {
   deleteNote,

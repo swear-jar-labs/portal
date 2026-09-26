@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createAccountRegistry } from "@/features/account/actor";
-import { createApplicationStore } from "@/features/account/applications";
+import { createAccountRegistry } from "@/features/account/model/actor";
+import { createApplicationStore } from "@/features/account/model/applications";
 
 const input = { experience: "A small compiler", weeklyHours: "5-10", motivation: "Fix parsers" };
 const timestamp = "2026-09-23T12:00:00.000Z";

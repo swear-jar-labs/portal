@@ -5,7 +5,7 @@ import { messages } from "@/content/messages";
 import type { ForumActivityCounts } from "@/features/board/contracts";
 import { useReadroomSession, type Readroom } from "@/features/readroom/contracts";
 import { countDoneBySize, useMergedTickets, type Ticket } from "@/features/tickets/contracts";
-import { readroomActivityCounts } from "./profile-activity";
+import { readroomActivityCounts } from "../data/profile-activity";
 import styles from "./ProfileActivity.module.css";
 
 const copy = messages.account.profile.stats;

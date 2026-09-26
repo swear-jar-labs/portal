@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getOwnProfile } from "@/features/account/data";
+import { getOwnProfile } from "@/features/account/data/queries";
 
 describe("getOwnProfile", () => {
   it("returns the profile with the actor standing", async () => {

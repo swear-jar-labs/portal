@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { USER_PATTERN } from "@/features/account/schema";
+import { USER_PATTERN } from "@/features/account/model/schema";
 import {
   ticketAssigneeSchema,
   ticketComposeSchema,

@@ -7,9 +7,9 @@ import type { ForumActivitySeed, ThreadSummary } from "@/features/board/contract
 import type { Readroom } from "@/features/readroom/contracts";
 import type { Ticket } from "@/features/tickets/contracts";
 import { overlayLayerPanels, PanelStack, ShellPanel, useOverlayTop } from "@/features/shell";
-import { ApplicationHistory } from "./ApplicationHistory";
-import type { MemberApplication } from "./applications";
-import type { MemberProfile } from "./data";
+import { ApplicationHistory } from "../applications/ApplicationHistory";
+import type { MemberApplication } from "../model/applications";
+import type { MemberProfile } from "../data/queries";
 import { ProfileEditForm } from "./ProfileEditForm";
 import { ProfileView } from "./ProfileView";
 

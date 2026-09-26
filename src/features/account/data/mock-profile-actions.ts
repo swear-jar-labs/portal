@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getActorSession } from "./mock-session.server";
 import { mockSessionEnabled } from "./mock-session";
 import { updateAccountProfile } from "./mock-accounts";
-import { PROFILE_AVATAR_MAX_BYTES, profileSchema } from "./schema";
+import { PROFILE_AVATAR_MAX_BYTES, profileSchema } from "../model/schema";
 
 const AVATAR_DATA_URL = /^data:image\/(webp|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/;
 

@@ -7,8 +7,6 @@ describe("getOwnProfile", () => {
     expect(member.user).toBe("ada");
     expect(member.role).toBe("member");
     expect(member.admin).toBe(false);
-    expect(member.stats).toHaveLength(3);
-    expect(member.activity).toEqual([]);
 
     const participant = await getOwnProfile("quinn", { level: "participant", admin: false });
     expect(participant.role).toBe("participant");

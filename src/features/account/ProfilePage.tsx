@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { listThreadSummariesByAuthor } from "@/features/board/contracts";
+import { forumActivitySeed, listThreadSummariesByAuthor } from "@/features/board/contracts";
+import { listReadrooms } from "@/features/readroom/contracts";
+import { listTickets } from "@/features/tickets/contracts";
 import { AccountGate } from "./AccountGate";
 import { getOwnProfile } from "./data";
 import { memberApplicationsFor } from "./mock-applications";
@@ -15,13 +17,22 @@ export async function ProfilePage() {
   if (!actor) return <AccountGate title={fileTitle("PROFILE")} />;
 
   const profile = await getOwnProfile(actor.user, actor);
-  const threads = await listThreadSummariesByAuthor(actor.user);
+  const [threads, forumSeed, tickets, readrooms] = await Promise.all([
+    listThreadSummariesByAuthor(actor.user),
+    forumActivitySeed(actor.user),
+    listTickets(),
+    listReadrooms(),
+  ]);
   const now = new Date().toISOString();
 
   return (
     <ProfileStack
       profile={profile}
       threads={threads}
+      forumSeed={forumSeed}
+      tickets={tickets}
+      readrooms={readrooms}
+      user={actor.user}
       now={now}
       applications={memberApplicationsFor(actor.user)}
       title={fileTitle("PROFILE")}

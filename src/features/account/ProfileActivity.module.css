@@ -1,0 +1,33 @@
+.groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.group {
+  min-width: 0;
+  padding: 0.75rem;
+  border: var(--dos-border-width) solid var(--dos-dark-gray);
+}
+
+.values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 0.5rem 0 0;
+}
+
+.value {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.value dt {
+  order: 1;
+}
+
+.value dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,11 +1,25 @@
+"use client";
+
 import { Avatar, Button, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { ThreadRows, type ThreadSummary } from "@/features/board/contracts";
+import {
+  ThreadRows,
+  useForumActivity,
+  type ForumActivitySeed,
+  type ThreadSummary,
+} from "@/features/board/contracts";
+import type { Readroom } from "@/features/readroom/contracts";
+import type { Ticket } from "@/features/tickets/contracts";
 import type { MemberProfile } from "./data";
+import { ProfileActivity } from "./ProfileActivity";
 
 export type ProfileViewProps = {
   profile: MemberProfile;
   threads: readonly ThreadSummary[];
+  forumSeed: ForumActivitySeed;
+  tickets: readonly Ticket[];
+  readrooms: readonly Readroom[];
+  user: string;
   now: string;
   onEdit: () => void;
   editButtonId: string;
@@ -15,11 +29,18 @@ export type ProfileViewProps = {
 export function ProfileView({
   profile,
   threads,
+  forumSeed,
+  tickets,
+  readrooms,
+  user,
   now,
   onEdit,
   editButtonId,
   saved,
 }: ProfileViewProps) {
+  const forum = useForumActivity(user, forumSeed, threads);
+  const hasThreads = threads.length > 0 || forum.localThreads.length > 0;
+
   return (
     <Stack gap={10}>
       <Stack direction="row" gap={10} align="center">
@@ -41,29 +62,21 @@ export function ProfileView({
       </div>
       {saved ? <Text role="positive">{messages.account.profile.edit.saved}</Text> : null}
 
-      <Stack gap={2}>
-        {profile.stats.map((stat) => (
-          <Text key={stat.id}>
-            {messages.account.profile.stats[stat.id]}: {stat.value}
-          </Text>
-        ))}
-      </Stack>
+      <ProfileActivity user={user} tickets={tickets} readrooms={readrooms} forum={forum} />
 
       <Stack gap={4}>
         <Heading level={2}>{messages.account.profile.threads.heading}</Heading>
-        {threads.length === 0 ? (
+        {!hasThreads ? (
           <Text role="hint">{messages.account.profile.threads.empty}</Text>
         ) : (
-          <ThreadRows threads={threads} now={now} />
-        )}
-      </Stack>
-
-      <Stack gap={4}>
-        <Heading level={2}>{messages.account.profile.activityHeading}</Heading>
-        {profile.activity.length === 0 ? (
-          <Text role="hint">{messages.account.profile.activityEmpty}</Text>
-        ) : (
-          profile.activity.map((entry) => <Text key={entry}>{entry}</Text>)
+          <>
+            {forum.localThreads.map((thread) => (
+              <Text key={thread.id}>
+                {thread.title} · {messages.account.profile.threads.sessionOnly}
+              </Text>
+            ))}
+            <ThreadRows threads={forum.threads} now={now} />
+          </>
         )}
       </Stack>
     </Stack>

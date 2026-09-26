@@ -5,6 +5,7 @@ describe("tickets contract", () => {
   it("publishes exactly the agreed surface", () => {
     expect(Object.keys(ticketsContract).sort()).toEqual([
       "TicketsOverlayTable",
+      "countDoneBySize",
       "listTickets",
       "listTicketsByProject",
       "subscribeTicketEvents",

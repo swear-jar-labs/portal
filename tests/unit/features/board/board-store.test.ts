@@ -128,4 +128,24 @@ describe("withLocalActivity", () => {
     // A thread without session replies keeps its exact object.
     expect(second).toBe(summaries[1]);
   });
+
+  it("drops tombstoned fixture and session replies from the count", () => {
+    const summaries = [summary("a", 2, "2026-09-17T00:00:00.000Z")];
+    const kept = store.addReply("a", "kept", ada);
+    const dropped = store.addReply("a", "dropped", ada);
+    store.deletePost("a", dropped.id);
+    store.deletePost("a", "a-1");
+
+    const [first] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
+    expect(first).toMatchObject({ replies: 2, lastActivityAt: kept.createdAt });
+  });
+
+  it("never drops the count below zero", () => {
+    const summaries = [summary("a", 0, "2026-09-17T00:00:00.000Z")];
+    store.deletePost("a", "a-1");
+    store.deletePost("a", "a-2");
+
+    const [first] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
+    expect(first).toMatchObject({ replies: 0 });
+  });
 });

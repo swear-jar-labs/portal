@@ -6,10 +6,13 @@ export type { BoardMember, ThreadSummary } from "../threads";
 export { FEED_PATH } from "../threads";
 export {
   countThreadsByBoard,
+  forumActivitySeed,
   getBoardMember,
   listRecentThreadSummariesByBoard,
   listThreadSummariesByAuthor,
 } from "../data";
+export { useForumActivity } from "../useForumActivity";
+export type { ForumActivitySeed, ForumActivityCounts } from "../forum-activity";
 export { JournalRows } from "../JournalRows";
 export { ThreadRows } from "../ThreadRows";
 // The upvote chip: the readroom's cards and task view vote with the same

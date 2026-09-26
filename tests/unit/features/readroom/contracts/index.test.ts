@@ -7,9 +7,11 @@ describe("readroom contract", () => {
       "hasNoteBy",
       "hasUpvoted",
       "isLead",
+      "listReadrooms",
       "listReadroomsByTicket",
       "phaseOf",
       "upvoteCount",
+      "useReadroomSession",
       "visibleNotes",
     ]);
   });

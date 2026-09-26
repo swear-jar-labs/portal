@@ -3,6 +3,7 @@
 // the bodies change to queries while the signatures stay put (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
+import type { ForumActivitySeed } from "./forum-activity";
 import { filterThreads, rankThreads } from "./feed";
 import {
   summarizeThread,
@@ -490,6 +491,20 @@ export async function listThreadSummariesByAuthor(user: string): Promise<ThreadS
     .filter((thread) => thread.author.user === user)
     .map(summarizeThread)
     .sort((a, b) => Date.parse(b.lastActivityAt) - Date.parse(a.lastActivityAt) || byId(a, b));
+}
+
+/** The fixture part of a profile's forum counts; session changes are applied on the client. */
+export async function forumActivitySeed(user: string): Promise<ForumActivitySeed> {
+  return {
+    posts: threads.filter((thread) => thread.author.user === user).length,
+    replies: threads.flatMap((thread) =>
+      thread.posts
+        .slice(1)
+        .flatMap((post) =>
+          post.author.user === user ? [{ threadId: thread.id, postId: post.id }] : [],
+        ),
+    ),
+  };
 }
 
 /** The full size of one project journal, independent of its preview limit. */

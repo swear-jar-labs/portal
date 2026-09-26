@@ -147,18 +147,24 @@ export function threadStateOf(snapshot: BoardState, threadId: string): ThreadSta
 }
 
 /** The feed's view of session replies: their count and the freshest activity
- * reach the card, so the list reads the same as the open thread. */
+ * reach the card, so the list reads the same as the open thread. Tombstones
+ * drop out of the count — a deleted fixture reply and a deleted session
+ * reply alike — so the card matches the profile's forum counter. */
 export function withLocalActivity(
   summaries: readonly ThreadSummary[],
   threads: Readonly<Record<string, ThreadState>>,
 ): ThreadSummary[] {
   return summaries.map((summary) => {
     const local = threads[summary.id];
-    if (local === undefined || local.addedPosts.length === 0) return summary;
+    if (local === undefined) return summary;
+    const addedIds = new Set(local.addedPosts.map((post) => post.id));
+    const liveAdded = local.addedPosts.filter((post) => !local.deletedPosts.has(post.id));
+    const removedFixtures = [...local.deletedPosts].filter((id) => !addedIds.has(id)).length;
+    if (liveAdded.length === 0 && removedFixtures === 0) return summary;
     return {
       ...summary,
-      replies: summary.replies + local.addedPosts.length,
-      lastActivityAt: local.addedPosts.at(-1)?.createdAt ?? summary.lastActivityAt,
+      replies: Math.max(0, summary.replies + liveAdded.length - removedFixtures),
+      lastActivityAt: liveAdded.at(-1)?.createdAt ?? summary.lastActivityAt,
     };
   });
 }

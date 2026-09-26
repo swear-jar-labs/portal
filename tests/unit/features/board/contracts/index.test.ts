@@ -10,9 +10,11 @@ describe("board contract", () => {
       "ThreadRows",
       "VoteButton",
       "countThreadsByBoard",
+      "forumActivitySeed",
       "getBoardMember",
       "listRecentThreadSummariesByBoard",
       "listThreadSummariesByAuthor",
+      "useForumActivity",
     ]);
   });
 

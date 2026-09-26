@@ -344,16 +344,20 @@ export const messages = {
       },
       admin: "ADMIN",
       stats: {
-        merged: "MERGED",
-        reviews: "REVIEWS",
-        errata: "ERRATA",
+        heading: "CONTRIBUTIONS",
+        tickets: "TICKETS DONE",
+        forum: "FORUM",
+        readroom: "READROOM",
+        posts: "POSTS",
+        replies: "REPLIES",
+        tasks: "TASKS",
+        answered: "ANSWERED",
       },
       threads: {
         heading: "MY THREADS",
         empty: "No threads yet. A question is a good start.",
+        sessionOnly: "THIS SESSION",
       },
-      activityHeading: "RECENT ACTIVITY",
-      activityEmpty: "No merged contributions yet. Check the jar.",
     },
     settings: {
       metadata: {

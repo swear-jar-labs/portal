@@ -3,7 +3,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { CloseButton, Stack } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import type { ThreadSummary } from "@/features/board/contracts";
+import type { ForumActivitySeed, ThreadSummary } from "@/features/board/contracts";
+import type { Readroom } from "@/features/readroom/contracts";
+import type { Ticket } from "@/features/tickets/contracts";
 import { PanelStack, ShellPanel } from "@/features/shell";
 import { ApplicationHistory } from "./ApplicationHistory";
 import type { MemberApplication } from "./applications";
@@ -14,12 +16,20 @@ import { ProfileView } from "./ProfileView";
 export function ProfileStack({
   profile,
   threads,
+  forumSeed,
+  tickets,
+  readrooms,
+  user,
   now,
   applications,
   title,
 }: {
   profile: MemberProfile;
   threads: readonly ThreadSummary[];
+  forumSeed: ForumActivitySeed;
+  tickets: readonly Ticket[];
+  readrooms: readonly Readroom[];
+  user: string;
   now: string;
   applications: readonly MemberApplication[];
   title: string;
@@ -53,6 +63,10 @@ export function ProfileStack({
           <ProfileView
             profile={profile}
             threads={threads}
+            forumSeed={forumSeed}
+            tickets={tickets}
+            readrooms={readrooms}
+            user={user}
             now={now}
             editButtonId={editButtonId}
             saved={saved}

@@ -8,6 +8,8 @@
 export { ticketPath } from "../tickets";
 export { listTickets, listTicketsByProject } from "../data";
 export { useMergedTickets } from "../useTicketSession";
+export { countDoneBySize } from "../claim";
+export type { TrackRecord } from "../claim";
 export { TicketsOverlayTable } from "../TicketsOverlayTable";
 export type { Ticket } from "../tickets";
 export { subscribeTicketEvents, ticketEventsSnapshot } from "../ticket-events";

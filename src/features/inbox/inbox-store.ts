@@ -12,12 +12,13 @@ import {
 // server snapshot. Switching demo actors never wipes or leaks another box —
 // LOGOFF drops the cookie only, the buckets live as long as the SPA — and a
 // reload drops every bucket back to its seed. Phase 5 replaces the bucket
-// writes with server actions; the read/archive/dedup semantics stay.
+// writes with server actions; the read/delete/dedup semantics stay.
 
 type InboxBuckets = Readonly<Record<string, readonly InboxNotification[]>>;
 
 let buckets: InboxBuckets = {};
 const seededRecipients = new Set<string>();
+const deletedIdsByRecipient = new Map<string, Set<string>>();
 const listeners = new Set<() => void>();
 
 function setBuckets(next: InboxBuckets): void {
@@ -38,13 +39,24 @@ export function ensureInbox(user: string, seed: readonly InboxNotification[]): v
   seededRecipients.add(user);
   const live = buckets[user] ?? [];
   const liveIds = new Set(live.map((entry) => entry.id));
-  setBuckets({ ...buckets, [user]: [...live, ...seed.filter((entry) => !liveIds.has(entry.id))] });
+  const deletedIds = deletedIdsByRecipient.get(user);
+  setBuckets({
+    ...buckets,
+    [user]: [
+      ...live,
+      ...seed.filter((entry) => !liveIds.has(entry.id) && !deletedIds?.has(entry.id)),
+    ],
+  });
 }
 
 /** Post a section event into the recipient's box; a repeated stable id is dropped. */
 export function enqueueInboxEvent(user: string, event: InboxEvent): void {
   updateBucket(user, (list) => {
-    if (list.some((entry) => entry.id === event.id)) return list;
+    if (
+      deletedIdsByRecipient.get(user)?.has(event.id) ||
+      list.some((entry) => entry.id === event.id)
+    )
+      return list;
     return [inboxEventToNotification(event), ...list];
   });
 }
@@ -55,28 +67,19 @@ export function markInboxRead(user: string, id: string): void {
   );
 }
 
-export function markInboxUnread(user: string, id: string): void {
+export function setInboxSelectedRead(user: string, ids: readonly string[], read: boolean): void {
+  const selected = new Set(ids);
   updateBucket(user, (list) =>
-    list.map((entry) => (entry.id === id ? { ...entry, read: false } : entry)),
+    list.map((entry) => (selected.has(entry.id) ? { ...entry, read } : entry)),
   );
 }
 
-export function markAllInboxRead(user: string): void {
-  updateBucket(user, (list) =>
-    list.map((entry) => (entry.archived ? entry : { ...entry, read: true })),
-  );
-}
-
-export function archiveInbox(user: string, id: string): void {
-  updateBucket(user, (list) =>
-    list.map((entry) => (entry.id === id ? { ...entry, archived: true } : entry)),
-  );
-}
-
-export function restoreInbox(user: string, id: string): void {
-  updateBucket(user, (list) =>
-    list.map((entry) => (entry.id === id ? { ...entry, archived: false } : entry)),
-  );
+export function deleteInboxSelected(user: string, ids: readonly string[]): void {
+  const selected = new Set(ids);
+  const deleted = deletedIdsByRecipient.get(user) ?? new Set<string>();
+  for (const id of selected) deleted.add(id);
+  deletedIdsByRecipient.set(user, deleted);
+  updateBucket(user, (list) => list.filter((entry) => !selected.has(entry.id)));
 }
 
 export function subscribeInboxStore(listener: () => void): () => void {
@@ -93,6 +96,7 @@ export function inboxStoreSnapshot(): InboxBuckets {
 /** Test seam: drop every bucket between cases. */
 export function resetInboxForTests(): void {
   seededRecipients.clear();
+  deletedIdsByRecipient.clear();
   setBuckets({});
 }
 

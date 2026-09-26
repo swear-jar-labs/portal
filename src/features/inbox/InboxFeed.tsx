@@ -5,7 +5,6 @@ import {
   Checkbox,
   FileIcon,
   Heading,
-  SegmentedControl,
   Stack,
   Table,
   Text,
@@ -14,44 +13,75 @@ import {
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
-import { INBOX_FEED_ID, inboxRowId, type InboxNotification, type InboxView } from "./inbox";
+import { INBOX_FEED_ID, inboxRowId, type InboxNotification } from "./inbox";
 import styles from "./inbox.module.css";
 
 export type InboxFeedProps = {
   list: readonly InboxNotification[];
   visible: readonly InboxNotification[];
   unread: number;
-  archivedCount: number;
-  view: InboxView;
   unreadOnly: boolean;
   selectedId: string | null;
+  selectedIds: ReadonlySet<string>;
   now: string;
-  onViewChange: (view: InboxView) => void;
   onUnreadOnlyChange: (value: boolean) => void;
   onSelect: (id: string) => void;
-  onMarkAllRead: () => void;
+  onToggleSelected: (id: string, checked: boolean) => void;
+  onToggleAll: (checked: boolean) => void;
+  onToggleSelectedRead: (read: boolean) => void;
+  onDeleteSelected: () => void;
 };
 
 const copy = messages.inbox;
+const NARROW_COLUMN_WIDTH = "32px";
 
 export function InboxFeed({
   list,
   visible,
   unread,
-  archivedCount,
-  view,
   unreadOnly,
   selectedId,
+  selectedIds,
   now,
-  onViewChange,
   onUnreadOnlyChange,
   onSelect,
-  onMarkAllRead,
+  onToggleSelected,
+  onToggleAll,
+  onToggleSelectedRead,
+  onDeleteSelected,
 }: InboxFeedProps) {
+  const visibleIds = visible.map((entry) => entry.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+  const selectedCount = visibleIds.filter((id) => selectedIds.has(id)).length;
+  const markRead = visible.some((entry) => selectedIds.has(entry.id) && !entry.read);
   const columns: TableColumn<InboxNotification>[] = [
     {
+      id: "select",
+      label: (
+        <Checkbox
+          name="inbox-select-all"
+          checked={allSelected}
+          onChange={onToggleAll}
+          label={copy.selectAll}
+          className={styles.selectionControl}
+        />
+      ),
+      width: NARROW_COLUMN_WIDTH,
+      className: styles.selectionCell,
+      render: (entry) => (
+        <Checkbox
+          name={`inbox-select-${entry.id}`}
+          checked={selectedIds.has(entry.id)}
+          onChange={(checked) => onToggleSelected(entry.id, checked)}
+          label={`${copy.selectMessage}: ${entry.subject}`}
+          className={styles.selectionControl}
+        />
+      ),
+    },
+    {
       id: "status",
-      label: copy.fresh,
+      label: "",
+      width: NARROW_COLUMN_WIDTH,
       className: styles.statusCell,
       render: (entry) =>
         entry.read ? (
@@ -72,6 +102,7 @@ export function InboxFeed({
         onActivate: () => onSelect(entry.id),
         current: entry.id === selectedId,
         rowActivation: true,
+        navigationPrimary: true,
       }),
     },
     {
@@ -89,18 +120,10 @@ export function InboxFeed({
     },
   ];
 
-  const inboxItems = view === "inbox" ? list.filter((entry) => !entry.archived) : [];
-  const empty =
-    view === "archive" ? (
-      <Text>{copy.emptyArchive}</Text>
-    ) : inboxItems.length === 0 ? (
-      <Text>{copy.empty}</Text>
-    ) : (
-      <Text>{copy.allRead}</Text>
-    );
+  const empty = <Text>{list.length === 0 ? copy.empty : copy.allRead}</Text>;
 
   return (
-    <Stack id={INBOX_FEED_ID} tabIndex={-1} gap={8}>
+    <Stack id={INBOX_FEED_ID} tabIndex={-1} gap={8} className={styles.feed}>
       <Stack direction="row" gap={8} align="center">
         <Heading level={2}>{copy.heading}</Heading>
         <Text>
@@ -108,27 +131,19 @@ export function InboxFeed({
         </Text>
       </Stack>
       <Stack direction="row" gap={4} wrap>
-        <SegmentedControl
-          mode="buttons"
-          label={copy.viewsLabel}
-          value={view}
-          onChange={onViewChange}
-          options={[
-            { value: "inbox", label: copy.views.inbox },
-            { value: "archive", label: `${copy.views.archive} (${archivedCount})` },
-          ]}
-        />
         <Checkbox
           name="inbox-unread-only"
           checked={unreadOnly}
           onChange={onUnreadOnlyChange}
           label={copy.unreadOnly}
+          className={styles.filterCheckbox}
         />
-        {view === "inbox" ? (
-          <Button onClick={onMarkAllRead} disabled={unread === 0}>
-            {copy.markAllRead}
-          </Button>
-        ) : null}
+        <Button onClick={() => onToggleSelectedRead(markRead)} disabled={selectedCount === 0}>
+          {markRead ? copy.markAsRead : copy.markAsUnread}
+        </Button>
+        <Button onClick={onDeleteSelected} disabled={selectedCount === 0}>
+          {copy.delete}
+        </Button>
       </Stack>
       {visible.length === 0 ? (
         empty
@@ -140,7 +155,7 @@ export function InboxFeed({
           rowKey={(entry) => entry.id}
           rowClassName={() => styles.inboxRow}
           label={copy.heading}
-          navigationBoundary
+          highlightFocusedRow
         />
       )}
     </Stack>

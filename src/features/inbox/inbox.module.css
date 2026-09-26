@@ -1,14 +1,19 @@
-.inboxTable col:first-child {
-  width: 32px;
+.feed {
+  --inbox-select-inset: 6px;
 }
 
 .inboxTable thead th:first-child {
-  padding-left: 4px;
+  padding-left: var(--inbox-select-inset);
   padding-right: 0;
 }
 
 .inboxTable tbody td:first-child {
+  padding-left: var(--inbox-select-inset);
   padding-right: 0;
+}
+
+.filterCheckbox {
+  margin-left: var(--inbox-select-inset);
 }
 
 .inboxRow {
@@ -28,4 +33,32 @@
   display: flex;
   align-items: center;
   width: max-content;
+}
+
+.selectionCell {
+  vertical-align: middle;
+}
+
+/* The row's full-width subject action sits above ordinary cells. Keep the
+   kit checkbox above that hit area so mouse and touch can toggle it. */
+.selectionControl {
+  position: relative;
+  z-index: 2;
+}
+
+.inboxTable tbody .selectionControl {
+  --dos-check-bg: var(--dos-silver);
+  --dos-check-mark: var(--dos-black);
+  --dos-field-border: var(--dos-dark-gray);
+}
+
+/* The kit label remains the checkbox's accessible name without occupying
+   room in this compact table column. */
+.selectionControl label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

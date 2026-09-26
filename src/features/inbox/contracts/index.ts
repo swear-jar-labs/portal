@@ -6,7 +6,7 @@
 //
 // Task 09 (section events → inbox) is the consumer: it builds InboxEvent
 // values and posts them with enqueueInboxEvent. The rest of the model and the
-// store stay internal — the inbox UI owns every read/archive call.
+// store stay internal — the inbox UI owns read and delete actions.
 
 export { enqueueInboxEvent } from "../inbox-store";
 export type {

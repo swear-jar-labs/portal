@@ -40,7 +40,6 @@ export type InboxNotification = {
   available: boolean;
   unavailableReason?: string;
   read: boolean;
-  archived: boolean;
 };
 
 // The minimal event a section producer posts for task 09: who it is for, what
@@ -70,15 +69,11 @@ export function inboxEventToNotification(event: InboxEvent): InboxNotification {
     available: event.available ?? true,
     unavailableReason: event.unavailableReason,
     read: false,
-    archived: false,
   };
 }
 
-export const inboxViews = ["inbox", "archive"] as const;
-export type InboxView = (typeof inboxViews)[number];
-
 export function isInboxUnread(entry: InboxNotification): boolean {
-  return !entry.read && !entry.archived;
+  return !entry.read;
 }
 
 export function unreadInboxCount(list: readonly InboxNotification[]): number {
@@ -89,19 +84,13 @@ export function sortInboxNewest(list: readonly InboxNotification[]): readonly In
   return [...list].sort((first, second) => second.at.localeCompare(first.at));
 }
 
-// The list side of the mail client: the archive holds its own view, the
-// incoming box optionally narrows to unread only. The counter and the list
-// read the same projection, so they never disagree.
+// The feed optionally narrows to unread mail. The counter and list read the
+// same notification state, so they never disagree.
 export function visibleInboxNotifications(
   list: readonly InboxNotification[],
-  view: InboxView,
   unreadOnly: boolean,
 ): readonly InboxNotification[] {
-  const scoped =
-    view === "archive"
-      ? list.filter((entry) => entry.archived)
-      : list.filter((entry) => !entry.archived);
-  const narrowed = unreadOnly ? scoped.filter((entry) => !entry.read) : scoped;
+  const narrowed = unreadOnly ? list.filter(isInboxUnread) : list;
   return sortInboxNewest(narrowed);
 }
 

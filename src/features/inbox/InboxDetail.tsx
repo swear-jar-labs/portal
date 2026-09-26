@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Heading, Link, Stack, Text } from "@swearjar/dos";
+import { Heading, Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { formatTimestamp } from "@/lib/format";
 import { useOverlayPush } from "@/features/shell";
@@ -8,10 +8,6 @@ import type { InboxNotification } from "./inbox";
 
 export type InboxDetailProps = {
   entry: InboxNotification;
-  onMarkRead: () => void;
-  onMarkUnread: () => void;
-  onArchive: () => void;
-  onRestore: () => void;
 };
 
 const copy = messages.inbox.detail;
@@ -21,13 +17,7 @@ const kinds = messages.inbox.kinds;
 // lands back on the link that opened it.
 const INBOX_TARGET_LINK_ID = "inbox-target-link";
 
-export function InboxDetail({
-  entry,
-  onMarkRead,
-  onMarkUnread,
-  onArchive,
-  onRestore,
-}: InboxDetailProps) {
+export function InboxDetail({ entry }: InboxDetailProps) {
   const pushOverlay = useOverlayPush();
 
   return (
@@ -62,18 +52,6 @@ export function InboxDetail({
           <Text>{entry.unavailableReason}</Text>
         </Stack>
       )}
-      <Stack direction="row" gap={4} wrap>
-        {entry.read ? (
-          <Button onClick={onMarkUnread}>{copy.markUnread}</Button>
-        ) : (
-          <Button onClick={onMarkRead}>{copy.markRead}</Button>
-        )}
-        {entry.archived ? (
-          <Button onClick={onRestore}>{copy.restore}</Button>
-        ) : (
-          <Button onClick={onArchive}>{copy.archive}</Button>
-        )}
-      </Stack>
       <Text role="hint">{copy.hint}</Text>
     </Stack>
   );

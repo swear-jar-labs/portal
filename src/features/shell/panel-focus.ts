@@ -3,8 +3,9 @@ import { DOC_ZONE } from "./zones";
 
 // The keyboard target of the right panel: the topmost doc panel's scroll body.
 // The panel stack renders its layers in order (base first, the open thread
-// last), so the last match is the panel the user is looking at.
-const PANEL_BODY_SELECTOR = `[${DOS_ZONE_ATTR}="${DOC_ZONE}"] [${DOS_SCROLL_ATTR}]`;
+// last), so the last match is the panel the user is looking at. Only the
+// panel's own body qualifies: nested table scroll regions cannot take focus.
+const PANEL_BODY_SELECTOR = `[${DOS_ZONE_ATTR}="${DOC_ZONE}"] > [${DOS_SCROLL_ATTR}]`;
 
 /**
  * Hands the keyboard to the right panel after the file manager opens a program.
@@ -14,7 +15,7 @@ export function focusPanelBody(): boolean {
   const body = Array.from(document.querySelectorAll<HTMLElement>(PANEL_BODY_SELECTOR)).at(-1);
   if (!body) return false;
   body.focus();
-  return true;
+  return document.activeElement === body;
 }
 
 /**

@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  archiveInbox,
+  deleteInboxSelected,
   enqueueInboxEvent,
   ensureInbox,
   inboxStoreSnapshot,
-  markAllInboxRead,
   markInboxRead,
-  markInboxUnread,
+  setInboxSelectedRead,
   resetInboxForTests,
-  restoreInbox,
 } from "@/features/inbox/inbox-store";
 import type { InboxEvent, InboxNotification } from "@/features/inbox/inbox";
 
@@ -23,7 +21,6 @@ function entry(overrides: Partial<InboxNotification> = {}): InboxNotification {
     target: { kind: "thread", label: "read-first", href: "/forum/read-first" },
     available: true,
     read: false,
-    archived: false,
     ...overrides,
   };
 }
@@ -66,28 +63,30 @@ describe("inbox store", () => {
     expect(inboxStoreSnapshot()["grace"]?.find((item) => item.id === "grace-1")?.read).toBe(true);
   });
 
-  it("marks one, one back, and all read — leaving archived mail alone", () => {
-    ensureInbox("ada", [
-      entry({ id: "a" }),
-      entry({ id: "b" }),
-      entry({ id: "filed", archived: true }),
-    ]);
+  it("marks selected messages read and unread without changing unselected messages", () => {
+    ensureInbox("ada", [entry({ id: "a" }), entry({ id: "b" }), entry({ id: "c" })]);
     markInboxRead("ada", "a");
     expect(inboxStoreSnapshot()["ada"]?.find((item) => item.id === "a")?.read).toBe(true);
-    markInboxUnread("ada", "a");
-    expect(inboxStoreSnapshot()["ada"]?.find((item) => item.id === "a")?.read).toBe(false);
-    markAllInboxRead("ada");
-    const list = inboxStoreSnapshot()["ada"] ?? [];
-    expect(list.filter((item) => !item.archived).every((item) => item.read)).toBe(true);
-    expect(list.find((item) => item.id === "filed")?.read).toBe(false);
+    setInboxSelectedRead("ada", ["b", "c"], true);
+    expect(inboxStoreSnapshot()["ada"]?.map((item) => item.read)).toEqual([true, true, true]);
+    setInboxSelectedRead("ada", ["a", "c"], false);
+    expect(inboxStoreSnapshot()["ada"]?.map((item) => item.read)).toEqual([false, true, false]);
   });
 
-  it("archives and restores without losing the entry", () => {
-    ensureInbox("ada", [entry({ id: "a" })]);
-    archiveInbox("ada", "a");
-    expect(inboxStoreSnapshot()["ada"]?.[0]?.archived).toBe(true);
-    restoreInbox("ada", "a");
-    expect(inboxStoreSnapshot()["ada"]?.[0]?.archived).toBe(false);
+  it("deletes only selected messages for the addressed recipient", () => {
+    ensureInbox("ada", [entry({ id: "a" }), entry({ id: "b" }), entry({ id: "c" })]);
+    ensureInbox("grace", [entry({ id: "a" })]);
+    deleteInboxSelected("ada", ["a", "c"]);
+    expect(inboxStoreSnapshot()["ada"]?.map((item) => item.id)).toEqual(["b"]);
+    expect(inboxStoreSnapshot()["grace"]?.map((item) => item.id)).toEqual(["a"]);
+  });
+
+  it("does not resurrect a deleted event when it is delivered or seeded again", () => {
+    enqueueInboxEvent("ada", event({ id: "same-event" }));
+    deleteInboxSelected("ada", ["same-event"]);
+    enqueueInboxEvent("ada", event({ id: "same-event" }));
+    ensureInbox("ada", [entry({ id: "same-event" }), entry({ id: "other" })]);
+    expect(inboxStoreSnapshot()["ada"]?.map((item) => item.id)).toEqual(["other"]);
   });
 
   it("enqueues section events and drops repeats of the same stable id", () => {

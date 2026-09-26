@@ -8,11 +8,9 @@ import { overlayLayerPanels, PanelStack, ShellPanel, useOverlayTop } from "@/fea
 import { InboxDetail } from "./InboxDetail";
 import { InboxFeed } from "./InboxFeed";
 import {
-  archiveInbox,
-  markAllInboxRead,
+  deleteInboxSelected,
   markInboxRead,
-  markInboxUnread,
-  restoreInbox,
+  setInboxSelectedRead,
   useInboxSession,
 } from "./inbox-store";
 import {
@@ -20,7 +18,6 @@ import {
   inboxRowId,
   visibleInboxNotifications,
   type InboxNotification,
-  type InboxView,
 } from "./inbox";
 
 export type InboxStackProps = {
@@ -36,9 +33,9 @@ export type InboxStackProps = {
 // the root overlay slot owned by this stack.
 export function InboxStack({ user, seed, now }: InboxStackProps) {
   const { list, unread } = useInboxSession(user, seed);
-  const [view, setView] = useState<InboxView>("inbox");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set());
   const closingRef = useRef(false);
   const returnFocusRef = useRef<string | null>(null);
   // The stack claims the overlay host role while mounted (the fallback host
@@ -47,13 +44,10 @@ export function InboxStack({ user, seed, now }: InboxStackProps) {
 
   useEffect(() => {
     closingRef.current = false;
-  }, [overlayLayers, selectedId, view]);
+  }, [overlayLayers, selectedId]);
 
-  const visible = useMemo(
-    () => visibleInboxNotifications(list, view, unreadOnly),
-    [list, view, unreadOnly],
-  );
-  const archivedCount = useMemo(() => list.filter((entry) => entry.archived).length, [list]);
+  const visible = useMemo(() => visibleInboxNotifications(list, unreadOnly), [list, unreadOnly]);
+  const visibleIds = useMemo(() => visible.map((entry) => entry.id), [visible]);
   const selected = useMemo(
     () => list.find((entry) => entry.id === selectedId) ?? null,
     [list, selectedId],
@@ -67,8 +61,7 @@ export function InboxStack({ user, seed, now }: InboxStackProps) {
     (document.getElementById(id) ?? document.getElementById(INBOX_FEED_ID))?.focus();
   }, [selectedId]);
 
-  // A selection that leaves the current projection (archived from the
-  // detail, filtered out) keeps its layer: the detail owns its entry.
+  // A read message can leave the unread projection while its detail stays open.
   const select = useCallback(
     (id: string) => {
       returnFocusRef.current = inboxRowId(id);
@@ -81,6 +74,46 @@ export function InboxStack({ user, seed, now }: InboxStackProps) {
   const closeDetail = useCallback(() => {
     setSelectedId(null);
   }, []);
+
+  const toggleSelected = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(
+    (checked: boolean) => {
+      setSelectedIds(checked ? new Set(visibleIds) : new Set());
+    },
+    [visibleIds],
+  );
+
+  const selectedVisibleIds = visibleIds.filter((id) => selectedIds.has(id));
+
+  const finishBulkAction = useCallback(() => {
+    setSelectedIds(new Set());
+    document.getElementById(INBOX_FEED_ID)?.focus();
+  }, []);
+
+  const toggleSelectedRead = useCallback(
+    (read: boolean) => {
+      setInboxSelectedRead(user, selectedVisibleIds, read);
+      finishBulkAction();
+    },
+    [finishBulkAction, selectedVisibleIds, user],
+  );
+
+  const deleteSelected = useCallback(() => {
+    deleteInboxSelected(user, selectedVisibleIds);
+    if (selectedId !== null && selectedVisibleIds.includes(selectedId)) {
+      returnFocusRef.current = null;
+      setSelectedId(null);
+    }
+    finishBulkAction();
+  }, [finishBulkAction, selectedId, selectedVisibleIds, user]);
 
   const closeTop = useCallback(() => {
     if (overlayOpen) {
@@ -97,15 +130,19 @@ export function InboxStack({ user, seed, now }: InboxStackProps) {
           list={list}
           visible={visible}
           unread={unread}
-          archivedCount={archivedCount}
-          view={view}
           unreadOnly={unreadOnly}
           selectedId={selectedId}
+          selectedIds={selectedIds}
           now={now}
-          onViewChange={setView}
-          onUnreadOnlyChange={setUnreadOnly}
+          onUnreadOnlyChange={(value) => {
+            setUnreadOnly(value);
+            setSelectedIds(new Set());
+          }}
           onSelect={select}
-          onMarkAllRead={() => markAllInboxRead(user)}
+          onToggleSelected={toggleSelected}
+          onToggleAll={toggleAll}
+          onToggleSelectedRead={toggleSelectedRead}
+          onDeleteSelected={deleteSelected}
         />
       </ShellPanel>
       {selected ? (
@@ -113,13 +150,7 @@ export function InboxStack({ user, seed, now }: InboxStackProps) {
           title={selected.target.label}
           actions={<CloseButton onClose={closeDetail} label={messages.shell.window.closeLabel} />}
         >
-          <InboxDetail
-            entry={selected}
-            onMarkRead={() => markInboxRead(user, selected.id)}
-            onMarkUnread={() => markInboxUnread(user, selected.id)}
-            onArchive={() => archiveInbox(user, selected.id)}
-            onRestore={() => restoreInbox(user, selected.id)}
-          />
+          <InboxDetail entry={selected} />
         </ShellPanel>
       ) : null}
       {overlayLayerPanels(overlayLayers, closeOverlay)}

@@ -11,7 +11,7 @@
 // stay outside.
 
 import { useEffect } from "react";
-import { DOS_ROW_ATTR } from "./attributes";
+import { DOS_ROW_ATTR, DOS_ROW_PRIMARY_ATTR } from "./attributes";
 import { FOCUSABLE_SELECTOR, isInScrollView, nextControlIndex, nextStepIndex } from "./focus";
 import { hasCommandModifier, shouldSkipEvent } from "./keyboard";
 
@@ -77,7 +77,8 @@ function stepRows(
   if (currentRow !== undefined && active !== null) rowMemory.set(currentRow.key, active);
 
   const nextIndex = nextStepIndex(rows.length, rowIndex, step, (index) => {
-    const cell = rows[index]?.cells[0];
+    const cells = rows[index]?.cells;
+    const cell = cells?.find((item) => item.hasAttribute(DOS_ROW_PRIMARY_ATTR)) ?? cells?.[0];
     return cell !== undefined && isInScrollView(cell, surface);
   });
   const row = rows[nextIndex];
@@ -86,7 +87,7 @@ function stepRows(
   const remembered = rowMemory.get(row.key);
   return remembered !== undefined && row.cells.includes(remembered)
     ? remembered
-    : (row.cells[0] ?? null);
+    : (row.cells.find((cell) => cell.hasAttribute(DOS_ROW_PRIMARY_ATTR)) ?? row.cells[0] ?? null);
 }
 
 // Enter in a search box steps to the next control on the right, like ArrowRight:
@@ -134,7 +135,11 @@ function resolveNextControl(
     const atEnd = target.selectionStart === target.value.length;
     const atStart = target.selectionStart === 0;
     if (rowStep === 1 ? !atEnd : !atStart) return null;
-  } else if (cellStep !== undefined && target instanceof HTMLInputElement) {
+  } else if (
+    cellStep !== undefined &&
+    target instanceof HTMLInputElement &&
+    target.type !== "checkbox"
+  ) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 import { type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
-import { DOS_ROW_ATTR, DOS_SCROLL_ATTR } from "../../attributes";
+import { DOS_ROW_ATTR, DOS_ROW_PRIMARY_ATTR, DOS_SCROLL_ATTR } from "../../attributes";
 import { cx } from "../tone";
 import styles from "./Table.module.css";
 
@@ -12,11 +12,12 @@ export type TableRowAction = {
   onActivate?: (event?: MouseEvent<HTMLElement>) => void;
   className?: string;
   rowActivation?: boolean;
+  navigationPrimary?: boolean;
 };
 
 export type TableColumn<Item> = {
   id: string;
-  label: string;
+  label: ReactNode;
   width?: string;
   minWidth?: string;
   align?: "left" | "right";
@@ -60,6 +61,7 @@ function Action({ action }: { action: TableRowAction }) {
         aria-expanded={action.expanded}
         onClick={action.onActivate}
         onKeyDown={action.onActivate ? handleLinkKeyDown : undefined}
+        {...(action.navigationPrimary ? { [DOS_ROW_PRIMARY_ATTR]: "" } : undefined)}
       >
         {action.content}
       </a>
@@ -74,6 +76,7 @@ function Action({ action }: { action: TableRowAction }) {
       aria-current={action.current ? "true" : undefined}
       aria-expanded={action.expanded}
       onClick={action.onActivate}
+      {...(action.navigationPrimary ? { [DOS_ROW_PRIMARY_ATTR]: "" } : undefined)}
     >
       {action.content}
     </button>

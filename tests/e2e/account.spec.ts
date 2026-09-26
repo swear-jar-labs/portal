@@ -66,6 +66,106 @@ test.describe("guest account chrome", () => {
 });
 
 test.describe("member session", () => {
+  test("reloads the shell without React key warnings", async ({ page }) => {
+    const keyWarnings: string[] = [];
+    page.on("console", (message) => {
+      if (message.text().includes('unique "key" prop')) {
+        keyWarnings.push(message.text());
+      }
+    });
+    await logon(page, `key-check-${Date.now().toString(36)}`);
+    await page.reload();
+    await waitForHydration(page);
+    await expect(page.getByRole("region", { name: FILES_REGION })).toBeVisible();
+    await expect(page.locator("#file-INBOX")).toBeVisible();
+    expect(keyWarnings).toEqual([]);
+  });
+
+  test("edits profile, crops an avatar, and keeps the old member link", async ({ page }) => {
+    const handle = `profile-${Date.now().toString(36)}`;
+    const renamed = `${handle}-new`;
+    await logon(page, handle);
+    await page.goto("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await profile.getByRole("button", { name: "EDIT PROFILE" }).click();
+    const editor = page.getByRole("region", { name: "EDIT PROFILE" });
+    await editor.getByLabel("USERNAME").fill(renamed);
+    await editor.getByLabel("BIO").fill("Building small tools.");
+    await editor.getByLabel("CHOOSE IMAGE").setInputFiles("tests/e2e/fixtures/avatar-pan.png");
+    const preview = editor.getByRole("img", { name: "CROP PREVIEW" });
+    await expect(preview).toBeVisible();
+    await expect(editor.getByRole("slider")).toHaveCount(1);
+    await editor.getByLabel("ZOOM").focus();
+    await page.keyboard.press("ArrowRight");
+    const beforeDrag = await preview.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+    const bounds = await preview.boundingBox();
+    expect(bounds).not.toBeNull();
+    if (!bounds) throw new Error("Avatar preview is missing");
+    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(bounds.x + bounds.width * 0.85, bounds.y + bounds.height / 2, {
+      steps: 5,
+    });
+    await page.mouse.up();
+    await expect
+      .poll(() => preview.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL()))
+      .not.toBe(beforeDrag);
+    const afterDrag = await preview.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+    await preview.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect
+      .poll(() => preview.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL()))
+      .not.toBe(afterDrag);
+    const zoom = editor.getByRole("slider", { name: "ZOOM" });
+    const zoomBeforeKeys = Number(await zoom.inputValue());
+    // Playwright sends the literal "=" for Shift+= while a real keyboard
+    // reports "+", so press "+" itself to hit the canvas zoom handler.
+    await page.keyboard.press("+");
+    await expect
+      .poll(async () => Number(await zoom.inputValue()))
+      .toBeCloseTo(zoomBeforeKeys + 0.1);
+    await page.keyboard.press("-");
+    await expect.poll(async () => Number(await zoom.inputValue())).toBeCloseTo(zoomBeforeKeys);
+    await page.keyboard.press("Enter");
+    await expect(zoom).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(preview).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(zoom).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(editor.getByRole("button", { name: "REMOVE AVATAR" })).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(editor.getByRole("button", { name: "SAVE" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(profile.getByRole("heading", { level: 1, name: renamed })).toBeVisible();
+    await expect(profile.getByText("Building small tools.")).toBeVisible();
+    await expect(profile.locator('img[src^="data:image/"]')).toBeVisible();
+    await expectNoViolations(page, "edited profile");
+
+    await page.goto(`/members/${handle}`);
+    await expect(page).toHaveURL(`/members/${renamed}`);
+    await expect(page.getByRole("heading", { level: 1, name: renamed })).toBeVisible();
+    await expect(page.getByText("Building small tools.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("heading", { level: 1, name: renamed })).toBeVisible();
+
+    await page.goto("/profile");
+    const currentProfile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await currentProfile.getByRole("button", { name: "EDIT PROFILE" }).click();
+    const removal = page.getByRole("region", { name: "EDIT PROFILE" });
+    await removal.getByRole("button", { name: "REMOVE AVATAR" }).click();
+    await removal.getByRole("button", { name: "SAVE" }).click();
+    await expect(currentProfile.getByRole("heading", { level: 1, name: renamed })).toBeVisible();
+    await expect(currentProfile.locator('img[src^="data:image/"]')).toHaveCount(0);
+
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "LOG OFF" }).click();
+    await expect(page).toHaveURL("/");
+    await logon(page, handle);
+    await page.goto("/profile");
+    await expect(page.getByRole("heading", { level: 1, name: renamed })).toBeVisible();
+  });
+
   test("logon lands on the forum and skips the guest welcome", async ({ page }) => {
     await logon(page);
     await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();

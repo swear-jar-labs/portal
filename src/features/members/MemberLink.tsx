@@ -3,7 +3,7 @@
 import { useId, type KeyboardEvent } from "react";
 import { Avatar, Link, Text } from "@swearjar/dos";
 import { useOverlayPush } from "@/features/shell";
-import { memberPath } from "@/shared/members";
+import { useMemberIdentity } from "@/shared/MemberIdentity";
 import styles from "./members.module.css";
 
 // The byline identity every section renders: BoardMember and ReadroomPerson
@@ -21,9 +21,10 @@ export type MemberLinkProps = {
 /** A byline's one target: avatar and user always navigate together. */
 export function MemberLink({ person, avatarSize = "md" }: MemberLinkProps) {
   const id = useId();
+  const identity = useMemberIdentity(person);
   // Every in-app profile opens as an overlay layer above the current stack
   // (the root slot intercepts it); the origin id returns focus on close.
-  const openMember = useOverlayPush()(memberPath(person.user), id);
+  const openMember = useOverlayPush()(identity.href, id);
 
   function activateOnSpace(event: KeyboardEvent<HTMLElement>) {
     if (event.key !== " ") return;
@@ -35,9 +36,9 @@ export function MemberLink({ person, avatarSize = "md" }: MemberLinkProps) {
   // wrapper and reaches the anchor by bubbling.
   return (
     <span className={styles.memberLinkHost} onClick={openMember} onKeyDown={activateOnSpace}>
-      <Link id={id} href={memberPath(person.user)} className={styles.memberLink}>
-        <Avatar user={person.user} src={person.avatar} size={avatarSize} />
-        <Text as="span">{person.user}</Text>
+      <Link id={id} href={identity.href} className={styles.memberLink}>
+        <Avatar user={identity.username} src={identity.avatar} size={avatarSize} />
+        <Text as="span">{identity.username}</Text>
       </Link>
     </span>
   );

@@ -17,6 +17,7 @@ type ButtonBaseProps = {
 type ButtonControlProps = ButtonBaseProps & {
   href?: never;
   onClick?: ButtonHTMLAttributes<HTMLButtonElement>["onClick"];
+  onKeyDown?: ButtonHTMLAttributes<HTMLButtonElement>["onKeyDown"];
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
 };
@@ -72,6 +73,7 @@ export function Button(props: ButtonProps) {
       id={id}
       type={type}
       onClick={onClick}
+      onKeyDown={props.onKeyDown}
       disabled={disabled}
       aria-label={ariaLabel}
       className={classes}

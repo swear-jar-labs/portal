@@ -6,6 +6,7 @@ import { Button, Heading, Stack, Text, Textarea } from "@swearjar/dos";
 import { DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "@/content/messages";
 import { formatTimestamp } from "@/lib/format";
+import { MemberName, useMemberIdentity } from "@/shared/MemberIdentity";
 import type { ProjectSubmission } from "@/features/projects/contracts";
 import styles from "./AdminQueue.module.css";
 
@@ -23,6 +24,7 @@ function Review({
   onDecide: DecideAction;
 }) {
   const router = useRouter();
+  const identity = useMemberIdentity({ user: submission.user });
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
@@ -55,13 +57,13 @@ function Review({
 
   return (
     <section
-      aria-label={`${submission.details.name} ${submission.user} ${submittedAt}`}
+      aria-label={`${submission.details.name} ${identity.username} ${submittedAt}`}
       className={styles.application}
       {...{ [DOS_SURFACE_ATTR]: "light" }}
     >
       <Stack gap={8}>
         <Heading level={2}>{submission.details.name}</Heading>
-        <Text role="hint">{submission.user}</Text>
+        <Text role="hint">{identity.username}</Text>
         <Stack gap={4}>
           <Heading level={3}>{messages.projects.proposal.history}</Heading>
           <Text role="accent">{messages.projects.proposal.states[submission.status]}</Text>
@@ -86,7 +88,7 @@ function Review({
             {submission.history.map((event, index) => (
               <li key={`${submission.id}-${index}`}>
                 <Text>
-                  {messages.projects.proposal.events[event.kind]} · {event.by} ·{" "}
+                  {messages.projects.proposal.events[event.kind]} · <MemberName user={event.by} /> ·{" "}
                   {formatTimestamp(event.at)}
                 </Text>
                 {event.note ? <Text>{event.note}</Text> : null}

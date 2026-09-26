@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Avatar, Button, Form, Stack, Text } from "@swearjar/dos";
+import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
+import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
 import { MemberLink } from "@/features/members/contracts";
 import { formatAge, type ThreadPost } from "./threads";
 import { postElementId, postHash } from "./post-anchor";
@@ -72,6 +73,7 @@ export function PostItem({
   onDelete,
 }: PostItemProps) {
   const dialogs = useShellDialogs();
+  const replyIdentity = useMemberIdentity(replyTo ?? { user: "" });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(post.body);
   const [error, setError] = useState<string | undefined>();
@@ -184,12 +186,14 @@ export function PostItem({
         {replyTo !== undefined ? (
           <Button
             variant="ghost"
-            ariaLabel={`${messages.board.post.replyToAria} ${replyTo.user}`}
+            ariaLabel={`${messages.board.post.replyToAria} ${replyIdentity.username}`}
             onClick={jumpToParent}
           >
             {REPLY_MARKER_GLYPH}
-            <Avatar user={replyTo.user} src={replyTo.avatar} size="sm" />
-            {replyTo.excerpt === undefined ? replyTo.user : `${replyTo.user}: "${replyTo.excerpt}"`}
+            <MemberAvatar person={replyTo} size="sm" />
+            {replyTo.excerpt === undefined
+              ? replyIdentity.username
+              : `${replyIdentity.username}: "${replyTo.excerpt}"`}
           </Button>
         ) : null}
         {!deleted && !editing ? (

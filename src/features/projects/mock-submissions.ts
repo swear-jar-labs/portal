@@ -9,9 +9,33 @@ import { createProjectSubmissionStore, type ProjectSubmission } from "./submissi
 type ProjectSubmissionStore = ReturnType<typeof createProjectSubmissionStore>;
 
 const DEMO_AT = "2026-09-20T11:00:00.000Z";
-const DEMO_GRACE: Actor = { user: "grace", level: "member", admin: false, email: null };
-const DEMO_ADA: Actor = { user: "ada", level: "member", admin: false, email: null };
-const DEMO_ADMIN: Actor = { user: "admin", level: "member", admin: true, email: null };
+const DEMO_GRACE: Actor = {
+  user: "grace",
+  username: "grace",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: false,
+  email: null,
+};
+const DEMO_ADA: Actor = {
+  user: "ada",
+  username: "ada",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: false,
+  email: null,
+};
+const DEMO_ADMIN: Actor = {
+  user: "admin",
+  username: "admin",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: true,
+  email: null,
+};
 
 let store: ProjectSubmissionStore | null = null;
 

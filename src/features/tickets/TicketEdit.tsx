@@ -14,6 +14,7 @@ import {
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
+import { useMemberIdentities } from "@/shared/MemberIdentity";
 import type { TicketEditChanges, TicketEditFailure } from "./edit-submit";
 import { ticketEditSchema, type TicketEditInput } from "./schema";
 import { TicketFields, type TicketFieldsErrors } from "./TicketFields";
@@ -90,6 +91,8 @@ export function TicketEdit({
   onCancel,
 }: TicketEditProps) {
   const session = useShellSession();
+  const identities = useMemberIdentities();
+  const displayUser = (user: string) => identities[user]?.username ?? user;
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
   const all = useMergedTickets(tickets);
@@ -97,11 +100,11 @@ export function TicketEdit({
   const [values, setValues] = useState<TicketEditInput>(() => draftOf(live));
   const [assigneeText, setAssigneeText] = useState(live.assignee?.user ?? "");
   const [assigneeQuery, setAssigneeQuery] = useState(
-    live.assignee?.user ?? messages.tickets.dossier.assigneeUnassigned,
+    live.assignee ? displayUser(live.assignee.user) : messages.tickets.dossier.assigneeUnassigned,
   );
   const [reviewerText, setReviewerText] = useState(live.reviewer?.user ?? "");
   const [reviewerQuery, setReviewerQuery] = useState(
-    live.reviewer?.user ?? messages.tickets.edit.reviewerNone,
+    live.reviewer ? displayUser(live.reviewer.user) : messages.tickets.edit.reviewerNone,
   );
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<EditErrors>({});
@@ -112,13 +115,13 @@ export function TicketEdit({
   const isAssignee = canWrite && session?.user === live.assignee?.user;
   const assigneeOptions: ComboBoxOption<string>[] = [
     { value: "", label: messages.tickets.dossier.assigneeUnassigned },
-    ...memberUsers.map((user) => ({ value: user, label: user })),
+    ...memberUsers.map((user) => ({ value: user, label: displayUser(user) })),
   ];
   const reviewerOptions: ComboBoxOption<string>[] = [
     { value: "", label: messages.tickets.edit.reviewerNone },
     ...reviewerCandidates(project, assigneeText).map((user) => ({
       value: user,
-      label: user,
+      label: displayUser(user),
     })),
   ];
 

@@ -1,4 +1,4 @@
-import { Avatar, Heading, Stack, Text } from "@swearjar/dos";
+import { Avatar, Button, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { ThreadRows, type ThreadSummary } from "@/features/board/contracts";
 import type { MemberProfile } from "./data";
@@ -7,9 +7,19 @@ export type ProfileViewProps = {
   profile: MemberProfile;
   threads: readonly ThreadSummary[];
   now: string;
+  onEdit: () => void;
+  editButtonId: string;
+  saved: boolean;
 };
 
-export function ProfileView({ profile, threads, now }: ProfileViewProps) {
+export function ProfileView({
+  profile,
+  threads,
+  now,
+  onEdit,
+  editButtonId,
+  saved,
+}: ProfileViewProps) {
   return (
     <Stack gap={10}>
       <Stack direction="row" gap={10} align="center">
@@ -24,6 +34,12 @@ export function ProfileView({ profile, threads, now }: ProfileViewProps) {
         </Stack>
       </Stack>
       <Text>{profile.bio}</Text>
+      <div>
+        <Button id={editButtonId} onClick={onEdit}>
+          {messages.account.profile.edit.open}
+        </Button>
+      </div>
+      {saved ? <Text role="positive">{messages.account.profile.edit.saved}</Text> : null}
 
       <Stack gap={2}>
         {profile.stats.map((stat) => (

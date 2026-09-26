@@ -26,7 +26,15 @@ describe("registration flow", () => {
     const { user, email } = pendingFor("quinn");
     expect(confirmRegistration(user, "123456", 2000)).toEqual({
       result: "ok",
-      actor: { user, level: "participant", admin: false, email },
+      actor: {
+        user,
+        username: user,
+        bio: "Learning how things work, one broken build at a time.",
+        avatar: undefined,
+        level: "participant",
+        admin: false,
+        email,
+      },
     });
   });
 

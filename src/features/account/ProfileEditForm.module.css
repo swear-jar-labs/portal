@@ -1,0 +1,18 @@
+.preview {
+  width: 12rem;
+  height: 12rem;
+  max-width: 100%;
+  image-rendering: auto;
+  border: 1px solid currentColor;
+  touch-action: none;
+  cursor: grab;
+}
+
+.preview:active {
+  cursor: grabbing;
+}
+
+.preview:focus-visible {
+  outline: var(--dos-focus-ring-width) solid var(--dos-focus-ring);
+  outline-offset: 2px;
+}

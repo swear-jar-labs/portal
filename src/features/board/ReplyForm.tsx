@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button, Form, Stack, Text } from "@swearjar/dos";
+import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
+import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
 import { replySchema } from "./schema";
 import type { ReplyTarget } from "./thread-actions";
 
@@ -24,6 +25,7 @@ export type ReplyFormProps = {
 export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
+  const targetIdentity = useMemberIdentity(target ?? { user: "" });
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | undefined>();
   const fieldRef = useRef<HTMLTextAreaElement>(null);
@@ -64,9 +66,11 @@ export function ReplyForm({ onReply, target, onTargetChange }: ReplyFormProps) {
             <Text as="span" role="hint">
               {messages.board.reply.target}
             </Text>
-            <Avatar user={target.user} src={target.avatar} size="sm" />
+            <MemberAvatar person={target} size="sm" />
             <Text as="span">
-              {target.excerpt === undefined ? target.user : `${target.user}: "${target.excerpt}"`}
+              {target.excerpt === undefined
+                ? targetIdentity.username
+                : `${targetIdentity.username}: "${target.excerpt}"`}
             </Text>
             <Button
               variant="ghost"

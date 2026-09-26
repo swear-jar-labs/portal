@@ -71,7 +71,12 @@ import styles from "./DosShell.module.css";
 // and a community level works, and logoff is injected by the layout (mock
 // action until auth lands). The level type comes from the command registry,
 // so the frame never imports the account slice (see AGENTS.md).
-export type ShellSession = { user: string; level: CommunityLevel; admin: boolean } | null;
+export type ShellSession = {
+  user: string;
+  username?: string;
+  level: CommunityLevel;
+  admin: boolean;
+} | null;
 
 export type DosShellProps = {
   children: ReactNode;
@@ -367,7 +372,7 @@ export function DosShell({ children, overlay, session, logoff, addons }: DosShel
             <ShellControlsProvider enabled={controlsEnabled}>
               <SessionProvider session={session}>
                 <ShellDialogsProvider dialogs={shellDialogs}>
-                  {overlay}
+                  <Fragment key="overlay">{overlay}</Fragment>
                   <OverlayDocumentTitle />
                   <ShellOverlayBody>{children}</ShellOverlayBody>
                 </ShellDialogsProvider>
@@ -394,7 +399,9 @@ export function DosShell({ children, overlay, session, logoff, addons }: DosShel
               {trayAddons.map(({ id, node }) => (
                 <Fragment key={id}>{node}</Fragment>
               ))}
-              <Text as="span">{session ? session.user : messages.shell.keyBar.guest}</Text>
+              <Text as="span">
+                {session ? (session.username ?? session.user) : messages.shell.keyBar.guest}
+              </Text>
               <KeyBarClock />
             </>
           }

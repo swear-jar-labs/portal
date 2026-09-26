@@ -38,6 +38,9 @@ export type { RemoveButtonProps } from "./components/RemoveButton/RemoveButton";
 export { Field } from "./components/Field/Field";
 export type { FieldProps } from "./components/Field/Field";
 
+export { HorizontalSlider } from "./components/HorizontalSlider/HorizontalSlider";
+export type { HorizontalSliderProps } from "./components/HorizontalSlider/HorizontalSlider";
+
 export { Form } from "./components/Form/Form";
 export type { FormProps } from "./components/Form/Form";
 
@@ -85,6 +88,7 @@ export { Window } from "./components/Window/Window";
 export type { WindowProps } from "./components/Window/Window";
 
 export { CloseButton } from "./components/CloseButton/CloseButton";
+export { FileButton } from "./components/Button/FileButton";
 export type { CloseButtonProps } from "./components/CloseButton/CloseButton";
 
 export { Dialog } from "./components/Dialog/Dialog";

@@ -1,4 +1,4 @@
-import { type MouseEvent, type ReactNode } from "react";
+import { Fragment, type MouseEvent, type ReactNode } from "react";
 import type { SpriteName } from "../../sprites";
 import { Table, type TableColumn } from "../Table/Table";
 import { FileIcon } from "./FileIcon";
@@ -79,9 +79,15 @@ export function FileTable({
             id: item.id,
             content: (
               <>
-                {item.iconNode ?? (
-                  <FileIcon kind={item.kind ?? "file"} expanded={item.expanded} icon={item.icon} />
-                )}
+                <Fragment key="icon">
+                  {item.iconNode ?? (
+                    <FileIcon
+                      kind={item.kind ?? "file"}
+                      expanded={item.expanded}
+                      icon={item.icon}
+                    />
+                  )}
+                </Fragment>
                 <span className={styles.name}>{item.name}</span>
               </>
             ),

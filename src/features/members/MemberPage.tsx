@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { messages } from "@/content/messages";
 import { resolveAccount } from "@/features/account/contracts";
 import {
@@ -16,17 +16,34 @@ export type MemberPageProps = {
 };
 
 async function publicMember(user: string): Promise<BoardMember | null> {
-  const boardMember = await getBoardMember(user);
-  if (boardMember) return boardMember;
+  const actor = resolveAccount(user);
+  const key = actor?.user ?? user;
+  const boardMember = await getBoardMember(key);
+  if (boardMember)
+    return {
+      ...boardMember,
+      user: actor?.username ?? user,
+      avatar: actor?.avatar === null ? undefined : (actor?.avatar ?? boardMember.avatar),
+    };
   // Registered demo accounts can lead a new project before posting to a
-  // fixture board. Their public profile still needs to resolve.
-  return resolveAccount(user)?.level === "member"
-    ? { user, role: "member", avatar: avatarFor(user) }
+  // fixture board. Their public profile still needs to resolve. Participants
+  // stay unlisted until they post (the members spec pins PATH NOT FOUND),
+  // unless the account was renamed: its reserved aliases redirect to this
+  // page, so it must exist for old-link continuity.
+  if (!actor) return null;
+  return actor.level === "member" || actor.username !== key
+    ? {
+        user: actor.username,
+        role: "member",
+        avatar: actor.avatar === null ? undefined : (actor.avatar ?? avatarFor(key)),
+      }
     : null;
 }
 
 export async function generateMemberMetadata({ params }: MemberPageProps): Promise<Metadata> {
   const { user } = await params;
+  const actor = resolveAccount(user);
+  if (actor && actor.username !== user) redirect(`/members/${actor.username}`);
   const member = await publicMember(user);
   return {
     title: member ? memberDocumentTitle(member.user) : messages.members.metadata.title,
@@ -42,13 +59,25 @@ function memberDocumentTitle(user: string): string {
 /** The RSC body shared by the standalone page and an intercepted Board layer. */
 export async function MemberBody({ params }: MemberPageProps) {
   const { user } = await params;
+  const actor = resolveAccount(user);
+  if (actor && actor.username !== user) redirect(`/members/${actor.username}`);
   const member = await publicMember(user);
   if (!member) notFound();
 
   const now = new Date().toISOString();
-  const threads = await listThreadSummariesByAuthor(member.user);
+  const threads = await listThreadSummariesByAuthor(actor?.user ?? user);
 
-  return <MemberView member={member} threads={threads} now={now} />;
+  return (
+    <MemberView
+      member={member}
+      bio={actor?.bio}
+      roleLabel={
+        actor?.level === "participant" ? messages.account.profile.roles.participant : undefined
+      }
+      threads={threads}
+      now={now}
+    />
+  );
 }
 
 /** The same profile body mounted into the root overlay slot (any section). */

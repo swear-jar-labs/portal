@@ -3,9 +3,33 @@ import type { Actor } from "@/features/account/contracts";
 import { DEFAULT_CLAIM_POLICY, type Project } from "@/features/projects/projects";
 import { createProjectTeamStore } from "@/features/projects/team-store";
 
-const member = (user: string): Actor => ({ user, level: "member", admin: false, email: null });
-const admin: Actor = { user: "admin", level: "member", admin: true, email: null };
-const participant: Actor = { user: "participant", level: "participant", admin: false, email: null };
+const member = (user: string): Actor => ({
+  user,
+  username: user,
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: false,
+  email: null,
+});
+const admin: Actor = {
+  user: "admin",
+  username: "admin",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: true,
+  email: null,
+};
+const participant: Actor = {
+  user: "participant",
+  username: "participant",
+  bio: "",
+  avatar: undefined,
+  level: "participant",
+  admin: false,
+  email: null,
+};
 
 function project(slug: string, maintainers = ["ada"]): Project {
   return {

@@ -42,6 +42,17 @@ export function promoteAccount(user: string): Actor | null {
   return registry.setLevel(user, "member");
 }
 
+export function updateAccountProfile(
+  key: string,
+  input: { username: string; bio: string; avatar?: string | null },
+) {
+  return registry.updateProfile(key, input);
+}
+
+export function memberIdentities() {
+  return registry.identities();
+}
+
 // Social signup provisions its own demo Participant per provider: unlike the
 // social logon (which lands the provider's long-lived demo Member), a fresh
 // signup starts a new account at the Participant level — mirroring what the

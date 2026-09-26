@@ -1,5 +1,6 @@
 import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { MemberName } from "@/shared/MemberIdentity";
 import { formatTimestamp } from "@/lib/format";
 import type { MemberApplication } from "./applications";
 import styles from "./ApplicationHistory.module.css";
@@ -10,7 +11,7 @@ export function ApplicationHistory({
   applications,
   headingLevel = 2,
 }: {
-  applications: MemberApplication[];
+  applications: readonly MemberApplication[];
   headingLevel?: 2 | 3;
 }) {
   if (applications.length === 0) return null;
@@ -34,7 +35,8 @@ export function ApplicationHistory({
             {application.history.map((event, index) => (
               <li key={`${application.id}-${index}`}>
                 <Text>
-                  {copy.events[event.kind]} · {event.by} · {formatTimestamp(event.at)}
+                  {copy.events[event.kind]} · <MemberName user={event.by} /> ·{" "}
+                  {formatTimestamp(event.at)}
                 </Text>
                 {event.note ? <Text>{event.note}</Text> : null}
               </li>

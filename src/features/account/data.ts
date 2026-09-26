@@ -3,6 +3,7 @@
 
 import { avatarFor } from "@/shared/members";
 import type { CommunityLevel } from "@/content/commands";
+import { messages } from "@/content/messages";
 
 export type MemberStat = {
   id: "merged" | "reviews" | "errata";
@@ -24,15 +25,21 @@ export type MemberProfile = {
 
 export async function getOwnProfile(
   user: string,
-  standing: { level: CommunityLevel; admin: boolean },
+  standing: {
+    level: CommunityLevel;
+    admin: boolean;
+    username?: string;
+    bio?: string;
+    avatar?: string | null;
+  },
 ): Promise<MemberProfile> {
   return {
-    user,
+    user: standing.username ?? user,
     role: standing.level,
     admin: standing.admin,
     joined: new Date().toISOString().slice(0, 10),
-    avatar: avatarFor(user),
-    bio: "Learning how things work, one broken build at a time.",
+    avatar: standing.avatar === null ? undefined : (standing.avatar ?? avatarFor(user)),
+    bio: standing.bio ?? messages.account.profile.defaultBio,
     stats: [
       { id: "merged", value: 0 },
       { id: "reviews", value: 0 },

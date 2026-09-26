@@ -4,7 +4,12 @@ import { Crt } from "@swearjar/dos";
 import "@swearjar/dos/tokens.css";
 import "@swearjar/dos/base.css";
 import "./globals.css";
-import { getActorSession, mockLogoff } from "@/features/account";
+import {
+  getActorSession,
+  memberIdentities,
+  MemberIdentityProvider,
+  mockLogoff,
+} from "@/features/account";
 import { InboxFileIcon, InboxStatusAddon, listInboxSeed } from "@/features/inbox";
 import { ChildrenPathProvider, DosShell, type ShellAddon } from "@/features/shell";
 import { messages } from "@/content/messages";
@@ -54,11 +59,13 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
     <html lang="en" className={`${greybeard18.variable} ${greybeard16.variable}`}>
       <body>
         <Crt>
-          <ChildrenPathProvider>
-            <DosShell session={session} logoff={mockLogoff} overlay={overlay} addons={addons}>
-              {children}
-            </DosShell>
-          </ChildrenPathProvider>
+          <MemberIdentityProvider identities={memberIdentities()}>
+            <ChildrenPathProvider>
+              <DosShell session={session} logoff={mockLogoff} overlay={overlay} addons={addons}>
+                {children}
+              </DosShell>
+            </ChildrenPathProvider>
+          </MemberIdentityProvider>
         </Crt>
       </body>
     </html>

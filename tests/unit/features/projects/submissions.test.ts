@@ -11,10 +11,34 @@ import {
 import { makeTicketComposeSchema } from "@/features/tickets/schema";
 import { nextTicketKey } from "@/features/tickets/tickets";
 
-const member: Actor = { user: "builder", level: "member", admin: false, email: null };
-const other: Actor = { user: "other", level: "member", admin: false, email: null };
+const member: Actor = {
+  user: "builder",
+  username: "builder",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: false,
+  email: null,
+};
+const other: Actor = {
+  user: "other",
+  username: "other",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: false,
+  email: null,
+};
 const participant: Actor = { ...member, level: "participant" };
-const admin: Actor = { user: "admin", level: "member", admin: true, email: null };
+const admin: Actor = {
+  user: "admin",
+  username: "admin",
+  bio: "",
+  avatar: undefined,
+  level: "member",
+  admin: true,
+  email: null,
+};
 const input = {
   slug: "new-workshop",
   name: "New Workshop",

@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
-import { Avatar, Stack, Table, Tag, type TableColumn } from "@swearjar/dos";
+import { Stack, Table, Tag, type TableColumn } from "@swearjar/dos";
+import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
 import { messages } from "@/content/messages";
 import {
   TICKETS_ROW_ATTR,
@@ -118,12 +119,7 @@ export function TicketsTable({
       label: messages.tickets.feed.columns.assignee,
       width: pixels(ticketColumnWidths.assignee),
       className: styles.assigneeCell,
-      render: (ticket) =>
-        ticket.assignee ? (
-          <span role="img" aria-label={ticket.assignee.user}>
-            <Avatar user={ticket.assignee.user} src={ticket.assignee.avatar} size="sm" />
-          </span>
-        ) : null,
+      render: (ticket) => (ticket.assignee ? <AssigneeAvatar person={ticket.assignee} /> : null),
     },
   ];
 
@@ -141,5 +137,14 @@ export function TicketsTable({
         label={label}
       />
     </article>
+  );
+}
+
+function AssigneeAvatar({ person }: { person: { user: string; avatar?: string } }) {
+  const identity = useMemberIdentity(person);
+  return (
+    <span role="img" aria-label={identity.username}>
+      <MemberAvatar person={person} size="sm" />
+    </span>
   );
 }

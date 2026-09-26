@@ -6,6 +6,7 @@ import { Button, ComboBox, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { useShellSession } from "@/features/shell";
+import { useMemberIdentities } from "@/shared/MemberIdentity";
 import { mockProjectTeamAction } from "./mock-team-actions";
 import type { Project } from "./projects";
 import type { ProjectTeam, ProjectTeamActionId } from "./team-store";
@@ -25,6 +26,8 @@ function unassignLabel(user: string, role: string): string {
 export function ProjectTeamManage({ project, team, memberUsers }: Props) {
   const router = useRouter();
   const session = useShellSession();
+  const identities = useMemberIdentities();
+  const displayUser = (user: string) => identities[user]?.username ?? user;
   const [memberQuery, setMemberQuery] = useState("");
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [error, setError] = useState<keyof typeof copy.errors | null>(null);
@@ -79,7 +82,10 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
             {(isLead || isAdmin || person.user === session?.user) &&
             project.status !== "archived" ? (
               <Button
-                ariaLabel={unassignLabel(person.user, messages.projects.about.maintainers)}
+                ariaLabel={unassignLabel(
+                  displayUser(person.user),
+                  messages.projects.about.maintainers,
+                )}
                 onClick={() => act("maintainer-remove", person.user)}
                 disabled={pending || (!isAdmin && team.maintainers.length === 1)}
               >
@@ -103,7 +109,7 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
               <MemberLink person={person} />
               {canEditReviewers ? (
                 <Button
-                  ariaLabel={unassignLabel(person.user, copy.reviewers)}
+                  ariaLabel={unassignLabel(displayUser(person.user), copy.reviewers)}
                   onClick={() => act("reviewer-remove", person.user)}
                   disabled={pending}
                 >
@@ -124,7 +130,7 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
               setMemberQuery(value);
               setSelectedMember(null);
             }}
-            options={memberUsers.map((user) => ({ value: user, label: user }))}
+            options={memberUsers.map((user) => ({ value: user, label: displayUser(user) }))}
             onPick={(option) => {
               setMemberQuery(option.label);
               setSelectedMember(option.value);

@@ -6,6 +6,7 @@ import { Button, Heading, Stack, Text, Textarea } from "@swearjar/dos";
 import { DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "@/content/messages";
 import { formatTimestamp } from "@/lib/format";
+import { useMemberIdentity } from "@/shared/MemberIdentity";
 import type { MemberApplication } from "@/features/account/contracts";
 import styles from "./AdminQueue.module.css";
 
@@ -23,6 +24,7 @@ function ApplicationReview({
   onDecide,
 }: ReviewItem & { onDecide: DecideAction }) {
   const router = useRouter();
+  const identity = useMemberIdentity({ user: application.user });
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
@@ -54,12 +56,12 @@ function ApplicationReview({
 
   return (
     <section
-      aria-label={`${application.user} ${submittedAt}`}
+      aria-label={`${identity.username} ${submittedAt}`}
       className={styles.application}
       {...{ [DOS_SURFACE_ATTR]: "light" }}
     >
       <Stack gap={8}>
-        <Heading level={2}>{application.user}</Heading>
+        <Heading level={2}>{identity.username}</Heading>
         {history}
         {application.status === "pending" ? (
           <Stack gap={8}>

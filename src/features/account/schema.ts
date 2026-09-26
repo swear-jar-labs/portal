@@ -14,6 +14,16 @@ export const userSchema = z
   .regex(USER_INPUT_PATTERN)
   .transform((value) => value.toLowerCase());
 
+export const PROFILE_BIO_MAX_LENGTH = 280;
+export const PROFILE_AVATAR_MAX_BYTES = 128 * 1024;
+export const profileSchema = z.object({
+  username: userSchema,
+  bio: z.string().trim().max(PROFILE_BIO_MAX_LENGTH),
+  avatar: z
+    .union([z.string().max(Math.ceil((PROFILE_AVATAR_MAX_BYTES * 4) / 3) + 32), z.null()])
+    .optional(),
+});
+
 // Lower-cased: mailbox comparison is case-insensitive, so the taken-check
 // must not treat Quinn@x.io and quinn@x.io as two mailboxes.
 export const emailSchema = z

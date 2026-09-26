@@ -5,8 +5,14 @@ import { useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Stack } from "@swearjar/dos";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
-import * as boardStore from "./board-store";
-import { FEED_PATH, threadPath, type BoardId, type TagId, type ThreadSummary } from "./threads";
+import * as boardStore from "../data/board-store";
+import {
+  FEED_PATH,
+  threadPath,
+  type BoardId,
+  type TagId,
+  type ThreadSummary,
+} from "../model/threads";
 import { ThreadCard, threadCardId } from "./ThreadCard";
 
 export type JournalRowsProps = {

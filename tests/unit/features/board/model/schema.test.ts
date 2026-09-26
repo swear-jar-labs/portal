@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { composeSchema, replySchema } from "@/features/board/schema";
-import { tagIds } from "@/features/board/threads";
+import { composeSchema, replySchema } from "@/features/board/model/schema";
+import { tagIds } from "@/features/board/model/threads";
 
 const validCompose = {
   board: "general",

@@ -7,7 +7,7 @@ import {
   rankThreads,
   sameFeedQuery,
   type RankableThread,
-} from "@/features/board/feed";
+} from "@/features/board/model/feed";
 
 const NOW = Date.parse("2026-09-16T12:00:00.000Z");
 

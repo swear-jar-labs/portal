@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { techIds } from "@/content/techs";
 import type { Actor } from "@/features/account/contracts";
-import { makeComposeSchema } from "@/features/board/schema";
+import { makeComposeSchema } from "@/features/board/model/schema";
 import { getProject, isKnownProjectSlug, listProjects } from "@/features/projects/data/queries";
 import { resetApprovedProjects } from "@/features/projects/data/project-registry";
 import {

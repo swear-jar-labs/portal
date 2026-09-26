@@ -5,9 +5,9 @@ import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { MemberLink } from "@/features/members/contracts";
-import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "./threads";
+import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "../model/threads";
 import { VoteButton } from "./VoteButton";
-import styles from "./board.module.css";
+import styles from "../board.module.css";
 
 export const threadCardId = (id: string) => `thread-card-${id}`;
 

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { FEED_PATH, threadPath } from "../../src/features/board/threads";
+import { FEED_PATH, threadPath } from "../../src/features/board/model/threads";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const FEED_REGION = "FORUM.EXE";

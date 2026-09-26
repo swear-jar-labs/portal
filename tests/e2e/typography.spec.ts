@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 import { DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
-import { FEED_PATH } from "../../src/features/board/threads";
+import { FEED_PATH } from "../../src/features/board/model/threads";
 import { projectPath } from "../../src/features/projects/model/projects";
 import { enterShell, expectMinimumContrast, waitForHydration } from "./helpers";
 

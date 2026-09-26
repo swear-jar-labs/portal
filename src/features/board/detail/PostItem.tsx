@@ -8,12 +8,12 @@ import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
 import { MemberLink } from "@/features/members/contracts";
-import { formatAge, type ThreadPost } from "./threads";
-import { postElementId, postHash } from "./post-anchor";
-import { replySchema } from "./schema";
-import type { ReplyTarget } from "./thread-actions";
-import { VoteButton } from "./VoteButton";
-import styles from "./board.module.css";
+import { formatAge, type ThreadPost } from "../model/threads";
+import { postElementId, postHash } from "../model/post-anchor";
+import { replySchema } from "../model/schema";
+import type { ReplyTarget } from "../data/thread-actions";
+import { VoteButton } from "../list/VoteButton";
+import styles from "../board.module.css";
 
 const EDIT_ROWS = 4;
 const REPLY_MARKER_GLYPH = "↪";

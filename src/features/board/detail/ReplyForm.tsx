@@ -6,8 +6,8 @@ import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
-import { replySchema } from "./schema";
-import type { ReplyTarget } from "./thread-actions";
+import { replySchema } from "../model/schema";
+import type { ReplyTarget } from "../data/thread-actions";
 
 const REPLY_ROWS = 2;
 const CLEAR_TARGET_GLYPH = "[×]";

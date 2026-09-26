@@ -10,7 +10,7 @@ import {
   tagIds,
   tagTones,
   threadPath,
-} from "@/features/board/threads";
+} from "@/features/board/model/threads";
 
 describe("board taxonomy", () => {
   it("keeps chrome labels for the static boards only", () => {

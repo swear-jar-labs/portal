@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { DOS_SCROLL_ATTR } from "@swearjar/dos/contracts";
-import { FEED_PATH, threadPath } from "../../src/features/board/threads";
+import { FEED_PATH, threadPath } from "../../src/features/board/model/threads";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { expectNoViolations, waitForHydration } from "./helpers";
 

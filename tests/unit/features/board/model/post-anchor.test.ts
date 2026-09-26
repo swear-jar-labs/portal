@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { postElementId, postHash, postIdFromHash } from "@/features/board/post-anchor";
+import { postElementId, postHash, postIdFromHash } from "@/features/board/model/post-anchor";
 
 describe("post anchors", () => {
   it("round-trips an id through the hash", () => {

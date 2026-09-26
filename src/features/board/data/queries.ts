@@ -4,14 +4,14 @@
 
 import { avatarFor } from "@/shared/members";
 import type { ForumActivitySeed } from "./forum-activity";
-import { filterThreads, rankThreads } from "./feed";
+import { filterThreads, rankThreads } from "../model/feed";
 import {
   summarizeThread,
   type BoardId,
   type BoardMember,
   type Thread,
   type ThreadSummary,
-} from "./threads";
+} from "../model/threads";
 
 const ada: BoardMember = { user: "ada", role: "maintainer", avatar: avatarFor("ada") };
 const grace: BoardMember = { user: "grace", role: "contributor", avatar: avatarFor("grace") };

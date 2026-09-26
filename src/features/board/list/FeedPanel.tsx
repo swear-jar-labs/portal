@@ -12,10 +12,10 @@ import {
   type BoardOption,
   type TagId,
   type ThreadSummary,
-} from "./threads";
-import { threadSorts, type FeedQuery } from "./feed";
+} from "../model/threads";
+import { threadSorts, type FeedQuery } from "../model/feed";
 import { ThreadCard } from "./ThreadCard";
-import styles from "./board.module.css";
+import styles from "../board.module.css";
 
 const BOARD_FILTER_ALL = "all";
 type BoardFilter = string;

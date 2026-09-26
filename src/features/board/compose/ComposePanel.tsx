@@ -23,8 +23,8 @@ import {
   type BoardId,
   type BoardOption,
   type TagId,
-} from "./threads";
-import { makeComposeSchema, type ComposeInput } from "./schema";
+} from "../model/threads";
+import { makeComposeSchema, type ComposeInput } from "../model/schema";
 
 const BODY_ROWS = 6;
 

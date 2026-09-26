@@ -30,17 +30,17 @@ import {
   type BoardMember,
   type BoardOption,
   type ThreadSummary,
-} from "./threads";
+} from "../model/threads";
 import { avatarFor } from "@/shared/members";
-import { ComposePanel } from "./ComposePanel";
+import { ComposePanel } from "../compose/ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
-import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "./feed";
-import { postElementId, postIdFromHash } from "./post-anchor";
-import type { ComposeInput } from "./schema";
-import { ThreadActionsProvider, type ThreadActions } from "./thread-actions";
+import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "../model/feed";
+import { postElementId, postIdFromHash } from "../model/post-anchor";
+import type { ComposeInput } from "../model/schema";
+import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
 import { threadCardId } from "./ThreadCard";
-import { ThreadView } from "./ThreadView";
-import { useBoardSession } from "./useBoardSession";
+import { ThreadView } from "../detail/ThreadView";
+import { useBoardSession } from "../data/useBoardSession";
 
 export type BoardThreadLayer = {
   id: string;

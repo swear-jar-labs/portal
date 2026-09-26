@@ -3,8 +3,8 @@
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { avatarFor } from "@/shared/members";
-import * as boardStore from "./board-store";
-import { ThreadActionsProvider, type ThreadActions } from "./thread-actions";
+import * as boardStore from "../data/board-store";
+import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
 
 export type ThreadOverlayActionsProps = {
   threadId: string;

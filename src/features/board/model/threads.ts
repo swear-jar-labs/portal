@@ -1,5 +1,5 @@
 // The board's model: types, taxonomy, the URL canon and the pure helpers the
-// board files share. Fixtures and getters live in ./data; the contract manifest
+// board files share. Fixtures and getters live in ../data/queries; the contract manifest
 // (contracts/index.ts) re-exports what other features consume.
 
 import type { Tone } from "@swearjar/dos";

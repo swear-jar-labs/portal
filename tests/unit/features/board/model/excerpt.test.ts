@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excerpt } from "@/features/board/excerpt";
+import { excerpt } from "@/features/board/model/excerpt";
 
 const MAX = 64;
 

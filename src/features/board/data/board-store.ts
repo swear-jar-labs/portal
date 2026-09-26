@@ -1,5 +1,5 @@
-import type { BoardMember, Thread, ThreadPost, ThreadSummary } from "./threads";
-import type { ComposeInput } from "./schema";
+import type { BoardMember, Thread, ThreadPost, ThreadSummary } from "../model/threads";
+import type { ComposeInput } from "../model/schema";
 
 // The board's session memory: the mock state outlives the route remount (the
 // feed unmounts when a thread opens) and dies with the page reload. The store

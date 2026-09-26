@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
-import { listThreads } from "./data";
+import { listThreads } from "../data/queries";
 import { BoardFallback, BoardStack } from "./BoardStack";
 
 export const discussionsMetadata: Metadata = messages.board.metadata;

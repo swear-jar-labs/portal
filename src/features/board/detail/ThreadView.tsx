@@ -4,13 +4,13 @@ import { useState, type ReactNode } from "react";
 import { Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
-import { formatAge, type Thread } from "./threads";
-import { excerpt } from "./excerpt";
+import { formatAge, type Thread } from "../model/threads";
+import { excerpt } from "../model/excerpt";
 import { PostItem } from "./PostItem";
 import { ReplyForm } from "./ReplyForm";
-import { useThreadActions, type ReplyTarget } from "./thread-actions";
-import { VoteButton } from "./VoteButton";
-import styles from "./board.module.css";
+import { useThreadActions, type ReplyTarget } from "../data/thread-actions";
+import { VoteButton } from "../list/VoteButton";
+import styles from "../board.module.css";
 
 const REPLY_EXCERPT_LENGTH = 64;
 

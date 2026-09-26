@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
-import { getThread } from "./data";
-import { threadDocumentTitle } from "./threads";
+import { getThread } from "../data/queries";
+import { threadDocumentTitle } from "../model/threads";
 import { ThreadOverlayActions } from "./ThreadOverlayActions";
 import { ThreadPanel } from "./ThreadPanel";
 import type { ThreadPageProps } from "./ThreadPage";
-import type { BoardThreadLayer } from "./BoardStack";
+import type { BoardThreadLayer } from "../list/BoardStack";
 
 export type ThreadLayerData = WithDocumentTitle<BoardThreadLayer>;
 

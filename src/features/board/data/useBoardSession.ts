@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { summarizeThread, type BoardMember, type ThreadSummary } from "./threads";
+import { summarizeThread, type BoardMember, type ThreadSummary } from "../model/threads";
 import * as boardStore from "./board-store";
-import { filterThreads, rankThreads, type FeedQuery } from "./feed";
-import type { ComposeInput } from "./schema";
+import { filterThreads, rankThreads, type FeedQuery } from "../model/feed";
+import type { ComposeInput } from "../model/schema";
 
 export type BoardSessionOptions = {
   threads: readonly ThreadSummary[];

@@ -6,9 +6,9 @@ import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { useOverlayPush } from "@/features/shell";
 import { MemberLink } from "@/features/members/contracts";
-import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "./threads";
+import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "../model/threads";
 import { threadCardId } from "./ThreadCard";
-import styles from "./board.module.css";
+import styles from "../board.module.css";
 
 type ThreadRowsProps = {
   threads: readonly ThreadSummary[];

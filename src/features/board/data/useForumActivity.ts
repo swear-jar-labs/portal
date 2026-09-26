@@ -8,7 +8,7 @@ import {
   withLocalActivity,
 } from "./board-store";
 import { forumActivityCounts, localForumThreads, type ForumActivitySeed } from "./forum-activity";
-import type { ThreadSummary } from "./threads";
+import type { ThreadSummary } from "../model/threads";
 
 export function useForumActivity(
   user: string,

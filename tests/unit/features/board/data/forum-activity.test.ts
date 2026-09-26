@@ -5,9 +5,9 @@ import {
   boardSnapshot,
   deletePost,
   resetBoardStore,
-} from "@/features/board/board-store";
-import { forumActivitySeed } from "@/features/board/data";
-import { forumActivityCounts, localForumThreads } from "@/features/board/forum-activity";
+} from "@/features/board/data/board-store";
+import { forumActivitySeed } from "@/features/board/data/queries";
+import { forumActivityCounts, localForumThreads } from "@/features/board/data/forum-activity";
 
 beforeEach(resetBoardStore);
 

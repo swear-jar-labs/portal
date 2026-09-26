@@ -8,8 +8,8 @@ import {
   listRecentThreadSummariesByBoard,
   listThreadSummariesByAuthor,
   listThreads,
-} from "@/features/board/data";
-import { boardIds, tagIds } from "@/features/board/threads";
+} from "@/features/board/data/queries";
+import { boardIds, tagIds } from "@/features/board/model/threads";
 
 describe("board fixtures", () => {
   it("keeps thread ids unique and resolvable", async () => {

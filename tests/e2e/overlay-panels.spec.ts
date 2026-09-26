@@ -5,7 +5,7 @@ import {
   projectPath,
   projectTabPath,
 } from "../../src/features/projects/model/projects";
-import { threadPath } from "../../src/features/board/threads";
+import { threadPath } from "../../src/features/board/model/threads";
 import { ticketEditButtonId, ticketPath } from "../../src/features/tickets/model/tickets";
 import { readroomPath } from "../../src/features/readroom/model/readrooms";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";

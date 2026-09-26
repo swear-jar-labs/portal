@@ -6,7 +6,7 @@ import {
   FOCUSABLE_SELECTOR,
 } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
-import { FEED_PATH, threadPath } from "../../src/features/board/threads";
+import { FEED_PATH, threadPath } from "../../src/features/board/model/threads";
 import {
   enterShell,
   expectAbove,

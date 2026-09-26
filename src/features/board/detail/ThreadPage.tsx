@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
-import { getThread, listThreads } from "./data";
-import { BoardFallback, BoardStack } from "./BoardStack";
+import { getThread, listThreads } from "../data/queries";
+import { BoardFallback, BoardStack } from "../list/BoardStack";
 import { loadThreadLayer } from "./ThreadOverlay";
-import { threadDocumentTitle } from "./threads";
+import { threadDocumentTitle } from "../model/threads";
 
 export type ThreadPageProps = {
   params: Promise<{ id: string }>;

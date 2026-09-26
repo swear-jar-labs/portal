@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createStackMemory } from "@/features/shell/stack-memory";
-import { FEED_PATH, threadPath } from "@/features/board/threads";
+import { FEED_PATH, threadPath } from "@/features/board/model/threads";
 
 describe("stack memory", () => {
   it("starts as a deep link: no route was pushed, nothing awaits focus", () => {

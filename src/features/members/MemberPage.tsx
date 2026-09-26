@@ -7,8 +7,9 @@ import {
   listThreadSummariesByAuthor,
   type BoardMember,
 } from "@/features/board/contracts";
-import { OverlayOutlet, ShellPanel } from "@/features/shell";
+import { OverlayOutlet } from "@/features/shell";
 import { avatarFor } from "@/shared/members";
+import { MemberStack } from "./MemberStack";
 import { MemberView } from "./MemberView";
 
 export type MemberPageProps = {
@@ -94,8 +95,8 @@ export async function InterceptedMemberPage(props: MemberPageProps) {
 /** The public minimum of Members: identity and authored board threads. */
 export async function MemberPage({ params }: MemberPageProps) {
   return (
-    <ShellPanel title={messages.members.panelTitle} closable>
+    <MemberStack>
       <MemberBody params={params} />
-    </ShellPanel>
+    </MemberStack>
   );
 }

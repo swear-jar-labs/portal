@@ -154,25 +154,23 @@ test("opens a readroom ticket as a layer above the task", async ({ page }) => {
   await expect(key).toBeFocused();
 });
 
-test("opens a profile thread in the fallback host and returns to the row", async ({ page }) => {
-  // The standalone profile has no section stack: the fallback host renders
-  // the overlay layer and hides the page behind it.
+test("opens a public profile thread above the profile and returns to the row", async ({ page }) => {
   await page.goto("/members/ada");
   await waitForHydration(page);
-  await expect(layers(page)).toHaveCount(0);
+  await expect(layers(page)).toHaveCount(1);
 
   const row = page.getByRole("link", { name: "CI cache poisoning: how we lost a day" });
   await row.click();
   await expect(page).toHaveURL(threadPath("ci-cache-poisoning"));
-  await expect(layers(page)).toHaveCount(1);
+  await expect(layers(page)).toHaveCount(2);
   await expect(
-    page.getByRole("region", { name: "CI cache poisoning: how we lost a day" }),
+    top(page).getByRole("region", { name: "CI cache poisoning: how we lost a day" }),
   ).toBeVisible();
-  await expectNoViolations(page, "thread over the profile host");
+  await expectNoViolations(page, "thread over the public profile");
 
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL("/members/ada");
-  await expect(layers(page)).toHaveCount(0);
+  await expect(layers(page)).toHaveCount(1);
   await expect(row).toBeFocused();
 });
 

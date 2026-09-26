@@ -98,12 +98,14 @@ test("opens a member profile from a feed byline and keeps its ring on the edge",
 test("keeps a direct member URL standalone across reload", async ({ page }) => {
   await page.goto(MEMBER_PATH);
   await expect(page.getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
-  await expect(layers(page)).toHaveCount(0);
+  await expect(layers(page)).toHaveCount(1);
+  await expect(topPanel(page).getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
 
   await page.reload();
   await expect(page).toHaveURL(MEMBER_PATH);
   await expect(page.getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
-  await expect(layers(page)).toHaveCount(0);
+  await expect(layers(page)).toHaveCount(1);
+  await expect(topPanel(page).getByRole("region", { name: "MEMBERS.EXE" })).toBeVisible();
 });
 
 test("shows PATH NOT FOUND for an unknown member", async ({ page }) => {

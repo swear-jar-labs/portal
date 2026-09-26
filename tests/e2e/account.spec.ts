@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { DOS_SURFACE_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos/contracts";
+import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensaver-prefs";
 import { screensaverDelayMs } from "../../src/content/settings";
 import {
@@ -631,6 +632,12 @@ test.describe("member threads", () => {
     await expect(
       page.getByRole("region", { name: "CI cache poisoning: how we lost a day" }),
     ).toBeVisible();
+    await expect(page.locator(`[${DOC_LAYER_ATTR}]`)).toHaveCount(2);
+    await expect(
+      page.locator(`[${DOC_TOP_ATTR}]`).getByRole("region", {
+        name: "CI cache poisoning: how we lost a day",
+      }),
+    ).toBeVisible();
     expect(
       await page.evaluate(() => (window as unknown as { sjSpaMarker?: number }).sjSpaMarker),
     ).toBe(1);
@@ -638,6 +645,7 @@ test.describe("member threads", () => {
     // Space activates a focused row (Enter is the native link activation).
     await page.goBack();
     await expect(page).toHaveURL("/profile");
+    await expect(page.locator(`[${DOC_LAYER_ATTR}]`)).toHaveCount(1);
     const row = page.getByRole("link", { name: "READ FIRST: how this board works" });
     await row.focus();
     await page.keyboard.press(" ");

@@ -5,7 +5,7 @@ export { useLoginPrompt, useShellDialogs } from "./ShellDialogs";
 export { ShellPanel, type ShellPanelProps } from "./ShellPanel/ShellPanel";
 export { PanelStack, type PanelStackProps } from "./PanelStack/PanelStack";
 export { stackMemory, type StackMemory } from "./stack-memory";
-export { useOverlayPush } from "./useOverlayPush";
+export { useOverlayPush } from "./hooks/useOverlayPush";
 export { OverlayOutlet } from "./OverlayOutlet";
 export type { WithDocumentTitle } from "./overlay-store";
 export { ChildrenPathProvider } from "./children-path";

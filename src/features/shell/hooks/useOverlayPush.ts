@@ -3,7 +3,7 @@
 import { useCallback, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { isPlainActivation } from "@/lib/activation";
-import { stackMemory } from "./stack-memory";
+import { stackMemory } from "../stack-memory";
 
 type OverlayActivation = (event?: MouseEvent<HTMLElement>) => void;
 type OverlayPush = (href: string, originId?: string | null) => OverlayActivation;

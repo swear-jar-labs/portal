@@ -10,8 +10,8 @@ import {
   type FileGroup,
 } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { CoffeeBody } from "./CoffeeBody";
-import { DirBody, DoomBody, ErrorBody, ExitBody, HelpBody, LogoffBody } from "./dialogs";
+import { CoffeeBody } from "../CoffeeBody";
+import { DirBody, DoomBody, ErrorBody, ExitBody, HelpBody, LogoffBody } from "../dialogs";
 
 export type DialogState = {
   title: string;

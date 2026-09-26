@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import type { DialogState } from "./useCommandRunner";
+import type { DialogState } from "./hooks/useCommandRunner";
 
 // The shell owns the modal layer; features ask for a dialog through this API
 // instead of mounting one of their own (the board's delete confirmation, the

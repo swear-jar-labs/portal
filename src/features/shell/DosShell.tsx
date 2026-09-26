@@ -50,7 +50,7 @@ import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { usePanelNav } from "./hooks/usePanelNav";
 import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
-import { useCommandRunner, type DialogState } from "./useCommandRunner";
+import { useCommandRunner, type DialogState } from "./hooks/useCommandRunner";
 import { CMD_ZONE } from "./zones";
 import { SessionProvider } from "./SessionContext";
 import { ShellDialogsProvider, type ShellDialogs } from "./ShellDialogs";

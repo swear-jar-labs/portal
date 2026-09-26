@@ -8,7 +8,7 @@ export {
   isKnownProjectSlug,
   listProjects,
   projectName,
-} from "../data";
+} from "../data/queries";
 export {
   DEFAULT_CLAIM_POLICY,
   dynamicTicketPrefix,
@@ -19,17 +19,17 @@ export {
   projectPath,
   projectSlugs,
   projectTeamManagePath,
-} from "../projects";
+} from "../model/projects";
 export {
   livePoliciesByProject,
   policyForProject,
   projectStoreServerSnapshot,
   projectStoreSnapshot,
   subscribeProjectStore,
-} from "../project-store";
-export type { ClaimPolicy, FixtureProjectSlug, ProjectSlug } from "../projects";
-export type { ProjectPolicyBase } from "../project-store";
-export type { Project, ProjectPerson } from "../projects";
-export { decideProject, listProjectSubmissions } from "../mock-submissions";
-export { MAX_PROJECT_NOTE_LENGTH } from "../submissions";
-export type { ProjectSubmission, SubmissionError } from "../submissions";
+} from "../data/project-store";
+export type { ClaimPolicy, FixtureProjectSlug, ProjectSlug } from "../model/projects";
+export type { ProjectPolicyBase } from "../data/project-store";
+export type { Project, ProjectPerson } from "../model/projects";
+export { decideProject, listProjectSubmissions } from "../data/mock-submissions";
+export { MAX_PROJECT_NOTE_LENGTH } from "../data/submissions";
+export type { ProjectSubmission, SubmissionError } from "../data/submissions";

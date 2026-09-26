@@ -252,7 +252,7 @@ function firstParam(
 /** The tracker filters from the address bar: unknown values fall back to the
  * defaults, so a hand-typed query never empties the table by accident. The
  * project check is a plain predicate: slugs are open-ended since approved
- * proposals add them at runtime (see features/projects/projects.ts). */
+ * proposals add them at runtime (see features/projects/model/projects.ts). */
 export function parseTicketQuery(
   source: URLSearchParams | Readonly<Record<string, string | string[] | undefined>>,
   isProject: (value: string) => boolean,

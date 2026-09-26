@@ -6,7 +6,7 @@ import {
   PROJECTS_PATH,
   projectPath,
   projectTabPath,
-} from "../../src/features/projects/projects";
+} from "../../src/features/projects/model/projects";
 import { expectAbove, expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const FEED_REGION = "PROJECTS.EXE";

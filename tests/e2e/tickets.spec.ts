@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { DOC_ZONE } from "../../src/features/shell/zones";
-import { projectPath } from "../../src/features/projects/projects";
+import { projectPath } from "../../src/features/projects/model/projects";
 import {
   TICKETS_PATH,
   ticketEditButtonId,

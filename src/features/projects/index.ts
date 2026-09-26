@@ -1,5 +1,5 @@
-export { ProjectsPage, projectsMetadata } from "./ProjectsPage";
-export { ProjectPage, generateProjectMetadata, type ProjectPageProps } from "./ProjectPage";
-export { ProjectProposalPage, projectProposalMetadata } from "./ProjectProposalPage";
-export { InterceptedProjectPage, loadProjectOverlay } from "./ProjectOverlay";
-export { InterceptedProjectProposalPage, loadProjectProposalLayer } from "./ProjectOverlay";
+export { ProjectsPage, projectsMetadata } from "./list/ProjectsPage";
+export { ProjectPage, generateProjectMetadata, type ProjectPageProps } from "./detail/ProjectPage";
+export { ProjectProposalPage, projectProposalMetadata } from "./proposal/ProjectProposalPage";
+export { InterceptedProjectPage, loadProjectOverlay } from "./detail/ProjectOverlay";
+export { InterceptedProjectProposalPage, loadProjectProposalLayer } from "./detail/ProjectOverlay";

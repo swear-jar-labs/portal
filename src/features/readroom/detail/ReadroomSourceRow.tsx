@@ -1,6 +1,6 @@
 import { Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { type Readroom } from "./readrooms";
+import { type Readroom } from "../model/readrooms";
 
 export type ReadroomSourceRowProps = {
   readroom: Readroom;

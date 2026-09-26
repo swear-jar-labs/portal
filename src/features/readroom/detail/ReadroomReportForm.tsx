@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Button, Form, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { publishReport } from "./readroom-store";
-import { reportSchema } from "./schema";
+import { publishReport } from "../data/readroom-store";
+import { reportSchema } from "../model/schema";
 
 const REPORT_ROWS = 6;
 

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { readroomActivityCounts } from "@/features/account/profile-activity";
-import type { Readroom } from "@/features/readroom/readrooms";
+import type { Readroom } from "@/features/readroom/model/readrooms";
 import {
   deleteNote,
   readroomSnapshot,
   resetReadroomStore,
   withSession,
-} from "@/features/readroom/readroom-store";
+} from "@/features/readroom/data/readroom-store";
 
 function task(id: string, lead: string, responders: readonly string[]): Readroom {
   return {

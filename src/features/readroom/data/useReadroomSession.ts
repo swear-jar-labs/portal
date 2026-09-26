@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
-import type { Readroom } from "./readrooms";
+import type { Readroom } from "../model/readrooms";
 import {
   readroomServerSnapshot,
   readroomSnapshot,

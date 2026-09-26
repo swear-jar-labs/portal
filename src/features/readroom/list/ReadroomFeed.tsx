@@ -10,9 +10,9 @@ import {
   readroomModes,
   type Readroom,
   type ReadroomMode,
-} from "./readrooms";
+} from "../model/readrooms";
 import { ReadroomCard } from "./ReadroomCard";
-import styles from "./readroom.module.css";
+import styles from "../readroom.module.css";
 
 /** The feed's compose control: closing the layer hands focus back to it. */
 export const readroomComposeButtonId = "readroom-compose";

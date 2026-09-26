@@ -4,7 +4,7 @@ import { Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useOverlayPush } from "@/features/shell";
 import { ticketPath, type Ticket } from "@/features/tickets/contracts";
-import { readroomTaskTicketId } from "./readrooms";
+import { readroomTaskTicketId } from "../model/readrooms";
 
 export type ReadroomTicketRowProps = {
   // The linked ticket's key, if the task names one.

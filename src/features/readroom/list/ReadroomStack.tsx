@@ -26,14 +26,14 @@ import {
 import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { avatarFor } from "@/shared/members";
-import type { ReadroomDraft } from "./datetime";
-import { READROOM_PATH, readroomPath, type Readroom, type ReadroomMode } from "./readrooms";
-import { createReadroom, toggleReadroomUpvote } from "./readroom-store";
-import { useReadroomSession } from "./useReadroomSession";
-import { ReadroomComposePanel } from "./ReadroomComposePanel";
+import type { ReadroomDraft } from "../model/datetime";
+import { READROOM_PATH, readroomPath, type Readroom, type ReadroomMode } from "../model/readrooms";
+import { createReadroom, toggleReadroomUpvote } from "../data/readroom-store";
+import { useReadroomSession } from "../data/useReadroomSession";
+import { ReadroomComposePanel } from "../compose/ReadroomComposePanel";
 import { ReadroomFeed, readroomComposeButtonId } from "./ReadroomFeed";
-import { ReadroomSourceRow } from "./ReadroomSourceRow";
-import { ReadroomView } from "./ReadroomView";
+import { ReadroomSourceRow } from "../detail/ReadroomSourceRow";
+import { ReadroomView } from "../detail/ReadroomView";
 import { readroomCardId } from "./ReadroomCard";
 
 export type ReadroomLayer = {

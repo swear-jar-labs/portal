@@ -7,7 +7,7 @@ import {
 } from "../../src/features/projects/model/projects";
 import { threadPath } from "../../src/features/board/threads";
 import { ticketEditButtonId, ticketPath } from "../../src/features/tickets/model/tickets";
-import { readroomPath } from "../../src/features/readroom/readrooms";
+import { readroomPath } from "../../src/features/readroom/model/readrooms";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);

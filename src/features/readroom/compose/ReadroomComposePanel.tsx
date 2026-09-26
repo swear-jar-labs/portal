@@ -6,11 +6,11 @@ import { messages } from "@/content/messages";
 import { MAX_TAGS, toggleTagSelection } from "@/lib/tags";
 import { type Ticket } from "@/features/tickets/contracts";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { defaultDeadlineLocal, fromLocalInput, type ReadroomDraft } from "./datetime";
-import { readroomTagIds, type ReadroomAttachment, type ReadroomTagId } from "./readrooms";
-import { attachmentsFromFiles, releaseAttachments } from "./attachments";
-import { ReadroomFilesRow } from "./ReadroomFilesRow";
-import { readroomSchema } from "./schema";
+import { defaultDeadlineLocal, fromLocalInput, type ReadroomDraft } from "../model/datetime";
+import { readroomTagIds, type ReadroomAttachment, type ReadroomTagId } from "../model/readrooms";
+import { attachmentsFromFiles, releaseAttachments } from "../data/attachments";
+import { ReadroomFilesRow } from "../detail/ReadroomFilesRow";
+import { readroomSchema } from "../model/schema";
 
 const DESCRIPTION_ROWS = 6;
 

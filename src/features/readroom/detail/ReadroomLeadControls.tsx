@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Field, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
-import { fromLocalInput, toLocalInput } from "./datetime";
-import type { Readroom } from "./readrooms";
-import { moveDeadline, stopReadroom } from "./readroom-store";
+import { fromLocalInput, toLocalInput } from "../model/datetime";
+import type { Readroom } from "../model/readrooms";
+import { moveDeadline, stopReadroom } from "../data/readroom-store";
 
 export type ReadroomLeadControlsProps = {
   readroom: Readroom;

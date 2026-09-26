@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Stack } from "@swearjar/dos";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import type { Ticket } from "@/features/tickets/contracts";
-import type { Readroom } from "./readrooms";
+import type { Readroom } from "../model/readrooms";
 import { ReadroomSourceRow } from "./ReadroomSourceRow";
 import { ReadroomView } from "./ReadroomView";
 

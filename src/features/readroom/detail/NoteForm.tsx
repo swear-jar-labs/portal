@@ -6,8 +6,8 @@ import { messages } from "@/content/messages";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { avatarFor } from "@/shared/members";
-import { addNote } from "./readroom-store";
-import { noteSchema } from "./schema";
+import { addNote } from "../data/readroom-store";
+import { noteSchema } from "../model/schema";
 
 const NOTE_ROWS = 3;
 

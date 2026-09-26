@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { projectSlugs } from "@/features/projects/contracts";
 import { listReadroomsByTicket } from "@/features/readroom/contracts";
-import { listReadrooms } from "@/features/readroom/data";
-import { readroomPath } from "@/features/readroom/readrooms";
+import { listReadrooms } from "@/features/readroom/data/queries";
+import { readroomPath } from "@/features/readroom/model/readrooms";
 import { getTicketByKey, listTickets, listTicketsByProject } from "@/features/tickets/data/queries";
 import { isActiveTicket } from "@/features/tickets/model/workflow";
 import {

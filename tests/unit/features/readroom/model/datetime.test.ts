@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { defaultDeadlineLocal, fromLocalInput, toLocalInput } from "@/features/readroom/datetime";
+import {
+  defaultDeadlineLocal,
+  fromLocalInput,
+  toLocalInput,
+} from "@/features/readroom/model/datetime";
 
 const DAY_MS = 86_400_000;
 

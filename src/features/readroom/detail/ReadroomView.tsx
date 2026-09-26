@@ -18,7 +18,7 @@ import {
   visibleNotes,
   type Readroom,
   type ReadroomAttachment,
-} from "./readrooms";
+} from "../model/readrooms";
 import {
   addAttachments,
   deleteNote,
@@ -27,16 +27,16 @@ import {
   removeAttachment,
   sessionReadroom,
   toggleReadroomUpvote,
-} from "./readroom-store";
-import { attachmentsFromFiles, releaseAttachments } from "./attachments";
-import { useReadroomStore } from "./useReadroomSession";
+} from "../data/readroom-store";
+import { attachmentsFromFiles, releaseAttachments } from "../data/attachments";
+import { useReadroomStore } from "../data/useReadroomSession";
 import { ReadroomFilesRow } from "./ReadroomFilesRow";
 import { ReadroomTicketRow } from "./ReadroomTicketRow";
 import { ReadroomLeadControls } from "./ReadroomLeadControls";
 import { ReadroomNoteItem } from "./ReadroomNoteItem";
 import { ReadroomReportForm } from "./ReadroomReportForm";
 import { NoteForm } from "./NoteForm";
-import styles from "./readroom.module.css";
+import styles from "../readroom.module.css";
 
 export type ReadroomViewProps = {
   readroom: Readroom;

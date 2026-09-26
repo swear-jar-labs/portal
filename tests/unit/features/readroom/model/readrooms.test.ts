@@ -17,7 +17,7 @@ import {
   visibleNotes,
   type Readroom,
   type ReadroomNote,
-} from "@/features/readroom/readrooms";
+} from "@/features/readroom/model/readrooms";
 import { ticketPath } from "@/features/tickets/contracts";
 
 const DEADLINE = "2026-09-16T12:00:00.000Z";

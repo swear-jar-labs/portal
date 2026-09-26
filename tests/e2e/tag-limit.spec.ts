@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { MAX_TAGS } from "../../src/lib/tags";
 import { messages } from "../../src/content/messages";
 import { tagIds } from "../../src/features/board/threads";
-import { readroomTagIds } from "../../src/features/readroom/readrooms";
+import { readroomTagIds } from "../../src/features/readroom/model/readrooms";
 import { ticketTagIds } from "../../src/features/tickets/model/tickets";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 

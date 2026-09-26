@@ -4,9 +4,9 @@ import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { Button, Link, RemoveButton, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { formatSize } from "@/lib/format";
-import { classifyAttachment } from "./attachment-preview";
+import { classifyAttachment } from "../model/attachment-preview";
 import { ReadroomAttachmentViewer } from "./ReadroomAttachmentViewer";
-import type { ReadroomAttachment } from "./readrooms";
+import type { ReadroomAttachment } from "../model/readrooms";
 import styles from "./attachments.module.css";
 
 export type ReadroomFilesRowProps = {

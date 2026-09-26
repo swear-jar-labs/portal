@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_TAGS } from "@/lib/tags";
-import { noteSchema, readroomSchema, reportSchema } from "@/features/readroom/schema";
-import { readroomTagIds } from "@/features/readroom/readrooms";
+import { noteSchema, readroomSchema, reportSchema } from "@/features/readroom/model/schema";
+import { readroomTagIds } from "@/features/readroom/model/readrooms";
 
 const validTask = {
   title: "Read the parser",

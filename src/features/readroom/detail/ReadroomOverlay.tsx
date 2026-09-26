@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { listTickets } from "@/features/tickets/contracts";
-import { getReadroom } from "./data";
+import { getReadroom } from "../data/queries";
 import { ReadroomPanel } from "./ReadroomPanel";
 import type { ReadroomTaskPageProps } from "./ReadroomTaskPage";
-import type { ReadroomLayer } from "./ReadroomStack";
-import { readroomDocumentTitle } from "./readrooms";
+import type { ReadroomLayer } from "../list/ReadroomStack";
+import { readroomDocumentTitle } from "../model/readrooms";
 
 export type ReadroomLayerData = WithDocumentTitle<ReadroomLayer>;
 

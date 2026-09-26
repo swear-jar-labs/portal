@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Readroom, ReadroomAttachment, ReadroomNote } from "@/features/readroom/readrooms";
+import type {
+  Readroom,
+  ReadroomAttachment,
+  ReadroomNote,
+} from "@/features/readroom/model/readrooms";
 import {
   addAttachments,
   addNote,
@@ -16,8 +20,8 @@ import {
   stopReadroom,
   toggleReadroomUpvote,
   withSession,
-} from "@/features/readroom/readroom-store";
-import type { ReadroomDraft } from "@/features/readroom/datetime";
+} from "@/features/readroom/data/readroom-store";
+import type { ReadroomDraft } from "@/features/readroom/model/datetime";
 
 const DEADLINE = "2026-09-27T18:00:00.000Z";
 const MOVED = "2026-10-04T18:00:00.000Z";

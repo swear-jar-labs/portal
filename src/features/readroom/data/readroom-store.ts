@@ -1,6 +1,11 @@
-import type { ReadroomAttachment, ReadroomPerson, Readroom, ReadroomNote } from "./readrooms";
-import { toggledUpvoters } from "./readrooms";
-import type { ReadroomDraft } from "./datetime";
+import type {
+  ReadroomAttachment,
+  ReadroomPerson,
+  Readroom,
+  ReadroomNote,
+} from "../model/readrooms";
+import { toggledUpvoters } from "../model/readrooms";
+import type { ReadroomDraft } from "../model/datetime";
 
 // The readroom's session memory: the mock state outlives the route remount
 // (the feed unmounts when a task opens) and dies with the page reload. The

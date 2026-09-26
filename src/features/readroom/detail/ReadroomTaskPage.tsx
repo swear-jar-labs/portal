@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
 import { listTickets } from "@/features/tickets/contracts";
-import { getReadroom, listReadrooms, projectRepoMap } from "./data";
+import { getReadroom, listReadrooms, projectRepoMap } from "../data/queries";
 import { loadReadroomLayer } from "./ReadroomOverlay";
-import { ReadroomStack } from "./ReadroomStack";
-import { readroomDocumentTitle } from "./readrooms";
+import { ReadroomStack } from "../list/ReadroomStack";
+import { readroomDocumentTitle } from "../model/readrooms";
 
 export type ReadroomTaskPageProps = {
   params: Promise<{ id: string }>;

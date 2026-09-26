@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getReadroom, listReadrooms } from "@/features/readroom/data";
-import { phaseOf } from "@/features/readroom/readrooms";
+import { getReadroom, listReadrooms } from "@/features/readroom/data/queries";
+import { phaseOf } from "@/features/readroom/model/readrooms";
 import { avatarFor } from "@/shared/members";
 
 const KNOWN_USERS = ["ada", "grace", "ken", "lin"];

@@ -15,8 +15,8 @@ import {
   readroomCardTicketId,
   readroomPath,
   type Readroom,
-} from "./readrooms";
-import styles from "./readroom.module.css";
+} from "../model/readrooms";
+import styles from "../readroom.module.css";
 
 export const readroomCardId = (id: string) => `readroom-card-${id}`;
 

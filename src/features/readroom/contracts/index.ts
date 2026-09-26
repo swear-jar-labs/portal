@@ -4,9 +4,16 @@
 // here — pages that read other contracts stay out, or the barrel would loop
 // the slice graph (see AGENTS.md). The contract test pins the published list.
 
-export { listReadroomsByTicket } from "../data";
-export { listReadrooms } from "../data";
-export { useReadroomSession } from "../useReadroomSession";
-export type { Readroom } from "../readrooms";
-export { hasNoteBy, hasUpvoted, isLead, phaseOf, upvoteCount, visibleNotes } from "../readrooms";
-export type { ReadroomMode, ReadroomPhase, ReadroomRef, VisibleNotes } from "../readrooms";
+export { listReadroomsByTicket } from "../data/queries";
+export { listReadrooms } from "../data/queries";
+export { useReadroomSession } from "../data/useReadroomSession";
+export type { Readroom } from "../model/readrooms";
+export {
+  hasNoteBy,
+  hasUpvoted,
+  isLead,
+  phaseOf,
+  upvoteCount,
+  visibleNotes,
+} from "../model/readrooms";
+export type { ReadroomMode, ReadroomPhase, ReadroomRef, VisibleNotes } from "../model/readrooms";

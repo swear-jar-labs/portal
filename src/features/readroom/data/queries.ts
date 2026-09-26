@@ -3,8 +3,8 @@
 // change to queries while the signatures stay put (TECH.md §5).
 
 import { avatarFor } from "@/shared/members";
-import type { Readroom, ReadroomNote, ReadroomPerson, ReadroomRef } from "./readrooms";
-import { readroomPath } from "./readrooms";
+import type { Readroom, ReadroomNote, ReadroomPerson, ReadroomRef } from "../model/readrooms";
+import { readroomPath } from "../model/readrooms";
 
 const ada: ReadroomPerson = { user: "ada", avatar: avatarFor("ada") };
 const grace: ReadroomPerson = { user: "grace", avatar: avatarFor("grace") };

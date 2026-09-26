@@ -4,9 +4,9 @@ import {
   decodePreview,
   MAX_PREVIEW_BYTES,
   readAttachmentPreview,
-} from "@/features/readroom/attachment-preview";
-import { attachmentsFromFiles, releaseAttachments } from "@/features/readroom/attachments";
-import type { ReadroomAttachment } from "@/features/readroom/readrooms";
+} from "@/features/readroom/model/attachment-preview";
+import { attachmentsFromFiles, releaseAttachments } from "@/features/readroom/data/attachments";
+import type { ReadroomAttachment } from "@/features/readroom/model/readrooms";
 
 const attachment: ReadroomAttachment = {
   id: "file",

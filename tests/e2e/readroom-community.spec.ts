@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { READROOM_PATH, readroomPath } from "../../src/features/readroom/readrooms";
+import { READROOM_PATH, readroomPath } from "../../src/features/readroom/model/readrooms";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const FEED_REGION = "READROOM.EXE";

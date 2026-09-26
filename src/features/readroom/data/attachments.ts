@@ -1,4 +1,4 @@
-import type { ReadroomAttachment } from "./readrooms";
+import type { ReadroomAttachment } from "../model/readrooms";
 
 // The mock storage for attached files: a picked file becomes a blob URL that
 // lives one SPA session and dies with the reload — nothing is uploaded yet

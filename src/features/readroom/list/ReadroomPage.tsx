@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
 import { listTickets } from "@/features/tickets/contracts";
-import { listReadrooms, projectRepoMap } from "./data";
+import { listReadrooms, projectRepoMap } from "../data/queries";
 import { ReadroomStack } from "./ReadroomStack";
 
 export const readroomMetadata: Metadata = messages.readroom.metadata;

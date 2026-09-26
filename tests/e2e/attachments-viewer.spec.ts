@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { MAX_PREVIEW_BYTES } from "../../src/features/readroom/attachment-preview";
+import { MAX_PREVIEW_BYTES } from "../../src/features/readroom/model/attachment-preview";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const TASK = "Dissect the allocator that hides a free list behind a bump pointer";

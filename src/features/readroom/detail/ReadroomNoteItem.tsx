@@ -8,9 +8,9 @@ import { useShellDialogs } from "@/features/shell";
 import { formatAge } from "@/shared/age";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { noteElementId, READROOM_CARD_ATTR, type ReadroomNote } from "./readrooms";
-import { noteSchema } from "./schema";
-import styles from "./readroom.module.css";
+import { noteElementId, READROOM_CARD_ATTR, type ReadroomNote } from "../model/readrooms";
+import { noteSchema } from "../model/schema";
+import styles from "../readroom.module.css";
 
 const EDIT_ROWS = 4;
 

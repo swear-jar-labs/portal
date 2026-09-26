@@ -8,8 +8,8 @@ import {
   MAX_PREVIEW_BYTES,
   readAttachmentPreview,
   type AttachmentPreview,
-} from "./attachment-preview";
-import type { ReadroomAttachment } from "./readrooms";
+} from "../model/attachment-preview";
+import type { ReadroomAttachment } from "../model/readrooms";
 import styles from "./attachments.module.css";
 
 export function ReadroomAttachmentViewer({

@@ -12,12 +12,16 @@ export type FeedFilters = {
 
 export type FeedQuery = FeedFilters & {
   sort: ThreadSort;
+  // The forum search: raw input, kept verbatim in the URL. Blank
+  // (empty/whitespace) means the plain feed; matching normalizes it.
+  q: string;
 };
 
-export const DEFAULT_FEED_QUERY: FeedQuery = { sort: "hot" };
+export const DEFAULT_FEED_QUERY: FeedQuery = { sort: "hot", q: "" };
 
 const TAG_PARAM = "tag";
 const SORT_PARAM = "sort";
+const SEARCH_QUERY_PARAM = "q";
 
 function isThreadSort(value: string): value is ThreadSort {
   return threadSorts.some((sort) => sort === value);
@@ -31,16 +35,18 @@ export function parseFeedQuery(
   const board = params.get(BOARD_QUERY_PARAM);
   const tag = params.get(TAG_PARAM);
   const sort = params.get(SORT_PARAM);
+  const q = params.get(SEARCH_QUERY_PARAM);
   return {
     ...(board && (isBoardId(board) || allowedBoards.includes(board)) ? { board } : {}),
     ...(tag && isTagId(tag) ? { tag } : {}),
     sort: sort && isThreadSort(sort) ? sort : DEFAULT_FEED_QUERY.sort,
+    q: q ?? DEFAULT_FEED_QUERY.q,
   };
 }
 
 /** Structural equality for feed queries: the URL sync resets only on change. */
 export function sameFeedQuery(a: FeedQuery, b: FeedQuery): boolean {
-  return a.board === b.board && a.tag === b.tag && a.sort === b.sort;
+  return a.board === b.board && a.tag === b.tag && a.sort === b.sort && a.q === b.q;
 }
 
 /** The URL form of the feed state: defaults stay out, so the feed links clean. */
@@ -49,6 +55,7 @@ export function feedQueryParams(query: FeedQuery): URLSearchParams {
   if (query.board) params.set(BOARD_QUERY_PARAM, query.board);
   if (query.tag) params.set(TAG_PARAM, query.tag);
   if (query.sort !== DEFAULT_FEED_QUERY.sort) params.set(SORT_PARAM, query.sort);
+  if (query.q !== DEFAULT_FEED_QUERY.q) params.set(SEARCH_QUERY_PARAM, query.q);
   return params;
 }
 

@@ -36,17 +36,11 @@ export function boardTitle(id: BoardId): string {
   return id;
 }
 
-// Tags are the board's vocabulary: status tags carry a tone and read as chips,
-// topical tags stay neutral.
-export const tagIds = [
-  "proposal",
-  "decision",
-  "question",
-  "compilers",
-  "tooling",
-  "craft",
-  "meta",
-] as const;
+// Tags are the board's status vocabulary: proposal, decision and question
+// carry a tone and read as chips. Topical tags (compilers, tooling, craft,
+// meta) were cut 2026-09-27: the board speaks in thread kinds, topics live
+// in titles and bodies (and the search finds them there).
+export const tagIds = ["proposal", "decision", "question"] as const;
 export type TagId = (typeof tagIds)[number];
 
 export const tagTones: Partial<Record<TagId, Tone>> = {

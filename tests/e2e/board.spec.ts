@@ -71,16 +71,21 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
 
   await feed.getByRole("button", { name: "QUESTION" }).first().click();
   await expect(page).toHaveURL(`${FEED_PATH}?tag=question`);
-  await expect(feed.getByRole("article")).toHaveCount(3);
+  await expect(feed.getByRole("article")).toHaveCount(4);
   await expect(feed.getByRole("button", { name: "QUESTION" }).first()).toHaveAttribute(
     "aria-pressed",
     "true",
   );
 
-  // Board and tag combine into the empty-filter state.
+  // Board and tag combine: the compiler journal asks no questions.
   await feed.getByRole("combobox", { name: "BOARD" }).click();
   await page.getByRole("option", { name: "Compiler" }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=question`);
+  await expect(feed.getByRole("article")).toHaveCount(1);
+
+  // ...while its decisions live elsewhere: the combination empties the feed.
+  await feed.getByRole("button", { name: "DECISION" }).first().click();
+  await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=decision`);
   await expect(feed.getByText("NO MATCHES. TRY CHANGING THE FILTERS.")).toBeVisible();
   await expect(feed.getByText("0 THREADS")).toBeVisible();
 
@@ -95,10 +100,10 @@ test("a tag on a card filters the feed instead of opening the thread", async ({ 
   const feed = page.getByRole("region", { name: FEED_REGION });
 
   const card = feed.getByRole("article").filter({ hasText: CI_CACHE });
-  await card.getByRole("button", { name: "TOOLING" }).click();
+  await card.getByRole("button", { name: "QUESTION" }).click();
 
-  await expect(page).toHaveURL(`${FEED_PATH}?tag=tooling`);
-  await expect(feed.getByRole("article")).toHaveCount(2);
+  await expect(page).toHaveURL(`${FEED_PATH}?tag=question`);
+  await expect(feed.getByRole("article")).toHaveCount(4);
 });
 
 test("the gap between card tags belongs to the stretched link", async ({ page }) => {
@@ -108,8 +113,8 @@ test("the gap between card tags belongs to the stretched link", async ({ page })
     .getByRole("article")
     .filter({ hasText: "Why we write our own parsers: a case for recursive descent" });
   await card.scrollIntoViewIfNeeded();
-  const first = await card.getByRole("button", { name: "COMPILERS" }).boundingBox();
-  const second = await card.getByRole("button", { name: "PROPOSAL" }).boundingBox();
+  const first = await card.getByRole("button", { name: "PROPOSAL" }).boundingBox();
+  const second = await card.getByRole("button", { name: "QUESTION" }).boundingBox();
   if (!first || !second) throw new Error("the card with two tags is not rendered");
 
   // The actions row keeps its gap click-through: the tags are its direct
@@ -135,19 +140,24 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
     await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused({ timeout: 1_000 });
   }).toPass();
   await page.keyboard.press("ArrowDown");
+  await expect(feed.getByRole("button", { name: "HOT", exact: true })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(feed.getByRole("button", { name: "NEW", exact: true })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
   await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
   await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toHaveCSS(
     "outline-offset",
     "-2px",
   );
 
-  // ◀/▶ walk inside the tag row.
+  // ◀/▶ walk inside the sort-and-tag row.
   await page.keyboard.press("ArrowRight");
   await expect(feed.getByRole("button", { name: "DECISION" }).first()).toBeFocused();
 
-  // ▼ leaves the row for the compose control (an unmarked row of its own),
-  // then for the first card's title (it leads the DOM while the byline reads
-  // above it on screen); ▶ walks author and vote.
+  // ▼ leaves the row for the compose control (an unmarked row of its
+  // own), then for the first card's title (it leads the DOM while the byline
+  // reads above it on screen); ▶ walks author and vote. The search box rides
+  // the board row (▶ from the board combobox reaches it).
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: NEW_THREAD })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -185,7 +195,7 @@ test("keeps walking while an arrow is held (system auto-repeat)", async ({ page 
     await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused({ timeout: 1_000 });
   }).toPass();
   await repeatKey(page, "ArrowDown");
-  await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
+  await expect(feed.getByRole("button", { name: "HOT", exact: true })).toBeFocused();
 });
 
 test("enters the scrolled feed from its visible edge", async ({ page }) => {
@@ -568,14 +578,14 @@ test("composes a thread that lives in the session", async ({ page }) => {
 
   await form.getByRole("combobox", { name: "BOARD" }).click();
   await page.getByRole("option", { name: "Tooling" }).click();
-  await form.getByRole("button", { name: "TOOLING" }).click();
+  await form.getByRole("button", { name: "QUESTION" }).click();
   await form.getByLabel("TITLE").fill(title);
   await form.getByLabel("BODY").fill("A header edit slipped past the cache again.");
   await form.getByRole("button", { name: "POST THREAD" }).click();
 
   const card = feed.getByRole("article").filter({ hasText: title });
   await expect(card).toBeVisible();
-  await expect(card).toContainText("TOOLING");
+  await expect(card).toContainText("QUESTION");
   // The submit switched the feed to the composed thread's board: the count is
   // the board's own (one fixture thread plus the new one).
   await expect(feed.getByText("2 THREADS")).toBeVisible();

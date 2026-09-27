@@ -6,6 +6,7 @@ import { cx } from "../tone";
 import controls from "../formControls.module.css";
 import { clampIndex, typeaheadIndex } from "./keyboard";
 import { focusNextControl } from "../../walk";
+import { isPrintableKey } from "../../keyboard";
 import styles from "./Select.module.css";
 
 export type SelectOption<T extends string> = {
@@ -102,7 +103,7 @@ export function Select<T extends string>({
       if (event.altKey) return;
       // A printable key opens the list at the first match (type-ahead) and must
       // never reach the shell's global command-line capture.
-      if (event.key.length !== 1 || event.key === " ") return;
+      if (!isPrintableKey(event.key)) return;
       event.preventDefault();
       const match = typeaheadIndex(
         options.map((option) => option.label),

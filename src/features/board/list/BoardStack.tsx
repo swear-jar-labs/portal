@@ -30,13 +30,14 @@ import {
   threadPath,
   type BoardMember,
   type BoardOption,
+  type Thread,
   type ThreadSummary,
 } from "../model/threads";
 import { avatarFor } from "@/shared/members";
 import { ComposePanel } from "../compose/ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
 import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "../model/feed";
-import { postElementId, postIdFromHash } from "../model/post-anchor";
+import { postElementId, postHash, postIdFromHash } from "../model/post-anchor";
 import type { ComposeInput } from "../model/schema";
 import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
 import { threadCardId } from "./ThreadCard";
@@ -56,6 +57,9 @@ export type BoardStackProps = {
   // The ranking base captured by the RSC render: server and client sort
   // identically at hydration.
   now: string;
+  // Full fixture threads for the mock search: the session merges its
+  // composed threads, replies, edits and deletions over them.
+  corpus: readonly Thread[];
   thread?: BoardThreadLayer;
   projectBoards?: readonly BoardOption[];
 };
@@ -65,7 +69,7 @@ export function BoardFallback() {
   return <ShellPanel title={fileTitle("FORUM")}>{null}</ShellPanel>;
 }
 
-export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardStackProps) {
+export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }: BoardStackProps) {
   const moderation = useModeration();
   const router = useRouter();
   const pushOverlay = useOverlayPush();
@@ -73,6 +77,12 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
   const searchParams = useSearchParams();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
+  // The search's view of the actor: hidden material drops out for anyone but
+  // admins and the material's own author.
+  const viewer = useMemo(
+    () => (session === null ? null : { user: session.user, admin: session.admin === true }),
+    [session],
+  );
   const allowedBoards = [...composableBoardIds, ...projectBoards.map((board) => board.id)];
   const [query, setQuery] = useState<FeedQuery>(() => parseFeedQuery(searchParams, allowedBoards));
   // The last search the state was synced from: UI-driven edits rewrite the URL
@@ -107,6 +117,7 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
   const {
     state,
     visible,
+    searchHits,
     threadState,
     toggleThreadVote,
     togglePostVote,
@@ -114,7 +125,15 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
     deletePost,
     addReply,
     addThread,
-  } = useBoardSession({ threads, now, query, threadId: activeThreadId });
+  } = useBoardSession({
+    threads,
+    now,
+    query,
+    threadId: activeThreadId,
+    corpus,
+    moderation,
+    viewer,
+  });
 
   const openedLocalThread = useMemo(
     () => state.addedThreads.find((entry) => entry.id === localThreadId) ?? null,
@@ -247,6 +266,32 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
     [gate, toggleThreadVote],
   );
 
+  // A search jump: the title opens the thread at its head, a reply lands on
+  // the post's anchor (focused and scrolled like a deep link). Session threads
+  // have no route, so they open in place with the hash set first — the feed
+  // effect below picks it up.
+  const jumpToMatch = useCallback(
+    (threadId: string, postId: string | undefined, event?: MouseEvent<HTMLElement>) => {
+      if (postId === undefined) {
+        activateThread(threadId, event);
+        return;
+      }
+      if (state.addedThreads.some((entry) => entry.id === threadId)) {
+        if (threadId === localThreadId) {
+          const post = document.getElementById(postElementId(postId));
+          post?.focus();
+          post?.scrollIntoView({ block: "center" });
+          return;
+        }
+        window.history.replaceState(window.history.state, "", postHash(postId));
+        setLocalThreadId(threadId);
+        return;
+      }
+      pushOverlay(`${threadPath(threadId)}${postHash(postId)}`, threadCardId(threadId))(event);
+    },
+    [activateThread, localThreadId, pushOverlay, state.addedThreads],
+  );
+
   const closeThread = useCallback(() => {
     if (!thread) return;
     if (closingRef.current) return;
@@ -255,10 +300,15 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
     // Direct-load only (an overlay thread peels with browser back instead):
     // only the route we pushed has the feed behind it in history; a
     // deep-linked thread (or one history walked back to) closes by pushing
-    // the feed.
+    // the feed with the current filters, so a search result returns to its
+    // results.
     if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
-    else router.push(FEED_PATH);
-  }, [router, thread]);
+    else {
+      const params = feedQueryParams(query);
+      const search = params.toString();
+      router.push(search ? `${FEED_PATH}?${search}` : FEED_PATH);
+    }
+  }, [query, router, thread]);
 
   const closeLocalThread = useCallback(() => {
     if (openedLocalThread === null) return;
@@ -293,7 +343,9 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
         return;
       }
       const id = addThread(input, author);
-      setQuery({ board: input.board, sort: "new" });
+      // The new card must be visible: the submit moves the feed to its board
+      // and drops any text query that would hide it.
+      setQuery({ board: input.board, sort: "new", q: "" });
       closeCompose(threadCardId(id));
     },
     [addThread, author, closeCompose, requestLogin],
@@ -334,8 +386,10 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
             currentThreadId={activeThreadId}
             votedThreadIds={state.votedThreads}
             localThreadIds={localThreadIds}
+            searchHits={searchHits}
             onQueryChange={applyQuery}
             onActivateThread={activateThread}
+            onJumpToMatch={jumpToMatch}
             onVoteThread={voteThread}
             onCompose={openCompose}
             projectBoards={projectBoards}

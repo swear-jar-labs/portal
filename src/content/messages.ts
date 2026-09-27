@@ -568,10 +568,6 @@ export const messages = {
       proposal: "PROPOSAL",
       decision: "DECISION",
       question: "QUESTION",
-      compilers: "COMPILERS",
-      tooling: "TOOLING",
-      craft: "CRAFT",
-      meta: "META",
     },
     roles: {
       member: "MEMBER",
@@ -588,6 +584,14 @@ export const messages = {
       empty: "No threads yet. Start a discussion.",
       emptyFilter: "No matches. Try changing the filters.",
       newThread: "NEW THREAD",
+      search: {
+        label: "SEARCH",
+        clear: "CLEAR",
+        empty: "No matches. Try fewer or different words.",
+        titleMatch: "TITLE",
+        replyMatch: "REPLY",
+        restMatches: "More matches in this thread",
+      },
     },
     compose: {
       title: "NEW THREAD",
@@ -1306,6 +1310,7 @@ export const pluralForms = {
   file: { one: "FILE", other: "FILES" },
   minute: { one: "MINUTE", other: "MINUTES" },
   thread: { one: "THREAD", other: "THREADS" },
+  match: { one: "MATCH", other: "MATCHES" },
   note: { one: "NOTE", other: "NOTES" },
   task: { one: "TASK", other: "TASKS" },
   project: { one: "PROJECT", other: "PROJECTS" },

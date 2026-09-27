@@ -35,7 +35,7 @@ const cases = [
 
 for (const entry of cases) {
   // Only the readroom vocabulary (22 techs) reaches the shared cap; the board
-  // (7) and the tickets (6) fit under it, so no chip ever disables there.
+  // (3) and the tickets (6) fit under it, so no chip ever disables there.
   const reachesCap = entry.tags.length > MAX_TAGS;
   test(`${entry.form} caps tags at ${MAX_TAGS} and keyboard walk skips unavailable chips`, async ({
     page,

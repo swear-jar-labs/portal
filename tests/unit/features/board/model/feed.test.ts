@@ -26,9 +26,9 @@ function thread(overrides: Partial<RankableThread> & Pick<RankableThread, "id">)
 
 describe("filterThreads", () => {
   const threads = [
-    thread({ id: "a", board: "general", tags: ["question", "craft"] }),
-    thread({ id: "b", board: "tooling", tags: ["tooling"] }),
-    thread({ id: "c", board: "tooling", tags: ["craft"] }),
+    thread({ id: "a", board: "general", tags: ["question", "decision"] }),
+    thread({ id: "b", board: "tooling", tags: ["proposal"] }),
+    thread({ id: "c", board: "tooling", tags: ["decision"] }),
   ];
 
   it("returns everything without filters", () => {
@@ -43,14 +43,17 @@ describe("filterThreads", () => {
   });
 
   it("filters by tag", () => {
-    expect(filterThreads(threads, { tag: "craft" }).map((entry) => entry.id)).toEqual(["a", "c"]);
+    expect(filterThreads(threads, { tag: "decision" }).map((entry) => entry.id)).toEqual([
+      "a",
+      "c",
+    ]);
   });
 
   it("combines board and tag", () => {
-    expect(filterThreads(threads, { board: "tooling", tag: "craft" }).map((e) => e.id)).toEqual([
+    expect(filterThreads(threads, { board: "tooling", tag: "decision" }).map((e) => e.id)).toEqual([
       "c",
     ]);
-    expect(filterThreads(threads, { board: "compiler", tag: "craft" })).toEqual([]);
+    expect(filterThreads(threads, { board: "compiler", tag: "decision" })).toEqual([]);
   });
 });
 
@@ -120,10 +123,11 @@ describe("rankThreads", () => {
 
 describe("feed URL codec", () => {
   it("parses valid filters and falls back on unknown values", () => {
-    expect(parseFeedQuery(new URLSearchParams("board=tooling&tag=craft&sort=new"))).toEqual({
+    expect(parseFeedQuery(new URLSearchParams("board=tooling&tag=decision&sort=new"))).toEqual({
       board: "tooling",
-      tag: "craft",
+      tag: "decision",
       sort: "new",
+      q: "",
     });
     expect(parseFeedQuery(new URLSearchParams("board=nope&tag=nah&sort=sideways"))).toEqual(
       DEFAULT_FEED_QUERY,
@@ -131,19 +135,39 @@ describe("feed URL codec", () => {
     expect(parseFeedQuery(new URLSearchParams())).toEqual(DEFAULT_FEED_QUERY);
   });
 
+  it("carries the raw search text, verbatim and optional", () => {
+    expect(parseFeedQuery(new URLSearchParams("q=heap+realloc")).q).toBe("heap realloc");
+    expect(parseFeedQuery(new URLSearchParams("q=%3Cscript%3E")).q).toBe("<script>");
+    expect(parseFeedQuery(new URLSearchParams("board=errata&q=staging"))).toEqual({
+      board: "errata",
+      sort: "hot",
+      q: "staging",
+    });
+  });
+
   it("keeps defaults out of the URL and round-trips the rest", () => {
     expect(feedQueryParams(DEFAULT_FEED_QUERY).toString()).toBe("");
-    const query = { board: "compiler", tag: "proposal", sort: "new" } as const;
-    expect(feedQueryParams(query).toString()).toBe("board=compiler&tag=proposal&sort=new");
+    const query = { board: "compiler", tag: "proposal", sort: "new", q: "parsers" } as const;
+    expect(feedQueryParams(query).toString()).toBe(
+      "board=compiler&tag=proposal&sort=new&q=parsers",
+    );
     expect(parseFeedQuery(feedQueryParams(query))).toEqual(query);
   });
 
   it("compares queries structurally", () => {
-    expect(sameFeedQuery(DEFAULT_FEED_QUERY, { sort: "hot" })).toBe(true);
-    expect(sameFeedQuery({ sort: "hot" }, { sort: "new" })).toBe(false);
-    expect(sameFeedQuery({ board: "errata", sort: "hot" }, { board: "errata", sort: "hot" })).toBe(
-      true,
+    expect(sameFeedQuery(DEFAULT_FEED_QUERY, { sort: "hot", q: "" })).toBe(true);
+    expect(sameFeedQuery({ sort: "hot", q: "" }, { sort: "new", q: "" })).toBe(false);
+    expect(
+      sameFeedQuery(
+        { board: "errata", sort: "hot", q: "" },
+        { board: "errata", sort: "hot", q: "" },
+      ),
+    ).toBe(true);
+    expect(sameFeedQuery({ board: "errata", sort: "hot", q: "" }, { sort: "hot", q: "" })).toBe(
+      false,
     );
-    expect(sameFeedQuery({ board: "errata", sort: "hot" }, { sort: "hot" })).toBe(false);
+    expect(sameFeedQuery({ sort: "hot", q: "heap" }, { sort: "hot", q: "heap canary" })).toBe(
+      false,
+    );
   });
 });

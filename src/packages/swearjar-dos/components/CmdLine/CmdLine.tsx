@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent }
 import type { Command } from "../../commands/types";
 import { nextCompletion } from "../../commands/registry";
 import { DOS_ZONE_ATTR } from "../../attributes";
+import { isPrintableKey } from "../../keyboard";
 import { cx } from "../tone";
 import styles from "./CmdLine.module.css";
 
@@ -60,7 +61,7 @@ export function CmdLine({
       // The line is the shell's text target: printable keys type into it from
       // anywhere, and Backspace edits it from anywhere too.
       const erasing = event.key === "Backspace";
-      if (!erasing && (event.key.length !== 1 || event.key === " ")) return;
+      if (!erasing && !isPrintableKey(event.key)) return;
       const target = event.target as HTMLElement | null;
       if (
         target?.closest(

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
-import { getThread, listThreads } from "../data/queries";
+import { getThread, listThreadDocuments, listThreads } from "../data/queries";
 import { BoardFallback, BoardStack } from "../list/BoardStack";
 import { loadThreadLayer } from "./ThreadOverlay";
 import { threadDocumentTitle } from "../model/threads";
@@ -23,13 +23,18 @@ export async function ThreadPage({ params }: ThreadPageProps) {
   const { id } = await params;
   const now = new Date().toISOString();
   const thread = await loadThreadLayer(id, now);
-  const [threads, projects] = await Promise.all([listThreads(), listProjects()]);
+  const [threads, corpus, projects] = await Promise.all([
+    listThreads(),
+    listThreadDocuments(),
+    listProjects(),
+  ]);
 
   return (
     <Suspense fallback={<BoardFallback />}>
       <BoardStack
         threads={threads}
         now={now}
+        corpus={corpus}
         projectBoards={projects.map((project) => ({
           id: project.slug,
           name: project.name,

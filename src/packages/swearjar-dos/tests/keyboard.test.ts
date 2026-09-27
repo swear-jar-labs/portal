@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { hasCommandModifier, shouldSkipEvent, type KeyboardGuardEvent } from "../keyboard";
+import {
+  hasCommandModifier,
+  isPrintableKey,
+  shouldSkipEvent,
+  type KeyboardGuardEvent,
+} from "../keyboard";
 
 type GuardInput = KeyboardGuardEvent & { shiftKey: boolean };
 
@@ -34,5 +39,20 @@ describe("hasCommandModifier", () => {
   it("does not count Shift or a plain key as a command modifier", () => {
     expect(hasCommandModifier(event({ shiftKey: true }))).toBe(false);
     expect(hasCommandModifier(event())).toBe(false);
+  });
+});
+
+describe("isPrintableKey", () => {
+  it("accepts a single printable character", () => {
+    expect(isPrintableKey("a")).toBe(true);
+    expect(isPrintableKey("Я")).toBe(true);
+  });
+
+  it("rejects words, space and a missing key", () => {
+    expect(isPrintableKey("Enter")).toBe(false);
+    expect(isPrintableKey("Backspace")).toBe(false);
+    expect(isPrintableKey(" ")).toBe(false);
+    expect(isPrintableKey("")).toBe(false);
+    expect(isPrintableKey(undefined)).toBe(false);
   });
 });

@@ -24,7 +24,7 @@ const threads: readonly Thread[] = [
     board: "general",
     title: "READ FIRST: how this board works",
     author: ada,
-    tags: ["meta"],
+    tags: [],
     pinned: true,
     locked: false,
     createdAt: "2026-08-01T09:00:00.000Z",
@@ -67,7 +67,7 @@ const threads: readonly Thread[] = [
     board: "general",
     title: "Weekly ritual: what did you build, and what did it teach you?",
     author: grace,
-    tags: ["craft"],
+    tags: [],
     pinned: true,
     locked: false,
     createdAt: "2026-09-01T18:00:00.000Z",
@@ -118,7 +118,7 @@ const threads: readonly Thread[] = [
     board: "compiler",
     title: "Why we write our own parsers: a case for recursive descent",
     author: grace,
-    tags: ["compilers", "proposal"],
+    tags: ["proposal", "question"],
     pinned: false,
     locked: false,
     createdAt: "2026-09-10T12:00:00.000Z",
@@ -178,7 +178,7 @@ const threads: readonly Thread[] = [
     board: "swearjar-dos",
     title: "Boot sequence: CRT-on before first paint",
     author: grace,
-    tags: ["craft"],
+    tags: ["proposal"],
     pinned: false,
     locked: false,
     createdAt: "2026-09-15T10:00:00.000Z",
@@ -233,7 +233,7 @@ const threads: readonly Thread[] = [
     board: "token-cache",
     title: "Eviction policy: LRU lies about recency",
     author: lin,
-    tags: ["tooling"],
+    tags: [],
     pinned: false,
     locked: false,
     createdAt: "2026-08-28T10:00:00.000Z",
@@ -265,7 +265,7 @@ const threads: readonly Thread[] = [
     board: "general",
     title: "Postmortem: heap corruption at 3am",
     author: ken,
-    tags: ["question", "craft"],
+    tags: ["question"],
     pinned: false,
     locked: false,
     createdAt: "2026-09-12T22:15:00.000Z",
@@ -323,7 +323,7 @@ const threads: readonly Thread[] = [
     board: "general",
     title: "Bikeshed closed: tabs, and here is why",
     author: ken,
-    tags: ["meta", "decision"],
+    tags: ["decision"],
     pinned: false,
     locked: true,
     createdAt: "2026-08-20T15:00:00.000Z",
@@ -351,7 +351,7 @@ const threads: readonly Thread[] = [
     board: "tooling",
     title: "CI cache poisoning: how we lost a day",
     author: ada,
-    tags: ["tooling", "question"],
+    tags: ["question"],
     pinned: false,
     locked: false,
     createdAt: "2026-09-14T08:30:00.000Z",
@@ -383,7 +383,7 @@ const threads: readonly Thread[] = [
     board: "general",
     title: "Decision: tools can help, but the author owns the code",
     author: ada,
-    tags: ["decision", "craft"],
+    tags: ["decision"],
     pinned: false,
     locked: false,
     createdAt: "2026-09-03T10:00:00.000Z",
@@ -421,7 +421,7 @@ const threads: readonly Thread[] = [
     board: "errata",
     title: 'Errata: I dropped a table to "clean up" a staging dump',
     author: grace,
-    tags: ["craft"],
+    tags: [],
     pinned: false,
     locked: false,
     createdAt: "2026-09-12T09:15:00.000Z",
@@ -453,7 +453,7 @@ const threads: readonly Thread[] = [
     board: "general",
     title: "Withdrawn: the weekly call",
     author: lin,
-    tags: ["meta"],
+    tags: [],
     pinned: false,
     locked: false,
     createdAt: "2026-09-15T10:00:00.000Z",
@@ -469,6 +469,14 @@ function byId(a: ThreadSummary, b: ThreadSummary): number {
 
 export async function listThreads(): Promise<ThreadSummary[]> {
   return threads.map(summarizeThread);
+}
+
+/** The search corpus: full fixture threads (titles plus every reply body,
+ * code fences included). The forum search merges the session's composed
+ * threads, replies, edits and deletions over it on the client; Phase 5
+ * replaces the body with a backend query while the signature stays put. */
+export async function listThreadDocuments(): Promise<readonly Thread[]> {
+  return threads;
 }
 
 export async function getThread(id: string): Promise<Thread | null> {

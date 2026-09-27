@@ -16,6 +16,9 @@ export type FieldProps = {
   error?: string;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   className?: string;
+  // Hides the label without dropping it from the accessibility tree: the
+  // caption moves into the placeholder (a compact filter row).
+  hideLabel?: boolean;
   // Puts input focus in the field on mount (an opening form hands over focus
   // to its first control).
   autoFocus?: boolean;
@@ -33,6 +36,7 @@ export function Field({
   error,
   onKeyDown,
   className,
+  hideLabel = false,
   autoFocus = false,
 }: FieldProps) {
   const id = useId();
@@ -49,7 +53,7 @@ export function Field({
 
   return (
     <div className={cx(styles.field, className)}>
-      <label className={styles.label} htmlFor={id}>
+      <label className={cx(styles.label, hideLabel && styles.visuallyHidden)} htmlFor={id}>
         {label}
       </label>
       <input

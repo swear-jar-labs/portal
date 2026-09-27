@@ -6,7 +6,7 @@ import type { ComposeInput } from "@/features/board/model/schema";
 const ada: BoardMember = { user: "ada", role: "maintainer" };
 const COMPOSE_INPUT: ComposeInput = {
   board: "tooling",
-  tags: ["tooling"],
+  tags: ["question"],
   title: "CI cache",
   body: "Key the cache by compiler.",
 };

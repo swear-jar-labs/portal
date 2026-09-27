@@ -1,7 +1,17 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Button, Heading, Select, Stack, Tag, Text, type SelectOption } from "@swearjar/dos";
+import {
+  Button,
+  Field,
+  Heading,
+  Select,
+  Stack,
+  Tag,
+  Text,
+  focusNextControl,
+  type SelectOption,
+} from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import {
@@ -13,7 +23,9 @@ import {
   type TagId,
   type ThreadSummary,
 } from "../model/threads";
+import { isBlankSearch, type ThreadSearchHit } from "../model/search";
 import { threadSorts, type FeedQuery } from "../model/feed";
+import { SearchResults } from "./SearchResults";
 import { ThreadCard } from "./ThreadCard";
 import styles from "../board.module.css";
 
@@ -31,8 +43,15 @@ export type FeedPanelProps = {
   votedThreadIds: ReadonlySet<string>;
   // Session-composed threads: their cards activate in place, without a link.
   localThreadIds: ReadonlySet<string>;
+  // Grouped matches by thread id under an active query, empty otherwise.
+  searchHits: ReadonlyMap<string, ThreadSearchHit>;
   onQueryChange: (patch: Partial<FeedQuery>) => void;
   onActivateThread: (threadId: string, event?: MouseEvent<HTMLElement>) => void;
+  onJumpToMatch: (
+    threadId: string,
+    postId: string | undefined,
+    event?: MouseEvent<HTMLElement>,
+  ) => void;
   onVoteThread: (threadId: string) => void;
   onCompose: () => void;
   projectBoards?: readonly BoardOption[];
@@ -45,8 +64,10 @@ export function FeedPanel({
   currentThreadId,
   votedThreadIds,
   localThreadIds,
+  searchHits,
   onQueryChange,
   onActivateThread,
+  onJumpToMatch,
   onVoteThread,
   onCompose,
   projectBoards = [],
@@ -67,6 +88,8 @@ export function FeedPanel({
   };
 
   const filtered = query.board !== undefined || query.tag !== undefined;
+  const searching = !isBlankSearch(query.q);
+  const matchCount = [...searchHits.values()].reduce((total, hit) => total + hit.totalMatches, 0);
 
   return (
     <Stack gap={8} className={styles.feed}>
@@ -75,7 +98,9 @@ export function FeedPanel({
       </Heading>
 
       <Stack gap={4} className={styles.filters}>
-        <Stack direction="row" gap={16} align="flex-end" wrap navRow>
+        {/* The row gap rides a variable: mobile halves it, so the break
+            element below costs two small gaps instead of two large ones. */}
+        <Stack direction="row" gap="var(--board-row-gap, 16px)" align="flex-end" wrap navRow>
           <Select
             label={messages.board.feed.boardLabel}
             name="board"
@@ -85,19 +110,44 @@ export function FeedPanel({
             }}
             options={boardOptions}
           />
-          <Stack direction="row" gap={4} align="center" wrap>
-            <Text as="span" role="hint">
-              {messages.board.feed.sortLabel}
-            </Text>
-            {threadSorts.map((sort) => (
-              <Tag key={sort} active={query.sort === sort} onClick={() => onQueryChange({ sort })}>
-                {messages.board.feed.sorts[sort]}
-              </Tag>
-            ))}
-          </Stack>
+          <div aria-hidden="true" className={styles.rowBreak} />
+          <Field
+            label={messages.board.feed.search.label}
+            name="q"
+            value={query.q}
+            placeholder={messages.board.feed.search.label}
+            hideLabel
+            onChange={(q: string) => onQueryChange({ q })}
+            // The filter row owns no submit: Enter walks right like ArrowRight.
+            onKeyDown={(event) => {
+              if (
+                event.key !== "Enter" ||
+                event.shiftKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.altKey ||
+                event.nativeEvent.isComposing
+              )
+                return;
+              if (focusNextControl(event.currentTarget)) event.preventDefault();
+            }}
+          />
+          {query.q !== "" ? (
+            <Button onClick={() => onQueryChange({ q: "" })}>
+              {messages.board.feed.search.clear}
+            </Button>
+          ) : null}
         </Stack>
 
-        <Stack direction="row" gap={4} align="center" wrap navRow>
+        <Stack direction="row" gap={4} align="center" wrap navRow className={styles.sortRow}>
+          <Text as="span" role="hint">
+            {messages.board.feed.sortLabel}
+          </Text>
+          {threadSorts.map((sort) => (
+            <Tag key={sort} active={query.sort === sort} onClick={() => onQueryChange({ sort })}>
+              {messages.board.feed.sorts[sort]}
+            </Tag>
+          ))}
           <Text as="span" role="hint">
             {messages.board.feed.tagLabel}
           </Text>
@@ -114,7 +164,14 @@ export function FeedPanel({
         </Stack>
 
         <Stack direction="row" gap={8} align="center" justify="space-between" wrap>
-          <Text role="hint">{formatCount(threads.length, pluralForms.thread)}</Text>
+          <Text role="hint">
+            {searching
+              ? [
+                  formatCount(threads.length, pluralForms.thread),
+                  formatCount(matchCount, pluralForms.match),
+                ].join(" · ")
+              : formatCount(threads.length, pluralForms.thread)}
+          </Text>
           <Button id={composeButtonId} variant="primary" onClick={onCompose}>
             {messages.board.feed.newThread}
           </Button>
@@ -123,8 +180,21 @@ export function FeedPanel({
 
       {threads.length === 0 ? (
         <Text role="hint">
-          {filtered ? messages.board.feed.emptyFilter : messages.board.feed.empty}
+          {searching
+            ? messages.board.feed.search.empty
+            : filtered
+              ? messages.board.feed.emptyFilter
+              : messages.board.feed.empty}
         </Text>
+      ) : searching ? (
+        <SearchResults
+          threads={threads}
+          now={now}
+          hits={searchHits}
+          currentThreadId={currentThreadId}
+          localThreadIds={localThreadIds}
+          onJumpToMatch={onJumpToMatch}
+        />
       ) : (
         <Stack gap={8}>
           {threads.map((thread) => (

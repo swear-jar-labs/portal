@@ -4,7 +4,7 @@ import { tagIds } from "@/features/board/model/threads";
 
 const validCompose = {
   board: "general",
-  tags: ["craft"],
+  tags: ["question"],
   title: "Postmortem: heap corruption at 3am",
   body: "The fix was one line; the search was six hours.",
 };
@@ -35,13 +35,12 @@ describe("composeSchema", () => {
   });
 
   it("caps tags at the shared limit", () => {
-    // The board vocabulary (7) fits under the cap: the whole list passes,
+    // The board vocabulary (3) fits under the cap: the whole list passes,
     // eleven chips do not.
     expect(composeSchema.safeParse({ ...validCompose, tags: [...tagIds] }).success).toBe(true);
-    expect(
-      composeSchema.safeParse({ ...validCompose, tags: [...tagIds, ...tagIds.slice(0, 4)] })
-        .success,
-    ).toBe(false);
+    const eleven = [...tagIds, ...tagIds, ...tagIds, ...tagIds.slice(0, 2)];
+    expect(eleven).toHaveLength(11);
+    expect(composeSchema.safeParse({ ...validCompose, tags: eleven }).success).toBe(false);
   });
 
   it("rejects an oversized title and body", () => {

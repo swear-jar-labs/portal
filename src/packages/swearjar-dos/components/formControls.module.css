@@ -4,6 +4,17 @@
   gap: 2px;
 }
 
+/* A label that stays available to assistive tech without taking visual
+   space (a filter row whose caption lives in the placeholder). */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .label {
   color: var(--dos-field-label, var(--dos-yellow));
   font-weight: 700;

@@ -17,3 +17,9 @@ export function shouldSkipEvent(event: KeyboardGuardEvent): boolean {
 export function hasCommandModifier(event: KeyboardGuardEvent): boolean {
   return event.ctrlKey || event.altKey || event.metaKey;
 }
+
+// A printable single character: anything else — including a missing key on a
+// synthetic event (which would throw on `.length`) — never types anywhere.
+export function isPrintableKey(key: unknown): key is string {
+  return typeof key === "string" && key.length === 1 && key !== " ";
+}

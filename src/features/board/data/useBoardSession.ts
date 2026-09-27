@@ -1,9 +1,22 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { summarizeThread, type BoardMember, type ThreadSummary } from "../model/threads";
+import {
+  summarizeThread,
+  type BoardMember,
+  type Thread,
+  type ThreadSummary,
+} from "../model/threads";
 import * as boardStore from "./board-store";
 import { filterThreads, rankThreads, type FeedQuery } from "../model/feed";
+import { isBlankSearch, searchThreads, type ThreadSearchHit } from "../model/search";
+import {
+  EMPTY_SEARCH_VISIBILITY,
+  effectiveSearchThreads,
+  resolveSearchVisibility,
+  type SearchModeration,
+  type SearchViewer,
+} from "./forum-search";
 import type { ComposeInput } from "../model/schema";
 
 export type BoardSessionOptions = {
@@ -12,13 +25,30 @@ export type BoardSessionOptions = {
   query: FeedQuery;
   // The thread whose layer is open (a route thread or a composed one).
   threadId?: string;
+  // The full fixture threads the mock search merges the session over. Absent
+  // only where no search box renders.
+  corpus?: readonly Thread[];
+  // Moderation-hidden threads/posts drop out before matching and counting;
+  // admins and the material's author keep seeing them.
+  moderation?: SearchModeration | null;
+  viewer?: SearchViewer;
 };
 
 /** The UI-first board's data layer: ranks the feed over the fixture summaries
  * and the session's composed threads, and binds the store's transitions to the
- * open thread. The island keeps navigation and gating; Phase 5 replaces the
- * store with server actions, the components do not change. */
-export function useBoardSession({ threads, now, query, threadId }: BoardSessionOptions) {
+ * open thread. Under a query it searches the session-merged threads instead:
+ * the same board/tag filters narrow the corpus first, the current sort still
+ * orders the hit threads. Phase 5 replaces the store with server actions,
+ * the components do not change. */
+export function useBoardSession({
+  threads,
+  now,
+  query,
+  threadId,
+  corpus = [],
+  moderation = null,
+  viewer = null,
+}: BoardSessionOptions) {
   const state = useSyncExternalStore(
     boardStore.subscribeBoard,
     boardStore.boardSnapshot,
@@ -44,10 +74,51 @@ export function useBoardSession({ threads, now, query, threadId }: BoardSessionO
     [state.votedThreads, summaries],
   );
 
-  const visible = useMemo(
-    () => rankThreads(filterThreads(withVotes, query), query.sort, Date.parse(now)),
-    [now, query, withVotes],
+  const searchActive = !isBlankSearch(query.q);
+
+  const visibility = useMemo(
+    () =>
+      moderation === null
+        ? EMPTY_SEARCH_VISIBILITY
+        : resolveSearchVisibility(corpus, state, moderation, viewer),
+    [corpus, moderation, state, viewer],
   );
+
+  // The searchable threads for this render: the fixtures with the session's
+  // composed threads, replies, edits and deletions merged in and the hidden
+  // material removed. Board/tag narrow the corpus before matching, so ERRATA
+  // never mixes other boards into its results.
+  const searchable = useMemo(
+    () =>
+      effectiveSearchThreads(corpus, state, visibility).filter(
+        (thread) =>
+          (query.board === undefined || thread.board === query.board) &&
+          (query.tag === undefined || thread.tags.includes(query.tag)),
+      ),
+    [corpus, query.board, query.tag, state, visibility],
+  );
+
+  const hits = useMemo(
+    () => (searchActive ? searchThreads(searchable, query.q) : []),
+    [query.q, searchActive, searchable],
+  );
+
+  const searchHits = useMemo(
+    () => new Map<string, ThreadSearchHit>(hits.map((hit) => [hit.threadId, hit])),
+    [hits],
+  );
+
+  const visible = useMemo(() => {
+    if (!searchActive) {
+      return rankThreads(filterThreads(withVotes, query), query.sort, Date.parse(now));
+    }
+    const hitIds = new Set(hits.map((hit) => hit.threadId));
+    return rankThreads(
+      withVotes.filter((summary) => hitIds.has(summary.id)),
+      query.sort,
+      Date.parse(now),
+    );
+  }, [hits, now, query, searchActive, withVotes]);
 
   const toggleThreadVote = useCallback((id: string) => {
     boardStore.toggleThreadVote(id);
@@ -97,6 +168,9 @@ export function useBoardSession({ threads, now, query, threadId }: BoardSessionO
   return {
     state,
     visible,
+    // Grouped matches by thread id under an active query, empty otherwise.
+    // The panel renders one post card per visible match from them.
+    searchHits,
     threadState,
     toggleThreadVote,
     togglePostVote,

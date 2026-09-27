@@ -6,6 +6,8 @@ import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { useOverlayPush } from "@/features/shell";
 import { MemberLink } from "@/features/members/contracts";
+import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
+import { useShellSession } from "@/features/shell";
 import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "../model/threads";
 import { threadCardId } from "./ThreadCard";
 import styles from "../board.module.css";
@@ -22,6 +24,8 @@ type ThreadRowsProps = {
  * the byline is the shared MemberLink. */
 export function ThreadRows({ threads, now }: ThreadRowsProps) {
   const pushOverlay = useOverlayPush();
+  const moderation = useModeration();
+  const session = useShellSession();
 
   const activate = (thread: ThreadSummary) => (event?: MouseEvent<HTMLElement>) => {
     // The profile stays mounted under the root-slot intercept, so the row
@@ -35,7 +39,13 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
         <Card
           key={thread.id}
           id={threadCardId(thread.id)}
-          title={thread.title}
+          title={
+            isThreadHidden(moderation, thread.id) &&
+            !session?.admin &&
+            session?.user !== thread.author.user
+              ? messages.moderation.hiddenThread
+              : thread.title
+          }
           href={threadPath(thread.id)}
           onActivate={activate(thread)}
           className={styles.cardTitle}

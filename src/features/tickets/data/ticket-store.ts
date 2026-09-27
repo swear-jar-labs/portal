@@ -72,6 +72,10 @@ const LOCAL_TICKET_ID_PREFIX = "local-ticket-";
 const LOCAL_LINK_ID_PREFIX = "local-link-";
 const LOCAL_COMMENT_ID_PREFIX = "local-comment-";
 
+export function isLocalTicketId(id: string): boolean {
+  return id.startsWith(LOCAL_TICKET_ID_PREFIX);
+}
+
 function localId(prefix: string): string {
   return `${prefix}${crypto.randomUUID()}`;
 }

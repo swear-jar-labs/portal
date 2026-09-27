@@ -4,18 +4,20 @@ import { useState, type ReactNode } from "react";
 import { SegmentedControl, Stack } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 
-type AdminTab = "members" | "projects" | "teams";
+type AdminTab = "members" | "projects" | "teams" | "moderation";
 const TAB_IDS = {
   members: "admin-tab-members",
   projects: "admin-tab-projects",
   teams: "admin-tab-teams",
+  moderation: "admin-tab-moderation",
 } as const;
 const PANEL_IDS = {
   members: "admin-panel-members",
   projects: "admin-panel-projects",
   teams: "admin-panel-teams",
+  moderation: "admin-panel-moderation",
 } as const;
-const TABS = (["members", "projects", "teams"] as const).map((tab) => ({
+const TABS = (["members", "projects", "teams", "moderation"] as const).map((tab) => ({
   value: tab,
   label: messages.admin.tabs[tab],
   id: TAB_IDS[tab],
@@ -26,10 +28,12 @@ export function AdminWorkspace({
   memberQueue,
   projectQueue,
   teamQueue,
+  moderationQueue,
 }: {
   memberQueue: ReactNode;
   projectQueue: ReactNode;
   teamQueue: ReactNode;
+  moderationQueue: ReactNode;
 }) {
   const [active, setActive] = useState<AdminTab>("members");
 
@@ -65,6 +69,14 @@ export function AdminWorkspace({
         hidden={active !== "teams"}
       >
         {teamQueue}
+      </div>
+      <div
+        id={PANEL_IDS.moderation}
+        role="tabpanel"
+        aria-labelledby={TAB_IDS.moderation}
+        hidden={active !== "moderation"}
+      >
+        {moderationQueue}
       </div>
     </Stack>
   );

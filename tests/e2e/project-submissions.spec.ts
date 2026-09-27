@@ -65,7 +65,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await page.keyboard.press("Home");
   await expect(page.getByRole("tab", { name: "MEMBER APPLICATIONS" })).toBeFocused();
   await page.keyboard.press("End");
-  await expect(page.getByRole("tab", { name: "PROJECT RESPONSIBILITY" })).toBeFocused();
+  await expect(page.getByRole("tab", { name: "MODERATION" })).toBeFocused();
   await page.getByRole("tab", { name: "PROJECT PROPOSALS" }).click();
   const review = page.getByRole("region", { name: `${name} ada`, exact: false });
   await expect(review.getByText(/TypeScript, Rust/)).toBeVisible();

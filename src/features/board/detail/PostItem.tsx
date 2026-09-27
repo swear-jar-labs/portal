@@ -6,11 +6,22 @@ import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
+import { TextAction } from "@/shared/TextAction/TextAction";
 import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
 import { MemberLink } from "@/features/members/contracts";
-import { formatAge, type ThreadPost } from "../model/threads";
+import {
+  ModerationTargetControls,
+  markEdited,
+  markTargetUnavailable,
+  targetKey,
+  useModeration,
+  type ModerationTarget,
+} from "@/features/moderation/contracts";
+import { useShellSession } from "@/features/shell";
+import { formatAge, threadPath, type ThreadPost } from "../model/threads";
 import { postElementId, postHash } from "../model/post-anchor";
 import { replySchema } from "../model/schema";
+import { isLocalThreadId } from "../data/board-store";
 import type { ReplyTarget } from "../data/thread-actions";
 import { VoteButton } from "../list/VoteButton";
 import styles from "../board.module.css";
@@ -20,6 +31,9 @@ const REPLY_MARKER_GLYPH = "↪";
 
 export type PostItemProps = {
   post: ThreadPost;
+  threadId: string;
+  threadTitle: string;
+  root: boolean;
   now: string;
   // The Markdown body rendered in RSC (fixture posts); session posts render
   // through the same pipeline on the client.
@@ -59,6 +73,9 @@ function DeleteConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCance
 
 export function PostItem({
   post,
+  threadId,
+  threadTitle,
+  root,
   now,
   body,
   voted,
@@ -73,12 +90,42 @@ export function PostItem({
   onDelete,
 }: PostItemProps) {
   const dialogs = useShellDialogs();
+  const session = useShellSession();
+  const moderation = useModeration();
+  const target: ModerationTarget = {
+    kind: "post",
+    id: post.id,
+    author: post.author.user,
+    label: threadTitle,
+    href: `${threadPath(threadId)}${postHash(post.id)}`,
+    ...(root ? { rootThreadId: threadId } : {}),
+    initialBody: editedBody ?? post.body,
+    ...(isLocalThreadId(threadId) ? { localBody: editedBody ?? post.body } : {}),
+  };
+  const caseBody = moderation.reports.find(
+    (report) => targetKey(report.target) === targetKey(target),
+  );
+  const currentBody =
+    caseBody && caseBody.currentRevision > 1
+      ? (caseBody.currentBody ?? editedBody ?? post.body)
+      : (editedBody ?? post.body);
+  const hiddenRecord = moderation.hidden[targetKey(target)];
+  const hidden = hiddenRecord !== undefined;
+  const canSeeHidden = session?.admin || session?.user === post.author.user;
   const replyIdentity = useMemberIdentity(replyTo ?? { user: "" });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(post.body);
   const [error, setError] = useState<string | undefined>();
   const wasDeleted = useRef(deleted);
   const wasEditing = useRef(editing);
+
+  useEffect(() => {
+    const id = postElementId(post.id);
+    if (window.location.hash !== `#${id}`) return;
+    const element = document.getElementById(id);
+    element?.focus();
+    element?.scrollIntoView({ block: "center" });
+  }, [post.id]);
 
   // The tombstone and the closed inline editor both unmount the control the
   // keyboard sat on: the post takes the focus back, so the walk continues from
@@ -102,7 +149,7 @@ export function PostItem({
   }
 
   function startEdit() {
-    setDraft(editedBody ?? post.body);
+    setDraft(currentBody);
     setError(undefined);
     setEditing(true);
   }
@@ -119,6 +166,9 @@ export function PostItem({
     }
     setEditing(false);
     onEdit(parsed.data.body);
+    // canEdit is author-only, so a mismatch here is only a session race or a
+    // removed target; the section store already holds the saved body.
+    if (parsed.data.body !== currentBody) markEdited(session, target, parsed.data.body);
   }
 
   function askDelete() {
@@ -129,6 +179,7 @@ export function PostItem({
           onConfirm={() => {
             dialogs.close();
             onDelete();
+            markTargetUnavailable(target);
           }}
           onCancel={dialogs.close}
         />
@@ -137,11 +188,16 @@ export function PostItem({
   }
 
   const meta = [messages.board.roles[post.author.role], formatAge(post.createdAt, now)];
-  if (!deleted && editedBody !== undefined) meta.push(messages.board.post.edited);
+  if (!deleted && (editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1))
+    meta.push(messages.board.post.edited);
 
   const content = deleted ? (
     <Text as="div" role="hint">
       {messages.board.post.deleted}
+    </Text>
+  ) : hidden && !canSeeHidden ? (
+    <Text as="div" role="hint">
+      {hiddenRecord?.permanent ? messages.moderation.permanentHidden : messages.moderation.hidden}
     </Text>
   ) : editing ? (
     <Form onSubmit={saveEdit} onCancel={cancelEdit} ariaLabel={messages.board.post.editLabel}>
@@ -163,8 +219,8 @@ export function PostItem({
         </Stack>
       </Stack>
     </Form>
-  ) : editedBody !== undefined ? (
-    <Markdown>{editedBody}</Markdown>
+  ) : editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1 ? (
+    <Markdown>{currentBody}</Markdown>
   ) : (
     (body ?? <Markdown>{post.body}</Markdown>)
   );
@@ -196,32 +252,41 @@ export function PostItem({
               : `${replyIdentity.username}: "${replyTo.excerpt}"`}
           </Button>
         ) : null}
-        {!deleted && !editing ? (
+        {!deleted && !editing && (!hidden || canSeeHidden) ? (
           <>
-            <VoteButton
-              votes={post.votes + (voted ? 1 : 0)}
-              voted={voted}
-              onToggle={onToggleVote}
-            />
-            {canReply ? (
-              <Button variant="ghost" onClick={onReply}>
-                {messages.board.post.reply}
-              </Button>
+            {!hidden ? (
+              <VoteButton
+                votes={post.votes + (voted ? 1 : 0)}
+                voted={voted}
+                onToggle={onToggleVote}
+              />
             ) : null}
+            {canReply ? (
+              <TextAction bracketed onClick={onReply}>
+                {messages.board.post.reply}
+              </TextAction>
+            ) : null}
+            <ModerationTargetControls target={target} mode="action" bracketed />
             {canEdit ? (
               <>
-                <Button variant="ghost" onClick={startEdit}>
+                <TextAction bracketed onClick={startEdit}>
                   {messages.board.post.edit}
-                </Button>
-                <Button variant="ghost" onClick={askDelete}>
+                </TextAction>
+                <TextAction bracketed onClick={askDelete}>
                   {messages.board.post.delete}
-                </Button>
+                </TextAction>
               </>
             ) : null}
           </>
         ) : null}
+        {!deleted && hidden && !canSeeHidden ? (
+          <ModerationTargetControls target={target} mode="action" bracketed />
+        ) : null}
       </Stack>
       {content}
+      {!deleted && hidden && canSeeHidden ? (
+        <ModerationTargetControls target={target} mode="status" />
+      ) : null}
     </Stack>
   );
 }

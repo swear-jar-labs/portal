@@ -37,6 +37,10 @@ const INITIAL_BOARD_STATE: BoardState = {
 const LOCAL_THREAD_ID_PREFIX = "local-thread-";
 const LOCAL_POST_ID_PREFIX = "local-post-";
 
+export function isLocalThreadId(id: string): boolean {
+  return id.startsWith(LOCAL_THREAD_ID_PREFIX);
+}
+
 function localId(prefix: string): string {
   return `${prefix}${crypto.randomUUID()}`;
 }

@@ -1,0 +1,17 @@
+.application {
+  min-width: 0;
+  padding: 8px;
+  border: var(--dos-border-width) solid var(--dos-card-border);
+}
+
+.messageBlock {
+  min-width: 0;
+  padding-top: 8px;
+  border-top: var(--dos-border-width) solid var(--dos-card-border);
+}
+
+@media (max-width: 720px) {
+  .application {
+    padding: 6px;
+  }
+}

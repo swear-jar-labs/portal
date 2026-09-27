@@ -13,6 +13,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CloseButton } from "@swearjar/dos";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
+import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
 import {
   overlayLayerPanels,
   PanelStack,
@@ -65,6 +66,7 @@ export function BoardFallback() {
 }
 
 export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardStackProps) {
+  const moderation = useModeration();
   const router = useRouter();
   const pushOverlay = useOverlayPush();
   const pathname = usePathname();
@@ -341,7 +343,13 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
         </ShellPanel>
         {thread ? (
           <ShellPanel
-            title={thread.title}
+            title={
+              isThreadHidden(moderation, thread.id) &&
+              !session?.admin &&
+              session?.user !== threads.find((item) => item.id === thread.id)?.author.user
+                ? messages.moderation.hiddenThread
+                : thread.title
+            }
             actions={<CloseButton onClose={closeThread} label={messages.shell.window.closeLabel} />}
           >
             {thread.layer}
@@ -349,7 +357,13 @@ export function BoardStack({ threads, now, thread, projectBoards = [] }: BoardSt
         ) : null}
         {openedLocalThread ? (
           <ShellPanel
-            title={openedLocalThread.title}
+            title={
+              isThreadHidden(moderation, openedLocalThread.id) &&
+              !session?.admin &&
+              session?.user !== openedLocalThread.author.user
+                ? messages.moderation.hiddenThread
+                : openedLocalThread.title
+            }
             actions={
               <CloseButton onClose={closeLocalThread} label={messages.shell.window.closeLabel} />
             }

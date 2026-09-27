@@ -5,6 +5,8 @@ import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { MemberLink } from "@/features/members/contracts";
+import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
+import { useShellSession } from "@/features/shell";
 import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "../model/threads";
 import { VoteButton } from "./VoteButton";
 import styles from "../board.module.css";
@@ -34,6 +36,12 @@ export function ThreadCard({
   onVote,
   onFilterTag,
 }: ThreadCardProps) {
+  const moderation = useModeration();
+  const session = useShellSession();
+  const masked =
+    isThreadHidden(moderation, thread.id) &&
+    !session?.admin &&
+    session?.user !== thread.author.user;
   // A composed thread has no route: the card activates in place (the title is a
   // button, so a context menu or drag cannot open a page that does not exist).
   const activation = local ? { onActivate } : { href: threadPath(thread.id), onActivate };
@@ -41,7 +49,7 @@ export function ThreadCard({
   return (
     <Card
       id={threadCardId(thread.id)}
-      title={thread.title}
+      title={masked ? messages.moderation.hiddenThread : thread.title}
       className={styles.cardTitle}
       current={current}
       {...activation}
@@ -78,7 +86,7 @@ export function ThreadCard({
       // between them (a wrapper would raise its whole box over the link).
       actions={
         <>
-          <VoteButton votes={thread.votes} voted={voted} onToggle={onVote} />
+          {!masked ? <VoteButton votes={thread.votes} voted={voted} onToggle={onVote} /> : null}
           {thread.tags.map((tag) => (
             <Tag key={tag} tone={tagTones[tag]} onClick={() => onFilterTag(tag)}>
               {messages.board.tags[tag]}

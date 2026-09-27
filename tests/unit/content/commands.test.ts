@@ -296,6 +296,25 @@ describe("commands content", () => {
     }
   });
 
+  it("shows REPORTS only when a signed-in account has visible cases", () => {
+    const account = { level: "participant" } as const;
+    const listed = (viewer: Viewer, reports: boolean) =>
+      fileGroupsFor(viewer, { REPORTS: reports }).flatMap((group) =>
+        group.items.map((item) => item.command),
+      );
+    expect(listed(account, false)).not.toContain("REPORTS");
+    expect(listed(account, true)).toContain("REPORTS");
+    expect(listed(null, true)).not.toContain("REPORTS");
+    expect(visibleCommands(account, { REPORTS: true }).map((command) => command.id)).toContain(
+      "REPORTS",
+    );
+    expect(menuDefsFor(account, { REPORTS: true }).flatMap((menu) => menu.entries)).toContainEqual({
+      kind: "command",
+      command: "REPORTS",
+      label: "Reports...",
+    });
+  });
+
   it("resolves every doc command to a document", () => {
     for (const command of commands) {
       if (!command.doc) continue;

@@ -329,6 +329,33 @@ export const sprites = {
       "................",
     ],
   },
+  // The reports file: a signal flag, flying from the same hand as the inbox
+  // envelope but with its own silhouette.
+  flag: {
+    palette: {
+      K: "#000000",
+      l: "#AAAAAA",
+      r: "#FF5555",
+    },
+    map: [
+      "................",
+      "....KKK.........",
+      "....KlK.........",
+      "....KlKKKKKKKK..",
+      "....KlKrrrrrrK..",
+      "....KlKrrrrrK...",
+      "....KlKrrrrrrK..",
+      "....KlKKKKKKKK..",
+      "....KlK.........",
+      "....KlK.........",
+      "....KlK.........",
+      "....KlK.........",
+      "....KlK.........",
+      "...KKKKK........",
+      "................",
+      "................",
+    ],
+  },
   person: {
     palette: {
       K: "#000000",

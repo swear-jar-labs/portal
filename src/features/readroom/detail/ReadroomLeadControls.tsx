@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Field, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
+import { TextAction } from "@/shared/TextAction/TextAction";
 import { fromLocalInput, toLocalInput } from "../model/datetime";
 import type { Readroom } from "../model/readrooms";
 import { moveDeadline, stopReadroom } from "../data/readroom-store";
@@ -108,9 +109,9 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
 
   return (
     <Stack direction="row" gap={6} wrap navRow>
-      <Button
+      <TextAction
         id={LEAD_MOVE_BUTTON_ID}
-        variant="ghost"
+        bracketed
         onClick={() => {
           setDraft(toLocalInput(readroom.deadlineAt));
           setError(undefined);
@@ -118,10 +119,10 @@ export function ReadroomLeadControls({ readroom }: ReadroomLeadControlsProps) {
         }}
       >
         {messages.readroom.lead.move}
-      </Button>
-      <Button variant="ghost" onClick={askStop}>
+      </TextAction>
+      <TextAction bracketed onClick={askStop}>
         {messages.readroom.lead.stop}
-      </Button>
+      </TextAction>
     </Stack>
   );
 }

@@ -11,7 +11,8 @@ import {
   mockLogoff,
 } from "@/features/account";
 import { InboxFileIcon, InboxStatusAddon, listInboxSeed } from "@/features/inbox";
-import { ChildrenPathProvider, DosShell, type ShellAddon } from "@/features/shell";
+import { ModerationDosShell } from "@/features/moderation";
+import { ChildrenPathProvider, type ShellAddon } from "@/features/shell";
 import { messages } from "@/content/messages";
 
 const greybeard18 = localFont({
@@ -61,9 +62,14 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
         <Crt>
           <MemberIdentityProvider identities={memberIdentities()}>
             <ChildrenPathProvider>
-              <DosShell session={session} logoff={mockLogoff} overlay={overlay} addons={addons}>
+              <ModerationDosShell
+                session={session}
+                logoff={mockLogoff}
+                overlay={overlay}
+                addons={addons}
+              >
                 {children}
-              </DosShell>
+              </ModerationDosShell>
             </ChildrenPathProvider>
           </MemberIdentityProvider>
         </Crt>

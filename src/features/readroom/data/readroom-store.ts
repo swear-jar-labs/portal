@@ -61,6 +61,10 @@ const INITIAL_READROOM_STATE: ReadroomState = { tasks: {}, addedReadrooms: [] };
 const LOCAL_READROOM_ID_PREFIX = "local-readroom-";
 const LOCAL_NOTE_ID_PREFIX = "local-note-";
 
+export function isLocalReadroomId(id: string): boolean {
+  return id.startsWith(LOCAL_READROOM_ID_PREFIX);
+}
+
 function localId(prefix: string): string {
   return `${prefix}${crypto.randomUUID()}`;
 }

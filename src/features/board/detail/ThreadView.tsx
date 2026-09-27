@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
+import { targetKey, useModeration } from "@/features/moderation/contracts";
 import { formatAge, type Thread } from "../model/threads";
 import { excerpt } from "../model/excerpt";
 import { PostItem } from "./PostItem";
@@ -59,6 +60,7 @@ function ThreadMeta({
 export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   const actions = useThreadActions();
   const session = useShellSession();
+  const moderation = useModeration();
   const { state } = actions;
   const [replyTargetId, setReplyTargetId] = useState<string | undefined>();
 
@@ -72,9 +74,11 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   function resolveTarget(id: string): ReplyTarget | undefined {
     const parent = posts.find((entry) => entry.post.id === id)?.post;
     if (parent === undefined) return undefined;
-    const parentExcerpt = state.deletedPosts.has(parent.id)
-      ? ""
-      : excerpt(state.edits.get(parent.id) ?? parent.body, REPLY_EXCERPT_LENGTH);
+    const parentExcerpt =
+      state.deletedPosts.has(parent.id) ||
+      moderation.hidden[targetKey({ kind: "post", id: parent.id })]
+        ? ""
+        : excerpt(state.edits.get(parent.id) ?? parent.body, REPLY_EXCERPT_LENGTH);
     return {
       id: parent.id,
       user: parent.author.user,
@@ -106,6 +110,9 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
           <PostItem
             key={post.id}
             post={post}
+            threadId={thread.id}
+            threadTitle={thread.title}
+            root={post.id === thread.posts[0]?.id}
             now={now}
             body={body}
             voted={state.votedPosts.has(post.id)}

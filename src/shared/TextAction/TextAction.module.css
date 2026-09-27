@@ -1,0 +1,7 @@
+.bracketed::before {
+  content: "[";
+}
+
+.bracketed::after {
+  content: "]";
+}

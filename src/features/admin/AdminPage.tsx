@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Heading, Stack, Text } from "@swearjar/dos";
-import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import {
   ApplicationHistory,
@@ -9,11 +8,12 @@ import {
   mockDecideMemberApplication,
 } from "@/features/account/contracts";
 import { listProjectSubmissions, listProjects } from "@/features/projects/contracts";
+import { ModerationQueue } from "@/features/moderation/contracts";
 import { ProjectAdminQueue } from "./AdminProjectQueue";
 import { AdminProjectTeams } from "./AdminProjectTeams";
-import { ShellPanel } from "@/features/shell";
 import { AdminQueue } from "./AdminQueue";
 import { AdminWorkspace } from "./AdminWorkspace";
+import { AdminStack } from "./AdminStack";
 import { mockDecideProject } from "./mock-project-actions";
 
 export const adminMetadata: Metadata = messages.admin.metadata;
@@ -22,7 +22,7 @@ export async function AdminPage() {
   const actor = await getActorSession();
   const projects = actor?.admin ? await listProjects() : [];
   return (
-    <ShellPanel title={fileTitle("ADMIN")} closable>
+    <AdminStack>
       {actor?.admin ? (
         <AdminWorkspace
           memberQueue={
@@ -41,6 +41,7 @@ export async function AdminPage() {
             />
           }
           teamQueue={<AdminProjectTeams projects={projects} />}
+          moderationQueue={<ModerationQueue />}
         />
       ) : (
         <Stack gap={8}>
@@ -48,6 +49,6 @@ export async function AdminPage() {
           <Text role="danger">{messages.admin.denied}</Text>
         </Stack>
       )}
-    </ShellPanel>
+    </AdminStack>
   );
 }

@@ -4,14 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
-import { useShellDialogs } from "@/features/shell";
+import { useShellDialogs, useShellSession } from "@/features/shell";
+import {
+  ModerationTargetControls,
+  markEdited,
+  markTargetUnavailable,
+  targetKey,
+  useModeration,
+  type ModerationTarget,
+} from "@/features/moderation/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { formatAge } from "@/shared/age";
 import { ticketCommentSchema } from "../model/schema";
 import { freshTicketAccess } from "../data/mock-ticket-access";
 import * as ticketStore from "../data/ticket-store";
-import { ticketCommentId, type Ticket, type TicketComment } from "../model/tickets";
+import { ticketCommentId, ticketPath, type Ticket, type TicketComment } from "../model/tickets";
 import { canWriteTicket, type TicketProject } from "../model/workflow";
 import styles from "../tickets.module.css";
 
@@ -50,12 +58,45 @@ export function TicketCommentItem({
   canEdit,
 }: TicketCommentItemProps) {
   const dialogs = useShellDialogs();
+  const session = useShellSession();
+  const moderation = useModeration();
+  const target: ModerationTarget = {
+    kind: "comment",
+    id: comment.id,
+    author: comment.author.user,
+    label: ticket.key,
+    href: `${ticketPath(ticket.key)}#${ticketCommentId(comment.id)}`,
+    initialBody: comment.body,
+    ...(ticketStore.isLocalTicketId(ticket.id) ? { localBody: comment.body } : {}),
+  };
+  const caseBody = moderation.reports.find(
+    (report) => targetKey(report.target) === targetKey(target),
+  );
+  const currentBody =
+    caseBody && caseBody.currentRevision > 1
+      ? (caseBody.currentBody ?? comment.body)
+      : comment.body;
+  const hiddenRecord = moderation.hidden[targetKey(target)];
+  const hidden = hiddenRecord !== undefined;
+  const canSeeHidden = session?.admin || session?.user === comment.author.user;
+  const needsEdit = moderation.reports.some(
+    (report) => targetKey(report.target) === targetKey(target) && report.status === "needs-edit",
+  );
+  const editable = canEdit || (session?.user === comment.author.user && needsEdit);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(comment.body);
+  const [draft, setDraft] = useState(currentBody);
   const [error, setError] = useState<string | undefined>();
   const deleted = comment.deletedAt !== undefined;
   const wasDeleted = useRef(deleted);
   const wasEditing = useRef(editing);
+
+  useEffect(() => {
+    const id = ticketCommentId(comment.id);
+    if (window.location.hash !== `#${id}`) return;
+    const element = document.getElementById(id);
+    element?.focus();
+    element?.scrollIntoView({ block: "nearest" });
+  }, [comment.id]);
 
   // The tombstone and the closed inline editor both unmount the control the
   // keyboard sat on: the comment takes the focus back, so the walk continues
@@ -69,7 +110,7 @@ export function TicketCommentItem({
   }, [comment.id, deleted, editing]);
 
   function startEdit() {
-    setDraft(comment.body);
+    setDraft(currentBody);
     setError(undefined);
     setEditing(true);
   }
@@ -78,7 +119,7 @@ export function TicketCommentItem({
     const access = await freshTicketAccess(project.slug);
     return (
       !!access &&
-      canWriteTicket(access.actor, access.project) &&
+      (canWriteTicket(access.actor, access.project) || needsEdit) &&
       access.actor?.user === comment.author.user
     );
   }
@@ -95,6 +136,9 @@ export function TicketCommentItem({
     }
     setEditing(false);
     ticketStore.editTicketComment(ticket.id, comment.id, parsed.data.body, comment.author.user);
+    // The save above is author-checked, so a mismatch here is only a session
+    // race or a removed target; the ticket store already holds the saved body.
+    if (parsed.data.body !== currentBody) markEdited(session, target, parsed.data.body);
   }
 
   function cancelEdit() {
@@ -113,6 +157,7 @@ export function TicketCommentItem({
               return;
             }
             ticketStore.deleteTicketComment(ticket.id, comment.id, comment.author.user);
+            markTargetUnavailable(target);
           }}
           onCancel={dialogs.close}
         />
@@ -121,13 +166,17 @@ export function TicketCommentItem({
   }
 
   const meta = [formatAge(comment.createdAt, now, messages.tickets.age)];
-  if (!deleted && comment.editedAt !== undefined) {
+  if (!deleted && (comment.editedAt !== undefined || (caseBody?.currentRevision ?? 1) > 1)) {
     meta.push(messages.tickets.dossier.comments.edited);
   }
 
   const content = deleted ? (
     <Text as="div" role="hint">
       {messages.tickets.dossier.comments.deleted}
+    </Text>
+  ) : hidden && !canSeeHidden ? (
+    <Text as="div" role="hint">
+      {hiddenRecord?.permanent ? messages.moderation.permanentHidden : messages.moderation.hidden}
     </Text>
   ) : editing ? (
     <Form
@@ -154,7 +203,7 @@ export function TicketCommentItem({
       </Stack>
     </Form>
   ) : (
-    <Markdown>{comment.body}</Markdown>
+    <Markdown>{currentBody}</Markdown>
   );
 
   return (
@@ -171,7 +220,7 @@ export function TicketCommentItem({
         <Text as="span" role="hint">
           {meta.join(" · ")}
         </Text>
-        {!deleted && !editing && canEdit ? (
+        {!deleted && !editing && editable ? (
           <>
             <Button variant="ghost" onClick={startEdit}>
               {messages.tickets.dossier.comments.edit}
@@ -181,8 +230,12 @@ export function TicketCommentItem({
             </Button>
           </>
         ) : null}
+        {!deleted && !editing ? <ModerationTargetControls target={target} mode="action" /> : null}
       </Stack>
       {content}
+      {!deleted && hidden && canSeeHidden ? (
+        <ModerationTargetControls target={target} mode="status" />
+      ) : null}
       {!editing && error === messages.tickets.edit.denied ? (
         <Text role="danger">{error}</Text>
       ) : null}

@@ -87,6 +87,7 @@ export type DosShellProps = {
   // Section-owned chrome (the inbox unread counter and its file icon): the
   // layout composes the addons, so the shell never imports a section.
   addons?: readonly ShellAddon[];
+  commandAvailability?: Partial<Record<CommandId, boolean>>;
 };
 
 // The file highlight follows the query (FORUM vs ERRATA share a pathname),
@@ -116,7 +117,14 @@ function ShellOverlayBody({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-export function DosShell({ children, overlay, session, logoff, addons }: DosShellProps) {
+export function DosShell({
+  children,
+  overlay,
+  session,
+  logoff,
+  addons,
+  commandAvailability,
+}: DosShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
@@ -170,8 +178,14 @@ export function DosShell({ children, overlay, session, logoff, addons }: DosShel
     if (!isHome) push(HOME_PATH);
   }, [isHome, push]);
 
-  const commandList = useMemo(() => visibleCommands(session), [session]);
-  const groups = useMemo(() => fileGroupsFor(session), [session]);
+  const commandList = useMemo(
+    () => visibleCommands(session, commandAvailability),
+    [session, commandAvailability],
+  );
+  const groups = useMemo(
+    () => fileGroupsFor(session, commandAvailability),
+    [session, commandAvailability],
+  );
   const functionKeys = useMemo(() => keyDefsFor(session), [session]);
   const { tray: trayAddons, fileIcons } = useMemo(() => resolveShellAddons(addons), [addons]);
 
@@ -319,7 +333,7 @@ export function DosShell({ children, overlay, session, logoff, addons }: DosShel
 
   const menus = useMemo(
     () =>
-      menuDefsFor(session).map((menu) => ({
+      menuDefsFor(session, commandAvailability).map((menu) => ({
         id: menu.id,
         label: menu.label,
         entries: menu.entries.map((entry) =>
@@ -333,7 +347,7 @@ export function DosShell({ children, overlay, session, logoff, addons }: DosShel
               },
         ),
       })),
-    [runCommand, session],
+    [commandAvailability, runCommand, session],
   );
 
   const keyItems = useMemo(

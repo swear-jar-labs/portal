@@ -167,6 +167,8 @@ export function ReadroomView({
             <ReadroomNoteItem
               key={note.id}
               note={note}
+              taskId={effective.id}
+              taskTitle={effective.title}
               now={now}
               body={noteBodies[note.id]}
               editedBody={task.noteEdits.get(note.id)}

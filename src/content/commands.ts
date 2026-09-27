@@ -45,6 +45,7 @@ export const APPLY_PATH = "/apply";
 export const ADMIN_PATH = "/admin";
 export const REGISTER_PATH = "/register";
 export const INBOX_PATH = "/inbox";
+export const REPORTS_PATH = "/reports";
 const LOGIN_RETURN_PARAM = "next";
 
 export function loginHref(returnTo?: string): `/${string}` {
@@ -81,6 +82,7 @@ export function stripQuery(location: string): string {
 type AppCommandDef = Command & {
   file?: FileMeta;
   audience?: Audience;
+  conditional?: boolean;
 };
 
 const commandDefs = [
@@ -181,6 +183,14 @@ const commandDefs = [
     file: { group: "account", name: "INBOX", ext: "EXE", size: 512, icon: "mail" },
   },
   {
+    id: "REPORTS",
+    description: messages.shell.registry.descriptions.REPORTS,
+    href: REPORTS_PATH,
+    audience: "account",
+    conditional: true,
+    file: { group: "account", name: "REPORTS", ext: "EXE", size: 512, icon: "flag" },
+  },
+  {
     id: "SETTINGS",
     description: messages.shell.registry.descriptions.SETTINGS,
     href: "/settings",
@@ -217,6 +227,7 @@ export type AppCommand = Omit<Command, "id" | "doc" | "href"> & {
   href?: `/${string}`;
   file?: FileMeta;
   audience?: Audience;
+  conditional?: boolean;
 };
 
 export const commands: readonly AppCommand[] = commandDefs;
@@ -270,7 +281,12 @@ export function commandIdForLocation(location: string): CommandId | undefined {
   return commandIdForPath(pathname);
 }
 
-export function isVisibleFor(command: Pick<AppCommand, "audience">, viewer: Viewer): boolean {
+export function isVisibleFor(
+  command: Pick<AppCommand, "id" | "audience" | "conditional">,
+  viewer: Viewer,
+  availability: Partial<Record<CommandId, boolean>> = {},
+): boolean {
+  if (command.conditional && availability[command.id] !== true) return false;
   const audience = command.audience ?? "any";
   if (audience === "any") return true;
   if (viewer === null) return audience === "guest";
@@ -279,8 +295,11 @@ export function isVisibleFor(command: Pick<AppCommand, "audience">, viewer: View
   return audience === viewer.level;
 }
 
-export function visibleCommands(viewer: Viewer): AppCommand[] {
-  return commands.filter((command) => isVisibleFor(command, viewer));
+export function visibleCommands(
+  viewer: Viewer,
+  availability?: Partial<Record<CommandId, boolean>>,
+): AppCommand[] {
+  return commands.filter((command) => isVisibleFor(command, viewer, availability));
 }
 
 export function fileTitle(commandId: CommandId): string {
@@ -313,12 +332,16 @@ const fileGroupDefs = [
   { id: "read", ...messages.shell.files.groups.read },
 ] as const satisfies readonly { id: FileGroupId; label: string; short: string }[];
 
-export function fileGroupsFor(viewer: Viewer): FileGroup[] {
+export function fileGroupsFor(
+  viewer: Viewer,
+  availability?: Partial<Record<CommandId, boolean>>,
+): FileGroup[] {
   return fileGroupDefs.map((group) => ({
     ...group,
     items: commands.flatMap((command) => {
       const file = command.file;
-      if (!file || file.group !== group.id || !isVisibleFor(command, viewer)) return [];
+      if (!file || file.group !== group.id || !isVisibleFor(command, viewer, availability))
+        return [];
       return [
         { command: command.id, name: file.name, ext: file.ext, size: file.size, icon: file.icon },
       ];
@@ -360,6 +383,7 @@ const menuDefs: MenuDef[] = [
       { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
       { kind: "command", command: "ADMIN", label: messages.shell.menuBar.labels.ADMIN },
       { kind: "command", command: "INBOX", label: messages.shell.menuBar.labels.INBOX },
+      { kind: "command", command: "REPORTS", label: messages.shell.menuBar.labels.REPORTS },
       { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
       { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
       { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
@@ -397,14 +421,17 @@ function trimSeparators(entries: MenuEntry[]): MenuEntry[] {
   return result;
 }
 
-export function menuDefsFor(viewer: Viewer): MenuDef[] {
+export function menuDefsFor(
+  viewer: Viewer,
+  availability?: Partial<Record<CommandId, boolean>>,
+): MenuDef[] {
   return menuDefs.map((menu) => ({
     ...menu,
     entries: trimSeparators(
       menu.entries.filter((entry) => {
         if (entry.kind === "separator") return true;
         const command = commandById.get(entry.command);
-        return command === undefined || isVisibleFor(command, viewer);
+        return command === undefined || isVisibleFor(command, viewer, availability);
       }),
     ),
   }));

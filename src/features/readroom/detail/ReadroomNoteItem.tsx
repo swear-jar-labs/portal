@@ -5,17 +5,35 @@ import { Button, DOS_ROW_ATTR, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { useShellDialogs } from "@/features/shell";
+import { useShellSession } from "@/features/shell";
+import {
+  ModerationTargetControls,
+  markEdited,
+  markTargetUnavailable,
+  targetKey,
+  useModeration,
+  type ModerationTarget,
+} from "@/features/moderation/contracts";
 import { formatAge } from "@/shared/age";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
-import { noteElementId, READROOM_CARD_ATTR, type ReadroomNote } from "../model/readrooms";
+import { TextAction } from "@/shared/TextAction/TextAction";
+import {
+  noteElementId,
+  readroomPath,
+  READROOM_CARD_ATTR,
+  type ReadroomNote,
+} from "../model/readrooms";
 import { noteSchema } from "../model/schema";
+import { isLocalReadroomId } from "../data/readroom-store";
 import styles from "../readroom.module.css";
 
 const EDIT_ROWS = 4;
 
 export type ReadroomNoteItemProps = {
   note: ReadroomNote;
+  taskId: string;
+  taskTitle: string;
   now: string;
   // The Markdown body rendered in RSC (a fixture note); a session note or an
   // edited one renders through the same pipeline on the client.
@@ -46,6 +64,8 @@ function DeleteConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCance
  * author's inline editor while the cycle is collecting. */
 export function ReadroomNoteItem({
   note,
+  taskId,
+  taskTitle,
   now,
   body,
   editedBody,
@@ -55,10 +75,43 @@ export function ReadroomNoteItem({
   onDelete,
 }: ReadroomNoteItemProps) {
   const dialogs = useShellDialogs();
+  const session = useShellSession();
+  const moderation = useModeration();
+  const target: ModerationTarget = {
+    kind: "note",
+    id: note.id,
+    author: note.author.user,
+    label: taskTitle,
+    href: `${readroomPath(taskId)}#${noteElementId(note.id)}`,
+    initialBody: editedBody ?? note.body,
+    ...(isLocalReadroomId(taskId) ? { localBody: editedBody ?? note.body } : {}),
+  };
+  const caseBody = moderation.reports.find(
+    (report) => targetKey(report.target) === targetKey(target),
+  );
+  const currentBody =
+    caseBody && caseBody.currentRevision > 1
+      ? (caseBody.currentBody ?? editedBody ?? note.body)
+      : (editedBody ?? note.body);
+  const hiddenRecord = moderation.hidden[targetKey(target)];
+  const hidden = hiddenRecord !== undefined;
+  const canSeeHidden = session?.admin || own;
+  const needsEdit = moderation.reports.some(
+    (report) => targetKey(report.target) === targetKey(target) && report.status === "needs-edit",
+  );
+  const editable = canEdit || (own && needsEdit);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note.body);
   const [error, setError] = useState<string | undefined>();
   const wasEditing = useRef(false);
+
+  useEffect(() => {
+    const id = noteElementId(note.id);
+    if (window.location.hash !== `#${id}`) return;
+    const element = document.getElementById(id);
+    element?.focus();
+    element?.scrollIntoView({ block: "nearest" });
+  }, [note.id]);
 
   // The closed inline editor unmounts the control the keyboard sat on: the
   // note takes the focus back, so the walk continues from it.
@@ -70,7 +123,7 @@ export function ReadroomNoteItem({
   }, [editing, note.id]);
 
   function startEdit() {
-    setDraft(editedBody ?? note.body);
+    setDraft(currentBody);
     setError(undefined);
     setEditing(true);
   }
@@ -87,6 +140,9 @@ export function ReadroomNoteItem({
     }
     setEditing(false);
     onEdit(parsed.data.body);
+    // The edit control is author-only, so a mismatch here is only a session
+    // race or a removed target; the section store already holds the saved body.
+    if (parsed.data.body !== currentBody) markEdited(session, target, parsed.data.body);
   }
 
   function askDelete() {
@@ -97,6 +153,7 @@ export function ReadroomNoteItem({
           onConfirm={() => {
             dialogs.close();
             onDelete();
+            markTargetUnavailable(target);
           }}
           onCancel={dialogs.close}
         />
@@ -105,33 +162,43 @@ export function ReadroomNoteItem({
   }
 
   const meta = [formatAge(note.createdAt, now, messages.readroom.age)];
-  if (!editing && editedBody !== undefined) meta.push(messages.readroom.notes.edited);
+  if (!editing && (editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1))
+    meta.push(messages.readroom.notes.edited);
 
-  const content = editing ? (
-    <Form onSubmit={saveEdit} onCancel={cancelEdit} ariaLabel={messages.readroom.notes.edit.label}>
-      <Stack gap={6}>
-        <MarkdownEditor
-          label={messages.readroom.notes.edit.label}
-          name={`note-edit-${note.id}`}
-          value={draft}
-          onChange={setDraft}
-          rows={EDIT_ROWS}
-          error={error}
-          autoFocus
-        />
-        <Stack direction="row" gap={6} navRow>
-          <Button type="submit" variant="primary">
-            {messages.readroom.notes.edit.save}
-          </Button>
-          <Button onClick={cancelEdit}>{messages.readroom.notes.edit.cancel}</Button>
+  const content =
+    hidden && !canSeeHidden ? (
+      <Text as="div" role="hint">
+        {hiddenRecord?.permanent ? messages.moderation.permanentHidden : messages.moderation.hidden}
+      </Text>
+    ) : editing ? (
+      <Form
+        onSubmit={saveEdit}
+        onCancel={cancelEdit}
+        ariaLabel={messages.readroom.notes.edit.label}
+      >
+        <Stack gap={6}>
+          <MarkdownEditor
+            label={messages.readroom.notes.edit.label}
+            name={`note-edit-${note.id}`}
+            value={draft}
+            onChange={setDraft}
+            rows={EDIT_ROWS}
+            error={error}
+            autoFocus
+          />
+          <Stack direction="row" gap={6} navRow>
+            <Button type="submit" variant="primary">
+              {messages.readroom.notes.edit.save}
+            </Button>
+            <Button onClick={cancelEdit}>{messages.readroom.notes.edit.cancel}</Button>
+          </Stack>
         </Stack>
-      </Stack>
-    </Form>
-  ) : editedBody !== undefined ? (
-    <Markdown>{editedBody}</Markdown>
-  ) : (
-    (body ?? <Markdown>{note.body}</Markdown>)
-  );
+      </Form>
+    ) : editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1 ? (
+      <Markdown>{currentBody}</Markdown>
+    ) : (
+      (body ?? <Markdown>{note.body}</Markdown>)
+    );
 
   return (
     <div
@@ -151,18 +218,20 @@ export function ReadroomNoteItem({
           <Text as="span" role="hint">
             {meta.join(" · ")}
           </Text>
-          {canEdit && !editing ? (
+          {editable && !editing ? (
             <>
-              <Button variant="ghost" onClick={startEdit}>
+              <TextAction bracketed onClick={startEdit}>
                 {messages.readroom.notes.edit.action}
-              </Button>
-              <Button variant="ghost" onClick={askDelete}>
+              </TextAction>
+              <TextAction bracketed onClick={askDelete}>
                 {messages.readroom.notes.delete.action}
-              </Button>
+              </TextAction>
             </>
           ) : null}
+          {!editing ? <ModerationTargetControls target={target} mode="action" bracketed /> : null}
         </Stack>
         {content}
+        {hidden && canSeeHidden ? <ModerationTargetControls target={target} mode="status" /> : null}
       </Stack>
     </div>
   );

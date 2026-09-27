@@ -188,15 +188,14 @@ test("opens MANAGE TEAM from the admin queue as a layer over the admin page", as
   const manage = entry.getByRole("link", { name: "MANAGE TEAM" });
   await manage.click();
   await expect(page).toHaveURL(`${projectPath("flagship")}?tab=team&manage=team`);
-  await expect(layers(page)).toHaveCount(2);
+  await expect(layers(page)).toHaveCount(3);
   await expect(page.getByRole("region", { name: "MANAGE TEAM" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "ADMIN.EXE" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "ADMIN.EXE" })).toHaveCount(1);
   await expectNoViolations(page, "manage team over admin");
 
-  // The host unmounts the page under the layer, so the admin workspace
-  // remounts on its first tab after the close (accepted trade-off).
+  // The project route owns its team panel; Escape returns to the admin queue.
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL("/admin");
-  await expect(layers(page)).toHaveCount(0);
+  await expect(layers(page)).toHaveCount(1);
   await expect(page.getByRole("region", { name: "ADMIN.EXE" })).toBeVisible();
 });

@@ -64,7 +64,9 @@ export function ProjectsFeed({
                     project={project}
                     now={now}
                     current={project.slug === currentSlug}
-                    eagerScreenshot={project.slug === projects[0]?.slug}
+                    eagerScreenshot={
+                      project.slug === projects[0]?.slug || project.slug === currentSlug
+                    }
                     onActivate={(event) => onActivate(project.slug, event)}
                   />
                 </Stack>

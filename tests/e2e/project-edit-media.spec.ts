@@ -19,6 +19,7 @@ test("project screenshots keep their own aspect ratios in the dossier and card",
   expect(logBox).not.toBeNull();
   if (!logBox) return;
   expect(logBox.width / logBox.height).toBeCloseTo(4 / 3, 1);
+  expect(logBox.height).toBeLessThanOrEqual(400);
 
   await page.goto("/projects");
   const card = page
@@ -29,6 +30,7 @@ test("project screenshots keep their own aspect ratios in the dossier and card",
   expect(cardBox).not.toBeNull();
   if (!cardBox) return;
   expect(cardBox.width / cardBox.height).toBeCloseTo(4 / 3, 1);
+  expect(cardBox.height).toBeLessThanOrEqual(400);
 });
 
 test("CANCEL closes a directly linked project editor", async ({ page }) => {
@@ -138,9 +140,9 @@ test("a Maintainer edits a new project's details and screenshots across accounts
   await page.keyboard.press("Enter");
   await form.getByRole("button", { name: "MOVE UP 2" }).click();
   await form.getByRole("button", { name: "SAVE PROJECT" }).click();
-  await expect(page.getByRole("region", { name: editedName, includeHidden: true })).toHaveCount(1);
-  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
   await expect(page).toHaveURL(path);
+  await expect(page.getByRole("region", { name: editedName, includeHidden: true })).toHaveCount(1);
   const updated = page.getByRole("region", { name: editedName });
   await expect(updated.getByRole("heading", { name: editedName, level: 1 })).toBeVisible();
   const screenshotButton = updated.getByRole("button", {
@@ -168,6 +170,15 @@ test("a Maintainer edits a new project's details and screenshots across accounts
   await page.keyboard.press("Escape");
   await page.reload();
   await expect(card.getByRole("img", { name: `${editedName}: screen three` })).toBeVisible();
+  await card.getByRole("link", { name: editedName }).click();
+  const overlayProject = page.getByRole("region", { name: editedName });
+  await overlayProject.getByRole("button", { name: "EDIT PROJECT" }).click();
+  const overlayEditor = page.getByRole("region", { name: "EDIT PROJECT" });
+  await overlayEditor.getByRole("button", { name: "SAVE PROJECT" }).click();
+  await expect(overlayEditor).toHaveCount(0);
+  await expect(overlayProject).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL("/projects");
   await logoff(page);
 
   await logon(page, "lin");
@@ -182,11 +193,19 @@ test("a Maintainer edits a new project's details and screenshots across accounts
   const revise = page.getByRole("form", { name: "EDIT PROJECT" });
   await revise.getByRole("button", { name: "REMOVE 1" }).click();
   await revise.getByRole("button", { name: "SAVE PROJECT" }).click();
+  await expect(revise).toHaveCount(0);
+  await expect(page).toHaveURL(path);
   await expect(
     page
       .getByRole("region", { name: editedName, includeHidden: true })
       .getByRole("img", { name: `${editedName}: screen three`, includeHidden: true }),
   ).toHaveCount(0);
+  const remainingImage = page.getByRole("region", { name: editedName }).getByRole("img", {
+    name: `${editedName}: screen one`,
+  });
+  const remainingBox = await remainingImage.boundingBox();
+  expect(remainingBox).not.toBeNull();
+  expect(remainingBox?.height).toBeLessThanOrEqual(400);
   await page.goto("/projects");
   await expect(card.getByRole("img", { name: `${editedName}: screen one` })).toBeVisible();
   await expect(card.getByRole("img", { name: `${editedName}: screen two` })).toBeVisible();

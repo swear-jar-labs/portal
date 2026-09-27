@@ -152,10 +152,11 @@ export function ProjectEditForm({ project }: { project: Project }) {
         return;
       }
       router.refresh();
+      closeEditor();
     });
   }
 
-  function cancel() {
+  function closeEditor() {
     if (closing.current) return;
     closing.current = true;
     if (closeManage) closeManage();
@@ -294,7 +295,7 @@ export function ProjectEditForm({ project }: { project: Project }) {
               <Button type="submit" variant="primary">
                 {copy.save}
               </Button>
-              <Button onClick={cancel}>{copy.cancel}</Button>
+              <Button onClick={closeEditor}>{copy.cancel}</Button>
             </Stack>
           </Stack>
         </fieldset>

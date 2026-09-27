@@ -8,6 +8,7 @@ import type { ProjectScreenshot } from "../model/projects";
 import styles from "./project-media.module.css";
 
 const GALLERY_ROW_HEIGHT = 160;
+const SCREENSHOT_TILE_MAX_HEIGHT = 400;
 
 export function ProjectScreenshotTiles({
   screenshots,
@@ -44,6 +45,7 @@ export function ProjectScreenshotTiles({
               flexBasis: compact
                 ? undefined
                 : Math.round((item.width / item.height) * GALLERY_ROW_HEIGHT),
+              maxWidth: (item.width / item.height) * SCREENSHOT_TILE_MAX_HEIGHT,
             }}
           >
             <Button

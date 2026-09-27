@@ -71,7 +71,11 @@ test("opens a project layer and closes it back to the card", async ({ page }) =>
   const panel = page.getByRole("region", { name: "Compiler" });
   await expect(panel.getByRole("heading", { level: 1, name: "Compiler" })).toBeVisible();
   await expect(panel.getByRole("heading", { level: 2, name: "ABOUT" })).toBeVisible();
-  await expect(panel.getByRole("heading", { level: 2, name: "FORGE" })).toBeVisible();
+  await panel.getByRole("tab", { name: "REPOSITORY" }).click();
+  await expect(page).toHaveURL(projectTabPath("compiler", "repository"));
+  await expect(panel.getByRole("heading", { level: 2, name: "REPOSITORY" })).toBeVisible();
+  await panel.getByRole("tab", { name: "PROJECT" }).click();
+  await expect(panel.getByRole("heading", { level: 2, name: "REPOSITORY" })).toBeHidden();
   await expect(panel.getByRole("heading", { level: 2, name: "RELATED THREADS" })).toHaveCount(0);
   await panel.getByRole("tab", { name: "PROJECT" }).focus();
   await page.keyboard.press("End");
@@ -85,6 +89,20 @@ test("opens a project layer and closes it back to the card", async ({ page }) =>
   await expect(layers(page)).toHaveCount(1);
   await expect(cards(page).nth(1).getByRole("link", { name: "Compiler" })).toBeFocused();
   await expectNoViolations(page, projectPath("compiler"));
+});
+
+test("opens the repository tab from a direct link", async ({ page }) => {
+  await page.goto(projectTabPath("tooling", "repository"));
+  await waitForHydration(page);
+  const panel = page.getByRole("region", { name: "Tooling" });
+  await expect(panel.getByRole("tab", { name: "REPOSITORY" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(panel.getByRole("heading", { level: 2, name: "REPOSITORY" })).toBeVisible();
+  await expect(
+    panel.getByRole("link", { name: "https://gitlab.com/swear-jar-labs/tooling" }),
+  ).toBeVisible();
 });
 
 test("walks the index with arrows and opens with Enter", async ({ page }) => {
@@ -210,16 +228,17 @@ test("keeps an empty journal readable", async ({ page }) => {
   const panel = page.getByRole("region", { name: "Flagship" });
   await panel.getByRole("tab", { name: "ACTIVITY" }).click();
   await expect(panel.getByText("No related threads yet.")).toBeVisible();
-  await panel.getByRole("tab", { name: "PROJECT" }).click();
+  await panel.getByRole("tab", { name: "REPOSITORY" }).click();
   await expect(panel.getByText("No repository linked yet.")).toBeVisible();
 });
 
-test("shows forge counters, the frozen archive and the member call", async ({ page }) => {
+test("shows repository counters, the frozen archive and the member call", async ({ page }) => {
   await page.goto(projectPath("swearjar-dos"));
   await waitForHydration(page);
   const panel = page.getByRole("region", { name: "SWEARJAR.DOS" });
 
-  await expect(panel.getByText("REPOSITORY", { exact: true })).toBeVisible();
+  await panel.getByRole("tab", { name: "REPOSITORY" }).click();
+  await expect(panel.getByRole("heading", { level: 2, name: "REPOSITORY" })).toBeVisible();
   await expect(panel.getByText("OPEN PRS", { exact: true })).toBeVisible();
   await expect(panel.getByText("MERGED 30D", { exact: true })).toBeVisible();
   await expect(panel.getByText("COMMITS 7D", { exact: true })).toBeVisible();
@@ -229,12 +248,16 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
   await expect(panel.getByText("RELEASE", { exact: true })).toBeVisible();
   await expect(panel.getByText(/v0\.1/)).toBeVisible();
   await expect(panel.getByText("SYNCED", { exact: true })).toBeVisible();
-  // The ABOUT stack reads as chips, like the index cards.
-  await expect(panel.getByText("STACK", { exact: true })).toBeVisible();
-  await expect(panel.getByText("TypeScript", { exact: true })).toBeVisible();
+  await expect(
+    panel.getByRole("link", { name: "https://github.com/swear-jar-labs/portal" }),
+  ).toBeVisible();
   await expect(
     panel.getByRole("link", { name: "https://github.com/swear-jar-labs/portal" }),
   ).toHaveAttribute("target", "_blank");
+  // The ABOUT stack reads as chips, like the index cards.
+  await panel.getByRole("tab", { name: "PROJECT" }).click();
+  await expect(panel.getByText("STACK", { exact: true })).toBeVisible();
+  await expect(panel.getByText("TypeScript", { exact: true })).toBeVisible();
 
   // Guests register before they can apply for project access.
   await panel.getByRole("tab", { name: "TEAM" }).click();
@@ -248,6 +271,10 @@ test("shows forge counters, the frozen archive and the member call", async ({ pa
 
   await page.goto(projectPath("token-cache"));
   await waitForHydration(page);
+  await page
+    .getByRole("region", { name: "Token Cache" })
+    .getByRole("tab", { name: "REPOSITORY" })
+    .click();
   await expect(
     page.getByRole("region", { name: "Token Cache" }).getByText("FROZEN", { exact: true }),
   ).toBeVisible();
@@ -306,7 +333,7 @@ test("shows the claim ladder and lets a maintainer tune it", async ({ page }) =>
   await expect(panel.getByText("2 DONE")).toBeVisible();
   await expect(panel.getByText("1 DONE")).toBeVisible();
 
-  await panel.getByRole("button", { name: "EDIT" }).click();
+  await panel.getByRole("button", { name: "EDIT", exact: true }).click();
   const save = panel.getByRole("button", { name: "SAVE" });
   // The opened form hands input focus to its first control.
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
@@ -322,7 +349,7 @@ test("shows the claim ladder and lets a maintainer tune it", async ({ page }) =>
   // SAVE lands the tune in the session: the rungs and the dossier gate
   // read it (cross-page it dies with the reload, like the tickets' store —
   // Phase 5 keeps it server-side).
-  await panel.getByRole("button", { name: "EDIT" }).click();
+  await panel.getByRole("button", { name: "EDIT", exact: true }).click();
   await panel.getByRole("combobox", { name: "M NEEDS" }).click();
   await page.getByRole("option", { name: "3", exact: true }).click();
   await panel.getByRole("button", { name: "SAVE" }).click();
@@ -339,7 +366,7 @@ test("Escape cancels the claim form first and closes the project next", async ({
   const panel = page.getByRole("region", { name: "Tooling" });
   await panel.getByRole("tab", { name: "TEAM" }).click();
 
-  await panel.getByRole("button", { name: "EDIT" }).click();
+  await panel.getByRole("button", { name: "EDIT", exact: true }).click();
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toBeFocused();
   // The first Esc drops the draft like CANCEL: the form is gone, the project
   // stays open, and the keyboard is back on the trigger.
@@ -347,7 +374,7 @@ test("Escape cancels the claim form first and closes the project next", async ({
   await expect(panel.getByRole("combobox", { name: "M NEEDS" })).toHaveCount(0);
   await expect(page).toHaveURL(projectTabPath("tooling", "team"));
   await expect(layers(page)).toHaveCount(2);
-  await expect(panel.getByRole("button", { name: "EDIT" })).toBeFocused();
+  await expect(panel.getByRole("button", { name: "EDIT", exact: true })).toBeFocused();
   // The second Esc finds no form and closes the project as before.
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(PROJECTS_PATH);
@@ -365,7 +392,7 @@ test("shows the ladder read-only without a maintainer seat", async ({ page }) =>
   await expect(panel.getByText("TASKS ARE AVAILABLE FOR")).toBeVisible();
   await expect(panel.getByText("EVERYONE")).toBeVisible();
   await expect(panel.getByText("TASKS NEED")).toHaveCount(2);
-  await expect(panel.getByRole("button", { name: "EDIT" })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "EDIT", exact: true })).toHaveCount(0);
 });
 
 test("shows the ladder to a guest", async ({ page }) => {
@@ -375,5 +402,5 @@ test("shows the ladder to a guest", async ({ page }) => {
   await panel.getByRole("tab", { name: "TEAM" }).click();
   await expect(panel.getByText("EVERYONE")).toBeVisible();
   await expect(panel.getByText("1 DONE")).toBeVisible();
-  await expect(panel.getByRole("button", { name: "EDIT" })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "EDIT", exact: true })).toHaveCount(0);
 });

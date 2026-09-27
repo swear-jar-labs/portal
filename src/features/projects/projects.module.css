@@ -2,12 +2,27 @@
   --dos-link: var(--dos-black);
 }
 
+.projectHeaderTitle {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.projectHeaderName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.projectHeaderAction {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 /* Passive card details let the stretched title link own their gaps and text. */
 .cardTitle .cardDetails {
   pointer-events: none;
 }
 
-/* The forge counters: label/value rows instead of a separator-joined line. */
+/* The repository counters: label/value rows instead of a separator-joined line. */
 .specs {
   display: grid;
   grid-template-columns: max-content 1fr;

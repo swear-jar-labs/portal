@@ -7,6 +7,7 @@ import { MemberLink } from "@/features/members/contracts";
 import { formatAge } from "@/shared/age";
 import { projectPath, projectStatusTones, type Project } from "../model/projects";
 import styles from "../projects.module.css";
+import { ProjectScreenshotTiles } from "../detail/ProjectScreenshots";
 
 export const projectCardId = (slug: string) => `project-card-${slug}`;
 
@@ -14,10 +15,17 @@ export type ProjectsCardProps = {
   project: Project;
   now: string;
   current?: boolean;
+  eagerScreenshot?: boolean;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
 };
 
-export function ProjectsCard({ project, now, current = false, onActivate }: ProjectsCardProps) {
+export function ProjectsCard({
+  project,
+  now,
+  current = false,
+  eagerScreenshot = false,
+  onActivate,
+}: ProjectsCardProps) {
   return (
     <Card
       id={projectCardId(project.slug)}
@@ -60,6 +68,13 @@ export function ProjectsCard({ project, now, current = false, onActivate }: Proj
               <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
             ))}
           </Stack>
+          {project.screenshots?.length ? (
+            <ProjectScreenshotTiles
+              screenshots={project.screenshots.slice(0, 2)}
+              compact
+              eagerFirst={eagerScreenshot}
+            />
+          ) : null}
         </div>
       }
     />

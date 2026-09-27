@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { messages } from "@/content/messages";
 import { userSchema } from "@/features/account/model/schema";
@@ -107,6 +109,23 @@ describe("projects fixtures", () => {
         expect(messages.readroom.tags[tech], `${project.slug} has an unlabeled tech`).toBeTypeOf(
           "string",
         );
+      }
+    }
+  });
+
+  it("seeds distinct, described screenshots for every fixture project", async () => {
+    for (const project of await listProjects()) {
+      const images = project.screenshots ?? [];
+      expect(images.length, `${project.slug} needs visible examples`).toBeGreaterThanOrEqual(2);
+      expect(new Set(images.map((image) => image.id)).size).toBe(images.length);
+      for (const image of images) {
+        expect(image.alt.trim()).not.toBe("");
+        const path = join(process.cwd(), "public", image.src);
+        expect(existsSync(path)).toBe(true);
+        expect(image.width).toBeGreaterThan(0);
+        expect(image.height).toBeGreaterThan(0);
+        const svg = readFileSync(path, "utf8");
+        expect(svg).toContain(`width="${image.width}" height="${image.height}"`);
       }
     }
   });

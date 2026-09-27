@@ -1,0 +1,91 @@
+.gallerySection {
+  margin-top: 16px;
+}
+
+.galleryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.galleryFigure {
+  margin: 0;
+  min-width: min(100%, 120px);
+  max-width: 100%;
+}
+
+/* Two classes beat the kit's ghost-button reset regardless of chunk order. */
+.galleryFigure .galleryTrigger {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: var(--dos-border-width) solid var(--dos-black);
+  text-align: left;
+  pointer-events: auto;
+}
+
+.galleryImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--dos-silver);
+}
+
+.viewer {
+  --dos-window-width: 1100px;
+}
+
+.viewerImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.cardGallery {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.cardGallery .galleryFigure {
+  flex-basis: 0;
+  min-width: 0;
+}
+
+.cardPreview {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 480px) {
+  .cardGallery {
+    flex-wrap: wrap;
+  }
+
+  .cardGallery .galleryFigure {
+    flex-basis: 100%;
+  }
+}
+
+.draftImage {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.draftItem {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--dos-black);
+}
+
+.fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

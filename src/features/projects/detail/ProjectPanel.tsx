@@ -8,6 +8,8 @@ import { ProjectClaimSection } from "./ProjectClaimSection";
 import { ProjectTeamSection } from "./ProjectTeamSection";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { ProjectCta } from "./ProjectCta";
+import { ProjectEditAction } from "./ProjectEditAction";
+import { ProjectScreenshots } from "./ProjectScreenshots";
 import type { ProjectTeam } from "../data/team-store";
 import { projectStatusTones, type Project, type ProjectTab } from "../model/projects";
 import styles from "../projects.module.css";
@@ -22,7 +24,7 @@ export type ProjectPanelProps = {
   now: string;
 };
 
-function ForgeBlock({ project, now }: { project: Project; now: string }) {
+function RepositoryBlock({ project, now }: { project: Project; now: string }) {
   const stats = project.stats;
   if (stats === undefined) {
     return project.repoUrl ? (
@@ -30,10 +32,10 @@ function ForgeBlock({ project, now }: { project: Project; now: string }) {
         <Link href={project.repoUrl} external>
           {project.repoUrl}
         </Link>
-        <Text role="hint">{messages.projects.forge.pending}</Text>
+        <Text role="hint">{messages.projects.repository.pending}</Text>
       </Stack>
     ) : (
-      <Text role="hint">{messages.projects.forge.empty}</Text>
+      <Text role="hint">{messages.projects.repository.empty}</Text>
     );
   }
   return (
@@ -42,25 +44,25 @@ function ForgeBlock({ project, now }: { project: Project; now: string }) {
         {project.repoUrl === undefined ? null : (
           <>
             <Text as="span" role="hint">
-              {messages.projects.forge.repository}
+              {messages.projects.repository.url}
             </Text>
             <Link href={project.repoUrl} external>
               {project.repoUrl}
             </Link>
           </>
         )}
-        {project.status === "archived" ? <Tag>{messages.projects.forge.frozen}</Tag> : null}
+        {project.status === "archived" ? <Tag>{messages.projects.repository.frozen}</Tag> : null}
       </Stack>
       <div className={styles.specs}>
-        <Text role="hint">{messages.projects.forge.openPrs}</Text>
+        <Text role="hint">{messages.projects.repository.openPrs}</Text>
         <Text as="span">{stats.openPrs}</Text>
-        <Text role="hint">{messages.projects.forge.merged}</Text>
+        <Text role="hint">{messages.projects.repository.merged}</Text>
         <Text as="span">{stats.merged30d}</Text>
-        <Text role="hint">{messages.projects.forge.commits}</Text>
+        <Text role="hint">{messages.projects.repository.commits}</Text>
         <Text as="span">{stats.commits7d}</Text>
         {stats.release === undefined ? null : (
           <>
-            <Text role="hint">{messages.projects.forge.release}</Text>
+            <Text role="hint">{messages.projects.repository.release}</Text>
             <Text as="span">
               {stats.release.tag}{" "}
               <Text as="span" role="hint">
@@ -69,16 +71,16 @@ function ForgeBlock({ project, now }: { project: Project; now: string }) {
             </Text>
           </>
         )}
-        <Text role="hint">{messages.projects.forge.activity}</Text>
+        <Text role="hint">{messages.projects.repository.activity}</Text>
         <Text as="span">{formatAge(stats.lastActivityAt, now, messages.projects.age)}</Text>
-        <Text role="hint">{messages.projects.forge.synced}</Text>
+        <Text role="hint">{messages.projects.repository.synced}</Text>
         <Text as="span">{formatAge(stats.syncedAt, now, messages.projects.age)}</Text>
       </div>
     </Stack>
   );
 }
 
-/** The project's RSC half: the header, description, forge counters and the
+/** The project's RSC half: the header, description, repository counters and the
  * related threads — Markdown and the member links arrive rendered, the CTA
  * reads the session in its own client island. */
 export function ProjectPanel({
@@ -99,10 +101,15 @@ export function ProjectPanel({
   return (
     <Stack gap={12}>
       <Stack direction="row" gap={8} align="center" wrap>
-        <Heading level={1}>{project.name}</Heading>
-        <Tag tone={projectStatusTones[project.status]}>
-          {messages.projects.statuses[project.status]}
-        </Tag>
+        <Stack direction="row" gap={8} align="center" wrap className={styles.projectHeaderTitle}>
+          <Heading level={1} className={styles.projectHeaderName}>
+            {project.name}
+          </Heading>
+          <Tag tone={projectStatusTones[project.status]}>
+            {messages.projects.statuses[project.status]}
+          </Tag>
+        </Stack>
+        <ProjectEditAction project={project} />
       </Stack>
 
       <ProjectWorkspace
@@ -133,11 +140,17 @@ export function ProjectPanel({
                   </Text>
                 ) : null}
               </Stack>
+              <ProjectScreenshots
+                screenshots={project.screenshots ?? []}
+                eagerFirst={activeTab === "project"}
+              />
             </Stack>
-            <Stack gap={4}>
-              <Heading level={2}>{messages.projects.forge.heading}</Heading>
-              <ForgeBlock project={project} now={now} />
-            </Stack>
+          </Stack>
+        }
+        repository={
+          <Stack gap={4}>
+            <Heading level={2}>{messages.projects.repository.heading}</Heading>
+            <RepositoryBlock project={project} now={now} />
           </Stack>
         }
         team={

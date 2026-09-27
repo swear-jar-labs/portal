@@ -11,6 +11,7 @@ import {
   PROJECT_MANAGE_QUERY_KEY,
   PROJECT_TAB_QUERY,
   PROJECT_TEAM_MANAGE_QUERY,
+  PROJECT_EDIT_MANAGE_QUERY,
   projectDocumentTitle,
   projectTabs,
   type ProjectTab,
@@ -19,6 +20,7 @@ import { projectTeams } from "../data/team-store";
 import { ProjectPanel } from "./ProjectPanel";
 import { ProjectProposalForm } from "../proposal/ProjectProposalForm";
 import { ProjectTeamManage } from "./ProjectTeamManage";
+import { ProjectEditForm } from "./ProjectEditForm";
 import type { ProjectPageProps } from "./ProjectPage";
 import type { ProjectsProjectLayer } from "../list/ProjectsStack";
 
@@ -81,6 +83,9 @@ export async function loadProjectOverlay({
     manageLayer: (
       <ProjectTeamManage project={project} team={team} memberUsers={listMemberUsers()} />
     ),
+    editLayer: (
+      <ProjectEditForm key={`${project.slug}-${project.contentVersion}`} project={project} />
+    ),
   };
 }
 
@@ -100,6 +105,9 @@ export async function InterceptedProjectPage({ params, searchParams }: ProjectPa
         { title: overlay.title, body: overlay.layer },
         ...(query[PROJECT_MANAGE_QUERY_KEY] === PROJECT_TEAM_MANAGE_QUERY
           ? [{ title: messages.projects.team.manageHeading, body: overlay.manageLayer }]
+          : []),
+        ...(query[PROJECT_MANAGE_QUERY_KEY] === PROJECT_EDIT_MANAGE_QUERY
+          ? [{ title: messages.projects.edit.heading, body: overlay.editLayer }]
           : []),
       ]}
     />

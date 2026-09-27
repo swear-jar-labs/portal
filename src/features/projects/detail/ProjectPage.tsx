@@ -7,6 +7,7 @@ import {
   projectDocumentTitle,
   PROJECT_MANAGE_QUERY_KEY,
   PROJECT_TEAM_MANAGE_QUERY,
+  PROJECT_EDIT_MANAGE_QUERY,
 } from "../model/projects";
 import { loadProjectOverlay } from "./ProjectOverlay";
 import { ProjectsStack } from "../list/ProjectsStack";
@@ -46,7 +47,13 @@ export async function ProjectPage({ params, searchParams }: ProjectPageProps) {
       projects={rankProjects(projects, activityBySlug, now)}
       now={now}
       project={overlay}
-      initialManage={query[PROJECT_MANAGE_QUERY_KEY] === PROJECT_TEAM_MANAGE_QUERY}
+      initialManage={
+        query[PROJECT_MANAGE_QUERY_KEY] === PROJECT_TEAM_MANAGE_QUERY
+          ? "team"
+          : query[PROJECT_MANAGE_QUERY_KEY] === PROJECT_EDIT_MANAGE_QUERY
+            ? "edit"
+            : null
+      }
     />
   );
 }

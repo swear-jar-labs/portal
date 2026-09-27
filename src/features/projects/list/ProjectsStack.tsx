@@ -15,6 +15,8 @@ import {
 } from "@/features/shell";
 import {
   PROJECTS_PATH,
+  PROJECT_EDIT_BUTTON_ID,
+  PROJECT_EDIT_MANAGE_QUERY,
   PROJECT_MANAGE_QUERY_KEY,
   PROJECT_PROPOSE_BUTTON_ID,
   PROJECT_PROPOSE_PATH,
@@ -23,9 +25,13 @@ import {
   projectPath,
   projectTabPath,
   projectTeamManagePath,
+  projectEditPath,
   type Project,
 } from "../model/projects";
-import { ProjectManageRequestProvider } from "../data/project-manage-request";
+import {
+  ProjectManageCloseProvider,
+  ProjectManageRequestProvider,
+} from "../data/project-manage-request";
 import { projectCardId } from "./ProjectsCard";
 import { ProjectsFeed } from "./ProjectsFeed";
 
@@ -42,6 +48,7 @@ export type ProjectsProjectLayer = {
   // The MANAGE TEAM panel body: the direct page's stack opens it from client
   // state, the interceptor renders it as a second panel from the URL query.
   manageLayer: ReactNode;
+  editLayer: ReactNode;
 };
 
 export type ProjectsStackProps = {
@@ -51,7 +58,7 @@ export type ProjectsStackProps = {
   now: string;
   project?: ProjectsProjectLayer;
   // A deep link (?manage=team) starts with the manage panel open.
-  initialManage?: boolean;
+  initialManage?: "team" | "edit" | null;
   proposalLayer?: ReactNode;
 };
 
@@ -59,7 +66,7 @@ export function ProjectsStack({
   projects,
   now,
   project,
-  initialManage = false,
+  initialManage = null,
   proposalLayer,
 }: ProjectsStackProps) {
   const router = useRouter();
@@ -75,7 +82,7 @@ export function ProjectsStack({
   // overlay interceptor and hijack the page's own layer. A project panel that
   // arrives as a store layer (the overlay) keeps the query navigation — the
   // interceptor turns it into the second panel of the same entry.
-  const [managing, setManaging] = useState(initialManage);
+  const [managing, setManaging] = useState<"team" | "edit" | null>(initialManage);
 
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
@@ -88,7 +95,10 @@ export function ProjectsStack({
   useEffect(() => {
     const onPopState = () => {
       const search = new URLSearchParams(window.location.search);
-      setManaging(search.get(PROJECT_MANAGE_QUERY_KEY) === PROJECT_TEAM_MANAGE_QUERY);
+      const kind = search.get(PROJECT_MANAGE_QUERY_KEY);
+      setManaging(
+        kind === PROJECT_TEAM_MANAGE_QUERY || kind === PROJECT_EDIT_MANAGE_QUERY ? kind : null,
+      );
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -120,12 +130,12 @@ export function ProjectsStack({
     pushOverlay(PROJECT_PROPOSE_PATH, PROJECT_PROPOSE_BUTTON_ID)();
   }, [pushOverlay]);
 
-  const openManage = useCallback((slug: Project["slug"]) => {
-    setManaging(true);
+  const openManage = useCallback((slug: Project["slug"], kind: "team" | "edit") => {
+    setManaging(kind);
     window.history.pushState(
       { ...window.history.state, [MANAGE_HISTORY_FLAG]: true },
       "",
-      projectTeamManagePath(slug),
+      kind === "team" ? projectTeamManagePath(slug) : projectEditPath(slug),
     );
   }, []);
 
@@ -153,8 +163,10 @@ export function ProjectsStack({
   const closeManage = useCallback(() => {
     if (!project || !managing || closingRef.current) return;
     closingRef.current = true;
-    stackMemory.requestCardFocus(PROJECT_TEAM_MANAGE_BUTTON_ID);
-    setManaging(false);
+    stackMemory.requestCardFocus(
+      managing === "team" ? PROJECT_TEAM_MANAGE_BUTTON_ID : PROJECT_EDIT_BUTTON_ID,
+    );
+    setManaging(null);
     // history.state is untyped in lib.dom: the marker this stack pushed decides
     // whether the entry can be walked back or must be rewritten in place.
     const historyState = window.history.state as Record<string, unknown> | null;
@@ -162,7 +174,11 @@ export function ProjectsStack({
       window.history.back();
     } else {
       // A deep link owns the URL: drop the manage query in place.
-      window.history.replaceState(window.history.state, "", projectTabPath(project.slug, "team"));
+      window.history.replaceState(
+        window.history.state,
+        "",
+        projectTabPath(project.slug, managing === "team" ? "team" : "project"),
+      );
     }
   }, [managing, project]);
 
@@ -211,10 +227,16 @@ export function ProjectsStack({
       ) : null}
       {project && managing ? (
         <ShellPanel
-          title={messages.projects.team.manageHeading}
+          title={
+            managing === "team"
+              ? messages.projects.team.manageHeading
+              : messages.projects.edit.heading
+          }
           actions={<CloseButton onClose={closeManage} label={messages.shell.window.closeLabel} />}
         >
-          {project.manageLayer}
+          <ProjectManageCloseProvider closeManage={closeManage}>
+            {managing === "team" ? project.manageLayer : project.editLayer}
+          </ProjectManageCloseProvider>
         </ShellPanel>
       ) : null}
       {proposalLayer ? (

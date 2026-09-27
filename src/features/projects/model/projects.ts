@@ -69,7 +69,7 @@ export type ProjectPerson = {
   avatar?: string;
 };
 
-// The FORGE block on the project page: repository counters only, never
+// The REPOSITORY tab on the project page: repository counters only, never
 // per-user statistics (RULES §15 — no karma). Phase 5 reads them from
 // project_forge_stats (forge-integration); the shape stays.
 export type ProjectStats = {
@@ -105,7 +105,23 @@ export type Project = {
   claimPolicy: ClaimPolicy;
   // Absent while the project has no repository (a plan so far).
   stats?: ProjectStats;
+  // Process-local demo images. The first two appear on the index card.
+  screenshots?: readonly ProjectScreenshot[];
+  contentVersion?: number;
 };
+
+export type ProjectScreenshot = {
+  id: string;
+  alt: string;
+  src: string;
+  width: number;
+  height: number;
+};
+export const MAX_PROJECT_SCREENSHOTS = 4;
+export const MAX_PROJECT_IMAGE_INPUT_BYTES = 10 * 1024 * 1024;
+export const MAX_PROJECT_IMAGE_BYTES = 256 * 1024;
+export const MAX_PROJECT_IMAGE_EDGE = 1600;
+export const PROJECT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 // The per-project claim ladder (RULES §15): how many done tickets of the
 // junior size open the next one. S is always free. Phase 5 stores the policy
@@ -129,15 +145,19 @@ export const PROJECT_PROPOSE_BUTTON_ID = "projects-propose-button";
 // The URL key of the manage panel; its value is PROJECT_TEAM_MANAGE_QUERY.
 export const PROJECT_MANAGE_QUERY_KEY = "manage";
 export const PROJECT_TEAM_MANAGE_QUERY = "team";
+export const PROJECT_EDIT_MANAGE_QUERY = "edit";
 export const PROJECT_TEAM_MANAGE_BUTTON_ID = "project-team-manage-button";
+export const PROJECT_EDIT_BUTTON_ID = "project-edit-button";
 export const PROJECT_TAB_QUERY = "tab";
-export const projectTabs = ["project", "team", "activity"] as const;
+export const projectTabs = ["project", "repository", "team", "activity"] as const;
 export type ProjectTab = (typeof projectTabs)[number];
 export const projectPath = (slug: ProjectSlug) => `${PROJECTS_PATH}/${slug}`;
 export const projectTabPath = (slug: ProjectSlug, tab: ProjectTab) =>
   tab === "project" ? projectPath(slug) : `${projectPath(slug)}?${PROJECT_TAB_QUERY}=${tab}`;
 export const projectTeamManagePath = (slug: ProjectSlug) =>
   `${projectTabPath(slug, "team")}&${PROJECT_MANAGE_QUERY_KEY}=${PROJECT_TEAM_MANAGE_QUERY}`;
+export const projectEditPath = (slug: ProjectSlug) =>
+  `${projectPath(slug)}?${PROJECT_MANAGE_QUERY_KEY}=${PROJECT_EDIT_MANAGE_QUERY}`;
 
 // The project's browser tab title: the direct page's metadata and the overlay
 // store (soft navigation skips the slot's metadata) share one string.

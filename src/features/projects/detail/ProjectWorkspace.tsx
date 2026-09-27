@@ -7,11 +7,13 @@ import { projectTabPath, projectTabs, type ProjectSlug, type ProjectTab } from "
 
 const TAB_IDS = {
   project: "project-tab-project",
+  repository: "project-tab-repository",
   team: "project-tab-team",
   activity: "project-tab-activity",
 } as const;
 const PANEL_IDS = {
   project: "project-panel-project",
+  repository: "project-panel-repository",
   team: "project-panel-team",
   activity: "project-panel-activity",
 } as const;
@@ -26,12 +28,14 @@ export function ProjectWorkspace({
   slug,
   initialTab,
   project,
+  repository,
   team,
   activity,
 }: {
   slug: ProjectSlug;
   initialTab: ProjectTab;
   project: ReactNode;
+  repository: ReactNode;
   team: ReactNode;
   activity: ReactNode;
 }) {
@@ -60,6 +64,14 @@ export function ProjectWorkspace({
         hidden={tab !== "project"}
       >
         {project}
+      </div>
+      <div
+        id={PANEL_IDS.repository}
+        role="tabpanel"
+        aria-labelledby={TAB_IDS.repository}
+        hidden={tab !== "repository"}
+      >
+        {repository}
       </div>
       <div
         id={PANEL_IDS.team}

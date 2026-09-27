@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   // The test server must not generate instruction files in the worktree.
   agentRules: !isE2E,
   output: "standalone",
+  // Four processed project screenshots can exceed Next's 1 MiB action default.
+  experimental: { serverActions: { bodySizeLimit: "2mb" } },
   // The dev overlay sits over the mobile file-list arrows and swallows the
   // clicks in e2e; errors still surface in the terminal and the log.
   devIndicators: false,

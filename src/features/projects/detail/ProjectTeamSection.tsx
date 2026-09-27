@@ -55,7 +55,7 @@ export function ProjectTeamSection({ project, team }: Props) {
             id={PROJECT_TEAM_MANAGE_BUTTON_ID}
             onClick={() => {
               if (requestManage !== null) {
-                requestManage(project.slug);
+                requestManage(project.slug, "team");
                 return;
               }
               // Hosted by another section's stack (a project overlay): the

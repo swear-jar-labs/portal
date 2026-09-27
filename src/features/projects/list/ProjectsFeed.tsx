@@ -64,6 +64,7 @@ export function ProjectsFeed({
                     project={project}
                     now={now}
                     current={project.slug === currentSlug}
+                    eagerScreenshot={project.slug === projects[0]?.slug}
                     onActivate={(event) => onActivate(project.slug, event)}
                   />
                 </Stack>

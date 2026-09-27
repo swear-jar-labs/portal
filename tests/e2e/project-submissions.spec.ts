@@ -114,7 +114,7 @@ test("a Member proposes a project, clarifies it, and becomes its first Maintaine
   await expect(panel.getByText("MAINTAINERS", { exact: true })).toBeVisible();
   await expect(panel.getByText("LEAD", { exact: true })).toBeVisible();
   await expect(panel.getByRole("link", { name: "ada" })).toHaveCount(3);
-  await panel.getByRole("tab", { name: "PROJECT" }).click();
+  await panel.getByRole("tab", { name: "REPOSITORY" }).click();
   await expect(panel.getByText("Repository activity is not synced in this demo.")).toBeVisible();
   await page.goto(`/tickets?project=${slug}`);
   await expect(page.getByRole("combobox", { name: "PROJECT" })).toHaveValue(name);

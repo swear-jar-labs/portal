@@ -10,9 +10,11 @@ import { createContext, useContext, type ReactNode } from "react";
  * (a project overlay over the tickets feed) falls back to the ordinary
  * intercepted query navigation.
  */
-export type ProjectManageRequest = (slug: string) => void;
+export type ProjectManageKind = "team" | "edit";
+export type ProjectManageRequest = (slug: string, kind: ProjectManageKind) => void;
 
 const ProjectManageRequestContext = createContext<ProjectManageRequest | null>(null);
+const ProjectManageCloseContext = createContext<(() => void) | null>(null);
 
 export function ProjectManageRequestProvider({
   requestManage,
@@ -30,4 +32,22 @@ export function ProjectManageRequestProvider({
 
 export function useProjectManageRequest(): ProjectManageRequest | null {
   return useContext(ProjectManageRequestContext);
+}
+
+export function ProjectManageCloseProvider({
+  closeManage,
+  children,
+}: {
+  closeManage: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <ProjectManageCloseContext.Provider value={closeManage}>
+      {children}
+    </ProjectManageCloseContext.Provider>
+  );
+}
+
+export function useProjectManageClose(): (() => void) | null {
+  return useContext(ProjectManageCloseContext);
 }

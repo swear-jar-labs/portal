@@ -9,10 +9,10 @@ export const sprites = {
   jar: {
     palette: {
       K: "#000000",
-      y: "#FFFF55",
+      y: "#AA5500",
       W: "#55FFFF",
       g: "#555555",
-      b: "#AA5500",
+      b: "#FFD700",
     },
     map: [
       "................",

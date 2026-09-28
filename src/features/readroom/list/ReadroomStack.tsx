@@ -27,9 +27,17 @@ import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { avatarFor } from "@/shared/members";
 import type { ReadroomDraft } from "../model/datetime";
-import { READROOM_PATH, readroomPath, type Readroom, type ReadroomMode } from "../model/readrooms";
+import {
+  noteElementId,
+  READROOM_PATH,
+  readroomPath,
+  reportElementId,
+  type Readroom,
+} from "../model/readrooms";
+import { readroomQueryParams, type ReadroomHit } from "../model/search";
 import { createReadroom, toggleReadroomUpvote } from "../data/readroom-store";
 import { useReadroomSession } from "../data/useReadroomSession";
+import { useReadroomSearch } from "../data/useReadroomSearch";
 import { ReadroomComposePanel } from "../compose/ReadroomComposePanel";
 import { ReadroomFeed, readroomComposeButtonId } from "./ReadroomFeed";
 import { ReadroomSourceRow } from "../detail/ReadroomSourceRow";
@@ -64,9 +72,11 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   const requestLogin = useLoginPrompt();
   const { state, readrooms: visible } = useReadroomSession(readrooms);
   const allTickets = useMergedTickets(tickets);
-  // The selected mode is session UI state, kept across actor switches like
-  // the composed tasks. Ranking reads off the page-open stamp beside it.
-  const [mode, setMode] = useState<ReadroomMode>("top");
+  const { query, changeQuery, clock, hits, feedReadrooms, availableTags } = useReadroomSearch(
+    visible,
+    now,
+    session === null ? null : { user: session.user, admin: session.admin === true },
+  );
   const [composing, setComposing] = useState(false);
   const [localTaskId, setLocalTaskId] = useState<string | null>(null);
   // The control a closed layer owes focus to (the compose button, a new card).
@@ -131,16 +141,20 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   );
 
   const activateTask = useCallback(
-    (id: string, event?: MouseEvent<HTMLElement>) => {
+    (id: string, event?: MouseEvent<HTMLElement>, anchor?: string) => {
       // A composed task has no route to navigate to (and no link in its card):
       // it opens in place. Keep the native behavior for real routes.
       if (localTaskIds.has(id)) {
         setLocalTaskId(id);
+        if (anchor) window.history.replaceState(window.history.state, "", `#${anchor}`);
         return;
       }
       // The root slot intercepts the task above the current stack: the card
       // stays mounted and returns focus when the overlay peels.
-      pushOverlay(readroomPath(id), readroomCardId(id))(event);
+      pushOverlay(
+        anchor ? `${readroomPath(id)}#${anchor}` : readroomPath(id),
+        readroomCardId(id),
+      )(event);
     },
     [localTaskIds, pushOverlay],
   );
@@ -152,14 +166,36 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     stackMemory.requestCardFocus(task.id);
     // Direct-load only (an overlay task peels with browser back instead).
     if (stackMemory.takePushedFrom(window.location.pathname)) router.back();
-    else router.push(READROOM_PATH);
-  }, [router, task]);
+    else {
+      const search = readroomQueryParams(query).toString();
+      router.push(search ? `${READROOM_PATH}?${search}` : READROOM_PATH);
+    }
+  }, [query, router, task]);
 
   const closeLocalTask = useCallback(() => {
     if (localTask === null) return;
     stackMemory.requestCardFocus(localTask.id);
     setLocalTaskId(null);
+    if (window.location.hash)
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${READROOM_PATH}${window.location.search}`,
+      );
   }, [localTask]);
+
+  const jumpToHit = useCallback(
+    (hit: ReadroomHit, event?: MouseEvent<HTMLElement>) => {
+      const anchor =
+        hit.kind === "note" && hit.noteId
+          ? noteElementId(hit.noteId)
+          : hit.kind === "report"
+            ? reportElementId(hit.taskId)
+            : undefined;
+      activateTask(hit.taskId, event, anchor);
+    },
+    [activateTask],
+  );
 
   // Participant and Member open the composer (community-participation); a
   // ticket or project link pinned in the draft grants no rights later.
@@ -222,14 +258,17 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     <PanelStack onCloseTop={closeTop}>
       <ShellPanel title={fileTitle("READROOM")}>
         <ReadroomFeed
-          readrooms={visible}
-          now={now}
+          readrooms={feedReadrooms}
+          now={clock}
           currentId={task?.id ?? localTask?.id}
-          mode={mode}
-          onModeChange={setMode}
+          query={query}
+          onQueryChange={changeQuery}
+          availableTags={availableTags}
+          hits={hits}
           voter={session?.user ?? null}
           localReadroomIds={localTaskIds}
           onActivate={activateTask}
+          onJumpToHit={jumpToHit}
           onToggleVote={toggleVote}
           onCompose={openCompose}
         />
@@ -254,7 +293,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
             <ReadroomView
               readroom={localTask}
               tickets={tickets}
-              now={now}
+              now={clock}
               description={<Markdown>{localTask.description}</Markdown>}
               noteBodies={{}}
             />

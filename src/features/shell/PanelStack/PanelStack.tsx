@@ -35,8 +35,17 @@ export function PanelStack({ children, onCloseTop }: PanelStackProps) {
 
   useEffect(() => {
     if (!hasTop) return;
-    // Opening a layer hands it the keyboard: its body is the scroll region, so
-    // the arrows scroll a long thread (a Dialog without controls does the same).
+    // An anchor that resolves names its own focus target (a note, a write-up,
+    // a post): the target's own effect takes it, the stack stays out of the
+    // way. An unknown hash (or none) falls back to the layer body below.
+    // Opening a layer hands it the keyboard otherwise: its body is the scroll
+    // region, so the arrows scroll a long thread (a Dialog without controls
+    // does the same).
+    if (
+      window.location.hash !== "" &&
+      document.getElementById(window.location.hash.slice(1)) !== null
+    )
+      return;
     const body = stackRef.current?.lastElementChild?.querySelector<HTMLElement>(
       `[${DOS_SCROLL_ATTR}]`,
     );

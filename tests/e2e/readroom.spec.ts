@@ -360,7 +360,7 @@ test("walks the feed and the task by rows", async ({ page }) => {
   // ▲/▼ enter the card rows on the card title (it leads the DOM while the
   // byline reads above it on screen); the first step retries until the
   // island's listeners answer (the feed hydrates after the shell clock). The
-  // compose row leads the feed, the mode switch follows, then the cards.
+  // compose, search, mode and tag rows lead the feed, then the cards.
   await expect(async () => {
     await focusedBody(page).focus();
     await page.keyboard.press("ArrowDown");
@@ -368,7 +368,15 @@ test("walks the feed and the task by rows", async ({ page }) => {
       timeout: 1_000,
     });
     await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("textbox", { name: "SEARCH READROOM" })).toBeFocused({
+      timeout: 1_000,
+    });
+    await page.keyboard.press("ArrowDown");
     await expect(feed.getByRole("button", { name: "TOP", exact: true })).toBeFocused({
+      timeout: 1_000,
+    });
+    await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("button", { name: "C", exact: true })).toBeFocused({
       timeout: 1_000,
     });
     await page.keyboard.press("ArrowDown");
@@ -480,7 +488,8 @@ test("opens a lead profile over the feed and closes back to the card", async ({ 
   ).toBe(1);
 
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(READROOM_PATH);
+  // Closing keeps the feed filters: the ACTIVE mode survives the overlay.
+  await expect(page).toHaveURL(`${READROOM_PATH}?mode=active`);
   await expect(layers(page)).toHaveCount(1);
   await expect(
     feed.getByRole("article").first().getByRole("link", { name: "grace" }),
@@ -490,7 +499,7 @@ test("opens a lead profile over the feed and closes back to the card", async ({ 
   await feed.getByRole("article").first().getByRole("link", { name: "grace" }).click();
   await expect(page).toHaveURL("/members/grace");
   await layers(page).last().getByRole("button", { name: "Close" }).click();
-  await expect(page).toHaveURL(READROOM_PATH);
+  await expect(page).toHaveURL(`${READROOM_PATH}?mode=active`);
   await expect(layers(page)).toHaveCount(1);
   await expect(
     feed.getByRole("article").first().getByRole("link", { name: "grace" }),

@@ -6,6 +6,28 @@
   --dos-link: var(--dos-black);
 }
 
+.searchCard {
+  --dos-link: var(--dos-black);
+}
+
+/* The result line follows the forum's selected-text treatment and stays
+   click-through to the card's stretched title link. */
+div.searchFragment {
+  padding: 2px 4px;
+  background: var(--dos-blue);
+  color: var(--dos-white);
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.searchHit {
+  font-weight: var(--dos-weight-bold);
+  text-decoration: underline;
+  color: inherit;
+  background: transparent;
+}
+
 /* Passive card details let the stretched title link own their gaps and text;
    only the ticket link and the vote chip rise above it as their own targets
    (the kit's metaInteractive pattern: the wrapper stays click-through). */

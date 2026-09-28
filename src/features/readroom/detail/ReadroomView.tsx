@@ -15,6 +15,7 @@ import {
   isLead,
   phaseOf,
   READROOM_CARD_ATTR,
+  reportElementId,
   visibleNotes,
   type Readroom,
   type ReadroomAttachment,
@@ -88,6 +89,13 @@ export function ReadroomView({
     returnToNoteForm.current = false;
     noteFieldRef.current?.focus();
   }, [posted]);
+  useEffect(() => {
+    const id = reportElementId(readroom.id);
+    if (window.location.hash !== `#${id}`) return;
+    const element = document.getElementById(id);
+    element?.focus();
+    element?.scrollIntoView({ block: "nearest" });
+  }, [readroom.id]);
   const reportNode =
     report !== undefined && effective.report === readroom.report ? (
       report
@@ -211,7 +219,12 @@ export function ReadroomView({
       ) : (
         <Stack gap={6}>
           <Heading level={2}>{messages.readroom.report.heading}</Heading>
-          <div className={styles.report} {...{ [READROOM_CARD_ATTR]: "" }}>
+          <div
+            id={reportElementId(readroom.id)}
+            tabIndex={0}
+            className={styles.report}
+            {...{ [READROOM_CARD_ATTR]: "" }}
+          >
             {reportNode}
           </div>
         </Stack>

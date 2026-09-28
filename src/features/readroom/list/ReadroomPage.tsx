@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { ShellPanel } from "@/features/shell";
+import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
 import { listTickets } from "@/features/tickets/contracts";
@@ -14,9 +17,14 @@ export async function ReadroomPage() {
   const projectRepos = projectRepoMap(await listProjects());
   const now = new Date().toISOString();
 
-  // The feed reads no search params: the stack renders without a Suspense
-  // boundary (unlike the board's filtered feed).
   return (
-    <ReadroomStack readrooms={readrooms} tickets={tickets} projectRepos={projectRepos} now={now} />
+    <Suspense fallback={<ShellPanel title={fileTitle("READROOM")}>{null}</ShellPanel>}>
+      <ReadroomStack
+        readrooms={readrooms}
+        tickets={tickets}
+        projectRepos={projectRepos}
+        now={now}
+      />
+    </Suspense>
   );
 }

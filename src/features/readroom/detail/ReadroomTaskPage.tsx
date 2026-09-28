@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
 import { listTickets } from "@/features/tickets/contracts";
@@ -30,12 +31,14 @@ export async function ReadroomTaskPage({ params }: ReadroomTaskPageProps) {
   const projectRepos = projectRepoMap(await listProjects());
 
   return (
-    <ReadroomStack
-      readrooms={readrooms}
-      tickets={tickets}
-      projectRepos={projectRepos}
-      now={now}
-      task={task}
-    />
+    <Suspense fallback={null}>
+      <ReadroomStack
+        readrooms={readrooms}
+        tickets={tickets}
+        projectRepos={projectRepos}
+        now={now}
+        task={task}
+      />
+    </Suspense>
   );
 }

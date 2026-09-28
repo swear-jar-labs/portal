@@ -18,8 +18,7 @@ export const phaseTones: Partial<Record<ReadroomPhase, Tone>> = {
 };
 
 // The cycle tags: the shared tech vocabulary (see src/content/techs.ts).
-// Labels live in messages; the seed list is fixed until the taxonomy grows a
-// consumer (a feed filter).
+// Labels live in messages; the feed filter uses this same catalogue.
 export const readroomTagIds = techIds;
 
 export type ReadroomTagId = TechId;
@@ -82,6 +81,7 @@ export const READROOM_CARD_ATTR = "data-readroom-card";
 
 // The note anchor: the closed inline editor hands the keyboard back to it.
 export const noteElementId = (id: string) => `readroom-note-${id}`;
+export const reportElementId = (id: string) => `readroom-report-${id}`;
 
 // The readroom's URL canon.
 export const READROOM_PATH = "/readroom";

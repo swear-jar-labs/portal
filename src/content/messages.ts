@@ -663,8 +663,22 @@ export const messages = {
       heading: "READROOM",
       empty: "No reading tasks yet. Bring some code and a question.",
       emptyMode: "No tasks in this view yet.",
+      tagLabel: "TAGS",
+      search: {
+        label: "SEARCH READROOM",
+        placeholder: "SEARCH",
+        clear: "CLEAR",
+        empty: "No matching reading tasks.",
+        kinds: {
+          title: "TITLE",
+          description: "DESCRIPTION",
+          note: "NOTE",
+          report: "WRITE-UP",
+        },
+      },
       newTask: "NEW TASK",
       modeLabel: "READROOM MODE",
+      searchScope: "TOP: ALL TIME · TOP/NEW INCLUDE ARCHIVED · ACTIVE: COLLECTING",
       modes: {
         active: "ACTIVE",
         top: "TOP",

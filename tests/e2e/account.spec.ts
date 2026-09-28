@@ -1118,12 +1118,16 @@ test.describe("logon window", () => {
     await page.keyboard.press("ArrowLeft");
     await expect(logon).toBeFocused();
 
-    // A text field keeps ←/→ for the caret: focus stays put.
-    await user.focus();
-    await page.keyboard.press("ArrowRight");
-    await expect(user).toBeFocused();
+    // Mid-text ←/→ keep the caret: focus stays put; at the caret edges the
+    // arrows walk on like everywhere else (an edge arrow is a native no-op,
+    // so the walk sacrifices no caret movement).
+    await user.fill("ab");
     await page.keyboard.press("ArrowLeft");
     await expect(user).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(user).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByLabel(PASSWORD_LABEL)).toBeFocused();
   });
 
   test("a window without a scrollbar ignores Shift + arrows", async ({ page }) => {

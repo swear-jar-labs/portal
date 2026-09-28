@@ -223,8 +223,22 @@ test("a member opens a task in this session", async ({ page }) => {
   await page.getByRole("button", { name: "NEW TASK" }).click();
   const form = page.getByRole("form", { name: "NEW TASK" });
   await form.getByLabel("TITLE").fill(NEW_TASK);
-  await form.getByRole("button", { name: "C", exact: true }).click();
-  await form.getByRole("button", { name: "Go", exact: true }).click();
+  const tagBox = form.getByRole("combobox", { name: "TAGS" });
+  // The search narrows the catalog: typing finds the tag, the pick reads back
+  // as a removable chip (the box hydrates behind Suspense: retry until it answers).
+  await expect(async () => {
+    await tagBox.fill("Rust");
+    await expect(page.getByRole("option", { name: "Rust", exact: true })).toBeVisible({
+      timeout: 1_000,
+    });
+  }).toPass();
+  await page.keyboard.press("Escape");
+  await tagBox.fill("");
+  await page.keyboard.press("Escape");
+  await tagBox.click();
+  await page.getByRole("option", { name: "C", exact: true }).click();
+  await tagBox.click();
+  await page.getByRole("option", { name: "Go", exact: true }).click();
   await form
     .getByRole("textbox", { name: "DESCRIPTION" })
     .fill("Find the memory order that is missing.");

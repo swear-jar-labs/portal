@@ -7,6 +7,7 @@ const ada: BoardMember = { user: "ada", role: "maintainer" };
 const COMPOSE_INPUT: ComposeInput = {
   board: "tooling",
   tags: ["question"],
+  techs: ["ci"],
   title: "CI cache",
   body: "Key the cache by compiler.",
 };
@@ -22,6 +23,7 @@ function summary(id: string, replies: number, lastActivityAt: string): ThreadSum
     title: id,
     author: ada,
     tags: [],
+    techs: [],
     pinned: false,
     locked: false,
     createdAt: "2026-09-15T12:00:00.000Z",

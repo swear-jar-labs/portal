@@ -7,7 +7,14 @@ import { formatCount } from "@/lib/format";
 import { MemberLink } from "@/features/members/contracts";
 import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
 import { useShellSession } from "@/features/shell";
-import { formatAge, tagTones, threadPath, type TagId, type ThreadSummary } from "../model/threads";
+import {
+  formatAge,
+  tagTones,
+  threadPath,
+  type TagId,
+  type ThreadSummary,
+  type ThreadTechId,
+} from "../model/threads";
 import { VoteButton } from "./VoteButton";
 import styles from "../board.module.css";
 
@@ -24,6 +31,7 @@ export type ThreadCardProps = {
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
   onVote: () => void;
   onFilterTag: (tag: TagId) => void;
+  onFilterTech: (tech: ThreadTechId) => void;
 };
 
 export function ThreadCard({
@@ -35,6 +43,7 @@ export function ThreadCard({
   onActivate,
   onVote,
   onFilterTag,
+  onFilterTech,
 }: ThreadCardProps) {
   const moderation = useModeration();
   const session = useShellSession();
@@ -90,6 +99,11 @@ export function ThreadCard({
           {thread.tags.map((tag) => (
             <Tag key={tag} tone={tagTones[tag]} onClick={() => onFilterTag(tag)}>
               {messages.board.tags[tag]}
+            </Tag>
+          ))}
+          {thread.techs.map((tech) => (
+            <Tag key={tech} onClick={() => onFilterTech(tech)}>
+              {messages.readroom.tags[tech]}
             </Tag>
           ))}
         </>

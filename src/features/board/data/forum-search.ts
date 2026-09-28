@@ -1,5 +1,12 @@
 import { isThreadHidden, targetKey } from "@/features/moderation/contracts";
-import type { BoardId, BoardRoleId, TagId, Thread, ThreadPost } from "../model/threads";
+import type {
+  BoardId,
+  BoardRoleId,
+  TagId,
+  Thread,
+  ThreadPost,
+  ThreadTechId,
+} from "../model/threads";
 import type { BoardState } from "./board-store";
 
 // What the viewer must not see: moderation-hidden threads and posts, resolved
@@ -82,6 +89,7 @@ export type ForumSearchDocument = {
   id: string;
   board: BoardId;
   tags: readonly TagId[];
+  techs: readonly ThreadTechId[];
   title: string;
   createdAt: string;
   posts: { id: string; body: string; createdAt: string; author: string; role: BoardRoleId }[];
@@ -101,6 +109,7 @@ export function effectiveSearchThreads(
     id: thread.id,
     board: thread.board,
     tags: thread.tags,
+    techs: thread.techs,
     title: thread.title,
     createdAt: thread.createdAt,
     posts: livePosts(thread.posts, thread.id, state, visibility).map((post) => ({

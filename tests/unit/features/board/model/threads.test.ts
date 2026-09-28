@@ -6,10 +6,12 @@ import {
   composableBoardIds,
   isBoardId,
   isTagId,
+  isThreadTechId,
   staticBoardIds,
   tagIds,
   tagTones,
   threadPath,
+  threadTechIds,
 } from "@/features/board/model/threads";
 
 describe("board taxonomy", () => {
@@ -47,6 +49,19 @@ describe("board taxonomy", () => {
     expect(isBoardId("nope")).toBe(false);
     expect(isTagId("proposal")).toBe(true);
     expect(isTagId("nope")).toBe(false);
+    expect(isThreadTechId("rust")).toBe(true);
+    expect(isThreadTechId("nope")).toBe(false);
+  });
+
+  it("keeps the status and tech vocabularies disjoint", () => {
+    // The unified pickers route by isTagId: an id in both lists would land in
+    // the wrong array.
+    for (const tag of tagIds) {
+      expect(threadTechIds, `${tag} is both a status and a tech`).not.toContain(tag);
+    }
+    for (const tech of threadTechIds) {
+      expect(tagIds, `${tech} is both a tech and a status`).not.toContain(tech);
+    }
   });
 
   it("owns the thread URL canon", () => {

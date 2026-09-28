@@ -566,7 +566,6 @@ export const messages = {
     },
     tags: {
       proposal: "PROPOSAL",
-      decision: "DECISION",
       question: "QUESTION",
     },
     roles: {
@@ -579,6 +578,7 @@ export const messages = {
       boardLabel: "BOARD",
       sortLabel: "SORT",
       tagLabel: "TAGS",
+      noTagMatch: "No tags match.",
       allBoards: "ALL BOARDS",
       sorts: { hot: "HOT", new: "NEW" },
       empty: "No threads yet. Start a discussion.",
@@ -596,9 +596,16 @@ export const messages = {
     compose: {
       title: "NEW THREAD",
       heading: "NEW THREAD",
-      fields: { board: "BOARD", tags: "TAGS", title: "TITLE", body: "BODY" },
+      fields: {
+        board: "BOARD",
+        tags: "TAGS",
+        title: "TITLE",
+        body: "BODY",
+      },
+      noTagMatch: "No tags match.",
       errors: {
         tags: "Ten tags is the limit.",
+        techs: "Ten technologies is the limit.",
         title: "Give the thread a title.",
         body: "Write the opening post.",
       },
@@ -664,6 +671,7 @@ export const messages = {
       empty: "No reading tasks yet. Bring some code and a question.",
       emptyMode: "No tasks in this view yet.",
       tagLabel: "TAGS",
+      noTagMatch: "No tags match.",
       search: {
         label: "SEARCH READROOM",
         placeholder: "SEARCH",
@@ -804,6 +812,7 @@ export const messages = {
         deadline: "Pick a future date and time.",
       },
       noTicketMatch: "No tickets match.",
+      noTagMatch: "No technologies match.",
       submit: "OPEN TASK",
       cancel: "CANCEL",
       hint: demoSessionHint,

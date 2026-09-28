@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MAX_TAGS } from "@/lib/tags";
-import { composableBoardIds, tagIds } from "./threads";
+import { composableBoardIds, tagIds, threadTechIds } from "./threads";
 
 // UI-first slice: input schemas of the board's forms. When the backend lands
 // (Phase 5) the same schemas guard the server actions; the forms do not change.
@@ -22,6 +22,7 @@ export function makeComposeSchema(allowedBoards: readonly string[] = composableB
     // offers.
     board: z.string().refine((board) => allowedBoards.includes(board)),
     tags: z.array(z.enum(tagIds)).max(MAX_TAGS),
+    techs: z.array(z.enum(threadTechIds)).max(MAX_TAGS),
     title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
     body: z.string().trim().min(1).max(MAX_BODY_LENGTH),
   });

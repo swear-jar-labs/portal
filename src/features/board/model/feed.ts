@@ -1,13 +1,24 @@
 import { BOARD_QUERY_PARAM } from "@/lib/board";
-import { boardIds, isBoardId, isTagId, type BoardId, type TagId } from "./threads";
+import {
+  boardIds,
+  isBoardId,
+  isTagId,
+  isThreadTechId,
+  type BoardId,
+  type TagId,
+  type ThreadTechId,
+} from "./threads";
 
 export const threadSorts = ["hot", "new"] as const;
 export type ThreadSort = (typeof threadSorts)[number];
 
-// What the feed can show: an unfiltered board, one board, one tag, or both.
+// What the feed can show: an unfiltered board, one board, any number of
+// status tags and techs (both AND, like the readroom's tag filter) — or their
+// combination.
 export type FeedFilters = {
   board?: BoardId;
-  tag?: TagId;
+  tags?: readonly TagId[];
+  techs?: readonly ThreadTechId[];
 };
 
 export type FeedQuery = FeedFilters & {
@@ -20,6 +31,7 @@ export type FeedQuery = FeedFilters & {
 export const DEFAULT_FEED_QUERY: FeedQuery = { sort: "hot", q: "" };
 
 const TAG_PARAM = "tag";
+const TECH_PARAM = "tech";
 const SORT_PARAM = "sort";
 const SEARCH_QUERY_PARAM = "q";
 
@@ -33,12 +45,16 @@ export function parseFeedQuery(
   allowedBoards: readonly BoardId[] = boardIds,
 ): FeedQuery {
   const board = params.get(BOARD_QUERY_PARAM);
-  const tag = params.get(TAG_PARAM);
+  const tags = params.getAll(TAG_PARAM).filter((tag): tag is TagId => isTagId(tag));
+  const techs = params
+    .getAll(TECH_PARAM)
+    .filter((tech): tech is ThreadTechId => isThreadTechId(tech));
   const sort = params.get(SORT_PARAM);
   const q = params.get(SEARCH_QUERY_PARAM);
   return {
     ...(board && (isBoardId(board) || allowedBoards.includes(board)) ? { board } : {}),
-    ...(tag && isTagId(tag) ? { tag } : {}),
+    ...(tags.length > 0 ? { tags: [...new Set(tags)] } : {}),
+    ...(techs.length > 0 ? { techs: [...new Set(techs)] } : {}),
     sort: sort && isThreadSort(sort) ? sort : DEFAULT_FEED_QUERY.sort,
     q: q ?? DEFAULT_FEED_QUERY.q,
   };
@@ -46,14 +62,21 @@ export function parseFeedQuery(
 
 /** Structural equality for feed queries: the URL sync resets only on change. */
 export function sameFeedQuery(a: FeedQuery, b: FeedQuery): boolean {
-  return a.board === b.board && a.tag === b.tag && a.sort === b.sort && a.q === b.q;
+  return (
+    a.board === b.board &&
+    (a.tags ?? []).join() === (b.tags ?? []).join() &&
+    (a.techs ?? []).join() === (b.techs ?? []).join() &&
+    a.sort === b.sort &&
+    a.q === b.q
+  );
 }
 
 /** The URL form of the feed state: defaults stay out, so the feed links clean. */
 export function feedQueryParams(query: FeedQuery): URLSearchParams {
   const params = new URLSearchParams();
   if (query.board) params.set(BOARD_QUERY_PARAM, query.board);
-  if (query.tag) params.set(TAG_PARAM, query.tag);
+  for (const tag of query.tags ?? []) params.append(TAG_PARAM, tag);
+  for (const tech of query.techs ?? []) params.append(TECH_PARAM, tech);
   if (query.sort !== DEFAULT_FEED_QUERY.sort) params.set(SORT_PARAM, query.sort);
   if (query.q !== DEFAULT_FEED_QUERY.q) params.set(SEARCH_QUERY_PARAM, query.q);
   return params;
@@ -63,6 +86,7 @@ export type RankableThread = {
   id: string;
   board: BoardId;
   tags: readonly TagId[];
+  techs: readonly ThreadTechId[];
   pinned: boolean;
   votes: number;
   replies: number;
@@ -110,7 +134,8 @@ export function filterThreads<T extends RankableThread>(
   return threads.filter(
     (thread) =>
       (filters.board === undefined || thread.board === filters.board) &&
-      (filters.tag === undefined || thread.tags.includes(filters.tag)),
+      (filters.tags ?? []).every((tag) => thread.tags.includes(tag)) &&
+      (filters.techs ?? []).every((tech) => thread.techs.includes(tech)),
   );
 }
 

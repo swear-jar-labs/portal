@@ -15,6 +15,7 @@ function thread(overrides: Partial<RankableThread> & Pick<RankableThread, "id">)
   return {
     board: "general",
     tags: [],
+    techs: [],
     pinned: false,
     votes: 0,
     replies: 0,
@@ -26,9 +27,9 @@ function thread(overrides: Partial<RankableThread> & Pick<RankableThread, "id">)
 
 describe("filterThreads", () => {
   const threads = [
-    thread({ id: "a", board: "general", tags: ["question", "decision"] }),
-    thread({ id: "b", board: "tooling", tags: ["proposal"] }),
-    thread({ id: "c", board: "tooling", tags: ["decision"] }),
+    thread({ id: "a", board: "general", tags: ["question", "proposal"], techs: ["c"] }),
+    thread({ id: "b", board: "tooling", tags: ["proposal"], techs: ["ci"] }),
+    thread({ id: "c", board: "tooling", tags: ["question"], techs: ["c", "rust"] }),
   ];
 
   it("returns everything without filters", () => {
@@ -43,17 +44,50 @@ describe("filterThreads", () => {
   });
 
   it("filters by tag", () => {
-    expect(filterThreads(threads, { tag: "decision" }).map((entry) => entry.id)).toEqual([
+    expect(filterThreads(threads, { tags: ["question"] }).map((entry) => entry.id)).toEqual([
       "a",
       "c",
     ]);
   });
 
+  it("combines tags with AND", () => {
+    expect(filterThreads(threads, { tags: ["question", "proposal"] }).map((e) => e.id)).toEqual([
+      "a",
+    ]);
+    expect(
+      filterThreads(threads, { tags: ["proposal", "question", "proposal"] }).map((e) => e.id),
+    ).toEqual(["a"]);
+  });
+
   it("combines board and tag", () => {
-    expect(filterThreads(threads, { board: "tooling", tag: "decision" }).map((e) => e.id)).toEqual([
+    expect(
+      filterThreads(threads, { board: "tooling", tags: ["question"] }).map((e) => e.id),
+    ).toEqual(["c"]);
+    expect(filterThreads(threads, { board: "compiler", tags: ["question"] })).toEqual([]);
+  });
+
+  it("filters by tech", () => {
+    expect(filterThreads(threads, { techs: ["c"] }).map((entry) => entry.id)).toEqual(["a", "c"]);
+    expect(filterThreads(threads, { techs: ["rust"] }).map((entry) => entry.id)).toEqual(["c"]);
+  });
+
+  it("combines techs with AND", () => {
+    expect(filterThreads(threads, { techs: ["c", "rust"] }).map((entry) => entry.id)).toEqual([
       "c",
     ]);
-    expect(filterThreads(threads, { board: "compiler", tag: "decision" })).toEqual([]);
+    expect(filterThreads(threads, { techs: ["c", "ci"] })).toEqual([]);
+    expect(filterThreads(threads, { techs: [] }).map((entry) => entry.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("combines tag and tech", () => {
+    expect(filterThreads(threads, { tags: ["question"], techs: ["c"] }).map((e) => e.id)).toEqual([
+      "a",
+      "c",
+    ]);
+    expect(filterThreads(threads, { tags: ["proposal"], techs: ["c"] }).map((e) => e.id)).toEqual([
+      "a",
+    ]);
+    expect(filterThreads(threads, { tags: ["proposal"], techs: ["rust"] })).toEqual([]);
   });
 });
 
@@ -123,15 +157,35 @@ describe("rankThreads", () => {
 
 describe("feed URL codec", () => {
   it("parses valid filters and falls back on unknown values", () => {
-    expect(parseFeedQuery(new URLSearchParams("board=tooling&tag=decision&sort=new"))).toEqual({
+    expect(parseFeedQuery(new URLSearchParams("board=tooling&tag=question&sort=new"))).toEqual({
       board: "tooling",
-      tag: "decision",
+      tags: ["question"],
       sort: "new",
       q: "",
     });
+    expect(
+      parseFeedQuery(new URLSearchParams("tag=question&tag=proposal&tag=question&tag=nah")),
+    ).toEqual({
+      tags: ["question", "proposal"],
+      sort: "hot",
+      q: "",
+    });
+    // A dropped status stays dropped: decision is no tag at all.
+    expect(parseFeedQuery(new URLSearchParams("tag=decision"))).toEqual(DEFAULT_FEED_QUERY);
     expect(parseFeedQuery(new URLSearchParams("board=nope&tag=nah&sort=sideways"))).toEqual(
       DEFAULT_FEED_QUERY,
     );
+    expect(parseFeedQuery(new URLSearchParams("tech=c"))).toEqual({
+      techs: ["c"],
+      sort: "hot",
+      q: "",
+    });
+    expect(parseFeedQuery(new URLSearchParams("tech=c&tech=go&tech=c&tech=brainfuck"))).toEqual({
+      techs: ["c", "go"],
+      sort: "hot",
+      q: "",
+    });
+    expect(parseFeedQuery(new URLSearchParams("tech=brainfuck"))).toEqual(DEFAULT_FEED_QUERY);
     expect(parseFeedQuery(new URLSearchParams())).toEqual(DEFAULT_FEED_QUERY);
   });
 
@@ -147,16 +201,34 @@ describe("feed URL codec", () => {
 
   it("keeps defaults out of the URL and round-trips the rest", () => {
     expect(feedQueryParams(DEFAULT_FEED_QUERY).toString()).toBe("");
-    const query = { board: "compiler", tag: "proposal", sort: "new", q: "parsers" } as const;
+    const query = { board: "compiler", tags: ["proposal"], sort: "new", q: "parsers" } as const;
     expect(feedQueryParams(query).toString()).toBe(
       "board=compiler&tag=proposal&sort=new&q=parsers",
     );
     expect(parseFeedQuery(feedQueryParams(query))).toEqual(query);
+    const bothQuery = {
+      tags: ["question", "proposal"],
+      techs: ["c"],
+      sort: "hot",
+      q: "",
+    } as const;
+    expect(feedQueryParams(bothQuery).toString()).toBe("tag=question&tag=proposal&tech=c");
+    expect(parseFeedQuery(feedQueryParams(bothQuery))).toEqual(bothQuery);
+    const techQuery = { techs: ["c", "go"], sort: "hot", q: "" } as const;
+    expect(feedQueryParams(techQuery).toString()).toBe("tech=c&tech=go");
+    expect(parseFeedQuery(feedQueryParams(techQuery))).toEqual(techQuery);
   });
 
   it("compares queries structurally", () => {
     expect(sameFeedQuery(DEFAULT_FEED_QUERY, { sort: "hot", q: "" })).toBe(true);
     expect(sameFeedQuery({ sort: "hot", q: "" }, { sort: "new", q: "" })).toBe(false);
+    expect(sameFeedQuery({ sort: "hot", q: "" }, { techs: ["c"], sort: "hot", q: "" })).toBe(false);
+    expect(
+      sameFeedQuery(
+        { techs: ["c", "go"], sort: "hot", q: "" },
+        { techs: ["c", "go"], sort: "hot", q: "" },
+      ),
+    ).toBe(true);
     expect(
       sameFeedQuery(
         { board: "errata", sort: "hot", q: "" },

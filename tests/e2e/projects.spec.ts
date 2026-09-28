@@ -254,10 +254,13 @@ test("shows repository counters, the frozen archive and the member call", async 
   await expect(
     panel.getByRole("link", { name: "https://github.com/swear-jar-labs/portal" }),
   ).toHaveAttribute("target", "_blank");
-  // The ABOUT stack reads as chips, like the index cards.
+  // The ABOUT stack reads as chips, like the index cards (the journal below
+  // also shows thread tech chips, so the stack chip scopes to its tabpanel).
   await panel.getByRole("tab", { name: "PROJECT" }).click();
   await expect(panel.getByText("STACK", { exact: true })).toBeVisible();
-  await expect(panel.getByText("TypeScript", { exact: true })).toBeVisible();
+  await expect(
+    panel.getByRole("tabpanel", { name: "PROJECT" }).getByText("TypeScript", { exact: true }),
+  ).toBeVisible();
 
   // Guests register before they can apply for project access.
   await panel.getByRole("tab", { name: "TEAM" }).click();

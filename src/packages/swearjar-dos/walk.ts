@@ -140,7 +140,13 @@ function resolveNextControl(
     target instanceof HTMLInputElement &&
     target.type !== "checkbox"
   ) {
-    return null;
+    // Plain text boxes release ←/→ at the caret edges (mid-text arrows stay
+    // native for the caret), like textareas release ↑/↓ above; anything
+    // smarter keeps its keys.
+    if (target.type !== "text" && target.type !== "search") return null;
+    const atEnd = target.selectionStart === target.value.length;
+    const atStart = target.selectionStart === 0;
+    if (cellStep === 1 ? !atEnd : !atStart) return null;
   }
 
   const controls = Array.from(surface.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));

@@ -72,7 +72,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   const requestLogin = useLoginPrompt();
   const { state, readrooms: visible } = useReadroomSession(readrooms);
   const allTickets = useMergedTickets(tickets);
-  const { query, changeQuery, clock, hits, feedReadrooms, availableTags } = useReadroomSearch(
+  const { query, changeQuery, clock, hits, feedReadrooms } = useReadroomSearch(
     visible,
     now,
     session === null ? null : { user: session.user, admin: session.admin === true },
@@ -263,7 +263,6 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
           currentId={task?.id ?? localTask?.id}
           query={query}
           onQueryChange={changeQuery}
-          availableTags={availableTags}
           hits={hits}
           voter={session?.user ?? null}
           localReadroomIds={localTaskIds}

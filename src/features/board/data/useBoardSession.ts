@@ -93,9 +93,10 @@ export function useBoardSession({
       effectiveSearchThreads(corpus, state, visibility).filter(
         (thread) =>
           (query.board === undefined || thread.board === query.board) &&
-          (query.tag === undefined || thread.tags.includes(query.tag)),
+          (query.tags ?? []).every((tag) => thread.tags.includes(tag)) &&
+          (query.techs ?? []).every((tech) => thread.techs.includes(tech)),
       ),
-    [corpus, query.board, query.tag, state, visibility],
+    [corpus, query.board, query.tags, query.techs, state, visibility],
   );
 
   const hits = useMemo(

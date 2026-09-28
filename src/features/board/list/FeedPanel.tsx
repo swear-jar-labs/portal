@@ -1,8 +1,9 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import {
   Button,
+  ComboBox,
   Field,
   Heading,
   Select,
@@ -14,14 +15,18 @@ import {
 } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
+import { MAX_TAG_QUERY_LENGTH } from "@/lib/tags";
 import {
   boardIds,
   boardTitle,
+  isTagId,
   tagIds,
   tagTones,
+  threadTechIds,
   type BoardOption,
   type TagId,
   type ThreadSummary,
+  type ThreadTechId,
 } from "../model/threads";
 import { isBlankSearch, type ThreadSearchHit } from "../model/search";
 import { threadSorts, type FeedQuery } from "../model/feed";
@@ -83,11 +88,58 @@ export function FeedPanel({
       .map((board) => ({ value: board.id, label: board.name })),
   ];
 
+  // The unified tag catalog behind the filter box: statuses first, then the
+  // techs. Picks toggle their membership (multi-select AND for both, like the
+  // readroom filter); card chips toggle through the same membership.
+  // The selections keep a render-stable identity for the memo below.
+  const tags = useMemo(() => query.tags ?? [], [query.tags]);
+  const techs = useMemo(() => query.techs ?? [], [query.techs]);
+  const [tagQuery, setTagQuery] = useState("");
+  const tagOptions = useMemo(
+    () => [
+      ...tagIds
+        .filter((tag) => !tags.includes(tag))
+        .map((tag) => ({ value: tag, label: messages.board.tags[tag] })),
+      ...threadTechIds
+        .filter((tech) => !techs.includes(tech))
+        .map((tech) => ({ value: tech, label: messages.readroom.tags[tech] })),
+    ],
+    [tags, techs],
+  );
+
+  function pickTagFilter(value: TagId | ThreadTechId) {
+    setTagQuery("");
+    if (isTagId(value)) toggleTag(value);
+    else toggleTech(value);
+  }
+
+  function removeTagFilter(value: TagId | ThreadTechId) {
+    if (isTagId(value)) {
+      onQueryChange({ tags: tags.filter((item) => item !== value) });
+    } else {
+      onQueryChange({ techs: techs.filter((item) => item !== value) });
+    }
+  }
+
+  // One control, one reset: the picked tags and the drafted query go together.
+  function clearTagFilter() {
+    setTagQuery("");
+    onQueryChange({ tags: [], techs: [] });
+  }
+
   const toggleTag = (tag: TagId) => {
-    onQueryChange({ tag: query.tag === tag ? undefined : tag });
+    onQueryChange({
+      tags: tags.includes(tag) ? tags.filter((item) => item !== tag) : [...tags, tag],
+    });
   };
 
-  const filtered = query.board !== undefined || query.tag !== undefined;
+  const toggleTech = (tech: ThreadTechId) => {
+    onQueryChange({
+      techs: techs.includes(tech) ? techs.filter((item) => item !== tech) : [...techs, tech],
+    });
+  };
+
+  const filtered = query.board !== undefined || tags.length > 0 || techs.length > 0;
   const searching = !isBlankSearch(query.q);
   const matchCount = [...searchHits.values()].reduce((total, hit) => total + hit.totalMatches, 0);
 
@@ -111,33 +163,75 @@ export function FeedPanel({
             options={boardOptions}
           />
           <div aria-hidden="true" className={styles.rowBreak} />
-          <Field
-            label={messages.board.feed.search.label}
-            name="q"
-            value={query.q}
-            placeholder={messages.board.feed.search.label}
-            hideLabel
-            onChange={(q: string) => onQueryChange({ q })}
-            // The filter row owns no submit: Enter walks right like ArrowRight.
-            onKeyDown={(event) => {
-              if (
-                event.key !== "Enter" ||
-                event.shiftKey ||
-                event.ctrlKey ||
-                event.metaKey ||
-                event.altKey ||
-                event.nativeEvent.isComposing
-              )
-                return;
-              if (focusNextControl(event.currentTarget)) event.preventDefault();
-            }}
-          />
-          {query.q !== "" ? (
-            <Button onClick={() => onQueryChange({ q: "" })}>
+          {/* The field hugs its CLEAR at the dense chip gap; the board picker
+              keeps the airy filter rhythm. The tag box rides the same row:
+              on mobile it wraps under the search. */}
+          <Stack direction="row" gap={4} align="flex-end" wrap>
+            <Field
+              label={messages.board.feed.search.label}
+              name="q"
+              value={query.q}
+              placeholder={messages.board.feed.search.label}
+              hideLabel
+              onChange={(q: string) => onQueryChange({ q })}
+              // The filter row owns no submit: Enter walks right like ArrowRight.
+              onKeyDown={(event) => {
+                if (
+                  event.key !== "Enter" ||
+                  event.shiftKey ||
+                  event.ctrlKey ||
+                  event.metaKey ||
+                  event.altKey ||
+                  event.nativeEvent.isComposing
+                )
+                  return;
+                if (focusNextControl(event.currentTarget)) event.preventDefault();
+              }}
+            />
+            {query.q !== "" ? (
+              <Button onClick={() => onQueryChange({ q: "" })}>
+                {messages.board.feed.search.clear}
+              </Button>
+            ) : null}
+            <ComboBox
+              label={messages.board.feed.tagLabel}
+              name="tag-search"
+              hideLabel
+              placeholder={messages.board.feed.tagLabel}
+              value={tagQuery}
+              onChange={setTagQuery}
+              options={tagOptions}
+              onPick={(option) => pickTagFilter(option.value)}
+              emptyText={messages.board.feed.noTagMatch}
+              advanceOnPick={false}
+              submitOnNoMatch={false}
+              maxLength={MAX_TAG_QUERY_LENGTH}
+            />
+          </Stack>
+        </Stack>
+
+        {/* The picked tags read right under their box, before the sort row:
+            one tight chip group that only exists while picked. */}
+        {tags.length === 0 && techs.length === 0 ? null : (
+          <Stack direction="row" gap={4} align="center" wrap navRow>
+            {tags.map((tag) => (
+              <Tag key={tag} tone={tagTones[tag]} active onClick={() => removeTagFilter(tag)}>
+                {messages.board.tags[tag]}
+              </Tag>
+            ))}
+            {techs.map((tech) => (
+              <Tag key={tech} active onClick={() => removeTagFilter(tech)}>
+                {messages.readroom.tags[tech]}
+              </Tag>
+            ))}
+            <Button
+              ariaLabel={`${messages.board.feed.search.clear} ${messages.board.feed.tagLabel}`}
+              onClick={clearTagFilter}
+            >
               {messages.board.feed.search.clear}
             </Button>
-          ) : null}
-        </Stack>
+          </Stack>
+        )}
 
         <Stack direction="row" gap={4} align="center" wrap navRow className={styles.sortRow}>
           <Text as="span" role="hint">
@@ -146,19 +240,6 @@ export function FeedPanel({
           {threadSorts.map((sort) => (
             <Tag key={sort} active={query.sort === sort} onClick={() => onQueryChange({ sort })}>
               {messages.board.feed.sorts[sort]}
-            </Tag>
-          ))}
-          <Text as="span" role="hint">
-            {messages.board.feed.tagLabel}
-          </Text>
-          {tagIds.map((tag) => (
-            <Tag
-              key={tag}
-              tone={tagTones[tag]}
-              active={query.tag === tag}
-              onClick={() => toggleTag(tag)}
-            >
-              {messages.board.tags[tag]}
             </Tag>
           ))}
         </Stack>
@@ -208,6 +289,7 @@ export function FeedPanel({
                 onActivate={(event) => onActivateThread(thread.id, event)}
                 onVote={() => onVoteThread(thread.id)}
                 onFilterTag={toggleTag}
+                onFilterTech={toggleTech}
               />
             </Stack>
           ))}

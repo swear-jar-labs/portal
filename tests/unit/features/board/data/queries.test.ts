@@ -9,7 +9,7 @@ import {
   listThreadSummariesByAuthor,
   listThreads,
 } from "@/features/board/data/queries";
-import { boardIds, tagIds } from "@/features/board/model/threads";
+import { boardIds, tagIds, threadTechIds } from "@/features/board/model/threads";
 
 describe("board fixtures", () => {
   it("keeps thread ids unique and resolvable", async () => {
@@ -55,6 +55,9 @@ describe("board fixtures", () => {
       expect(boardIds, `${summary.id} has an unknown board`).toContain(summary.board);
       for (const tag of summary.tags) {
         expect(tagIds, `${summary.id} has an unknown tag`).toContain(tag);
+      }
+      for (const tech of summary.techs) {
+        expect(threadTechIds, `${summary.id} has an unknown tech`).toContain(tech);
       }
       expect(summary.votes).toBeGreaterThanOrEqual(0);
     }

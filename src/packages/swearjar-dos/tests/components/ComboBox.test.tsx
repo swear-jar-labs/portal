@@ -42,6 +42,39 @@ describe("ComboBox", () => {
     expect(html).toContain(`id="${labelled?.[1]}"`);
   });
 
+  it("caps the box text with maxLength", () => {
+    const html = renderToStaticMarkup(
+      <ComboBox
+        label="Tags"
+        name="tags-search"
+        value=""
+        onChange={() => {}}
+        options={OPTIONS}
+        emptyText="No tags match."
+        maxLength={32}
+      />,
+    );
+    expect(html).toContain('maxLength="32"');
+  });
+
+  it("hides the label without dropping its accessible name", () => {
+    const html = renderToStaticMarkup(
+      <ComboBox
+        label="Tags"
+        name="tag-search"
+        value=""
+        onChange={() => {}}
+        options={OPTIONS}
+        emptyText="No tags match."
+        hideLabel
+        placeholder="TAGS"
+      />,
+    );
+    expect(html).toContain("visuallyHidden");
+    expect(html).toContain('placeholder="TAGS"');
+    expect(html).toContain(">Tags</label>");
+  });
+
   it("marks and describes an errored box", () => {
     const html = renderToStaticMarkup(
       <ComboBox

@@ -160,7 +160,7 @@ test("clears the query, names the empty state and walks history", async ({ page 
 
   // Clearing drops the query from the URL and restores the plain feed with
   // its own filters untouched.
-  await feed(page).getByRole("button", { name: "CLEAR" }).click();
+  await feed(page).getByRole("button", { name: "CLEAR", exact: true }).click();
   await expect(page).toHaveURL(FEED_PATH);
   await expect(feed(page).getByText("12 THREADS")).toBeVisible();
 
@@ -168,7 +168,7 @@ test("clears the query, names the empty state and walks history", async ({ page 
   // the raw text from the URL.
   await searchBox(page).fill("   ");
   await expect(feed(page).getByText("12 THREADS")).toBeVisible();
-  await feed(page).getByRole("button", { name: "CLEAR" }).click();
+  await feed(page).getByRole("button", { name: "CLEAR", exact: true }).click();
   await expect(page).toHaveURL(FEED_PATH);
 });
 

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ComboBox, Field, Form, Heading, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { MAX_TAGS, toggleTagSelection } from "@/lib/tags";
+import { MAX_TAGS, MAX_TAG_QUERY_LENGTH, toggleTagSelection } from "@/lib/tags";
 import { type Ticket } from "@/features/tickets/contracts";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { defaultDeadlineLocal, fromLocalInput, type ReadroomDraft } from "../model/datetime";
@@ -72,6 +72,17 @@ export function ReadroomComposePanel({
     () => tickets.map((entry) => ({ value: entry.key, label: entry.key, hint: entry.title })),
     [tickets],
   );
+  // The tag catalog behind the search box: the picked tags leave the list and
+  // read back as removable chips below it (the projects' stack pattern).
+  const [tagQuery, setTagQuery] = useState("");
+  const tagOptions = useMemo(
+    () =>
+      readroomTagIds
+        .filter((tag) => !values.tags.includes(tag))
+        .map((tag) => ({ value: tag, label: messages.readroom.tags[tag] })),
+    [values.tags],
+  );
+  const atTagCap = values.tags.length >= MAX_TAGS;
   // The picked ticket's pool for the source: the product repo plus the
   // ticket's pinned links, deduplicated. Shown while the source stays empty —
   // a pin, never an overwrite. Buttons read by kind ("PR LINK"); the full
@@ -132,6 +143,11 @@ export function ReadroomComposePanel({
 
   function toggleTag(tag: ReadroomTagId) {
     update("tags", toggleTagSelection(values.tags, tag));
+  }
+
+  function addTag(tag: ReadroomTagId) {
+    update("tags", toggleTagSelection(values.tags, tag));
+    setTagQuery("");
   }
 
   // An empty optional field never reaches the schema: absent means absent.
@@ -200,27 +216,35 @@ export function ReadroomComposePanel({
         />
 
         <Stack gap={4}>
-          <Text as="span" role="hint">
-            {messages.readroom.compose.fields.tags}
-          </Text>
-          {/* One walk row: ←/→ moves between tags, ↑/↓ leaves for the fields. */}
-          <Stack direction="row" gap={4} wrap navRow>
-            {readroomTagIds.map((tag) => (
-              <Tag
-                key={tag}
-                active={values.tags.includes(tag)}
-                disabled={!values.tags.includes(tag) && values.tags.length >= MAX_TAGS}
-                onClick={() => toggleTag(tag)}
-              >
-                {messages.readroom.tags[tag]}
-              </Tag>
-            ))}
-          </Stack>
-          {errors.tags ? (
-            <Text as="span" role="danger">
-              {errors.tags}
-            </Text>
-          ) : null}
+          <ComboBox
+            label={messages.readroom.compose.fields.tags}
+            name="tags-search"
+            value={tagQuery}
+            onChange={setTagQuery}
+            // At the cap the catalog closes: the empty box names the limit
+            // (the old flat chips disabled instead). A removal reopens it.
+            options={atTagCap ? [] : tagOptions}
+            onPick={(option) => addTag(option.value)}
+            emptyText={
+              atTagCap
+                ? messages.readroom.compose.errors.tags
+                : messages.readroom.compose.noTagMatch
+            }
+            advanceOnPick={false}
+            submitOnNoMatch={false}
+            maxLength={MAX_TAG_QUERY_LENGTH}
+            error={errors.tags}
+          />
+          {values.tags.length === 0 ? null : (
+            /* One walk row: ←/→ moves between the picked tags, ↑/↓ leaves. */
+            <Stack direction="row" gap={4} wrap navRow>
+              {values.tags.map((tag) => (
+                <Tag key={tag} active onClick={() => toggleTag(tag)}>
+                  {messages.readroom.tags[tag]}
+                </Tag>
+              ))}
+            </Stack>
+          )}
         </Stack>
 
         <MarkdownEditor

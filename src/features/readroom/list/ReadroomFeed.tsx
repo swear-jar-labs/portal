@@ -1,8 +1,9 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import {
   Button,
+  ComboBox,
   Field,
   Heading,
   SegmentedControl,
@@ -13,10 +14,12 @@ import {
 } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
+import { MAX_TAG_QUERY_LENGTH } from "@/lib/tags";
 import {
   hasUpvoted,
   rankReadroomMode,
   readroomModes,
+  readroomTagIds,
   type Readroom,
   type ReadroomMode,
   type ReadroomTagId,
@@ -36,7 +39,6 @@ export type ReadroomFeedProps = {
   // Search, mode and tags are URL state; actor switches read the live corpus.
   query: ReadroomQuery;
   onQueryChange: (patch: Partial<ReadroomQuery>) => void;
-  availableTags: readonly ReadroomTagId[];
   hits: readonly ReadroomHit[];
   // The session's handle for the vote chips (null reads as a guest).
   voter: string | null;
@@ -56,7 +58,6 @@ export function ReadroomFeed({
   currentId,
   query,
   onQueryChange,
-  availableTags,
   hits,
   voter,
   localReadroomIds,
@@ -75,6 +76,32 @@ export function ReadroomFeed({
         ? query.tags.filter((item) => item !== tag)
         : [...query.tags, tag],
     });
+  }
+
+  // The tag catalog behind the filter box: the whole shared vocabulary, not
+  // just the corpus tags — a pick with no tasks behind it honestly empties the
+  // feed. Picked tags leave the list and read back as removable chips.
+  const [tagQuery, setTagQuery] = useState("");
+  const tagOptions = useMemo(
+    () =>
+      readroomTagIds
+        .filter((tag) => !query.tags.includes(tag))
+        .map((tag) => ({ value: tag, label: messages.readroom.tags[tag] })),
+    [query.tags],
+  );
+  function addTagFilter(tag: ReadroomTagId) {
+    if (query.tags.includes(tag)) {
+      setTagQuery("");
+      return;
+    }
+    setTagQuery("");
+    toggleTag(tag);
+  }
+
+  // One control, one reset: the picked tags and the drafted query go together.
+  function clearTagFilter() {
+    setTagQuery("");
+    onQueryChange({ tags: [] });
   }
 
   const cards = (tasks: readonly Readroom[]) =>
@@ -109,7 +136,9 @@ export function ReadroomFeed({
         </Button>
       </Stack>
 
-      <Stack direction="row" gap={8} align="center" wrap navRow>
+      {/* The field hugs its CLEAR at the dense chip gap; the tag box rides
+          the same row and wraps under the search on mobile. */}
+      <Stack direction="row" gap={4} align="center" wrap navRow>
         <Field
           name="q"
           label={messages.readroom.feed.search.label}
@@ -138,7 +167,38 @@ export function ReadroomFeed({
             {messages.readroom.feed.search.clear}
           </Button>
         ) : null}
+        <ComboBox
+          label={messages.readroom.feed.tagLabel}
+          name="tag-search"
+          hideLabel
+          placeholder={messages.readroom.feed.tagLabel}
+          value={tagQuery}
+          onChange={setTagQuery}
+          options={tagOptions}
+          onPick={(option) => addTagFilter(option.value)}
+          emptyText={messages.readroom.feed.noTagMatch}
+          advanceOnPick={false}
+          submitOnNoMatch={false}
+          maxLength={MAX_TAG_QUERY_LENGTH}
+        />
       </Stack>
+      {query.tags.length === 0 ? null : (
+        /* The picked tags read right under their box, before the mode row:
+           one tight chip group that only exists while picked. */
+        <Stack direction="row" gap={4} align="center" wrap navRow>
+          {query.tags.map((tag) => (
+            <Tag key={tag} active onClick={() => toggleTag(tag)}>
+              {messages.readroom.tags[tag]}
+            </Tag>
+          ))}
+          <Button
+            ariaLabel={`${messages.readroom.feed.search.clear} ${messages.readroom.feed.tagLabel}`}
+            onClick={clearTagFilter}
+          >
+            {messages.readroom.feed.search.clear}
+          </Button>
+        </Stack>
+      )}
       <Stack direction="row" gap={8} align="center" wrap navRow>
         <SegmentedControl
           mode="buttons"
@@ -152,19 +212,6 @@ export function ReadroomFeed({
         />
       </Stack>
       {searching ? <Text role="hint">{messages.readroom.feed.searchScope}</Text> : null}
-
-      {availableTags.length > 0 ? (
-        <Stack direction="row" gap={4} align="center" wrap navRow>
-          <Text as="span" role="hint">
-            {messages.readroom.feed.tagLabel}
-          </Text>
-          {availableTags.map((tag) => (
-            <Tag key={tag} active={query.tags.includes(tag)} onClick={() => toggleTag(tag)}>
-              {messages.readroom.tags[tag]}
-            </Tag>
-          ))}
-        </Stack>
-      ) : null}
 
       {readrooms.length === 0 ? (
         <Text role="hint">

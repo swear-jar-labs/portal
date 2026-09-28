@@ -121,6 +121,7 @@ export function addThread(input: ComposeInput, author: BoardMember): Thread {
     title: input.title,
     author,
     tags: input.tags,
+    techs: input.techs,
     pinned: false,
     locked: false,
     createdAt: now,

@@ -35,6 +35,13 @@ export type ComboBoxProps<T extends string = string> = {
   emptyText: string;
   error?: string;
   required?: boolean;
+  // Caps the box text (a catalog search never needs a long query).
+  maxLength?: number;
+  // Hides the label without dropping it from the accessibility tree: the
+  // caption moves into the placeholder (a compact filter row).
+  hideLabel?: boolean;
+  // The placeholder behind an empty box (takes the hidden label's caption).
+  placeholder?: string;
   className?: string;
   // Puts input focus in the box on mount (an opening form hands over focus
   // to its first control); the list itself stays closed.
@@ -54,6 +61,9 @@ export function ComboBox<T extends string = string>({
   emptyText,
   error,
   required = false,
+  maxLength,
+  hideLabel = false,
+  placeholder,
   className,
   autoFocus = false,
 }: ComboBoxProps<T>) {
@@ -201,7 +211,11 @@ export function ComboBox<T extends string = string>({
 
   return (
     <div className={cx(controls.field, className)}>
-      <label id={labelId} className={controls.label} htmlFor={inputId}>
+      <label
+        id={labelId}
+        className={cx(controls.label, hideLabel && controls.visuallyHidden)}
+        htmlFor={inputId}
+      >
         {label}
       </label>
       <RadixPopover.Root open={open} onOpenChange={handleOpenChange}>
@@ -227,6 +241,8 @@ export function ComboBox<T extends string = string>({
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
             required={required}
+            maxLength={maxLength}
+            placeholder={placeholder}
             autoComplete="off"
             className={controls.control}
           />

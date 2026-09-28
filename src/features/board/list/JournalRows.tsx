@@ -12,6 +12,7 @@ import {
   type BoardId,
   type TagId,
   type ThreadSummary,
+  type ThreadTechId,
 } from "../model/threads";
 import { ThreadCard, threadCardId } from "./ThreadCard";
 
@@ -68,6 +69,10 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
     router.push(`${FEED_PATH}?board=${board}&tag=${tag}`);
   };
 
+  const filterTech = (tech: ThreadTechId) => {
+    router.push(`${FEED_PATH}?board=${board}&tech=${tech}`);
+  };
+
   return (
     <Stack gap={8}>
       {rows.map((thread) => (
@@ -79,6 +84,7 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
             onActivate={(event) => activateThread(thread.id, event)}
             onVote={() => gate(() => boardStore.toggleThreadVote(thread.id))}
             onFilterTag={filterTag}
+            onFilterTech={filterTech}
           />
         </Stack>
       ))}

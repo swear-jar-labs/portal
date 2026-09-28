@@ -47,7 +47,8 @@ test("query, AND tags and mode combine in the URL; clear restores the feed", asy
   await expect(search(page)).toHaveValue("retry");
   await expect(feed(page).getByText("1 TASK")).toBeVisible();
   await expect.poll(() => feed(page).getByRole("article").count()).toBeGreaterThan(1);
-  await feed(page).getByRole("button", { name: "Linux" }).click();
+  await feed(page).getByRole("combobox", { name: "TAGS" }).click();
+  await page.getByRole("option", { name: "Linux", exact: true }).click();
   await expect(page).toHaveURL("/readroom?q=retry&mode=new&tag=go&tag=linux");
   await expect(feed(page).getByText("1 TASK")).toBeVisible();
   await feed(page)
@@ -64,7 +65,7 @@ test("query, AND tags and mode combine in the URL; clear restores the feed", asy
   await search(page).focus();
   await page.keyboard.press("Enter");
   await expect(search(page)).not.toBeFocused();
-  await feed(page).getByRole("button", { name: "CLEAR" }).click();
+  await feed(page).getByRole("button", { name: "CLEAR", exact: true }).click();
   await expect(search(page)).toHaveValue("");
   await page.goto("/readroom?tag=rust");
   await waitForHydration(page);
@@ -72,6 +73,16 @@ test("query, AND tags and mode combine in the URL; clear restores the feed", asy
   await feed(page).getByRole("button", { name: "Rust" }).click();
   await expect(page).toHaveURL(READROOM);
   await expect(feed(page).getByRole("article")).toHaveCount(5);
+  // CLEAR TAGS drops every picked tag at once, keeping the rest of the query.
+  await feed(page).getByRole("combobox", { name: "TAGS" }).click();
+  await page.getByRole("option", { name: "Go", exact: true }).click();
+  await feed(page).getByRole("combobox", { name: "TAGS" }).click();
+  await page.getByRole("option", { name: "Linux", exact: true }).click();
+  await expect(page).toHaveURL(`${READROOM}?tag=go&tag=linux`);
+  await feed(page).getByRole("button", { name: "CLEAR TAGS" }).click();
+  await expect(page).toHaveURL(READROOM);
+  await expect(feed(page).getByRole("article")).toHaveCount(5);
+  await expect(feed(page).getByRole("button", { name: "CLEAR TAGS" })).toHaveCount(0);
   await expectNoViolations(page, "readroom search filters");
 });
 

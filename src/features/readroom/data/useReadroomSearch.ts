@@ -75,9 +75,6 @@ export function useReadroomSearch(readrooms: readonly Readroom[], now: string, v
   const hitIds = new Set(hits.map((hit) => hit.taskId));
   const feedReadrooms =
     searchTerms(query.q).length === 0 ? filtered : filtered.filter((entry) => hitIds.has(entry.id));
-  // A valid tag can arrive in a URL even when the current corpus has no task
-  // with it. Keep the selected control visible so the empty feed can recover.
-  const availableTags = [...new Set([...readrooms.flatMap((entry) => entry.tags), ...query.tags])];
 
-  return { query, changeQuery, clock, hits, feedReadrooms, availableTags };
+  return { query, changeQuery, clock, hits, feedReadrooms };
 }

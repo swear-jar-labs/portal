@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
+  ComboBox,
   Field,
   Form,
   Heading,
@@ -13,25 +14,29 @@ import {
   type SelectOption,
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { MAX_TAGS, toggleTagSelection } from "@/lib/tags";
+import { MAX_TAGS, MAX_TAG_QUERY_LENGTH, toggleTagSelection } from "@/lib/tags";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import {
   boardTitle,
   composableBoardIds,
+  isTagId,
   tagIds,
   tagTones,
+  threadTechIds,
   type BoardId,
   type BoardOption,
   type TagId,
+  type ThreadTechId,
 } from "../model/threads";
 import { makeComposeSchema, type ComposeInput } from "../model/schema";
 
 const BODY_ROWS = 6;
 
-const INITIAL_VALUES: ComposeInput = { board: "general", tags: [], title: "", body: "" };
+const INITIAL_VALUES: ComposeInput = { board: "general", tags: [], techs: [], title: "", body: "" };
 
 type ComposeErrors = {
   tags?: string;
+  techs?: string;
   title?: string;
   body?: string;
 };
@@ -67,8 +72,43 @@ export function ComposePanel({
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  function toggleTag(tag: TagId) {
-    update("tags", toggleTagSelection(values.tags, tag));
+  // The unified tag catalog behind the search box: statuses first, then the
+  // techs. Picks toggle their membership; the picked read back as removable
+  // chips below (statuses with their tone). At the shared cap the catalog
+  // closes and names the limit instead.
+  const [tagQuery, setTagQuery] = useState("");
+  const tagOptions = useMemo(
+    () => [
+      ...tagIds
+        .filter((tag) => !values.tags.includes(tag))
+        .map((tag) => ({ value: tag, label: messages.board.tags[tag] })),
+      ...threadTechIds
+        .filter((tech) => !values.techs.includes(tech))
+        .map((tech) => ({ value: tech, label: messages.readroom.tags[tech] })),
+    ],
+    [values.tags, values.techs],
+  );
+  const pickedCount = values.tags.length + values.techs.length;
+  const atTagCap = pickedCount >= MAX_TAGS;
+
+  function addTag(value: TagId | ThreadTechId) {
+    if (isTagId(value)) update("tags", toggleTagSelection(values.tags, value));
+    else update("techs", toggleTagSelection(values.techs, value));
+    setTagQuery("");
+  }
+
+  function removeTag(value: TagId | ThreadTechId) {
+    if (isTagId(value)) {
+      update(
+        "tags",
+        values.tags.filter((item) => item !== value),
+      );
+    } else {
+      update(
+        "techs",
+        values.techs.filter((item) => item !== value),
+      );
+    }
   }
 
   function handleSubmit() {
@@ -78,6 +118,7 @@ export function ComposePanel({
         parsed.error.issues.some((issue) => issue.path[0] === field);
       setErrors({
         tags: hasError("tags") ? messages.board.compose.errors.tags : undefined,
+        techs: hasError("techs") ? messages.board.compose.errors.techs : undefined,
         title: hasError("title") ? messages.board.compose.errors.title : undefined,
         body: hasError("body") ? messages.board.compose.errors.body : undefined,
       });
@@ -101,28 +142,38 @@ export function ComposePanel({
         />
 
         <Stack gap={4}>
-          <Text as="span" role="hint">
-            {messages.board.compose.fields.tags}
-          </Text>
-          {/* One walk row: ←/→ moves between tags, ↑/↓ leaves for the fields. */}
-          <Stack direction="row" gap={4} wrap navRow>
-            {tagIds.map((tag) => (
-              <Tag
-                key={tag}
-                tone={tagTones[tag]}
-                active={values.tags.includes(tag)}
-                disabled={!values.tags.includes(tag) && values.tags.length >= MAX_TAGS}
-                onClick={() => toggleTag(tag)}
-              >
-                {messages.board.tags[tag]}
-              </Tag>
-            ))}
-          </Stack>
-          {errors.tags ? (
-            <Text as="span" role="danger">
-              {errors.tags}
-            </Text>
-          ) : null}
+          <ComboBox
+            label={messages.board.compose.fields.tags}
+            name="tags-search"
+            value={tagQuery}
+            onChange={setTagQuery}
+            // At the cap the catalog closes: the empty box names the limit.
+            // A removal reopens it.
+            options={atTagCap ? [] : tagOptions}
+            onPick={(option) => addTag(option.value)}
+            emptyText={
+              atTagCap ? messages.board.compose.errors.tags : messages.board.compose.noTagMatch
+            }
+            advanceOnPick={false}
+            submitOnNoMatch={false}
+            maxLength={MAX_TAG_QUERY_LENGTH}
+            error={errors.tags ?? errors.techs}
+          />
+          {pickedCount === 0 ? null : (
+            /* One walk row: ←/→ moves between the picked tags, ↑/↓ leaves. */
+            <Stack direction="row" gap={4} wrap navRow>
+              {values.tags.map((tag) => (
+                <Tag key={tag} tone={tagTones[tag]} active onClick={() => removeTag(tag)}>
+                  {messages.board.tags[tag]}
+                </Tag>
+              ))}
+              {values.techs.map((tech) => (
+                <Tag key={tech} active onClick={() => removeTag(tech)}>
+                  {messages.readroom.tags[tech]}
+                </Tag>
+              ))}
+            </Stack>
+          )}
         </Stack>
 
         <Field

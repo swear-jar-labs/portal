@@ -29,8 +29,11 @@ describe("forum activity", () => {
     };
     const ada = { user: "ada", role: "member" } as const;
     const ken = { user: "ken", role: "member" } as const;
-    const thread = addThread({ board: "general", tags: [], title: "A post", body: "Body" }, ada);
-    addThread({ board: "general", tags: [], title: "Another", body: "Body" }, ken);
+    const thread = addThread(
+      { board: "general", tags: [], techs: [], title: "A post", body: "Body" },
+      ada,
+    );
+    addThread({ board: "general", tags: [], techs: [], title: "Another", body: "Body" }, ken);
     const reply = addReply(thread.id, "Reply", ada);
     addReply(thread.id, "Other", ken);
     expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 2, replies: 2 });

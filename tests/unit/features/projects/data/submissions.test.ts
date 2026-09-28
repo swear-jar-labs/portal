@@ -135,6 +135,7 @@ describe("project submissions", () => {
         title: "First thread",
         body: "Hi",
         tags: [],
+        techs: [],
       }).success,
     ).toBe(true);
   });

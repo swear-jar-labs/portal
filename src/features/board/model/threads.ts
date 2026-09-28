@@ -4,6 +4,7 @@
 
 import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { techIds, type TechId } from "@/content/techs";
 import {
   archivedProjectSlugs,
   isKnownProjectSlug,
@@ -36,16 +37,17 @@ export function boardTitle(id: BoardId): string {
   return id;
 }
 
-// Tags are the board's status vocabulary: proposal, decision and question
-// carry a tone and read as chips. Topical tags (compilers, tooling, craft,
-// meta) were cut 2026-09-27: the board speaks in thread kinds, topics live
-// in titles and bodies (and the search finds them there).
-export const tagIds = ["proposal", "decision", "question"] as const;
+// Tags are the board's status vocabulary: proposal and question carry a tone
+// and read as chips (decision was cut 2026-09-28: announcements read without
+// a status). Topical tags (compilers, tooling, craft, meta) were cut
+// 2026-09-27: the board speaks in thread kinds, topics live in titles and
+// bodies (and the search finds them there). Technologies ride the readroom's
+// shared vocabulary instead (ThreadTechId below).
+export const tagIds = ["proposal", "question"] as const;
 export type TagId = (typeof tagIds)[number];
 
 export const tagTones: Partial<Record<TagId, Tone>> = {
   proposal: "cyan",
-  decision: "green",
   question: "yellow",
 };
 
@@ -55,6 +57,17 @@ export function isBoardId(value: string): value is BoardId {
 
 export function isTagId(value: string): value is TagId {
   return tagIds.some((id) => id === value);
+}
+
+// Technologies share the readroom's vocabulary whole (one list for the forum,
+// the readroom and the project stacks): a thread carries status tags (what
+// kind of thread it is) plus techs (what it is about). Both filters are
+// multi-select AND, like the readroom's tag filter.
+export const threadTechIds = techIds;
+export type ThreadTechId = TechId;
+
+export function isThreadTechId(value: string): value is ThreadTechId {
+  return threadTechIds.some((id) => id === value);
 }
 
 // The board's URL canon: the feed and the profile build thread links from it.
@@ -92,6 +105,7 @@ export type Thread = {
   title: string;
   author: BoardMember;
   tags: readonly TagId[];
+  techs: readonly ThreadTechId[];
   pinned: boolean;
   locked: boolean;
   createdAt: string;

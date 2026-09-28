@@ -69,7 +69,25 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
   await waitForHydration(page);
   const feed = page.getByRole("region", { name: FEED_REGION });
 
-  await feed.getByRole("button", { name: "QUESTION" }).first().click();
+  // The feed island hydrates behind Suspense after the shell clock: the first
+  // click retries until the box answers with its list. The search then
+  // narrows the unified catalog (statuses first, techs after).
+  const tagBox = feed.getByRole("combobox", { name: "TAGS" });
+  await expect(async () => {
+    await tagBox.click();
+    await expect(page.getByRole("listbox")).toHaveCount(1, { timeout: 1_000 });
+  }).toPass();
+  await expect(tagBox).toHaveAttribute("placeholder", "TAGS");
+  await page.keyboard.press("Escape");
+  await tagBox.fill("ques");
+  await expect(page.getByRole("option", { name: "QUESTION", exact: true })).toBeVisible();
+  await expect(page.getByRole("option", { name: "C", exact: true })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await tagBox.fill("");
+  await page.keyboard.press("Escape");
+
+  await tagBox.click();
+  await page.getByRole("option", { name: "QUESTION", exact: true }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?tag=question`);
   await expect(feed.getByRole("article")).toHaveCount(4);
   await expect(feed.getByRole("button", { name: "QUESTION" }).first()).toHaveAttribute(
@@ -77,21 +95,88 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
     "true",
   );
 
-  // Board and tag combine: the compiler journal asks no questions.
-  await feed.getByRole("combobox", { name: "BOARD" }).click();
-  await page.getByRole("option", { name: "Compiler" }).click();
-  await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=question`);
+  // Statuses combine with AND: only the parsers thread is both.
+  await tagBox.click();
+  await page.getByRole("option", { name: "PROPOSAL", exact: true }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?tag=question&tag=proposal`);
   await expect(feed.getByRole("article")).toHaveCount(1);
 
-  // ...while its decisions live elsewhere: the combination empties the feed.
-  await feed.getByRole("button", { name: "DECISION" }).first().click();
-  await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=decision`);
-  await expect(feed.getByText("NO MATCHES. TRY CHANGING THE FILTERS.")).toBeVisible();
-  await expect(feed.getByText("0 THREADS")).toBeVisible();
+  // Board and tags combine.
+  await feed.getByRole("combobox", { name: "BOARD" }).click();
+  await page.getByRole("option", { name: "Compiler" }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?board=compiler&tag=question&tag=proposal`);
+  await expect(feed.getByRole("article")).toHaveCount(1);
+
+  // CLEAR TAGS drops the tags and keeps the board.
+  await feed.getByRole("button", { name: "CLEAR TAGS" }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?board=compiler`);
+  await expect(feed.getByRole("article")).toHaveCount(1);
+  await expect(feed.getByRole("button", { name: "CLEAR TAGS" })).toHaveCount(0);
 
   // The state is deep-linkable.
   await page.reload();
+  await expect(feed.getByRole("article")).toHaveCount(1);
+});
+
+test("filters by tech and keeps the state in the URL", async ({ page }) => {
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+
+  // The feed island hydrates behind Suspense after the shell clock: the first
+  // click retries until the box answers with its list. The search then
+  // narrows the unified catalog; tech picks read back as chips.
+  const tagBox = feed.getByRole("combobox", { name: "TAGS" });
+  await expect(async () => {
+    await tagBox.click();
+    await expect(page.getByRole("listbox")).toHaveCount(1, { timeout: 1_000 });
+  }).toPass();
+  await page.keyboard.press("Escape");
+  await tagBox.fill("scri");
+  await expect(page.getByRole("option", { name: "TypeScript", exact: true })).toBeVisible();
+  await expect(page.getByRole("option", { name: "C", exact: true })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await tagBox.fill("");
+  await page.keyboard.press("Escape");
+  await tagBox.click();
+  await page.getByRole("option", { name: "C", exact: true }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?tech=c`);
+  await expect(feed.getByText("2 THREADS")).toBeVisible();
+  await expect(feed.getByRole("article")).toHaveCount(2);
+  await expect(feed.getByRole("button", { name: "C", exact: true }).first()).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // Techs combine with AND: no thread carries both C and Go.
+  await tagBox.click();
+  await page.getByRole("option", { name: "Go", exact: true }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?tech=c&tech=go`);
+  await expect(feed.getByText("0 THREADS")).toBeVisible();
   await expect(feed.getByText("NO MATCHES. TRY CHANGING THE FILTERS.")).toBeVisible();
+
+  // The chips remove singly; CLEAR TAGS drops them all at once.
+  await feed.getByRole("button", { name: "Go", exact: true }).first().click();
+  await expect(page).toHaveURL(`${FEED_PATH}?tech=c`);
+  await expect(feed.getByText("2 THREADS")).toBeVisible();
+  await tagBox.click();
+  await page.getByRole("option", { name: "Go", exact: true }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?tech=c&tech=go`);
+  await feed.getByRole("button", { name: "CLEAR TAGS" }).click();
+  await expect(page).toHaveURL(FEED_PATH);
+  await expect(feed.getByText("12 THREADS")).toBeVisible();
+  await expect(feed.getByRole("button", { name: "CLEAR TAGS" })).toHaveCount(0);
+  // A card tech chip filters the feed instead of opening the thread.
+  const cache = feed.getByRole("article").filter({ hasText: "Eviction policy" });
+  await cache.getByRole("button", { name: "Go", exact: true }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?tech=go`);
+  await expect(feed.getByText("1 THREAD")).toBeVisible();
+
+  // The state is deep-linkable.
+  await page.goto(`${FEED_PATH}?tech=ci`);
+  await waitForHydration(page);
+  await expect(feed.getByText("1 THREAD")).toBeVisible();
+  await expect(feed.getByRole("article").filter({ hasText: "CI cache poisoning" })).toBeVisible();
 });
 
 test("a tag on a card filters the feed instead of opening the thread", async ({ page }) => {
@@ -139,25 +224,26 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
     await page.keyboard.press("ArrowDown");
     await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused({ timeout: 1_000 });
   }).toPass();
+  // ▶ walks the search row: board picker, search field, tag box. Text inputs
+  // release ←/→ at the caret edges (mid-text arrows stay native), so an
+  // empty field hands over to the box.
+  await page.keyboard.press("ArrowRight");
+  await expect(feed.getByRole("textbox", { name: "SEARCH" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(feed.getByRole("combobox", { name: "TAGS" })).toBeFocused();
+  // ▼ steps to the sort row and across it, then to the compose control.
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: "HOT", exact: true })).toBeFocused();
-  await page.keyboard.press("ArrowRight");
-  await expect(feed.getByRole("button", { name: "NEW", exact: true })).toBeFocused();
-  await page.keyboard.press("ArrowRight");
-  await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toBeFocused();
-  await expect(feed.getByRole("button", { name: "PROPOSAL" }).first()).toHaveCSS(
+  await expect(feed.getByRole("button", { name: "HOT", exact: true })).toHaveCSS(
     "outline-offset",
     "-2px",
   );
-
-  // ◀/▶ walk inside the sort-and-tag row.
   await page.keyboard.press("ArrowRight");
-  await expect(feed.getByRole("button", { name: "DECISION" }).first()).toBeFocused();
+  await expect(feed.getByRole("button", { name: "NEW", exact: true })).toBeFocused();
 
-  // ▼ leaves the row for the compose control (an unmarked row of its
+  // ▼ leaves the sort row for the compose control (an unmarked row of its
   // own), then for the first card's title (it leads the DOM while the byline
-  // reads above it on screen); ▶ walks author and vote. The search box rides
-  // the board row (▶ from the board combobox reaches it).
+  // reads above it on screen); ▶ walks author and vote.
   await page.keyboard.press("ArrowDown");
   await expect(feed.getByRole("button", { name: NEW_THREAD })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -174,9 +260,11 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   await expect(cards.first().getByRole("button").first()).toBeFocused();
 
   // The walk wraps: ▲ from the first row lands on the last card's title.
+  // Re-entering the search row restores its remembered control (the tag box
+  // the walk left it from), not its first one.
   await focusedBody(page).focus();
   await page.keyboard.press("ArrowDown");
-  await expect(feed.getByRole("combobox", { name: "BOARD" })).toBeFocused();
+  await expect(feed.getByRole("combobox", { name: "TAGS" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(cards.last().getByRole("link").first()).toBeFocused();
 });
@@ -578,7 +666,22 @@ test("composes a thread that lives in the session", async ({ page }) => {
 
   await form.getByRole("combobox", { name: "BOARD" }).click();
   await page.getByRole("option", { name: "Tooling" }).click();
-  await form.getByRole("button", { name: "QUESTION" }).click();
+  // The unified box takes statuses and techs alike: the search narrows it.
+  // (The compose box keeps its visible label; the TAGS placeholder lives on
+  // the feed boxes only.)
+  const tagBox = form.getByRole("combobox", { name: "TAGS" });
+  await tagBox.fill("ques");
+  await expect(page.getByRole("option", { name: "QUESTION", exact: true })).toBeVisible();
+  await expect(page.getByRole("option", { name: "Rust", exact: true })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await tagBox.fill("");
+  await page.keyboard.press("Escape");
+  await tagBox.click();
+  await page.getByRole("option", { name: "QUESTION", exact: true }).click();
+  await expect(form.getByRole("button", { name: "QUESTION", exact: true })).toBeVisible();
+  await tagBox.click();
+  await page.getByRole("option", { name: "Rust", exact: true }).click();
+  await expect(form.getByRole("button", { name: "Rust", exact: true })).toBeVisible();
   await form.getByLabel("TITLE").fill(title);
   await form.getByLabel("BODY").fill("A header edit slipped past the cache again.");
   await form.getByRole("button", { name: "POST THREAD" }).click();
@@ -586,6 +689,7 @@ test("composes a thread that lives in the session", async ({ page }) => {
   const card = feed.getByRole("article").filter({ hasText: title });
   await expect(card).toBeVisible();
   await expect(card).toContainText("QUESTION");
+  await expect(card).toContainText("Rust");
   // The submit switched the feed to the composed thread's board: the count is
   // the board's own (one fixture thread plus the new one).
   await expect(feed.getByText("2 THREADS")).toBeVisible();
@@ -860,14 +964,13 @@ test("walks the compose layer and returns focus to its button", async ({ page })
   const form = page.getByRole("form", { name: "NEW THREAD" });
   await expect(page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`)).toBeFocused();
 
-  // The form walks two axes: rows step down to the editor's field, tabs and
-  // toolbar rows, cells step across the tags and the submit pair.
+  // The form walks two axes: rows step down through the unified tag box to
+  // the editor's field, tabs and toolbar rows, cells step across the submit
+  // pair.
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("combobox", { name: "BOARD" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(form.getByRole("button", { name: "PROPOSAL" })).toBeFocused();
-  await page.keyboard.press("ArrowRight");
-  await expect(form.getByRole("button", { name: "DECISION" })).toBeFocused();
+  await expect(form.getByRole("combobox", { name: "TAGS" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("textbox", { name: "TITLE" })).toBeFocused();
   await page.keyboard.press("ArrowDown");

@@ -81,12 +81,15 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
             </Stack>
           }
           actions={
-            thread.tags.length === 0 ? null : (
+            thread.tags.length === 0 && thread.techs.length === 0 ? null : (
               <Stack direction="row" gap={4} wrap>
                 {thread.tags.map((tag) => (
                   <Tag key={tag} tone={tagTones[tag]}>
                     {messages.board.tags[tag]}
                   </Tag>
+                ))}
+                {thread.techs.map((tech) => (
+                  <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
                 ))}
               </Stack>
             )

@@ -26,9 +26,9 @@ const FILE_COLUMNS: FileTableColumn[] = [
 const FILE_SIZE_ORDER = ["peek", "compact", "full"] as const;
 export type FileListSize = (typeof FILE_SIZE_ORDER)[number];
 
-// The document shown when no route owns the right panel (boot, CLS, [X] on an
-// inner window): the shell's default view.
-export const DEFAULT_DOC_ID: DocId = "ABOUT";
+// The document shown when no route owns the right panel (boot, CLS): the
+// shell's default view.
+const DEFAULT_DOC_ID: DocId = "ABOUT";
 const INITIAL_CURSOR_ID = fileRowId(DEFAULT_DOC_ID);
 
 type CursorState = {

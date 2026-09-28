@@ -22,7 +22,7 @@ export async function LoginPage({ searchParams }: LoginPageProps) {
   if (actor) redirect(returnTo ?? FORUM_PATH);
 
   return (
-    <ShellPanel title={fileTitle("LOGON")} closable>
+    <ShellPanel title={fileTitle("LOGON")}>
       <LogonForm returnTo={returnTo} />
     </ShellPanel>
   );

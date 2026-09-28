@@ -1141,12 +1141,16 @@ test.describe("logon window", () => {
     await expect(google).toBeFocused();
   });
 
-  test("the window [X] closes back to the default document", async ({ page }) => {
-    for (const path of ["/login", "/apply", "/profile"]) {
+  test("a top-level window has no [X]: the last panel cannot be closed", async ({ page }) => {
+    for (const path of ["/login", "/apply", "/profile", "/no-such-route"]) {
       await page.goto(path);
-      await page.getByRole("button", { name: "Close" }).click();
-      await expect(page).toHaveURL("/");
-      await expect(page.getByRole("region", { name: "ABOUT.TXT" })).toBeVisible();
+      // The [X] belongs to layers above the base only: a lone panel has
+      // nothing to close back to, so the shell renders no Close button.
+      await expect(page.getByRole("button", { name: "Close" })).toHaveCount(0);
+      // Esc pops stack layers; with no stack it must leave the route alone.
+      const url = page.url();
+      await page.keyboard.press("Escape");
+      await expect(page).toHaveURL(url);
     }
   });
 

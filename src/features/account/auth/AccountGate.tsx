@@ -6,7 +6,7 @@ import { ShellPanel } from "@/features/shell";
 // stays put and the next step (logon or register) is one click away.
 export function AccountGate({ title }: { title: string }) {
   return (
-    <ShellPanel title={title} closable>
+    <ShellPanel title={title}>
       <Stack gap={8}>
         <Heading level={1}>{messages.account.gate.heading}</Heading>
         <Text>{messages.account.gate.text}</Text>

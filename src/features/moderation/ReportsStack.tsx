@@ -291,7 +291,7 @@ export function ReportsStack({ user }: { user: string }) {
 
   return (
     <PanelStack onCloseTop={closeTop}>
-      <ShellPanel title={fileTitle("REPORTS")} closable>
+      <ShellPanel title={fileTitle("REPORTS")}>
         <Stack gap={12}>
           <Heading level={1}>{copy.personal.heading}</Heading>
           <SegmentedControl

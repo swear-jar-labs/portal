@@ -12,7 +12,7 @@ export async function SettingsPage() {
   if (!actor) return <AccountGate title={fileTitle("SETTINGS")} />;
 
   return (
-    <ShellPanel title={fileTitle("SETTINGS")} closable>
+    <ShellPanel title={fileTitle("SETTINGS")}>
       <SettingsForm />
     </ShellPanel>
   );

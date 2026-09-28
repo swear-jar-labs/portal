@@ -426,6 +426,9 @@ test("opens a thread over the feed and pops back to the focused card", async ({ 
   await expect(layers(page).first()).toHaveAttribute("inert", "");
   await expect(layers(page).last()).not.toHaveAttribute("inert", "");
   await expect(feed).toBeVisible();
+  // The [X] belongs to the thread layer: the base feed cannot be closed.
+  await expect(feed.getByRole("button", { name: "Close" })).toHaveCount(0);
+  await expect(thread.getByRole("button", { name: "Close" })).toHaveCount(1);
 
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(FEED_PATH);

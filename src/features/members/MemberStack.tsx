@@ -19,9 +19,7 @@ export function MemberStack({ children }: { children: ReactNode }) {
 
   return (
     <PanelStack onCloseTop={overlayOpen ? closeOverlay : undefined}>
-      <ShellPanel title={messages.members.panelTitle} closable>
-        {children}
-      </ShellPanel>
+      <ShellPanel title={messages.members.panelTitle}>{children}</ShellPanel>
       {overlayLayerPanels(overlayLayers, closeOverlay)}
     </PanelStack>
   );

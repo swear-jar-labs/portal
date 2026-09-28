@@ -43,9 +43,7 @@ export function AdminStack({ children }: { children: ReactNode }) {
   return (
     <ModerationPreviewProvider open={openPreview}>
       <PanelStack onCloseTop={closeTop}>
-        <ShellPanel title={fileTitle("ADMIN")} closable>
-          {children}
-        </ShellPanel>
+        <ShellPanel title={fileTitle("ADMIN")}>{children}</ShellPanel>
         {previewId === null ? null : (
           <ShellPanel
             title={messages.moderation.previewHeading}

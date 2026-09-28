@@ -202,7 +202,7 @@ export function ProjectsStack({
 
   return (
     <PanelStack onCloseTop={closeTop}>
-      <ShellPanel title={fileTitle("PROJECTS")} closable>
+      <ShellPanel title={fileTitle("PROJECTS")}>
         <ProjectsFeed
           projects={projects}
           now={now}

@@ -290,7 +290,7 @@ export function TicketsStack({
 
   return (
     <PanelStack onCloseTop={closeTop}>
-      <ShellPanel title={fileTitle("TICKETS")} closable>
+      <ShellPanel title={fileTitle("TICKETS")}>
         <TicketsFeed
           tickets={visible}
           query={query}

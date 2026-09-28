@@ -13,7 +13,7 @@ export async function RegisterPage() {
   if (actor) redirect("/profile");
 
   return (
-    <ShellPanel title={fileTitle("REGISTER")} closable>
+    <ShellPanel title={fileTitle("REGISTER")}>
       <RegisterForm />
     </ShellPanel>
   );

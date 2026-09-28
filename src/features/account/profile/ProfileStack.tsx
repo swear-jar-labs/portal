@@ -68,7 +68,7 @@ export function ProfileStack({
 
   return (
     <PanelStack onCloseTop={overlayOpen ? closeOverlay : editing ? requestClose : undefined}>
-      <ShellPanel title={title} closable>
+      <ShellPanel title={title}>
         <Stack gap={12}>
           <ProfileView
             profile={profile}

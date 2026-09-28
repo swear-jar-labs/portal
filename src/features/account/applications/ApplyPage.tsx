@@ -15,7 +15,7 @@ export async function ApplyPage() {
   if (actor.level === "member") redirect("/profile");
 
   return (
-    <ShellPanel title={fileTitle("APPLY")} closable>
+    <ShellPanel title={fileTitle("APPLY")}>
       <ApplyForm applicant={actor.user} applications={memberApplicationsFor(actor.user)} />
     </ShellPanel>
   );

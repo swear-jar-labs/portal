@@ -125,7 +125,7 @@ export function InboxStack({ user, seed, now }: InboxStackProps) {
 
   return (
     <PanelStack onCloseTop={closeTop}>
-      <ShellPanel title={fileTitle("INBOX")} closable>
+      <ShellPanel title={fileTitle("INBOX")}>
         <InboxFeed
           list={list}
           visible={visible}

@@ -6,6 +6,8 @@
   --file-row-height: 1.8em;
   --file-table-chrome: calc(3 * 1.4em + 25px);
   flex: 0 0 33%;
+  /* On wide screens the list stops growing: the document keeps the room. */
+  max-width: 350px;
 }
 
 .fileTable {
@@ -15,6 +17,7 @@
 @media (max-width: 720px) {
   .panelLeft {
     flex: 0 0 auto;
+    max-width: none;
   }
 
   .fileTable {

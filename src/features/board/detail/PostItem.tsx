@@ -62,10 +62,12 @@ function DeleteConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCance
         {messages.board.post.deleteHint}
       </Text>
       <Stack direction="row" gap={10} wrap>
-        <Button variant="danger" onClick={onConfirm}>
+        <Button variant="danger" className={styles.dialogAction} onClick={onConfirm}>
           {messages.board.post.deleteConfirm}
         </Button>
-        <Button onClick={onCancel}>{messages.board.post.cancel}</Button>
+        <Button className={styles.dialogAction} onClick={onCancel}>
+          {messages.board.post.cancel}
+        </Button>
       </Stack>
     </Stack>
   );

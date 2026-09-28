@@ -50,6 +50,9 @@
 .item[data-highlighted] {
   background: var(--dos-blue);
   color: var(--dos-white);
+  /* The blue highlight is the menu's focus mark; the global :focus-visible
+     ring would sit cyan on light gray (and only matches after base.css). */
+  outline: none;
 }
 
 .item[data-disabled] {

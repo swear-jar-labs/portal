@@ -17,6 +17,12 @@
   background: var(--dos-post-bg, var(--dos-black));
 }
 
+/* Confirmation pair in a board dialog: each button claims an equal share of
+   the window width (the shell dialogs' pattern). */
+.dialogAction {
+  flex: 1 1 0;
+}
+
 .threadMeta {
   padding-bottom: 6px;
 }

@@ -28,8 +28,10 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  background: var(--dos-light-gray);
-  color: var(--dos-black);
+  /* The chrome tokens: the panel stack repoints them on the front layer
+     (PanelStack.module.css), everywhere else the light fallbacks hold. */
+  background: var(--dos-titlebar-bg, var(--dos-light-gray));
+  color: var(--dos-titlebar-ink, var(--dos-black));
   padding: 0 4px;
   user-select: none;
 }

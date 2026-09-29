@@ -9,12 +9,11 @@
   color: var(--dos-black);
   border: var(--dos-border-width) solid;
   border-color: var(--dos-border-raised);
-  /* Double frame: the raised border's right/bottom edges are black and would
-     vanish over the black doc panel; the light outer ring keeps the silhouette
-     readable on any backdrop. */
+  /* The raised border's right/bottom edges are black; the black ring keeps the
+     silhouette readable on any backdrop, the drop lends the depth. No light
+     outer ring: dialogs sit frameless on the dimmed overlay. */
   box-shadow:
     0 0 0 var(--dos-border-width) var(--dos-black),
-    0 0 0 4px var(--dos-light-gray),
     8px 8px 0 rgba(0, 0, 0, 0.65);
 }
 

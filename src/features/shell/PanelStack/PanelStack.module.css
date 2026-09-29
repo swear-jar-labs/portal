@@ -21,6 +21,14 @@
   margin-top: var(--dos-panel-stack-inset);
 }
 
+/* The front window reads dimmed: only the top wrapper repoints the title-bar
+   tokens (the kit Panel falls back to the light chrome), so lone panels and
+   the revealed bars behind stay light. White ink keeps AA on the dark bar. */
+.top {
+  --dos-titlebar-bg: var(--dos-dark-gray);
+  --dos-titlebar-ink: var(--dos-white);
+}
+
 /* Every layer owns its ordered stacking context: otherwise positioned parts
    of an earlier panel (cards, rows) could paint over a later panel. */
 

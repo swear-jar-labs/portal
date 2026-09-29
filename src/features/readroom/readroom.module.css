@@ -2,6 +2,13 @@
   min-height: 100%;
 }
 
+/* The filter block: the count and the compose control close it and the line
+   separates the feed from the controls (the forum's pattern). */
+.filters {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--dos-dark-gray);
+}
+
 .cardTitle {
   --dos-link: var(--dos-black);
 }

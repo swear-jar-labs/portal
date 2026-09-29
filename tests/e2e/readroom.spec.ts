@@ -360,14 +360,10 @@ test("walks the feed and the task by rows", async ({ page }) => {
   // ▲/▼ enter the card rows on the card title (it leads the DOM while the
   // byline reads above it on screen); the first step retries until the
   // island's listeners answer (the feed hydrates after the shell clock). The
-  // compose and search rows lead the feed (the tag box rides the search row),
-  // then mode, then the cards.
+  // search row leads the feed (the tag box rides it), then mode, then the
+  // compose row that closes the filters, then the cards.
   await expect(async () => {
     await focusedBody(page).focus();
-    await page.keyboard.press("ArrowDown");
-    await expect(feed.getByRole("button", { name: "NEW TASK" })).toBeFocused({
-      timeout: 1_000,
-    });
     await page.keyboard.press("ArrowDown");
     await expect(feed.getByRole("textbox", { name: "SEARCH READROOM" })).toBeFocused({
       timeout: 1_000,
@@ -380,6 +376,10 @@ test("walks the feed and the task by rows", async ({ page }) => {
     });
     await page.keyboard.press("ArrowDown");
     await expect(feed.getByRole("button", { name: "TOP", exact: true })).toBeFocused({
+      timeout: 1_000,
+    });
+    await page.keyboard.press("ArrowDown");
+    await expect(feed.getByRole("button", { name: "NEW TASK" })).toBeFocused({
       timeout: 1_000,
     });
     await page.keyboard.press("ArrowDown");

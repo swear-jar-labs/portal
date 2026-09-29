@@ -125,93 +125,94 @@ export function ReadroomFeed({
         {messages.readroom.feed.heading}
       </Heading>
 
-      <Stack direction="row" gap={8} align="center" justify="space-between" wrap>
-        <Text role="hint">
-          {searching
-            ? `${formatCount(entries.length, pluralForms.task)} · ${formatCount(orderedHits.length, pluralForms.match)}`
-            : formatCount(entries.length, pluralForms.task)}
-        </Text>
-        <Button id={readroomComposeButtonId} variant="primary" onClick={onCompose}>
-          {messages.readroom.feed.newTask}
-        </Button>
-      </Stack>
-
-      {/* The field hugs its CLEAR at the dense chip gap; the tag box rides
-          the same row and wraps under the search on mobile. */}
-      <Stack direction="row" gap={4} align="center" wrap navRow>
-        <Field
-          name="q"
-          label={messages.readroom.feed.search.label}
-          placeholder={messages.readroom.feed.search.placeholder}
-          hideLabel
-          value={query.q}
-          onChange={(q: string) => onQueryChange({ q })}
-          onKeyDown={(event) => {
-            if (
-              event.key !== "Enter" ||
-              event.shiftKey ||
-              event.ctrlKey ||
-              event.metaKey ||
-              event.altKey ||
-              event.nativeEvent.isComposing
-            )
-              return;
-            // Enter repeats the current search with the present clock, then
-            // follows the DOS row walk to the next control.
-            onQueryChange({ q: query.q });
-            if (focusNextControl(event.currentTarget)) event.preventDefault();
-          }}
-        />
-        {query.q ? (
-          <Button onClick={() => onQueryChange({ q: "" })}>
-            {messages.readroom.feed.search.clear}
-          </Button>
-        ) : null}
-        <ComboBox
-          label={messages.readroom.feed.tagLabel}
-          name="tag-search"
-          hideLabel
-          placeholder={messages.readroom.feed.tagLabel}
-          value={tagQuery}
-          onChange={setTagQuery}
-          options={tagOptions}
-          onPick={(option) => addTagFilter(option.value)}
-          emptyText={messages.readroom.feed.noTagMatch}
-          advanceOnPick={false}
-          submitOnNoMatch={false}
-          maxLength={MAX_TAG_QUERY_LENGTH}
-        />
-      </Stack>
-      {query.tags.length === 0 ? null : (
-        /* The picked tags read right under their box, before the mode row:
-           one tight chip group that only exists while picked. */
+      <Stack gap={8} className={styles.filters}>
+        {/* The field hugs its CLEAR at the dense chip gap; the tag box rides
+            the same row and wraps under the search on mobile. */}
         <Stack direction="row" gap={4} align="center" wrap navRow>
-          {query.tags.map((tag) => (
-            <Tag key={tag} active onClick={() => toggleTag(tag)}>
-              {messages.readroom.tags[tag]}
-            </Tag>
-          ))}
-          <Button
-            ariaLabel={`${messages.readroom.feed.search.clear} ${messages.readroom.feed.tagLabel}`}
-            onClick={clearTagFilter}
-          >
-            {messages.readroom.feed.search.clear}
+          <Field
+            name="q"
+            label={messages.readroom.feed.search.label}
+            placeholder={messages.readroom.feed.search.placeholder}
+            hideLabel
+            value={query.q}
+            onChange={(q: string) => onQueryChange({ q })}
+            onKeyDown={(event) => {
+              if (
+                event.key !== "Enter" ||
+                event.shiftKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.altKey ||
+                event.nativeEvent.isComposing
+              )
+                return;
+              // Enter repeats the current search with the present clock, then
+              // follows the DOS row walk to the next control.
+              onQueryChange({ q: query.q });
+              if (focusNextControl(event.currentTarget)) event.preventDefault();
+            }}
+          />
+          {query.q ? (
+            <Button onClick={() => onQueryChange({ q: "" })}>
+              {messages.readroom.feed.search.clear}
+            </Button>
+          ) : null}
+          <ComboBox
+            label={messages.readroom.feed.tagLabel}
+            name="tag-search"
+            hideLabel
+            placeholder={messages.readroom.feed.tagLabel}
+            value={tagQuery}
+            onChange={setTagQuery}
+            options={tagOptions}
+            onPick={(option) => addTagFilter(option.value)}
+            emptyText={messages.readroom.feed.noTagMatch}
+            advanceOnPick={false}
+            submitOnNoMatch={false}
+            maxLength={MAX_TAG_QUERY_LENGTH}
+          />
+        </Stack>
+        {query.tags.length === 0 ? null : (
+          /* The picked tags read right under their box, before the mode row:
+             one tight chip group that only exists while picked. */
+          <Stack direction="row" gap={4} align="center" wrap navRow>
+            {query.tags.map((tag) => (
+              <Tag key={tag} active onClick={() => toggleTag(tag)}>
+                {messages.readroom.tags[tag]}
+              </Tag>
+            ))}
+            <Button
+              ariaLabel={`${messages.readroom.feed.search.clear} ${messages.readroom.feed.tagLabel}`}
+              onClick={clearTagFilter}
+            >
+              {messages.readroom.feed.search.clear}
+            </Button>
+          </Stack>
+        )}
+        <Stack direction="row" gap={8} align="center" wrap navRow>
+          <SegmentedControl
+            mode="buttons"
+            label={messages.readroom.feed.modeLabel}
+            value={query.mode}
+            onChange={(mode: ReadroomMode) => onQueryChange({ mode })}
+            options={readroomModes.map((entry) => ({
+              value: entry,
+              label: messages.readroom.feed.modes[entry],
+            }))}
+          />
+        </Stack>
+        {searching ? <Text role="hint">{messages.readroom.feed.searchScope}</Text> : null}
+        <Stack direction="row" gap={8} align="center" justify="space-between" wrap>
+          <Text role="hint">
+            {searching
+              ? `${formatCount(entries.length, pluralForms.task)} · ${formatCount(orderedHits.length, pluralForms.match)}`
+              : formatCount(entries.length, pluralForms.task)}
+          </Text>
+          <Button id={readroomComposeButtonId} variant="primary" onClick={onCompose}>
+            {messages.readroom.feed.newTask}
           </Button>
         </Stack>
-      )}
-      <Stack direction="row" gap={8} align="center" wrap navRow>
-        <SegmentedControl
-          mode="buttons"
-          label={messages.readroom.feed.modeLabel}
-          value={query.mode}
-          onChange={(mode: ReadroomMode) => onQueryChange({ mode })}
-          options={readroomModes.map((entry) => ({
-            value: entry,
-            label: messages.readroom.feed.modes[entry],
-          }))}
-        />
       </Stack>
-      {searching ? <Text role="hint">{messages.readroom.feed.searchScope}</Text> : null}
 
       {readrooms.length === 0 ? (
         <Text role="hint">

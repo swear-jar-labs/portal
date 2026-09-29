@@ -142,9 +142,9 @@ test("walks the tracker with arrows, opens with Enter and returns focus", async 
   await focusedBody(page).focus();
   const firstTicket = table(page).getByRole("link", { name: "DOS-1" });
   await page.keyboard.press("ArrowDown");
-  await expect(feed(page).getByRole("button", { name: "NEW TICKET" })).toBeFocused();
-  await page.keyboard.press("ArrowDown");
   await expect(feed(page).getByRole("combobox", { name: "PROJECT" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(feed(page).getByRole("button", { name: "NEW TICKET" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(firstTicket).toBeFocused();
   await expect(firstTicket.locator("xpath=ancestor::tr")).toHaveCSS(
@@ -152,7 +152,7 @@ test("walks the tracker with arrows, opens with Enter and returns focus", async 
     "rgb(0, 0, 170)",
   );
   await page.keyboard.press("ArrowUp");
-  await expect(feed(page).getByRole("combobox", { name: "PROJECT" })).toBeFocused();
+  await expect(feed(page).getByRole("button", { name: "NEW TICKET" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(firstTicket).toBeFocused();
   await page.keyboard.press("ArrowDown");

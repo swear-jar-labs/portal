@@ -32,6 +32,7 @@ import {
   type TicketTagId,
 } from "../model/tickets";
 import { TicketsTable, type TicketTableAction } from "./TicketsTable";
+import styles from "../tickets.module.css";
 
 export type TicketProjectOption = TicketProject & {
   name: string;
@@ -154,74 +155,76 @@ export function TicketsFeed({
         {messages.tickets.feed.heading}
       </Heading>
 
-      <Stack direction="row" gap={8} align="center" wrap navRow>
-        <Text role="hint">{formatCount(tickets.length, pluralForms.ticket)}</Text>
-        <Button id={composeButtonId} variant="primary" onClick={onCompose}>
-          {messages.tickets.feed.newTicket}
-        </Button>
-      </Stack>
+      <Stack gap={8} className={styles.filters}>
+        <Stack direction="row" gap={8} wrap navRow>
+          <ProjectFilterBox
+            key={query.project}
+            projects={projects}
+            selected={query.project}
+            onPick={(project) => onQueryChange({ project })}
+          />
+          <Select
+            label={messages.tickets.feed.filters.size}
+            name="size"
+            value={query.size}
+            onChange={(size: SizeFilter) => onQueryChange({ size })}
+            options={sizeOptions}
+          />
+          <Select
+            label={messages.tickets.feed.filters.priority}
+            name="priority"
+            value={query.priority}
+            onChange={(priority: PriorityFilter) => onQueryChange({ priority })}
+            options={priorityOptions}
+          />
+          <Select
+            label={messages.tickets.feed.filters.status}
+            name="status"
+            value={query.status}
+            onChange={(status: StatusFilter) => onQueryChange({ status })}
+            options={statusOptions}
+          />
+          <Select
+            label={messages.tickets.feed.filters.assignee}
+            name="assignee"
+            value={query.assignee}
+            onChange={(assignee) => onQueryChange({ assignee })}
+            options={assigneeOptions}
+          />
+          <Select
+            label={messages.tickets.feed.filters.tag}
+            name="tag"
+            value={query.tag}
+            onChange={(tag: TagFilter) => onQueryChange({ tag })}
+            options={tagOptions}
+          />
+          <Field
+            label={messages.tickets.feed.filters.search}
+            name="q"
+            value={query.q}
+            onChange={(q: string) => onQueryChange({ q })}
+            // The filter row owns no submit: Enter walks right like ArrowRight.
+            onKeyDown={(event) => {
+              if (
+                event.key !== "Enter" ||
+                event.shiftKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.altKey ||
+                event.nativeEvent.isComposing
+              )
+                return;
+              if (focusNextControl(event.currentTarget)) event.preventDefault();
+            }}
+          />
+        </Stack>
 
-      <Stack direction="row" gap={8} wrap navRow>
-        <ProjectFilterBox
-          key={query.project}
-          projects={projects}
-          selected={query.project}
-          onPick={(project) => onQueryChange({ project })}
-        />
-        <Select
-          label={messages.tickets.feed.filters.size}
-          name="size"
-          value={query.size}
-          onChange={(size: SizeFilter) => onQueryChange({ size })}
-          options={sizeOptions}
-        />
-        <Select
-          label={messages.tickets.feed.filters.priority}
-          name="priority"
-          value={query.priority}
-          onChange={(priority: PriorityFilter) => onQueryChange({ priority })}
-          options={priorityOptions}
-        />
-        <Select
-          label={messages.tickets.feed.filters.status}
-          name="status"
-          value={query.status}
-          onChange={(status: StatusFilter) => onQueryChange({ status })}
-          options={statusOptions}
-        />
-        <Select
-          label={messages.tickets.feed.filters.assignee}
-          name="assignee"
-          value={query.assignee}
-          onChange={(assignee) => onQueryChange({ assignee })}
-          options={assigneeOptions}
-        />
-        <Select
-          label={messages.tickets.feed.filters.tag}
-          name="tag"
-          value={query.tag}
-          onChange={(tag: TagFilter) => onQueryChange({ tag })}
-          options={tagOptions}
-        />
-        <Field
-          label={messages.tickets.feed.filters.search}
-          name="q"
-          value={query.q}
-          onChange={(q: string) => onQueryChange({ q })}
-          // The filter row owns no submit: Enter walks right like ArrowRight.
-          onKeyDown={(event) => {
-            if (
-              event.key !== "Enter" ||
-              event.shiftKey ||
-              event.ctrlKey ||
-              event.metaKey ||
-              event.altKey ||
-              event.nativeEvent.isComposing
-            )
-              return;
-            if (focusNextControl(event.currentTarget)) event.preventDefault();
-          }}
-        />
+        <Stack direction="row" gap={8} align="center" justify="space-between" wrap navRow>
+          <Text role="hint">{formatCount(tickets.length, pluralForms.ticket)}</Text>
+          <Button id={composeButtonId} variant="primary" onClick={onCompose}>
+            {messages.tickets.feed.newTicket}
+          </Button>
+        </Stack>
       </Stack>
 
       {tickets.length === 0 ? (

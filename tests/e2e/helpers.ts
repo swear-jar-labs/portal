@@ -65,11 +65,17 @@ export async function logon(page: Page, user = "ada") {
   await expect(page).toHaveURL("/forum", { timeout: 15_000 });
 }
 
-// Client-side navigation updates <title> asynchronously; axe would otherwise
-// flag an empty document title mid-transition (caught under parallel load).
+// Client-side navigation swaps <title> through an empty gap: React unmounts
+// the old element before mounting the new one, and axe can analyze the head
+// right in that gap (caught under parallel load). The document-title rule
+// protects nothing else in this shell — every route rides the root layout's
+// title — so it is checked apart from axe, on the settled document.
 export async function expectNoViolations(page: Page, context: string) {
   await expect.poll(() => page.title()).not.toBe("");
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa"])
+    .disableRules(["document-title"])
+    .analyze();
   expect(results.violations, context).toEqual([]);
 }
 

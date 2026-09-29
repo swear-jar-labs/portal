@@ -50,6 +50,14 @@ describe("projects fixtures", () => {
     }
   });
 
+  it("keeps website links valid URLs", async () => {
+    for (const project of await listProjects()) {
+      const siteUrl = project.siteUrl;
+      if (siteUrl === undefined) continue;
+      expect(() => new URL(siteUrl), `${project.slug} has a bad website URL`).not.toThrow();
+    }
+  });
+
   it("keeps stats counters honest and releases tagged", async () => {
     for (const project of await listProjects()) {
       const stats = project.stats;

@@ -93,6 +93,9 @@ export type Project = {
   contributors?: string;
   createdAt: string;
   repoUrl?: string;
+  // The project's website, shown under the name on the card and on the
+  // PROJECT tab. Optional: a plan or a repo-only project has none.
+  siteUrl?: string;
   forge?: ForgeId;
   status: ProjectStatus;
   lead: ProjectPerson | null;

@@ -288,7 +288,7 @@ test("links the ticket row to its live dossier", async ({ page }) => {
 test("seals notes from a guest until the deadline", async ({ page }) => {
   await page.goto(readroomPath("bump-allocator"));
   const task = page.getByRole("region", { name: BUMP });
-  await expect(task.getByText("3 NOTES SEALED")).toBeVisible();
+  await expect(task.getByText("3 NOTES WILL BE SHOWN AFTER DEADLINE")).toBeVisible();
   await expect(task.getByText(/max_free_chunks/)).toHaveCount(0);
   await expect(task.getByText(/pushes the chunk back/)).toHaveCount(0);
 
@@ -306,7 +306,7 @@ test("shows a member their own notes and seals the rest before the deadline", as
 
   await expect(task.getByText("[YOURS]")).toBeVisible();
   await expect(task.getByText(/max_free_chunks/)).toBeVisible();
-  await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
+  await expect(task.getByText("2 NOTES WILL BE SHOWN AFTER DEADLINE")).toBeVisible();
   await expect(task.getByText(/pushes the chunk back/)).toHaveCount(0);
   // One note per reader: the composer stays closed while her note stands.
   await expect(task.getByRole("textbox", { name: "NOTE" })).toHaveCount(0);
@@ -319,7 +319,7 @@ test("shows a member their own notes and seals the rest before the deadline", as
     .getByRole("button", { name: "DELETE" })
     .click();
   await expect(task.getByText(/max_free_chunks/)).toHaveCount(0);
-  await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
+  await expect(task.getByText("2 NOTES WILL BE SHOWN AFTER DEADLINE")).toBeVisible();
   await expect(task.getByRole("textbox", { name: "NOTE" })).toBeFocused();
 });
 

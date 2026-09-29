@@ -42,6 +42,30 @@
   pointer-events: none;
 }
 
+/* The website link under the name rises above the stretched title link (the
+   readroom cardDetails pattern: the wrapper stays click-through, the link
+   itself is a target) and reads blue like any link — the card's --dos-link
+   stays black for the title. The card scope beats the kit's .link rule
+   deterministically (no chunk-order tie); the hover/focus rules keep the
+   kit's white-on-blue and black-on-cyan marks. Long URLs wrap instead of
+   stretching the card. */
+.cardTitle .below a {
+  pointer-events: auto;
+}
+
+.cardTitle .site {
+  overflow-wrap: anywhere;
+  color: var(--dos-tone-blue);
+}
+
+.cardTitle .site:hover {
+  color: var(--dos-white);
+}
+
+.cardTitle .site:focus-visible {
+  color: var(--dos-black);
+}
+
 /* The card excerpt: the description clamped to three lines, so a long ABOUT
  * never stretches the index. */
 .excerpt {

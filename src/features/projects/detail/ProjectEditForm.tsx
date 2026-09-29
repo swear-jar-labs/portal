@@ -54,6 +54,7 @@ function initialDraft(project: Project) {
     techs: [...project.techs],
     contributors: project.contributors ?? "",
     repoUrl: project.repoUrl ?? "",
+    siteUrl: project.siteUrl ?? "",
     screenshots,
   };
 }
@@ -231,6 +232,12 @@ export function ProjectEditForm({ project }: { project: Project }) {
               name="repoUrl"
               value={draft.repoUrl}
               onChange={(value) => update("repoUrl", value)}
+            />
+            <Field
+              label={copy.siteUrl}
+              name="siteUrl"
+              value={draft.siteUrl}
+              onChange={(value) => update("siteUrl", value)}
             />
             <Stack gap={6}>
               <Heading level={2}>{copy.screenshots}</Heading>

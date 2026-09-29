@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
+import { Card, FileIcon, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { formatAge } from "@/shared/age";
@@ -60,6 +60,11 @@ export function ProjectsCard({
           <Text role="hint" className={styles.excerpt}>
             {project.description}
           </Text>
+          {project.siteUrl === undefined ? null : (
+            <Link href={project.siteUrl} external className={styles.site}>
+              {project.siteUrl}
+            </Link>
+          )}
           <Stack direction="row" gap={6} align="center" wrap className={styles.cardDetails}>
             <Tag tone={projectStatusTones[project.status]}>
               {messages.projects.statuses[project.status]}

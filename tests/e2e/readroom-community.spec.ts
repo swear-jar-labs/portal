@@ -85,7 +85,7 @@ test("a Participant opens a task, a second account notes and votes, the switch k
   await gotoReadroomSpa(page);
   await waitForHydration(page);
   const mine = await openLocalTask(page, COMMUNITY_TASK);
-  await expect(mine.getByText("1 NOTE SEALED")).toBeVisible();
+  await expect(mine.getByText("1 NOTE WILL BE SHOWN AFTER DEADLINE")).toBeVisible();
   await expect(mine.getByText("The second reader disagrees.")).toHaveCount(0);
   await expect(mine.getByRole("button", { name: "▲ 1 VOTE" })).toHaveAttribute(
     "aria-pressed",
@@ -177,5 +177,5 @@ test("a project maintainer gets no cycle rights from the ticket link", async ({ 
   const task = page.getByRole("region", { name: BUMP });
   await expect(task.getByRole("button", { name: "MOVE DEADLINE" })).toHaveCount(0);
   await expect(task.getByRole("button", { name: "STOP TASK" })).toHaveCount(0);
-  await expect(task.getByText("2 NOTES SEALED")).toBeVisible();
+  await expect(task.getByText("2 NOTES WILL BE SHOWN AFTER DEADLINE")).toBeVisible();
 });

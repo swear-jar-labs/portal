@@ -41,6 +41,7 @@ const input: ProjectContentInput = {
   techs: ["typescript", "rust"],
   contributors: "Looking for testers.",
   repoUrl: "https://github.com/example/demo",
+  siteUrl: "https://example.com/demo",
   screenshots: [{ id: firstId, alt: "Demo home screen", dataUrl: png, width: 1, height: 1 }],
 };
 
@@ -64,6 +65,7 @@ describe("project content edits", () => {
         screenshots: [{ id: firstId, alt: "Missing size", dataUrl: png, width: 0, height: 1 }],
       }).success,
     ).toBe(false);
+    expect(projectContentSchema.safeParse({ ...input, siteUrl: "not-a-url" }).success).toBe(false);
   });
 
   it("checks current role and version before publishing; keeps the base unchanged", () => {
@@ -78,6 +80,7 @@ describe("project content edits", () => {
     if (!saved.ok) return;
     expect(base.name).toBe("Demo project");
     expect(store.view(base).name).toBe("Edited demo");
+    expect(store.view(base).siteUrl).toBe("https://example.com/demo");
     expect(store.view(base).contentVersion).toBe(2);
     expect(store.update(base, actor("ada"), input)).toEqual({ ok: false, error: "conflict" });
     expect(
@@ -188,10 +191,12 @@ describe("project content edits", () => {
         ...input,
         version: 3,
         repoUrl: "",
+        siteUrl: "",
         screenshots: [],
       }).ok,
     ).toBe(true);
     expect(store.view(seeded).repoUrl).toBeUndefined();
+    expect(store.view(seeded).siteUrl).toBeUndefined();
     expect(store.view(seeded).forge).toBeUndefined();
     expect(store.view(seeded).stats).toBeUndefined();
   });

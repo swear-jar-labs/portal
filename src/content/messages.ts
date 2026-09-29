@@ -743,7 +743,7 @@ export const messages = {
       heading: "NOTES",
       empty: "No notes yet.",
       yours: "[YOURS]",
-      sealed: "SEALED",
+      sealed: "WILL BE SHOWN AFTER DEADLINE",
       edited: "[EDITED]",
       posted: "One note per reader. You can edit yours until the deadline.",
       form: {
@@ -838,6 +838,7 @@ export const messages = {
       removeTech: "Remove",
       contributors: "What help or contributors are needed?",
       repoUrl: "Repository URL (optional)",
+      siteUrl: "Website URL (optional)",
       screenshots: "SCREENSHOTS",
       imageHint:
         "Up to four JPEG, PNG or WebP files, 10 MiB each. Images are reduced before saving. The first two appear on PROJECTS cards.",
@@ -997,6 +998,7 @@ export const messages = {
     },
     about: {
       heading: "ABOUT",
+      site: "WEBSITE",
       stack: "STACK",
       contributors: "HELP NEEDED",
       lead: "LEAD",

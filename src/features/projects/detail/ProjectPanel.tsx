@@ -120,6 +120,16 @@ export function ProjectPanel({
             <Stack gap={4}>
               <Heading level={2}>{messages.projects.about.heading}</Heading>
               <Markdown>{project.description}</Markdown>
+              {project.siteUrl === undefined ? null : (
+                <Stack direction="row" gap={6} align="center" wrap navRow>
+                  <Text as="span" role="hint">
+                    {messages.projects.about.site}
+                  </Text>
+                  <Link href={project.siteUrl} external>
+                    {project.siteUrl}
+                  </Link>
+                </Stack>
+              )}
               <Stack gap={4}>
                 {project.techs.length === 0 ? null : (
                   <Stack direction="row" gap={6} align="center" wrap navRow>

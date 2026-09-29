@@ -56,6 +56,7 @@ const projects: readonly Project[] = [
     ],
     repoUrl: "https://github.com/swear-jar-labs/portal",
     forge: "github",
+    siteUrl: "https://swearjar.team",
     status: "active",
     lead: ada,
     maintainers: [ada, grace],

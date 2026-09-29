@@ -54,6 +54,7 @@ export function createProjectContentStore() {
       );
       if (!screenshots) return { ok: false, error: "invalid" };
       const repoUrl = parsed.data.repoUrl || undefined;
+      const siteUrl = parsed.data.siteUrl || undefined;
       const repositoryChanged = repoUrl !== current.repoUrl;
       const next: Project = {
         ...current,
@@ -62,6 +63,7 @@ export function createProjectContentStore() {
         techs: parsed.data.techs,
         contributors: parsed.data.contributors || undefined,
         repoUrl,
+        siteUrl,
         forge: repositoryChanged ? forgeForRepository(repoUrl) : current.forge,
         stats: repositoryChanged ? undefined : current.stats,
         screenshots,

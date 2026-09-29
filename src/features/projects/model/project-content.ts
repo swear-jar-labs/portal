@@ -13,6 +13,7 @@ const MAX_NAME = 80;
 const MAX_DESCRIPTION = 4000;
 const MAX_CONTRIBUTORS = 2000;
 const MAX_REPO_URL = 500;
+const MAX_SITE_URL = 500;
 const MAX_ALT = 180;
 const MAX_TECHS = 10;
 const DATA_URL = /^data:(image\/jpeg|image\/png|image\/webp);base64,([A-Za-z0-9+/]+={0,2})$/;
@@ -34,6 +35,7 @@ export const projectContentSchema = z.object({
     .refine((items) => new Set(items).size === items.length),
   contributors: z.string().trim().max(MAX_CONTRIBUTORS),
   repoUrl: z.union([z.literal(""), z.httpUrl().max(MAX_REPO_URL)]),
+  siteUrl: z.union([z.literal(""), z.httpUrl().max(MAX_SITE_URL)]),
   screenshots: z
     .array(
       z.object({

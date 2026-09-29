@@ -10,6 +10,22 @@
   gap: 6px;
 }
 
+/* Usernames are links, so they read blue like any link — including on cards,
+   where --dos-link is black for the title. The host scope beats the kit's
+   .link rule deterministically (no chunk-order tie); the hover/focus rules
+   keep the kit's white-on-blue and black-on-cyan marks. */
+.memberLinkHost .memberLink {
+  color: var(--dos-tone-blue);
+}
+
+.memberLinkHost .memberLink:hover {
+  color: var(--dos-white);
+}
+
+.memberLinkHost .memberLink:focus-visible {
+  color: var(--dos-black);
+}
+
 .memberLink:focus-visible {
   outline-offset: -2px;
 }

@@ -8,6 +8,7 @@ import { useOverlayPush } from "@/features/shell";
 import { MemberLink } from "@/features/members/contracts";
 import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
 import { useShellSession } from "@/features/shell";
+import { PROFILE_RECENT_COUNT } from "@/shared/profile";
 import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "../model/threads";
 import { threadCardId } from "./ThreadCard";
 import styles from "../board.module.css";
@@ -15,6 +16,9 @@ import styles from "../board.module.css";
 type ThreadRowsProps = {
   threads: readonly ThreadSummary[];
   now: string;
+  // The profile previews the freshest entries only; the caller passes the
+  // remainder when session-composed threads take the first slots.
+  limit?: number;
 };
 
 /** A member's threads: read-only rows that open the board's thread panel
@@ -22,7 +26,7 @@ type ThreadRowsProps = {
  * native tab behavior). Rows read like the feed's cards (byline first, black
  * titles): the vote button stays where the board's session store lives, and
  * the byline is the shared MemberLink. */
-export function ThreadRows({ threads, now }: ThreadRowsProps) {
+export function ThreadRows({ threads, now, limit = PROFILE_RECENT_COUNT }: ThreadRowsProps) {
   const pushOverlay = useOverlayPush();
   const moderation = useModeration();
   const session = useShellSession();
@@ -35,7 +39,7 @@ export function ThreadRows({ threads, now }: ThreadRowsProps) {
 
   return (
     <Stack gap={8}>
-      {threads.map((thread) => (
+      {threads.slice(0, Math.max(0, limit)).map((thread) => (
         <Card
           key={thread.id}
           id={threadCardId(thread.id)}

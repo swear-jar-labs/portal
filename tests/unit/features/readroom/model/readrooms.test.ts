@@ -12,6 +12,7 @@ import {
   readroomPath,
   readroomPhases,
   readroomTagIds,
+  recentTasksByLead,
   toggledUpvoters,
   upvoteCount,
   visibleNotes,
@@ -276,5 +277,28 @@ describe("stamps", () => {
     expect(hasNoteBy(notes, "ada")).toBe(true);
     expect(hasNoteBy(notes, "grace")).toBe(false);
     expect(hasNoteBy(notes, null)).toBe(false);
+  });
+});
+
+describe("recentTasksByLead", () => {
+  const tasks = [
+    readroom({ id: "old", createdAt: "2026-09-10T12:00:00.000Z", lead: { user: "ada" } }),
+    readroom({ id: "fresh", createdAt: "2026-09-15T12:00:00.000Z", lead: { user: "ada" } }),
+    readroom({ id: "mid", createdAt: "2026-09-12T12:00:00.000Z", lead: { user: "ada" } }),
+    readroom({ id: "stranger", createdAt: "2026-09-16T12:00:00.000Z", lead: { user: "ken" } }),
+  ];
+
+  it("keeps the author's tasks newest first", () => {
+    expect(recentTasksByLead(tasks, "ada", 5).map((entry) => entry.id)).toEqual([
+      "fresh",
+      "mid",
+      "old",
+    ]);
+  });
+
+  it("caps the preview and ignores strangers", () => {
+    expect(recentTasksByLead(tasks, "ada", 2).map((entry) => entry.id)).toEqual(["fresh", "mid"]);
+    expect(recentTasksByLead(tasks, "nobody", 5)).toEqual([]);
+    expect(recentTasksByLead(tasks, "ada", 0)).toEqual([]);
   });
 });

@@ -4,12 +4,14 @@ import * as readroomContract from "@/features/readroom/contracts";
 describe("readroom contract", () => {
   it("publishes exactly the agreed surface for the neighbour slices", () => {
     expect(Object.keys(readroomContract).sort()).toEqual([
+      "ReadroomRows",
       "hasNoteBy",
       "hasUpvoted",
       "isLead",
       "listReadrooms",
       "listReadroomsByTicket",
       "phaseOf",
+      "recentTasksByLead",
       "upvoteCount",
       "useReadroomSession",
       "visibleNotes",

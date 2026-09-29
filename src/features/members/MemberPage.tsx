@@ -7,6 +7,8 @@ import {
   listThreadSummariesByAuthor,
   type BoardMember,
 } from "@/features/board/contracts";
+import { listMemberProjects } from "@/features/projects/contracts";
+import { listReadrooms } from "@/features/readroom/contracts";
 import { OverlayOutlet } from "@/features/shell";
 import { avatarFor } from "@/shared/members";
 import { MemberStack } from "./MemberStack";
@@ -66,16 +68,22 @@ export async function MemberBody({ params }: MemberPageProps) {
   if (!member) notFound();
 
   const now = new Date().toISOString();
-  const threads = await listThreadSummariesByAuthor(actor?.user ?? user);
+  const key = actor?.user ?? user;
+  const threads = await listThreadSummariesByAuthor(key);
+  const projects = await listMemberProjects(key);
+  const readrooms = await listReadrooms();
 
   return (
     <MemberView
       member={member}
+      userKey={key}
       bio={actor?.bio}
       roleLabel={
         actor?.level === "participant" ? messages.account.profile.roles.participant : undefined
       }
       threads={threads}
+      projects={projects}
+      readrooms={readrooms}
       now={now}
     />
   );

@@ -5,11 +5,11 @@ import { Card, FileIcon, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { formatAge } from "@/shared/age";
-import { projectPath, projectStatusTones, type Project } from "../model/projects";
+import { projectCardId, projectPath, projectStatusTones, type Project } from "../model/projects";
 import styles from "../projects.module.css";
 import { ProjectScreenshotTiles } from "../detail/ProjectScreenshots";
 
-export const projectCardId = (slug: string) => `project-card-${slug}`;
+export { projectCardId };
 
 export type ProjectsCardProps = {
   project: Project;

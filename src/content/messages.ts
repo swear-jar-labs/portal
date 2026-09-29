@@ -356,9 +356,18 @@ export const messages = {
         answered: "ANSWERED",
       },
       threads: {
-        heading: "MY THREADS",
+        heading: "MY LAST THREADS",
         empty: "No threads yet. A question is a good start.",
         sessionOnly: "THIS SESSION",
+      },
+      tasks: {
+        heading: "MY LAST READROOM TASKS",
+        empty: "No tasks yet. Bring some code and a question.",
+        sessionOnly: "THIS SESSION",
+      },
+      projects: {
+        heading: "MY PROJECTS",
+        empty: "No projects yet. Join a team to get updates.",
       },
     },
     settings: {
@@ -553,6 +562,14 @@ export const messages = {
     threads: {
       heading: "THREADS",
       empty: "No threads yet.",
+    },
+    tasks: {
+      heading: "READROOM TASKS",
+      empty: "No tasks yet.",
+    },
+    projects: {
+      heading: "PROJECTS",
+      empty: "No projects yet.",
     },
   },
   board: {

@@ -176,6 +176,10 @@ export const JOURNAL_PREVIEW_COUNT = 3;
 // return and walk rows, the same way board and readroom cards do.
 export const PROJECTS_CARD_ATTR = "data-projects-card";
 
+// The card link id shared by the feed and the member rows: the overlay push
+// names it as the focus origin, so closing a project returns to its row.
+export const projectCardId = (slug: string) => `project-card-${slug}`;
+
 function statusRank(status: ProjectStatus): number {
   return projectStatuses.indexOf(status);
 }

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { CloseButton, Stack } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import type { ForumActivitySeed, ThreadSummary } from "@/features/board/contracts";
+import type { Project } from "@/features/projects/contracts";
 import type { Readroom } from "@/features/readroom/contracts";
 import type { Ticket } from "@/features/tickets/contracts";
 import { overlayLayerPanels, PanelStack, ShellPanel, useOverlayTop } from "@/features/shell";
@@ -19,6 +20,7 @@ export function ProfileStack({
   forumSeed,
   tickets,
   readrooms,
+  projects,
   user,
   now,
   applications,
@@ -29,6 +31,7 @@ export function ProfileStack({
   forumSeed: ForumActivitySeed;
   tickets: readonly Ticket[];
   readrooms: readonly Readroom[];
+  projects: readonly Project[];
   user: string;
   now: string;
   applications: readonly MemberApplication[];
@@ -76,6 +79,7 @@ export function ProfileStack({
             forumSeed={forumSeed}
             tickets={tickets}
             readrooms={readrooms}
+            projects={projects}
             user={user}
             now={now}
             editButtonId={editButtonId}

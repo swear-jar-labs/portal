@@ -231,6 +231,23 @@ export async function getProject(slug: string): Promise<Project | null> {
   return project ? withLiveTeam(project) : null;
 }
 
+/** Projects this account takes part in. Membership, roles and lead are
+ * independent team relations, so any of them counts: fixtures seed members
+ * from maintainers, joins/leaves update the same store, and approved
+ * proposals publish their author as lead and Maintainer. */
+export async function listMemberProjects(user: string): Promise<Project[]> {
+  const all = await listProjects();
+  return all.filter((project) => {
+    const team = projectTeams.view(project);
+    return (
+      team.lead?.user === user ||
+      team.members.some((person) => person.user === user) ||
+      team.reviewers.some((person) => person.user === user) ||
+      team.maintainers.some((person) => person.user === user)
+    );
+  });
+}
+
 function withLiveTeam(project: Project): Project {
   const content = projectContent.view(project);
   const team = projectTeams.view(content);

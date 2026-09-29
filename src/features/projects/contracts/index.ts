@@ -6,6 +6,7 @@ export {
   archivedProjectSlugs,
   getProject,
   isKnownProjectSlug,
+  listMemberProjects,
   listProjects,
   projectName,
 } from "../data/queries";
@@ -16,8 +17,10 @@ export {
   MAX_POLICY_NEED,
   MIN_POLICY_NEED,
   isFixtureProjectSlug,
+  projectCardId,
   projectPath,
   projectSlugs,
+  projectStatusTones,
   projectTeamManagePath,
 } from "../model/projects";
 export {

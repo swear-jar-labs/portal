@@ -7,12 +7,14 @@
 export { listReadroomsByTicket } from "../data/queries";
 export { listReadrooms } from "../data/queries";
 export { useReadroomSession } from "../data/useReadroomSession";
+export { ReadroomRows } from "../list/ReadroomRows";
 export type { Readroom } from "../model/readrooms";
 export {
   hasNoteBy,
   hasUpvoted,
   isLead,
   phaseOf,
+  recentTasksByLead,
   upvoteCount,
   visibleNotes,
 } from "../model/readrooms";

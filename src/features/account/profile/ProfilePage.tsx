@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { forumActivitySeed, listThreadSummariesByAuthor } from "@/features/board/contracts";
+import { listMemberProjects } from "@/features/projects/contracts";
 import { listReadrooms } from "@/features/readroom/contracts";
 import { listTickets } from "@/features/tickets/contracts";
 import { AccountGate } from "../auth/AccountGate";
@@ -17,11 +18,12 @@ export async function ProfilePage() {
   if (!actor) return <AccountGate title={fileTitle("PROFILE")} />;
 
   const profile = await getOwnProfile(actor.user, actor);
-  const [threads, forumSeed, tickets, readrooms] = await Promise.all([
+  const [threads, forumSeed, tickets, readrooms, projects] = await Promise.all([
     listThreadSummariesByAuthor(actor.user),
     forumActivitySeed(actor.user),
     listTickets(),
     listReadrooms(),
+    listMemberProjects(actor.user),
   ]);
   const now = new Date().toISOString();
 
@@ -32,6 +34,7 @@ export async function ProfilePage() {
       forumSeed={forumSeed}
       tickets={tickets}
       readrooms={readrooms}
+      projects={projects}
       user={actor.user}
       now={now}
       applications={memberApplicationsFor(actor.user)}

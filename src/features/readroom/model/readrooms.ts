@@ -179,6 +179,18 @@ function byCreatedDesc(a: Readroom, b: Readroom): number {
   return Date.parse(b.createdAt) - Date.parse(a.createdAt) || byId(a, b);
 }
 
+/** A member's tasks, newest first, capped for the profile preview. */
+export function recentTasksByLead(
+  readrooms: readonly Readroom[],
+  user: string,
+  limit: number,
+): Readroom[] {
+  return [...readrooms]
+    .filter((readroom) => readroom.lead.user === user)
+    .sort(byCreatedDesc)
+    .slice(0, Math.max(0, limit));
+}
+
 /** One vote per account, withdrawable: the author's own counts. Notes carry
  * no votes and the count never touches roles. */
 export function hasUpvoted(voters: readonly string[], user: string | null): boolean {

@@ -668,7 +668,7 @@ test.describe("member threads", () => {
     await waitForHydration(page);
 
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
-    await expect(profile.getByRole("heading", { level: 2, name: "MY THREADS" })).toBeVisible();
+    await expect(profile.getByRole("heading", { level: 2, name: "MY LAST THREADS" })).toBeVisible();
     await expect(
       profile.getByRole("link", { name: "CI cache poisoning: how we lost a day" }),
     ).toBeVisible();
@@ -721,13 +721,78 @@ test.describe("member threads", () => {
     // must include the member's rows, not only the feed's cards).
     await page.keyboard.press("Escape");
     await expect(page).toHaveURL("/profile");
-    await expect(profile.getByRole("heading", { level: 2, name: "MY THREADS" })).toBeVisible();
+    await expect(profile.getByRole("heading", { level: 2, name: "MY LAST THREADS" })).toBeVisible();
   });
 
   test("shows the empty state for a member without threads", async ({ page }) => {
     await logon(page, "nobody");
     await page.goto("/profile");
     await expect(page.getByText("No threads yet. A question is a good start.")).toBeVisible();
+  });
+});
+
+test.describe("member readroom tasks", () => {
+  test("lists the member's tasks and opens one as an overlay", async ({ page }) => {
+    await logon(page);
+    await page.goto("/profile");
+    await waitForHydration(page);
+
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(
+      profile.getByRole("heading", { level: 2, name: "MY LAST READROOM TASKS" }),
+    ).toBeVisible();
+    const task = profile.getByRole("link", {
+      name: "The hand-written parser: where the precedence table lies",
+    });
+    await expect(task).toBeVisible();
+
+    await task.click();
+    await expect(page).toHaveURL("/readroom/recursive-descent");
+    await expect(page.locator(`[${DOC_LAYER_ATTR}]`)).toHaveCount(2);
+    await expect(
+      page
+        .locator(`[${DOC_TOP_ATTR}]`)
+        .getByRole("heading", { name: "The hand-written parser: where the precedence table lies" }),
+    ).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(page).toHaveURL("/profile");
+    await expect(
+      profile.getByRole("heading", { level: 2, name: "MY LAST READROOM TASKS" }),
+    ).toBeVisible();
+  });
+
+  test("shows the empty state for a member without tasks", async ({ page }) => {
+    await logon(page, "nobody");
+    await page.goto("/profile");
+    await expect(page.getByText("No tasks yet. Bring some code and a question.")).toBeVisible();
+  });
+});
+
+test.describe("member projects", () => {
+  test("lists the member's projects and opens one as an overlay", async ({ page }) => {
+    await logon(page);
+    await page.goto("/profile");
+    await waitForHydration(page);
+
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 2, name: "MY PROJECTS" })).toBeVisible();
+    await expect(profile.getByRole("link", { name: "SWEARJAR.DOS" })).toBeVisible();
+    await expect(profile.getByRole("link", { name: "Tooling" })).toBeVisible();
+
+    await profile.getByRole("link", { name: "SWEARJAR.DOS" }).click();
+    await expect(page).toHaveURL("/projects/swearjar-dos");
+    await expect(page.locator(`[${DOC_LAYER_ATTR}]`)).toHaveCount(2);
+
+    await page.keyboard.press("Escape");
+    await expect(page).toHaveURL("/profile");
+    await expect(profile.getByRole("heading", { level: 2, name: "MY PROJECTS" })).toBeVisible();
+  });
+
+  test("shows the empty state for a member without projects", async ({ page }) => {
+    await logon(page, "nobody");
+    await page.goto("/profile");
+    await expect(page.getByText("No projects yet. Join a team to get updates.")).toBeVisible();
   });
 });
 

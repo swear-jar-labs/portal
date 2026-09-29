@@ -1,6 +1,7 @@
 "use client";
 
-import { Avatar, Button, Heading, Stack, Text } from "@swearjar/dos";
+import type { MouseEvent } from "react";
+import { Avatar, Button, Card, Heading, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import {
   ThreadRows,
@@ -8,8 +9,16 @@ import {
   type ForumActivitySeed,
   type ThreadSummary,
 } from "@/features/board/contracts";
-import type { Readroom } from "@/features/readroom/contracts";
+import { ReadroomRows, type Readroom } from "@/features/readroom/contracts";
+import {
+  projectCardId,
+  projectPath,
+  projectStatusTones,
+  type Project,
+} from "@/features/projects/contracts";
+import { useOverlayPush } from "@/features/shell";
 import type { Ticket } from "@/features/tickets/contracts";
+import { PROFILE_RECENT_COUNT } from "@/shared/profile";
 import type { MemberProfile } from "../data/queries";
 import { ProfileActivity } from "./ProfileActivity";
 
@@ -19,6 +28,7 @@ export type ProfileViewProps = {
   forumSeed: ForumActivitySeed;
   tickets: readonly Ticket[];
   readrooms: readonly Readroom[];
+  projects: readonly Project[];
   user: string;
   now: string;
   onEdit: () => void;
@@ -32,6 +42,7 @@ export function ProfileView({
   forumSeed,
   tickets,
   readrooms,
+  projects,
   user,
   now,
   onEdit,
@@ -40,6 +51,17 @@ export function ProfileView({
 }: ProfileViewProps) {
   const forum = useForumActivity(user, forumSeed, threads);
   const hasThreads = threads.length > 0 || forum.localThreads.length > 0;
+  // Session-composed threads are the freshest by definition, so they take
+  // the first preview slots and the fixtures fill the rest.
+  const localShownThreads = forum.localThreads.slice(0, PROFILE_RECENT_COUNT);
+  const threadLimit = PROFILE_RECENT_COUNT - localShownThreads.length;
+  const pushOverlay = useOverlayPush();
+
+  // Memberships are few, so the profile lists every project as a compact row
+  // (title plus lifecycle): the full feed card stays where the registry is.
+  const activateProject = (project: Project) => (event?: MouseEvent<HTMLElement>) => {
+    pushOverlay(projectPath(project.slug), projectCardId(project.slug))(event);
+  };
 
   return (
     <Stack gap={10}>
@@ -65,19 +87,56 @@ export function ProfileView({
       <ProfileActivity user={user} tickets={tickets} readrooms={readrooms} forum={forum} />
 
       <Stack gap={4}>
+        <Heading level={2}>{messages.account.profile.projects.heading}</Heading>
+        {projects.length === 0 ? (
+          <Text role="hint">{messages.account.profile.projects.empty}</Text>
+        ) : (
+          <Stack gap={8}>
+            {projects.map((project) => (
+              <Card
+                key={project.slug}
+                id={projectCardId(project.slug)}
+                title={project.name}
+                href={projectPath(project.slug)}
+                onActivate={activateProject(project)}
+                meta={
+                  <Tag tone={projectStatusTones[project.status]}>
+                    {messages.projects.statuses[project.status]}
+                  </Tag>
+                }
+                metaPosition="before"
+              />
+            ))}
+          </Stack>
+        )}
+      </Stack>
+
+      <Stack gap={4}>
         <Heading level={2}>{messages.account.profile.threads.heading}</Heading>
         {!hasThreads ? (
           <Text role="hint">{messages.account.profile.threads.empty}</Text>
         ) : (
           <>
-            {forum.localThreads.map((thread) => (
+            {localShownThreads.map((thread) => (
               <Text key={thread.id}>
                 {thread.title} · {messages.account.profile.threads.sessionOnly}
               </Text>
             ))}
-            <ThreadRows threads={forum.threads} now={now} />
+            {threadLimit > 0 ? (
+              <ThreadRows threads={forum.threads} now={now} limit={threadLimit} />
+            ) : null}
           </>
         )}
+      </Stack>
+
+      <Stack gap={4}>
+        <Heading level={2}>{messages.account.profile.tasks.heading}</Heading>
+        <ReadroomRows
+          user={user}
+          readrooms={readrooms}
+          now={now}
+          empty={messages.account.profile.tasks.empty}
+        />
       </Stack>
     </Stack>
   );

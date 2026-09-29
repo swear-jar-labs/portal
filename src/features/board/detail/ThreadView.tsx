@@ -5,13 +5,11 @@ import { Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
 import { targetKey, useModeration } from "@/features/moderation/contracts";
-import { formatAge, type Thread } from "../model/threads";
+import type { Thread } from "../model/threads";
 import { excerpt } from "../model/excerpt";
 import { PostItem } from "./PostItem";
 import { ReplyForm } from "./ReplyForm";
 import { useThreadActions, type ReplyTarget } from "../data/thread-actions";
-import { VoteButton } from "../list/VoteButton";
-import styles from "../board.module.css";
 
 const REPLY_EXCERPT_LENGTH = 64;
 
@@ -23,40 +21,11 @@ export type ThreadViewProps = {
   bodies?: Record<string, ReactNode>;
 };
 
-function ThreadMeta({
-  thread,
-  now,
-  voted,
-  onToggleVote,
-}: {
-  thread: Thread;
-  now: string;
-  voted: boolean;
-  onToggleVote: () => void;
-}) {
-  return (
-    <Stack direction="row" gap={6} align="baseline" wrap className={styles.threadMeta}>
-      {thread.pinned ? (
-        <Text as="span" role="accent">
-          {messages.board.card.pinned}
-        </Text>
-      ) : null}
-      {thread.locked ? (
-        <Text as="span" role="danger">
-          {messages.board.card.locked}
-        </Text>
-      ) : null}
-      <Text as="span" role="hint">
-        {formatAge(thread.createdAt, now)}
-      </Text>
-      <VoteButton votes={thread.votes + (voted ? 1 : 0)} voted={voted} onToggle={onToggleVote} />
-    </Stack>
-  );
-}
-
 /** The open thread's body: the post list (fixture posts keep their RSC-rendered
  * Markdown) plus the session's replies, edits and tombstones. Replies stay
- * flat: the marker is the thread's only tree. */
+ * flat: the marker is the thread's only tree. The opening post stands for the
+ * thread: its meta row carries the thread status and its vote control is the
+ * thread vote the feed cards show. */
 export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   const actions = useThreadActions();
   const session = useShellSession();
@@ -96,37 +65,34 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
 
   return (
     <Stack gap={12}>
-      <ThreadMeta
-        thread={thread}
-        now={now}
-        voted={actions.votedThread}
-        onToggleVote={actions.onToggleThreadVote}
-      />
-
       {posts.length === 0 ? (
         <Text role="hint">{messages.board.thread.postsEmpty}</Text>
       ) : (
-        posts.map(({ post, body }) => (
-          <PostItem
-            key={post.id}
-            post={post}
-            threadId={thread.id}
-            threadTitle={thread.title}
-            root={post.id === thread.posts[0]?.id}
-            now={now}
-            body={body}
-            voted={state.votedPosts.has(post.id)}
-            editedBody={state.edits.get(post.id)}
-            deleted={state.deletedPosts.has(post.id)}
-            canEdit={session?.user === post.author.user}
-            canReply={!thread.locked}
-            replyTo={post.replyTo === undefined ? undefined : resolveTarget(post.replyTo)}
-            onToggleVote={() => actions.onTogglePostVote(post.id)}
-            onReply={() => setReplyTargetId(post.id)}
-            onEdit={(body) => actions.onEditPost(post.id, body)}
-            onDelete={() => actions.onDeletePost(post.id)}
-          />
-        ))
+        posts.map(({ post, body }) => {
+          const root = post.id === thread.posts[0]?.id;
+          return (
+            <PostItem
+              key={post.id}
+              post={post}
+              thread={thread}
+              now={now}
+              body={body}
+              votes={root ? thread.votes : post.votes}
+              voted={root ? actions.votedThread : state.votedPosts.has(post.id)}
+              editedBody={state.edits.get(post.id)}
+              deleted={state.deletedPosts.has(post.id)}
+              canEdit={session?.user === post.author.user}
+              canReply={!thread.locked}
+              replyTo={post.replyTo === undefined ? undefined : resolveTarget(post.replyTo)}
+              onToggleVote={
+                root ? actions.onToggleThreadVote : () => actions.onTogglePostVote(post.id)
+              }
+              onReply={() => setReplyTargetId(post.id)}
+              onEdit={(body) => actions.onEditPost(post.id, body)}
+              onDelete={() => actions.onDeletePost(post.id)}
+            />
+          );
+        })
       )}
 
       {thread.locked ? (

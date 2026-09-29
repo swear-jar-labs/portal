@@ -23,10 +23,6 @@
   flex: 1 1 0;
 }
 
-.threadMeta {
-  padding-bottom: 6px;
-}
-
 /* A flex line break, mobile only: the search box drops under the board
    picker without stretching full width. Not focusable, out of the walk. */
 .rowBreak {

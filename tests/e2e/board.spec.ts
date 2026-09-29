@@ -359,12 +359,10 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await expect(focusedBody(page)).toBeFocused();
 
   // Three posts, the reply composer as four rows (tabs, toolbar, field,
-  // submit) and the thread vote above them as an unmarked row of its own.
+  // submit); the opening post carries the thread's meta line itself.
   const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
   await expect(rows).toHaveCount(7);
 
-  await page.keyboard.press("ArrowDown");
-  await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -382,7 +380,7 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await expect(thread.getByRole("button", { name: "POST REPLY" })).toBeFocused();
   // The post walk wraps at both ends.
   await page.keyboard.press("ArrowDown");
-  await expect(thread.getByRole("button", { name: "▲ 45 VOTES" }).first()).toBeFocused();
+  await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(thread.getByRole("button", { name: "POST REPLY" })).toBeFocused();
 });
@@ -558,6 +556,15 @@ test("renders posts, the empty thread and the locked thread", async ({ page }) =
   await expect(locked.getByText("THIS THREAD IS LOCKED.")).toBeVisible();
   // A locked thread takes no replies.
   await expect(locked.getByRole("textbox", { name: "REPLY" })).toHaveCount(0);
+
+  // The opening post is the thread's face: it carries the thread tags (and
+  // techs); a reply carries none.
+  await page.goto(threadPath("swearjar-boot"));
+  const tagged = page.getByRole("region", { name: /Boot sequence/ });
+  const opening = tagged.getByRole("article").first();
+  await expect(opening).toContainText("PROPOSAL");
+  await expect(opening.getByText("TypeScript", { exact: true })).toBeVisible();
+  await expect(tagged.getByRole("article").nth(1)).not.toContainText("PROPOSAL");
 });
 
 test("a guest action asks for logon and keeps the reply draft", async ({ page }) => {
@@ -622,28 +629,29 @@ test("votes a thread once and keeps the delta across panels", async ({ page }) =
     "true",
   );
 
-  // The open thread shows the same thread vote; its posts keep their own.
+  // The opening post carries the thread vote: the card's counter and state.
   await card.getByRole("link", { name: CI_CACHE }).click();
   const thread = page.getByRole("region", { name: CI_CACHE });
-  await expect(thread.getByRole("button", { name: "▲ 15 VOTES" }).first()).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  const firstPost = thread.getByRole("article").first();
-  await firstPost.getByRole("button", { name: "▲ 14 VOTES" }).click();
-  await expect(firstPost.getByRole("button", { name: "▲ 15 VOTES" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  const opening = thread.getByRole("article").first();
+  const openingVote = opening.getByRole("button", { name: "▲ 15 VOTES" });
+  await expect(openingVote).toHaveAttribute("aria-pressed", "true");
 
-  // Closing back to the feed: the card keeps the vote, a second click unvotes.
+  // A reply keeps its own vote; the thread counter stays put.
+  const reply = thread.getByRole("article").nth(1);
+  await reply.getByRole("button", { name: "▲ 6 VOTES" }).click();
+  await expect(reply.getByRole("button", { name: "▲ 7 VOTES" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(openingVote).toHaveAttribute("aria-pressed", "true");
+
+  // Unvoting from the opening post unvotes the thread everywhere.
+  await openingVote.click();
+  await expect(opening.getByRole("button", { name: "▲ 14 VOTES" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
   await page.keyboard.press("Escape");
-  const stillVoted = feed
-    .getByRole("article")
-    .filter({ hasText: CI_CACHE })
-    .getByRole("button", { name: "▲ 15 VOTES" });
-  await expect(stillVoted).toHaveAttribute("aria-pressed", "true");
-  await stillVoted.click();
   await expect(
     feed
       .getByRole("article")

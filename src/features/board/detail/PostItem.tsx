@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, Form, Stack, Text } from "@swearjar/dos";
+import { Button, Form, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellDialogs } from "@/features/shell";
 import { Markdown } from "@/shared/Markdown/Markdown";
@@ -18,7 +18,7 @@ import {
   type ModerationTarget,
 } from "@/features/moderation/contracts";
 import { useShellSession } from "@/features/shell";
-import { formatAge, threadPath, type ThreadPost } from "../model/threads";
+import { formatAge, tagTones, threadPath, type Thread, type ThreadPost } from "../model/threads";
 import { postElementId, postHash } from "../model/post-anchor";
 import { replySchema } from "../model/schema";
 import { isLocalThreadId } from "../data/board-store";
@@ -31,13 +31,17 @@ const REPLY_MARKER_GLYPH = "↪";
 
 export type PostItemProps = {
   post: ThreadPost;
-  threadId: string;
-  threadTitle: string;
-  root: boolean;
+  // The post's thread. The opening post (root) is the thread's face: the
+  // thread's pin/lock status and its tags ride on its meta row; replies carry
+  // neither.
+  thread: Thread;
   now: string;
   // The Markdown body rendered in RSC (fixture posts); session posts render
   // through the same pipeline on the client.
   body?: ReactNode;
+  // The counter the vote control works on: the thread's for the opening post,
+  // the post's own for replies.
+  votes: number;
   voted: boolean;
   // Set once the post was edited in this session: the body re-renders from it.
   editedBody?: string;
@@ -75,11 +79,10 @@ function DeleteConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCance
 
 export function PostItem({
   post,
-  threadId,
-  threadTitle,
-  root,
+  thread,
   now,
   body,
+  votes,
   voted,
   editedBody,
   deleted,
@@ -94,15 +97,16 @@ export function PostItem({
   const dialogs = useShellDialogs();
   const session = useShellSession();
   const moderation = useModeration();
+  const root = post.id === thread.posts[0]?.id;
   const target: ModerationTarget = {
     kind: "post",
     id: post.id,
     author: post.author.user,
-    label: threadTitle,
-    href: `${threadPath(threadId)}${postHash(post.id)}`,
-    ...(root ? { rootThreadId: threadId } : {}),
+    label: thread.title,
+    href: `${threadPath(thread.id)}${postHash(post.id)}`,
+    ...(root ? { rootThreadId: thread.id } : {}),
     initialBody: editedBody ?? post.body,
-    ...(isLocalThreadId(threadId) ? { localBody: editedBody ?? post.body } : {}),
+    ...(isLocalThreadId(thread.id) ? { localBody: editedBody ?? post.body } : {}),
   };
   const caseBody = moderation.reports.find(
     (report) => targetKey(report.target) === targetKey(target),
@@ -237,6 +241,16 @@ export function PostItem({
       tabIndex={0}
     >
       <Stack direction="row" gap={6} align="center" wrap>
+        {root && thread.pinned ? (
+          <Text as="span" role="accent">
+            {messages.board.card.pinned}
+          </Text>
+        ) : null}
+        {root && thread.locked ? (
+          <Text as="span" role="danger">
+            {messages.board.card.locked}
+          </Text>
+        ) : null}
         <MemberLink person={post.author} />
         <Text as="span" role="hint">
           {meta.join(" · ")}
@@ -257,11 +271,7 @@ export function PostItem({
         {!deleted && !editing && (!hidden || canSeeHidden) ? (
           <>
             {!hidden ? (
-              <VoteButton
-                votes={post.votes + (voted ? 1 : 0)}
-                voted={voted}
-                onToggle={onToggleVote}
-              />
+              <VoteButton votes={votes + (voted ? 1 : 0)} voted={voted} onToggle={onToggleVote} />
             ) : null}
             {canReply ? (
               <TextAction bracketed onClick={onReply}>
@@ -285,6 +295,18 @@ export function PostItem({
           <ModerationTargetControls target={target} mode="action" bracketed />
         ) : null}
       </Stack>
+      {root && (thread.tags.length > 0 || thread.techs.length > 0) ? (
+        <Stack direction="row" gap={4} wrap>
+          {thread.tags.map((tag) => (
+            <Tag key={tag} tone={tagTones[tag]}>
+              {messages.board.tags[tag]}
+            </Tag>
+          ))}
+          {thread.techs.map((tech) => (
+            <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+          ))}
+        </Stack>
+      ) : null}
       {content}
       {!deleted && hidden && canSeeHidden ? (
         <ModerationTargetControls target={target} mode="status" />

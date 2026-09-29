@@ -18,7 +18,7 @@ async function logoff(page: Page) {
 
 async function logonSpa(page: Page, user: string) {
   await page.getByRole("region", { name: FILES_REGION }).locator("#file-LOGON").click();
-  await page.getByLabel("Username").fill(user);
+  await page.getByLabel("Username or email").fill(user);
   await page.getByLabel("Password").fill("secret");
   await page.getByRole("button", { name: "LOG ON" }).click();
   await expect(page).toHaveURL("/", { timeout: 15_000 });

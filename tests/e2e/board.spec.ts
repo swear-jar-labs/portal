@@ -607,7 +607,7 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   // The logon started on the thread, so it carries the way back (?next=).
   await expect(page).toHaveURL("/login?next=%2Fforum%2Fci-cache-poisoning");
 
-  await page.getByLabel("Username").fill("ada");
+  await page.getByLabel("Username or email").fill("ada");
   await page.getByLabel("Password").fill("secret");
   await page.getByRole("button", { name: "LOG ON" }).click();
   // The logon lands back on the thread. The typed draft does not survive the

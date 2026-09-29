@@ -13,7 +13,7 @@ Learn to build software by making your own decisions, including the wrong ones.
 
 :yellow[**PROJECTS**] — take a ticket, explain your approach, and work through review. Ask for help when you get stuck.
 
-Register to join FORUM and READROOM. Apply to become a Member when you're ready for project work.
+Register to join FORUM and READROOM. Sign in later with your username or email. Apply to become a Member when you're ready for project work.
 
 :dim[Demo build: registration works with demo accounts; Member applications are still in development.]
 

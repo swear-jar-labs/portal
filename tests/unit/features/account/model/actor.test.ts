@@ -35,6 +35,14 @@ describe("account registry", () => {
     expect(roster().resolve("quinn")).toBeNull();
   });
 
+  it("names the account behind a verified mailbox", () => {
+    const accounts = createAccountRegistry([
+      { user: "ada", level: "member", email: "ada@example.com" },
+    ]);
+    expect(accounts.userForEmail("ada@example.com")).toBe("ada");
+    expect(accounts.userForEmail("quinn@example.com")).toBeNull();
+  });
+
   it("indexes both the stable key and a seeded display username", () => {
     const accounts = createAccountRegistry([{ user: "ada", username: "ada-new", level: "member" }]);
     expect(accounts.resolve("ada-new")?.user).toBe("ada");

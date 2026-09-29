@@ -241,10 +241,10 @@ export const messages = {
       },
       heading: "LOGON",
       fields: {
-        user: "Username",
+        user: "Username or email",
         password: "Password",
       },
-      hint: "Usernames use letters, digits, - or _. Letters are saved in lower case.",
+      hint: "Usernames use letters, digits, - or _. Letters are saved in lower case. You can also sign in with your registration email.",
       demoHint:
         "Development demo: use a made-up password. Google and GitHub buttons also simulate sign-in; no real accounts are connected.",
       submit: "LOG ON",
@@ -256,9 +256,9 @@ export const messages = {
         },
       },
       errors: {
-        user: "2-32 characters: letters, digits, - or _.",
+        user: "Enter your username (2-32 characters: letters, digits, - or _) or your email.",
         password: "A password is needed.",
-        invalid: "Incorrect username or password.",
+        invalid: "Incorrect username, email, or password.",
         unavailable:
           "Sign-in is not available in this build. Demo sign-in works in development only.",
       },

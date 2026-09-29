@@ -14,7 +14,9 @@ export type MockSession = {
 };
 
 export const mockLogonSchema = z.object({
-  user: userSchema,
+  // The logon names the account by handle or by mailbox: handles keep the
+  // first-contact provisioning, mailboxes name a verified account only.
+  user: z.union([userSchema, emailSchema]),
   password: z.string().min(1),
 });
 

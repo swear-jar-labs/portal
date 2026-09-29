@@ -6,6 +6,7 @@ import {
   confirmRegistration,
   ensureAccount,
   ensureSocialAccount,
+  resolveLogonUser,
   startRegistration,
 } from "./mock-accounts";
 import {
@@ -49,7 +50,10 @@ export async function mockLogon(input: unknown): Promise<MockLogonResult> {
 
   // First contact provisions a Participant (see actor.ts): the demo logon
   // doubles as an implicit registration. No password is checked or stored.
-  const actor = ensureAccount(parsed.data.user);
+  // A mailbox must name a verified account; an unknown one is refused.
+  const user = resolveLogonUser(parsed.data.user);
+  if (user === null) return { ok: false, error: "invalid" };
+  const actor = ensureAccount(user);
   await setMockSession(actor.user);
   return { ok: true, user: actor.user };
 }

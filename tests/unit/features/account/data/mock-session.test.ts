@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ensureAccount, resolveLogonUser } from "@/features/account/data/mock-accounts";
 import {
   mockLogonSchema,
   mockRegisterConfirmSchema,
@@ -46,6 +47,14 @@ describe("mockLogonSchema", () => {
 
   it("rejects users with invalid characters", () => {
     expect(mockLogonSchema.safeParse({ user: "ada!", password: "secret" }).success).toBe(false);
+  });
+
+  it("accepts a mailbox, lower-cased", () => {
+    const parsed = mockLogonSchema.safeParse({ user: "Ada@Example.com", password: "secret" });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data).toEqual({ user: "ada@example.com", password: "secret" });
+    }
   });
 });
 
@@ -117,5 +126,15 @@ describe("mockSessionEnabled", () => {
   it("is off in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     expect(mockSessionEnabled()).toBe(false);
+  });
+});
+
+describe("resolveLogonUser", () => {
+  it("passes handles through and resolves verified mailboxes only", () => {
+    expect(resolveLogonUser("quinn")).toBe("quinn");
+    expect(resolveLogonUser("nobody@example.com")).toBeNull();
+    const handle = `quinn-mail-${Date.now().toString(36)}`;
+    ensureAccount(handle, `${handle}@example.com`);
+    expect(resolveLogonUser(`${handle}@example.com`)).toBe(handle);
   });
 });

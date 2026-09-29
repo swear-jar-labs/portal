@@ -15,6 +15,7 @@ import {
 
 const FILES_REGION = "C:\\SWEARJAR";
 const USER_LABEL = "Username";
+const LOGIN_USER_LABEL = "Username or email";
 const PASSWORD_LABEL = "Password";
 const SUBMIT_BUTTON = "SUBMIT";
 const LONG_DELAY_MS = screensaverDelayMs(30);
@@ -236,7 +237,7 @@ test.describe("member session", () => {
     await page.locator("#file-LOGON").click();
     await expect(page).toHaveURL("/login?next=%2Ftickets%2FFLAG-1");
 
-    await page.getByLabel(USER_LABEL).fill("ada");
+    await page.getByLabel(LOGIN_USER_LABEL).fill("ada");
     await page.getByLabel(PASSWORD_LABEL).fill("secret");
     await page.getByRole("button", { name: "LOG ON" }).click();
     await expect(page).toHaveURL("/tickets/FLAG-1");
@@ -367,6 +368,58 @@ test.describe("registration and levels", () => {
     await expect(profile.getByText("Participant")).toBeVisible();
     await expect(profile.getByRole("img")).toHaveCount(0);
     await expectNoViolations(page, "fresh participant profile");
+  });
+
+  test("signs in with the registration email as well as the username", async ({ page }) => {
+    await page.goto("/register");
+    const handle = `quinn-mailbox-${Date.now().toString(36)}`;
+    const mailbox = `${handle}@example.com`;
+    const form = page.getByRole("form", { name: "REGISTER" });
+    await form.getByLabel(USER_LABEL).fill(handle);
+    await form.getByLabel("Email").fill(mailbox);
+    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByRole("button", { name: "REGISTER" }).click();
+
+    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
+    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
+      const match = /([0-9]{6})/.exec(element.textContent ?? "");
+      if (!match?.[1]) throw new Error("the demo code is not shown");
+      return match[1];
+    });
+    await form.getByLabel("Email code").fill(demoCode);
+    await form.getByRole("button", { name: "CONFIRM" }).click();
+    await expect(page).toHaveURL("/profile");
+
+    // Out and back in on the mailbox: the logon names the same account.
+    await page.keyboard.press("F9");
+    await page.getByRole("button", { name: "LOG OFF" }).click();
+    await expect(page).toHaveURL("/");
+
+    await page.goto("/login");
+    await waitForHydration(page);
+    const logonForm = page.getByRole("form", { name: "LOGON" });
+    await expect(
+      logonForm.getByText("You can also sign in with your registration email."),
+    ).toBeVisible();
+    await logonForm.getByLabel(LOGIN_USER_LABEL).fill(mailbox);
+    await logonForm.getByLabel(PASSWORD_LABEL).fill("secret");
+    await logonForm.getByRole("button", { name: "LOG ON" }).click();
+    await expect(page).toHaveURL("/forum");
+
+    await page.goto("/profile");
+    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
+    await expect(profile.getByRole("heading", { level: 1, name: handle })).toBeVisible();
+  });
+
+  test("refuses an unknown mailbox instead of provisioning a stranger", async ({ page }) => {
+    await page.goto("/login");
+    await waitForHydration(page);
+    const form = page.getByRole("form", { name: "LOGON" });
+    await form.getByLabel(LOGIN_USER_LABEL).fill(`nobody-${Date.now().toString(36)}@example.com`);
+    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByRole("button", { name: "LOG ON" }).click();
+    await expect(form.getByText("Incorrect username, email, or password.")).toBeVisible();
+    await expect(page).toHaveURL("/login");
   });
 
   test("rejects a wrong email code without creating the account", async ({ page }) => {
@@ -1053,7 +1106,7 @@ test.describe("logon window", () => {
     await page.goto("/login");
     const doc = docScroll(page);
     const row = page.locator("#file-LOGON");
-    const user = page.getByLabel(USER_LABEL);
+    const user = page.getByLabel(LOGIN_USER_LABEL);
 
     await row.focus();
     await page.keyboard.press("Tab");
@@ -1084,7 +1137,7 @@ test.describe("logon window", () => {
         "Development demo: use a made-up password. Google and GitHub buttons also simulate sign-in; no real accounts are connected.",
       ),
     ).toBeVisible();
-    const user = page.getByLabel(USER_LABEL);
+    const user = page.getByLabel(LOGIN_USER_LABEL);
     const password = page.getByLabel(PASSWORD_LABEL);
     const register = form.getByRole("link", { name: "REGISTER" });
 
@@ -1106,7 +1159,7 @@ test.describe("logon window", () => {
   }) => {
     await page.goto("/login");
     const form = page.getByRole("form", { name: "LOGON" });
-    const user = page.getByLabel(USER_LABEL);
+    const user = page.getByLabel(LOGIN_USER_LABEL);
     const logon = form.getByRole("button", { name: "LOG ON" });
     const google = form.getByRole("button", { name: "GOOGLE" });
 

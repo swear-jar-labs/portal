@@ -67,6 +67,14 @@ export function createAccountRegistry(seed: readonly AccountSeed[]) {
       }
       return false;
     },
+    // The logon by mailbox: a verified address names its account key, an
+    // unknown one names nothing (unlike handles, mailboxes never provision).
+    userForEmail(email: string): string | null {
+      for (const [key, entry] of known) {
+        if (entry.email === email) return key;
+      }
+      return null;
+    },
     memberUsers(): string[] {
       return [...known.values()]
         .filter((entry) => entry.level === "member")

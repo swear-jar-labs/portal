@@ -34,8 +34,16 @@ export function listMemberUsers(): string[] {
   return registry.memberUsers();
 }
 
-export function ensureAccount(user: string): Actor {
-  return registry.ensure(user);
+export function ensureAccount(user: string, email?: string): Actor {
+  return registry.ensure(user, email);
+}
+
+// The logon credential is a handle or a mailbox: a mailbox resolves to its
+// verified account (unknown mailboxes refuse — they never provision), a
+// handle passes through to the first-contact provisioning.
+export function resolveLogonUser(login: string): string | null {
+  if (!login.includes("@")) return login;
+  return registry.userForEmail(login);
 }
 
 export function promoteAccount(user: string): Actor | null {

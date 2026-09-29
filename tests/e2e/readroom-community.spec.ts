@@ -30,7 +30,7 @@ async function gotoReadroomSpa(page: Page) {
 async function logonSpa(page: Page, user: string) {
   await page.getByRole("region", { name: FILES_REGION }).locator("#file-LOGON").click();
   await expect(page).toHaveURL(/\/login/);
-  await page.getByLabel("Username").fill(user);
+  await page.getByLabel("Username or email").fill(user);
   await page.getByLabel("Password").fill("secret");
   await page.getByRole("button", { name: "LOG ON" }).click();
   // The file manager carries ?next=%2F, so the return lands on the landing.

@@ -7,7 +7,7 @@ title: HOW-IT-WORKS.TXT
 
 Learn to build software by making your own decisions, including the wrong ones.
 
-:yellow[**FORUM & ERRATA**] — ask questions, compare approaches, or share a mistake and what it taught you. Stories from your own practice are welcome.
+:yellow[**FORUM & ERRATA**] — ask questions (GENERAL), pitch a project seed (IDEAS), prepare for interviews (INTERVIEWS), or share a mistake and what it taught you (ERRATA). Stories from your own practice are welcome.
 
 :yellow[**READROOM**] — bring code and a question. Write your notes independently. Until the deadline, each reader sees only their own notes. Then everyone's notes become public. A write-up is welcome, not required.
 

@@ -37,8 +37,8 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   const feed = page.getByRole("region", { name: FEED_REGION });
   const cards = feed.getByRole("article");
 
-  await expect(cards).toHaveCount(12);
-  await expect(feed.getByText("12 THREADS")).toBeVisible();
+  await expect(cards).toHaveCount(14);
+  await expect(feed.getByText("14 THREADS")).toBeVisible();
   await expect(cards.first()).toContainText("[PINNED]");
   // Every feed card carries its section icon in the title row.
   await expect(cards.first().locator('[data-file-icon="speech"]')).toBeVisible();
@@ -89,7 +89,7 @@ test("filters by tag and board and keeps the state in the URL", async ({ page })
   await tagBox.click();
   await page.getByRole("option", { name: "QUESTION", exact: true }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?tag=question`);
-  await expect(feed.getByRole("article")).toHaveCount(4);
+  await expect(feed.getByRole("article")).toHaveCount(5);
   await expect(feed.getByRole("button", { name: "QUESTION" }).first()).toHaveAttribute(
     "aria-pressed",
     "true",
@@ -164,7 +164,7 @@ test("filters by tech and keeps the state in the URL", async ({ page }) => {
   await expect(page).toHaveURL(`${FEED_PATH}?tech=c&tech=go`);
   await feed.getByRole("button", { name: "CLEAR TAGS" }).click();
   await expect(page).toHaveURL(FEED_PATH);
-  await expect(feed.getByText("12 THREADS")).toBeVisible();
+  await expect(feed.getByText("14 THREADS")).toBeVisible();
   await expect(feed.getByRole("button", { name: "CLEAR TAGS" })).toHaveCount(0);
   // A card tech chip filters the feed instead of opening the thread.
   const cache = feed.getByRole("article").filter({ hasText: "Eviction policy" });
@@ -188,7 +188,7 @@ test("a tag on a card filters the feed instead of opening the thread", async ({ 
   await card.getByRole("button", { name: "QUESTION" }).click();
 
   await expect(page).toHaveURL(`${FEED_PATH}?tag=question`);
-  await expect(feed.getByRole("article")).toHaveCount(4);
+  await expect(feed.getByRole("article")).toHaveCount(5);
 });
 
 test("the gap between card tags belongs to the stretched link", async ({ page }) => {
@@ -1231,4 +1231,88 @@ test.describe("forum and errata entries", () => {
       page.getByRole("region", { name: "READ FIRST: how this board works" }),
     ).toBeVisible();
   });
+});
+
+test("pins and locks a thread as admin, and hides the controls from members", async ({ page }) => {
+  await logon(page, "admin");
+  await page.goto(threadPath("heap-postmortem"));
+  await waitForHydration(page);
+  const thread = page.getByRole("region", { name: HEAP_POSTMORTEM });
+
+  // The admin row walks first: an arrow step from the body lands on PIN.
+  await expect(async () => {
+    await focusedBody(page).focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(thread.getByRole("button", { name: "PIN", exact: true })).toBeFocused({
+      timeout: 1_000,
+    });
+  }).toPass();
+  await expect(thread.getByRole("button", { name: "LOCK", exact: true })).toBeVisible();
+
+  // Pinning marks the opening post and follows the thread back to the feed.
+  // The return is an Escape, not a reload: the mock store lives one SPA
+  // session, a full load forgets the pin like every other session edit.
+  await thread.getByRole("button", { name: "PIN", exact: true }).click();
+  await expect(thread.getByRole("button", { name: "UNPIN", exact: true })).toBeVisible();
+  await expect(thread.getByRole("article").first()).toContainText("[PINNED]");
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(FEED_PATH);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+  await expect(feed.getByRole("article").filter({ hasText: HEAP_POSTMORTEM })).toContainText(
+    "[PINNED]",
+  );
+
+  // Unpinning reverts both.
+  await feed.getByRole("link", { name: HEAP_POSTMORTEM }).click();
+  await expect(thread.getByRole("button", { name: "UNPIN", exact: true })).toBeVisible();
+  await thread.getByRole("button", { name: "UNPIN", exact: true }).click();
+  await expect(thread.getByRole("button", { name: "PIN", exact: true })).toBeVisible();
+  await expect(thread.getByRole("article").first()).not.toContainText("[PINNED]");
+
+  // Locking takes the reply box and keeps the votes.
+  await thread.getByRole("button", { name: "LOCK", exact: true }).click();
+  await expect(thread.getByRole("button", { name: "UNLOCK", exact: true })).toBeVisible();
+  await expect(thread.getByText("THIS THREAD IS LOCKED.")).toBeVisible();
+  await expect(thread.getByRole("textbox", { name: "REPLY" })).toHaveCount(0);
+  await expect(thread.getByRole("button", { name: "▲ 12 VOTES" })).toBeVisible();
+  await thread.getByRole("button", { name: "UNLOCK", exact: true }).click();
+  await expect(thread.getByRole("button", { name: "LOCK", exact: true })).toBeVisible();
+  await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
+  await expectNoViolations(page, "forum pin and lock");
+
+  // A member sees the thread but neither control.
+  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "LOG OFF" }).click();
+  await expect(page).toHaveURL("/");
+  await logon(page);
+  await page.goto(threadPath("heap-postmortem"));
+  await waitForHydration(page);
+  const memberThread = page.getByRole("region", { name: HEAP_POSTMORTEM });
+  await expect(memberThread.getByRole("button", { name: "PIN", exact: true })).toHaveCount(0);
+  await expect(memberThread.getByRole("button", { name: "UNPIN", exact: true })).toHaveCount(0);
+  await expect(memberThread.getByRole("button", { name: "LOCK", exact: true })).toHaveCount(0);
+  await expect(memberThread.getByRole("button", { name: "UNLOCK", exact: true })).toHaveCount(0);
+  await expect(memberThread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
+});
+
+test("filters the ideas and interviews boards", async ({ page }) => {
+  await page.goto(FEED_PATH);
+  await waitForHydration(page);
+  const feed = page.getByRole("region", { name: FEED_REGION });
+
+  await feed.getByRole("combobox", { name: "BOARD" }).click();
+  await page.getByRole("option", { name: "IDEAS" }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?board=ideas`);
+  await expect(feed.getByText("1 THREAD")).toBeVisible();
+  await expect(
+    feed.getByRole("article").filter({ hasText: "pocket logic analyzer" }),
+  ).toBeVisible();
+
+  await feed.getByRole("combobox", { name: "BOARD" }).click();
+  await page.getByRole("option", { name: "INTERVIEWS" }).click();
+  await expect(page).toHaveURL(`${FEED_PATH}?board=interviews`);
+  await expect(feed.getByText("1 THREAD")).toBeVisible();
+  await expect(
+    feed.getByRole("article").filter({ hasText: "rate limiter in 45 minutes" }),
+  ).toBeVisible();
 });

@@ -64,14 +64,21 @@ export function useBoardSession({
     [state.addedThreads, state.threads, threads],
   );
 
+  // Admin pin/lock overrides land before the votes and the rank: a pinned
+  // thread tops the feed, a locked one reads locked on its card.
+  const withFlags = useMemo(
+    () => boardStore.withSessionFlags(summaries, state.flags),
+    [state.flags, summaries],
+  );
+
   // Votes change the visible count and the hot rank at once — the fixtures are
   // never touched, the local delta lives beside them.
   const withVotes = useMemo(
     () =>
-      summaries.map((summary) =>
+      withFlags.map((summary) =>
         state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
       ),
-    [state.votedThreads, summaries],
+    [state.votedThreads, withFlags],
   );
 
   const searchActive = !isBlankSearch(query.q);
@@ -161,6 +168,30 @@ export function useBoardSession({
     return boardStore.addThread(input, author).id;
   }, []);
 
+  // The open thread's pin/lock as the session sees them: the fixture flags
+  // with the admin overrides merged in. The toggles flip the effective flag;
+  // rights are gated where the actions are bound (the thread providers).
+  const openSummary =
+    threadId === undefined ? undefined : withFlags.find((entry) => entry.id === threadId);
+  const pinned = openSummary?.pinned ?? false;
+  const locked = openSummary?.locked ?? false;
+
+  const togglePin = useCallback(() => {
+    if (threadId === undefined) return;
+    const snapshot = boardStore.boardSnapshot();
+    const current =
+      boardStore.threadFlagOf(snapshot, threadId, "pinned") ?? openSummary?.pinned ?? false;
+    boardStore.setThreadFlag(threadId, "pinned", !current);
+  }, [openSummary, threadId]);
+
+  const toggleLock = useCallback(() => {
+    if (threadId === undefined) return;
+    const snapshot = boardStore.boardSnapshot();
+    const current =
+      boardStore.threadFlagOf(snapshot, threadId, "locked") ?? openSummary?.locked ?? false;
+    boardStore.setThreadFlag(threadId, "locked", !current);
+  }, [openSummary, threadId]);
+
   const threadState =
     threadId === undefined
       ? boardStore.EMPTY_THREAD_STATE
@@ -173,10 +204,14 @@ export function useBoardSession({
     // The panel renders one post card per visible match from them.
     searchHits,
     threadState,
+    pinned,
+    locked,
     toggleThreadVote,
     togglePostVote,
     editPost,
     deletePost,
+    togglePin,
+    toggleLock,
     addReply,
     addThread,
   };

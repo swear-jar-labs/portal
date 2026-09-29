@@ -5,6 +5,7 @@ import { Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useShellSession } from "@/features/shell";
 import { targetKey, useModeration } from "@/features/moderation/contracts";
+import { TextAction } from "@/shared/TextAction/TextAction";
 import type { Thread } from "../model/threads";
 import { excerpt } from "../model/excerpt";
 import { PostItem } from "./PostItem";
@@ -63,8 +64,23 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
     setReplyTargetId(undefined);
   }
 
+  // The thread as the session sees it: the provider merged the admin
+  // pin/lock overrides over the fixture flags. The markers, the reply gate
+  // and the locked notice all read it.
+  const view: Thread = { ...thread, pinned: actions.pinned, locked: actions.locked };
+
   return (
     <Stack gap={12}>
+      {actions.canModerate ? (
+        <Stack direction="row" gap={6} navRow>
+          <TextAction bracketed onClick={actions.onTogglePin}>
+            {view.pinned ? messages.board.thread.unpin : messages.board.thread.pin}
+          </TextAction>
+          <TextAction bracketed onClick={actions.onToggleLock}>
+            {view.locked ? messages.board.thread.unlock : messages.board.thread.lock}
+          </TextAction>
+        </Stack>
+      ) : null}
       {posts.length === 0 ? (
         <Text role="hint">{messages.board.thread.postsEmpty}</Text>
       ) : (
@@ -74,7 +90,7 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
             <PostItem
               key={post.id}
               post={post}
-              thread={thread}
+              thread={view}
               now={now}
               body={body}
               votes={root ? thread.votes : post.votes}
@@ -82,7 +98,7 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
               editedBody={state.edits.get(post.id)}
               deleted={state.deletedPosts.has(post.id)}
               canEdit={session?.user === post.author.user}
-              canReply={!thread.locked}
+              canReply={!view.locked}
               replyTo={post.replyTo === undefined ? undefined : resolveTarget(post.replyTo)}
               onToggleVote={
                 root ? actions.onToggleThreadVote : () => actions.onTogglePostVote(post.id)
@@ -95,7 +111,7 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
         })
       )}
 
-      {thread.locked ? (
+      {view.locked ? (
         <Text role="danger">{messages.board.thread.locked}</Text>
       ) : (
         <ReplyForm onReply={submitReply} target={target} onTargetChange={setReplyTargetId} />

@@ -563,6 +563,8 @@ export const messages = {
     boards: {
       general: "GENERAL",
       errata: "ERRATA",
+      ideas: "IDEAS",
+      interviews: "INTERVIEWS",
     },
     tags: {
       proposal: "PROPOSAL",
@@ -644,6 +646,10 @@ export const messages = {
     thread: {
       postsEmpty: "No posts here yet.",
       locked: "This thread is locked.",
+      pin: "PIN",
+      unpin: "UNPIN",
+      lock: "LOCK",
+      unlock: "UNLOCK",
     },
     age: {
       now: "JUST NOW",

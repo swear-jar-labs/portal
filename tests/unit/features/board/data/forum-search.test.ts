@@ -39,6 +39,7 @@ function boardState(overrides: Partial<BoardState> = {}): BoardState {
     votedThreads: new Set(),
     addedThreads: [],
     threads: {},
+    flags: {},
     ...overrides,
   };
 }

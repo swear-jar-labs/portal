@@ -114,6 +114,28 @@ describe("board store", () => {
     store.toggleThreadVote("tabs");
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  it("sets pin and lock flags independently per thread", () => {
+    store.setThreadFlag("a", "pinned", true);
+    store.setThreadFlag("a", "locked", true);
+    store.setThreadFlag("b", "pinned", true);
+    const state = store.boardSnapshot();
+
+    expect(store.threadFlagOf(state, "a", "pinned")).toBe(true);
+    expect(store.threadFlagOf(state, "a", "locked")).toBe(true);
+    expect(store.threadFlagOf(state, "b", "pinned")).toBe(true);
+    expect(store.threadFlagOf(state, "b", "locked")).toBeUndefined();
+
+    store.setThreadFlag("a", "pinned", false);
+    expect(store.threadFlagOf(store.boardSnapshot(), "a", "pinned")).toBe(false);
+    expect(store.threadFlagOf(store.boardSnapshot(), "a", "locked")).toBe(true);
+  });
+
+  it("keeps an unknown thread without flags", () => {
+    const state = store.boardSnapshot();
+    expect(store.threadFlagOf(state, "nope", "pinned")).toBeUndefined();
+    expect(store.threadFlagOf(state, "nope", "locked")).toBeUndefined();
+  });
 });
 
 describe("withLocalActivity", () => {
@@ -149,5 +171,30 @@ describe("withLocalActivity", () => {
 
     const [first] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
     expect(first).toMatchObject({ replies: 0 });
+  });
+});
+
+describe("withSessionFlags", () => {
+  it("replaces the set flags and keeps the rest of the summary", () => {
+    const summaries = [
+      summary("a", 2, "2026-09-17T00:00:00.000Z"),
+      summary("b", 0, "2026-09-16T00:00:00.000Z"),
+    ];
+    store.setThreadFlag("a", "pinned", true);
+    store.setThreadFlag("a", "locked", true);
+
+    const [first, second] = store.withSessionFlags(summaries, store.boardSnapshot().flags);
+    expect(first).toMatchObject({ pinned: true, locked: true, replies: 2 });
+    // A thread without overrides keeps its exact object.
+    expect(second).toBe(summaries[1]);
+  });
+
+  it("clears an override back to the fixture flag", () => {
+    const summaries = [summary("a", 2, "2026-09-17T00:00:00.000Z")];
+    store.setThreadFlag("a", "pinned", true);
+    store.setThreadFlag("a", "pinned", false);
+
+    const [first] = store.withSessionFlags(summaries, store.boardSnapshot().flags);
+    expect(first).toBe(summaries[0]);
   });
 });

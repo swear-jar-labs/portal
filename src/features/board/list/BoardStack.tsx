@@ -119,10 +119,14 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     visible,
     searchHits,
     threadState,
+    pinned,
+    locked,
     toggleThreadVote,
     togglePostVote,
     editPost,
     deletePost,
+    togglePin,
+    toggleLock,
     addReply,
     addThread,
   } = useBoardSession({
@@ -216,13 +220,25 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
 
   const threadActions = useMemo<ThreadActions | null>(() => {
     if (activeThreadId === undefined) return null;
+    // Pin/lock belong to admins alone: the controls hide for anyone else,
+    // and the transitions below no-op without the admin bit.
+    const admin = session?.admin === true;
     return {
       state: threadState,
       votedThread: state.votedThreads.has(activeThreadId),
+      pinned,
+      locked,
+      canModerate: admin,
       onToggleThreadVote: () => gate(() => toggleThreadVote(activeThreadId)),
       onTogglePostVote: (postId) => gate(() => togglePostVote(postId)),
       onEditPost: editPost,
       onDeletePost: deletePost,
+      onTogglePin: () => {
+        if (admin) togglePin();
+      },
+      onToggleLock: () => {
+        if (admin) toggleLock();
+      },
       onReply: (body, replyTo) => {
         if (author !== null) addReply(body, author, replyTo);
       },
@@ -234,8 +250,13 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     deletePost,
     editPost,
     gate,
+    locked,
+    pinned,
+    session?.admin,
     state.votedThreads,
     threadState,
+    toggleLock,
+    togglePin,
     togglePostVote,
     toggleThreadVote,
   ]);

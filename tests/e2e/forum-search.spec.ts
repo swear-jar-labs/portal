@@ -162,12 +162,12 @@ test("clears the query, names the empty state and walks history", async ({ page 
   // its own filters untouched.
   await feed(page).getByRole("button", { name: "CLEAR", exact: true }).click();
   await expect(page).toHaveURL(FEED_PATH);
-  await expect(feed(page).getByText("12 THREADS")).toBeVisible();
+  await expect(feed(page).getByText("14 THREADS")).toBeVisible();
 
   // A whitespace query is the plain feed, not a search; CLEAR still drops
   // the raw text from the URL.
   await searchBox(page).fill("   ");
-  await expect(feed(page).getByText("12 THREADS")).toBeVisible();
+  await expect(feed(page).getByText("14 THREADS")).toBeVisible();
   await feed(page).getByRole("button", { name: "CLEAR", exact: true }).click();
   await expect(page).toHaveURL(FEED_PATH);
 });
@@ -269,6 +269,6 @@ test("reaches the search box and the jumps with the arrows", async ({ page }) =>
   await searchBox(page).press("ControlOrMeta+a");
   await searchBox(page).press("Backspace");
   await expect(page).toHaveURL(FEED_PATH);
-  await expect(feed(page).getByText("12 THREADS")).toBeVisible();
+  await expect(feed(page).getByText("14 THREADS")).toBeVisible();
   await expectNoViolations(page, "forum search keyboard");
 });

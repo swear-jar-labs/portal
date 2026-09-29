@@ -15,10 +15,17 @@ export type ThreadState = {
   addedPosts: readonly ThreadPost[];
 };
 
+export type ThreadFlag = "pinned" | "locked";
+
+export type ThreadFlagOverrides = Readonly<Record<string, Partial<Record<ThreadFlag, boolean>>>>;
+
 export type BoardState = {
   votedThreads: ReadonlySet<string>;
   addedThreads: readonly Thread[];
   threads: Readonly<Record<string, ThreadState>>;
+  // Admin pin/lock overrides over the fixture flags: set in this session, die
+  // with the reload. Absent means the fixture flag stands.
+  flags: ThreadFlagOverrides;
 };
 
 export const EMPTY_THREAD_STATE: ThreadState = {
@@ -32,6 +39,7 @@ const INITIAL_BOARD_STATE: BoardState = {
   votedThreads: new Set(),
   addedThreads: [],
   threads: {},
+  flags: {},
 };
 
 const LOCAL_THREAD_ID_PREFIX = "local-thread-";
@@ -73,6 +81,24 @@ export function togglePostVote(threadId: string, postId: string): void {
     ...current,
     votedPosts: toggled(current.votedPosts, postId),
   }));
+}
+
+/** An admin pin/lock override: the feed and the open thread read the merged
+ * flag, the fixtures are never touched. Rights are gated where the action is
+ * bound (the thread providers); Phase 5 enforces them on the server. */
+export function setThreadFlag(threadId: string, flag: ThreadFlag, value: boolean): void {
+  setState({
+    ...state,
+    flags: { ...state.flags, [threadId]: { ...state.flags[threadId], [flag]: value } },
+  });
+}
+
+export function threadFlagOf(
+  snapshot: BoardState,
+  threadId: string,
+  flag: ThreadFlag,
+): boolean | undefined {
+  return snapshot.flags[threadId]?.[flag];
 }
 
 export function editPost(threadId: string, postId: string, body: string): void {
@@ -171,6 +197,24 @@ export function withLocalActivity(
       replies: Math.max(0, summary.replies + liveAdded.length - removedFixtures),
       lastActivityAt: liveAdded.at(-1)?.createdAt ?? summary.lastActivityAt,
     };
+  });
+}
+
+/** The feed's view of admin pin/lock overrides: a set flag replaces the
+ * fixture one before ranking, so a pinned thread tops the feed and a locked
+ * one reads locked on its card. Threads without an override keep their exact
+ * object. */
+export function withSessionFlags(
+  summaries: readonly ThreadSummary[],
+  flags: ThreadFlagOverrides,
+): ThreadSummary[] {
+  return summaries.map((summary) => {
+    const override = flags[summary.id];
+    if (override === undefined) return summary;
+    const pinned = override.pinned ?? summary.pinned;
+    const locked = override.locked ?? summary.locked;
+    if (pinned === summary.pinned && locked === summary.locked) return summary;
+    return { ...summary, pinned, locked };
   });
 }
 

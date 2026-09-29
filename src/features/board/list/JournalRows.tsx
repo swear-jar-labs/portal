@@ -51,11 +51,11 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
   const rows = useMemo(
     () =>
       boardStore
-        .withLocalActivity([...threads], state.threads)
+        .withSessionFlags(boardStore.withLocalActivity([...threads], state.threads), state.flags)
         .map((summary) =>
           state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
         ),
-    [threads, state.threads, state.votedThreads],
+    [threads, state.flags, state.threads, state.votedThreads],
   );
 
   const activateThread = (threadId: string, event?: MouseEvent<HTMLElement>) => {

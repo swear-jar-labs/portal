@@ -14,10 +14,13 @@ import {
 import { ERRATA_BOARD_ID } from "@/lib/board";
 import { formatAge as formatRelativeAge } from "@/shared/age";
 
-// Boards: the general one, errata (its own vocabulary, same machinery) and
-// the project journals (names come from the projects slice; Phase 5 reads
-// them from sections.title).
-export const staticBoardIds = ["general", ERRATA_BOARD_ID] as const;
+// Boards: the general one, errata (its own vocabulary, same machinery),
+// ideas (a project's seed, pre-proposal) and interviews (prep: mock
+// questions and answer reviews, no job offers) plus the project journals
+// (names come from the projects slice; Phase 5 reads them from
+// sections.title). Tutorials stay out until guides accumulate in GENERAL.
+export const staticBoardIds = ["general", ERRATA_BOARD_ID, "ideas", "interviews"] as const;
+type StaticBoardId = (typeof staticBoardIds)[number];
 
 export const boardIds = [...staticBoardIds, ...projectSlugs] as const;
 export type BoardId = string;
@@ -33,8 +36,12 @@ export const composableBoardIds = boardIds.filter((id) => !archivedBoards.has(id
  * registry's name for the journals (fixture and runtime-approved alike). */
 export function boardTitle(id: BoardId): string {
   if (isKnownProjectSlug(id)) return projectName(id);
-  if (id === "general" || id === ERRATA_BOARD_ID) return messages.board.boards[id];
+  if (isStaticBoardId(id)) return messages.board.boards[id];
   return id;
+}
+
+function isStaticBoardId(value: string): value is StaticBoardId {
+  return staticBoardIds.some((id) => id === value);
 }
 
 // Tags are the board's status vocabulary: proposal and question carry a tone

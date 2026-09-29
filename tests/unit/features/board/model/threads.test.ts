@@ -23,6 +23,8 @@ describe("board taxonomy", () => {
   it("titles every board, journals by project name", () => {
     expect(boardTitle("general")).toBe("GENERAL");
     expect(boardTitle("errata")).toBe("ERRATA");
+    expect(boardTitle("ideas")).toBe("IDEAS");
+    expect(boardTitle("interviews")).toBe("INTERVIEWS");
     expect(boardTitle("swearjar-dos")).toBe("SWEARJAR.DOS");
     expect(boardTitle("compiler")).toBe("Compiler");
     expect(boardTitle("tooling")).toBe("Tooling");

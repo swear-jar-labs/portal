@@ -94,7 +94,6 @@ export function ReadroomView({
     readroomId: readroom.id,
     taskTitle: effective.title,
     deadlineAt: effective.deadlineAt,
-    now,
     noteAuthors: effective.notes.map((note) => note.author.user),
   });
   // A deleted note reopens the form: the caret follows it there.

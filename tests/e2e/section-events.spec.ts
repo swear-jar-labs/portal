@@ -1,12 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
 import { threadPath } from "../../src/features/board/model/threads";
-import { TICKETS_PATH } from "../../src/features/tickets/model/tickets";
+import { readroomPath } from "../../src/features/readroom/model/readrooms";
+import { TICKETS_PATH, ticketPath } from "../../src/features/tickets/model/tickets";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 const READ_FIRST = "READ FIRST: how this board works";
 const FILES = "C:\\SWEARJAR";
 const REPLY_SUBJECT = `grace replied in ${READ_FIRST}`;
 const COMMENT_SUBJECT = "grace commented on DOS-2";
+const STALL_SUBJECT = "DOS-1 needs a maintainer check-in";
+const BUMP_TITLE = "Dissect the allocator that hides a free list behind a bump pointer";
+const BUMP_OPENED_SUBJECT = `opened notes for ${BUMP_TITLE}`;
+const FEED_REGION = "READROOM.EXE";
+
+function bumpCard(page: Page) {
+  return page.getByRole("region", { name: FEED_REGION }).getByRole("link", { name: BUMP_TITLE });
+}
 
 async function logoff(page: Page) {
   await page.getByRole("button", { name: "F9 Logoff" }).click();
@@ -126,4 +135,90 @@ test("an application submit pages admins and the decision returns", async ({ pag
   await detail.getByRole("link", { name: "OPEN" }).click();
   await expect(page).toHaveURL("/profile");
   await expectNoViolations(page, "section application inbox");
+});
+
+test("a stalled ticket pages its maintainers once", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-09-21T08:59:00.000Z") });
+  await logon(page, "ada");
+  await page.goto(ticketPath("DOS-1"));
+  await waitForHydration(page);
+  const dossier = page.getByRole("region", { name: "DOS-1" });
+  await expect(
+    dossier.getByText("Three days without a work update. Check in with the assignee"),
+  ).toHaveCount(0);
+
+  // The two-minute jump trips the dossier clock: the stall signal appears and
+  // pages the maintainers (grace — the watching ada never self-notifies).
+  await page.clock.fastForward(2 * 60_000);
+  await expect(
+    dossier.getByText("Three days without a work update. Check in with the assignee"),
+  ).toBeVisible();
+
+  await logoff(page);
+  await logonSpa(page, "grace");
+  await openInbox(page);
+  const row = page.getByRole("button", { name: STALL_SUBJECT });
+  await expect(row).toHaveCount(1);
+  await row.click();
+  const detail = page.getByRole("region", { name: "DOS-1" });
+  await detail.getByRole("link", { name: "OPEN" }).click();
+  await expect(page).toHaveURL(ticketPath("DOS-1"));
+
+  await openInbox(page);
+  await expect(page.getByRole("button", { name: STALL_SUBJECT })).toHaveCount(1);
+  await expectNoViolations(page, "section stall inbox");
+});
+
+test("crossing the readroom deadline notifies note authors without leaking text", async ({
+  page,
+}) => {
+  await logon(page, "ken");
+  await page.goto(readroomPath("bump-allocator"));
+  await waitForHydration(page);
+  await page.clock.install();
+  const task = page.getByRole("region", { name: BUMP_TITLE });
+  // Sealed before the deadline: ken reads his own note, ada's stays hidden.
+  await expect(task.getByText("walks the list")).toBeVisible();
+  await expect(task.getByText("max_free_chunks")).toHaveCount(0);
+
+  // No opening notice exists anywhere yet.
+  await logoff(page);
+  await logonSpa(page, "lin");
+  await openInbox(page);
+  await expect(page.getByRole("button", { name: BUMP_OPENED_SUBJECT })).toHaveCount(0);
+
+  // Back to the task as ken, then past the deadline. The jump trips the idle
+  // screensaver: its capture listener eats the first keystroke, so wake it
+  // before touching the file list or the keystroke never reaches the shell.
+  await logoff(page);
+  await logonSpa(page, "ken");
+  await page.getByRole("region", { name: FILES }).locator("#file-READROOM").click();
+  await bumpCard(page).click();
+  await expect(page).toHaveURL(readroomPath("bump-allocator"));
+  await page.clock.fastForward(5 * 24 * 60 * 60 * 1000);
+  const screensaver = page.getByRole("img", { name: "Starfield screensaver" });
+  await expect(screensaver).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(screensaver).toBeHidden();
+
+  // A remount past the deadline fires the opening exactly once per session.
+  await page.getByRole("region", { name: FILES }).locator("#file-READROOM").click();
+  await bumpCard(page).click();
+  await expect(page).toHaveURL(readroomPath("bump-allocator"));
+
+  await logoff(page);
+  await logonSpa(page, "lin");
+  await openInbox(page);
+  const row = page.getByRole("button", { name: BUMP_OPENED_SUBJECT });
+  await expect(row).toHaveCount(1);
+  await row.click();
+  // The notice names the task only: no note text travels before the opening.
+  const detail = page.getByRole("region", { name: BUMP_TITLE });
+  await expect(detail.getByText("max_free_chunks")).toHaveCount(0);
+  await detail.getByRole("link", { name: "OPEN" }).click();
+  await expect(page).toHaveURL(readroomPath("bump-allocator"));
+
+  await openInbox(page);
+  await expect(page.getByRole("button", { name: BUMP_OPENED_SUBJECT })).toHaveCount(1);
+  await expectNoViolations(page, "section deadline inbox");
 });

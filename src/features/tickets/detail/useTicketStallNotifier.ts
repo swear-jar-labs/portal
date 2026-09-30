@@ -21,7 +21,7 @@ const delivered = new Set<string>();
 
 export function useTicketStallNotifier(input: TicketStallInput): void {
   const { ticketId, ticketKey, projectLabel, actorUser, stalled, maintainers, lead } = input;
-  const maintainersKey = [...maintainers].sort().join("\u0000");
+  const maintainersKey = JSON.stringify([...maintainers].sort());
   useEffect(() => {
     if (!stalled) return;
     if (delivered.has(ticketId)) return;

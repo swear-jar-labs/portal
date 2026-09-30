@@ -15,6 +15,11 @@ export type TagProps = {
   className?: string;
 };
 
+// Fills too dark for the default black chip text (red, dim): these chips
+// spend white ink on the light surfaces instead. The set lives here, next to
+// the tone tables, so every consumer gets it without thinking.
+const LIGHT_INK_TONES: ReadonlySet<Tone> = new Set(["red", "dim"]);
+
 export function Tag({
   children,
   tone,
@@ -24,7 +29,13 @@ export function Tag({
   disabled = false,
   className,
 }: TagProps) {
-  const classes = cx(styles.tag, onClick && styles.button, active && styles.active, className);
+  const classes = cx(
+    styles.tag,
+    onClick && styles.button,
+    active && styles.active,
+    tone !== undefined && !active && LIGHT_INK_TONES.has(tone) && styles.lightInk,
+    className,
+  );
   // The tone travels as custom properties, not as an inline color: the surface
   // owns how a chip spends it — ink by default, fill (the raw CGA block) on the
   // light surfaces (the cast only adds the custom properties to CSSProperties).

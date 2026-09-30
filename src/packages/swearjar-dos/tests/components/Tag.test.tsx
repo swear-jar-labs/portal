@@ -20,6 +20,13 @@ describe("Tag", () => {
     expect(html).toContain("--dos-tone-cyan");
   });
 
+  it("spends the tech-vocabulary tone as a fill hook", () => {
+    const html = renderToStaticMarkup(<Tag tone="muted-magenta">rust</Tag>);
+    expect(html).toContain("<span");
+    expect(html).toContain("--dos-tone-muted-magenta");
+    expect(html).toContain("--dos-tag-fill");
+  });
+
   it("renders a toggle button when clickable", () => {
     const html = renderToStaticMarkup(<Tag onClick={() => {}}>ops</Tag>);
     expect(html).toContain('<button type="button"');
@@ -44,5 +51,14 @@ describe("Tag", () => {
       </Tag>,
     );
     expect(html).toContain('aria-label="Remove ops"');
+  });
+
+  it("spends white ink on dark fills and keeps black everywhere else", () => {
+    const red = renderToStaticMarkup(<Tag tone="red">high</Tag>);
+    expect(red).toContain("lightInk");
+    const dim = renderToStaticMarkup(<Tag tone="dim">low</Tag>);
+    expect(dim).toContain("lightInk");
+    const green = renderToStaticMarkup(<Tag tone="green">open</Tag>);
+    expect(green).not.toContain("lightInk");
   });
 });

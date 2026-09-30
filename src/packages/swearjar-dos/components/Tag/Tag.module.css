@@ -45,6 +45,13 @@
   color: var(--dos-black);
 }
 
+/* Dark fills (red, dim) keep white ink on the light surfaces; the border
+   stays black so the chip holds its edge on white grounds (ticket rows). */
+:global([data-dos-surface="light"]) .tag.lightInk:not(.active),
+:global([data-dos-surface="paper"]) .tag.lightInk:not(.active) {
+  color: var(--dos-white);
+}
+
 :global([data-dos-surface="light"]) .button:not(.active):not(:disabled):hover,
 :global([data-dos-surface="paper"]) .button:not(.active):not(:disabled):hover {
   background: var(--dos-blue);

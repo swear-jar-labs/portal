@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { Card, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { formatCount } from "@/lib/format";
 import { useOverlayPush } from "@/features/shell";
 import { MemberLink } from "@/features/members/contracts";
@@ -93,7 +94,9 @@ export function ThreadRows({ threads, now, limit = PROFILE_RECENT_COUNT }: Threa
                   </Tag>
                 ))}
                 {thread.techs.map((tech) => (
-                  <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+                  <Tag key={tech} tone={techTagTone}>
+                    {messages.readroom.tags[tech]}
+                  </Tag>
                 ))}
               </Stack>
             )

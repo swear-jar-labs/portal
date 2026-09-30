@@ -1,5 +1,6 @@
 import { Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { type Readroom } from "../model/readrooms";
 
 export type ReadroomSourceRowProps = {
@@ -28,7 +29,9 @@ export function ReadroomSourceRow({ readroom }: ReadroomSourceRowProps) {
           </Link>
         )}
         {readroom.tags.map((tag) => (
-          <Tag key={tag}>{messages.readroom.tags[tag]}</Tag>
+          <Tag key={tag} tone={techTagTone}>
+            {messages.readroom.tags[tag]}
+          </Tag>
         ))}
       </Stack>
     </Stack>

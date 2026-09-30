@@ -3,6 +3,10 @@
 // live in messages.readroom.tags; the readroom aliases the list whole
 // (readroomTagIds), projects take their subsets per fixture.
 
+// One magic, one place: every static tech chip (cards, rows, posts, panels)
+// spends this tone, so the vocabulary reads as one color family everywhere.
+export const techTagTone = "muted-magenta" as const;
+
 export const techIds = [
   "c",
   "cpp",

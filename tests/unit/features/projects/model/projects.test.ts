@@ -40,10 +40,11 @@ describe("projects model", () => {
     expect(isFixtureProjectSlug("workshop-night")).toBe(false);
   });
 
-  it("tones active and planned, leaves the archive neutral", () => {
+  it("tones active and planned, keeps the archive gray", () => {
     expect(projectStatusTones satisfies Partial<Record<ProjectStatus, string>>).toEqual({
       active: "green",
       planned: "yellow",
+      archived: "default",
     });
   });
 

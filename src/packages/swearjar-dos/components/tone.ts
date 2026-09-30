@@ -1,7 +1,17 @@
 import type { CSSProperties } from "react";
 
 export type Tone =
-  "default" | "dim" | "white" | "black" | "blue" | "cyan" | "green" | "yellow" | "red" | "magenta";
+  | "default"
+  | "dim"
+  | "white"
+  | "black"
+  | "blue"
+  | "cyan"
+  | "green"
+  | "yellow"
+  | "red"
+  | "magenta"
+  | "muted-magenta";
 
 // Panels and windows share two light surfaces: the silver window chrome (the
 // prototype's .win-body.form) and the white paper client area of readers.
@@ -28,10 +38,12 @@ export const toneColor: Record<Tone, string> = {
   yellow: "var(--dos-tone-yellow)",
   red: "var(--dos-tone-red)",
   magenta: "var(--dos-tone-magenta)",
+  "muted-magenta": "var(--dos-tone-muted-magenta)",
 };
 
 // The block color of a tone: the raw CGA palette, untouched by the surface
-// remap. Paper chips spend the tone as a fill and need the vivid colors there,
+// remap — except muted-magenta, a calmer custom cut for the tech-vocabulary
+// chips. Paper chips spend the tone as a fill and need the vivid colors there,
 // where toneColor would hand out the dark ink instead.
 export const toneBlockColor: Record<Tone, string> = {
   default: "var(--dos-light-gray)",
@@ -44,6 +56,7 @@ export const toneBlockColor: Record<Tone, string> = {
   yellow: "var(--dos-yellow)",
   red: "var(--dos-red)",
   magenta: "var(--dos-magenta)",
+  "muted-magenta": "var(--dos-muted-magenta)",
 };
 
 export function toneStyle(tone: Tone | undefined): CSSProperties | undefined {

@@ -1,5 +1,6 @@
 import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { FEED_PATH, JournalRows, type ThreadSummary } from "@/features/board/contracts";
 import { TicketsOverlayTable, type Ticket } from "@/features/tickets/contracts";
 import { mentionUsersForBody } from "@/features/account/contracts";
@@ -52,7 +53,9 @@ function RepositoryBlock({ project, now }: { project: Project; now: string }) {
             </Link>
           </>
         )}
-        {project.status === "archived" ? <Tag>{messages.projects.repository.frozen}</Tag> : null}
+        {project.status === "archived" ? (
+          <Tag tone="default">{messages.projects.repository.frozen}</Tag>
+        ) : null}
       </Stack>
       <div className={styles.specs}>
         <Text role="hint">{messages.projects.repository.openPrs}</Text>
@@ -140,7 +143,9 @@ export function ProjectPanel({
                       {messages.projects.about.stack}
                     </Text>
                     {project.techs.map((tech) => (
-                      <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+                      <Tag key={tech} tone={techTagTone}>
+                        {messages.readroom.tags[tech]}
+                      </Tag>
                     ))}
                   </Stack>
                 )}

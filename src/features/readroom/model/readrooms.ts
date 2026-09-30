@@ -10,11 +10,12 @@ import { techIds, type TechId } from "@/content/techs";
 export const readroomPhases = ["collecting", "reviewing", "published", "archived"] as const;
 export type ReadroomPhase = (typeof readroomPhases)[number];
 
-// The phase reads as a chip; the archive is neutral.
+// The phase reads as a chip; terminal states stay gray, not vivid.
 export const phaseTones: Partial<Record<ReadroomPhase, Tone>> = {
   collecting: "green",
   reviewing: "yellow",
   published: "cyan",
+  archived: "default",
 };
 
 // The cycle tags: the shared tech vocabulary (see src/content/techs.ts).

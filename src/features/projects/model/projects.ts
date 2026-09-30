@@ -6,13 +6,14 @@ import type { Tone } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import type { TechId } from "@/content/techs";
 
-// The lifecycle reads as a chip; the archive is neutral.
+// The lifecycle reads as a chip; terminal states stay gray, not vivid.
 export const projectStatuses = ["active", "planned", "archived"] as const;
 export type ProjectStatus = (typeof projectStatuses)[number];
 
 export const projectStatusTones: Partial<Record<ProjectStatus, Tone>> = {
   active: "green",
   planned: "yellow",
+  archived: "default",
 };
 
 // The registry: two static boards are also project journals, the flagship is

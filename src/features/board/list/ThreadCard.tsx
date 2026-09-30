@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { Card, FileIcon, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { formatCount } from "@/lib/format";
 import { MemberLink } from "@/features/members/contracts";
 import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
@@ -102,7 +103,7 @@ export function ThreadCard({
             </Tag>
           ))}
           {thread.techs.map((tech) => (
-            <Tag key={tech} onClick={() => onFilterTech(tech)}>
+            <Tag key={tech} tone={techTagTone} onClick={() => onFilterTech(tech)}>
               {messages.readroom.tags[tech]}
             </Tag>
           ))}

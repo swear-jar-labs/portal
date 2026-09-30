@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { Card, FileIcon, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { formatCount } from "@/lib/format";
 import { formatAge } from "@/shared/age";
 import { MemberLink } from "@/features/members/contracts";
@@ -83,11 +84,13 @@ export function ReadroomCard({
               className={styles.ticket}
               onClick={openOverlay(ticketPath(readroom.ticket), readroomCardTicketId(readroom.id))}
             >
-              <Tag>{`${messages.readroom.task.ticket} #${readroom.ticket}`}</Tag>
+              <Tag tone="default">{`${messages.readroom.task.ticket} #${readroom.ticket}`}</Tag>
             </Link>
           )}
           {readroom.tags.map((tag) => (
-            <Tag key={tag}>{messages.readroom.tags[tag]}</Tag>
+            <Tag key={tag} tone={techTagTone}>
+              {messages.readroom.tags[tag]}
+            </Tag>
           ))}
           <VoteButton votes={readroom.upvotes.length} voted={voted} onToggle={onVote} />
         </Stack>

@@ -12,7 +12,7 @@ import {
 } from "@/features/projects/contracts";
 export type { ProjectSlug } from "@/features/projects/contracts";
 
-// The work queue reads as a chip; done and closed are neutral.
+// The work queue reads as a chip; terminal states stay gray, not vivid.
 export const ticketStatuses = ["open", "in_progress", "review", "done", "closed"] as const;
 export type TicketStatus = (typeof ticketStatuses)[number];
 
@@ -20,6 +20,8 @@ export const ticketStatusTones: Partial<Record<TicketStatus, Tone>> = {
   open: "green",
   in_progress: "cyan",
   review: "yellow",
+  done: "default",
+  closed: "default",
 };
 
 export function isTicketStatus(value: string): value is TicketStatus {
@@ -34,13 +36,13 @@ export function isTicketSize(value: string): value is TicketSize {
   return ticketSizes.some((size) => size === value);
 }
 
-// The ladder chips: free reads green, the tracked rungs yellow and cyan —
-// the open/review/in_progress rhyme, so the queue and the ladder share one
+// The ladder chips: free reads green, the tracked rungs cyan and yellow —
+// the in_progress/review rhyme, so the queue and the ladder share one
 // color language.
 export const ticketSizeTones: Record<TicketSize, Tone> = {
   S: "green",
-  M: "yellow",
-  L: "cyan",
+  M: "cyan",
+  L: "yellow",
 };
 
 // The queue's order: high first, normal in the middle, low waits. The scale is
@@ -48,8 +50,11 @@ export const ticketSizeTones: Record<TicketSize, Tone> = {
 export const ticketPriorities = ["low", "normal", "high"] as const;
 export type TicketPriority = (typeof ticketPriorities)[number];
 
+// Normal reads cyan (the common case hums along), low stays a plain gray
+// chip, high warns red.
 export const ticketPriorityTones: Partial<Record<TicketPriority, Tone>> = {
-  low: "dim",
+  low: "default",
+  normal: "cyan",
   high: "red",
 };
 
@@ -69,9 +74,15 @@ export const ticketTagIds = [
 ] as const;
 export type TicketTagId = (typeof ticketTagIds)[number];
 
+// Signal colors are reserved for good-first (welcome) and bug (warning);
+// the rest of the vocabulary stays gray.
 export const ticketTagTones: Partial<Record<TicketTagId, Tone>> = {
   "good-first": "green",
   bug: "yellow",
+  feature: "default",
+  docs: "default",
+  refactor: "default",
+  testing: "default",
 };
 
 export function isTicketTagId(value: string): value is TicketTagId {

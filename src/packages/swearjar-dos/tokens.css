@@ -12,6 +12,9 @@
   --dos-light-cyan: #55ffff;
   --dos-light-red: #ff5555;
   --dos-light-magenta: #ff55ff;
+  /* Muted magenta for the tech-vocabulary chips: the neon cut screams on
+     dense feeds; this keeps the hue at ~12:1 with black text. */
+  --dos-muted-magenta: #d8b8d8;
   --dos-yellow: #ffff55;
   --dos-white: #ffffff;
 
@@ -36,6 +39,10 @@
   --dos-tone-yellow: var(--dos-yellow);
   --dos-tone-red: var(--dos-light-red);
   --dos-tone-magenta: var(--dos-light-magenta);
+  /* The tech-vocabulary chip spends the high-intensity magenta as its fill;
+     the ink hook exists so the tone stays usable as text on dark surfaces. */
+  --dos-tone-muted-magenta: var(--dos-muted-magenta);
+  --dos-tone-muted-magenta: var(--dos-muted-magenta);
 
   /* Greybeard ships one outline set per pixel size; 18px/16px are the designs
      the UI loads. Line-heights are whole pixels, so text baselines stay on the
@@ -172,6 +179,7 @@
   --dos-tone-yellow: #7a3c00;
   --dos-tone-red: #a00000;
   --dos-tone-magenta: #8a008a;
+  --dos-tone-muted-magenta: #8a008a;
   /* White reads only on dark; on the light surfaces it is body text. */
   --dos-tone-white: var(--dos-black);
   --dos-link: var(--dos-tone-blue);
@@ -210,4 +218,5 @@
   --dos-tone-yellow: #a05a00;
   --dos-tone-red: #c00000;
   --dos-tone-magenta: #c000c0;
+  --dos-tone-muted-magenta: #c000c0;
 }

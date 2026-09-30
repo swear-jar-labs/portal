@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, Form, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { useShellDialogs } from "@/features/shell";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
@@ -307,7 +308,9 @@ export function PostItem({
             </Tag>
           ))}
           {thread.techs.map((tech) => (
-            <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+            <Tag key={tech} tone={techTagTone}>
+              {messages.readroom.tags[tech]}
+            </Tag>
           ))}
         </Stack>
       ) : null}

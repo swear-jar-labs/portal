@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { Card, FileIcon, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { techTagTone } from "@/content/techs";
 import { MemberLink } from "@/features/members/contracts";
 import { formatAge } from "@/shared/age";
 import { projectCardId, projectPath, projectStatusTones, type Project } from "../model/projects";
@@ -70,7 +71,9 @@ export function ProjectsCard({
               {messages.projects.statuses[project.status]}
             </Tag>
             {project.techs.map((tech) => (
-              <Tag key={tech}>{messages.readroom.tags[tech]}</Tag>
+              <Tag key={tech} tone={techTagTone}>
+                {messages.readroom.tags[tech]}
+              </Tag>
             ))}
           </Stack>
           {project.screenshots?.length ? (

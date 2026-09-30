@@ -5,6 +5,7 @@ export type { Actor } from "../model/actor";
 export { listMemberApplications } from "../data/mock-applications";
 export { getActorSession } from "../data/mock-session.server";
 export { listMemberUsers, resolveAccount } from "../data/mock-accounts";
+export { mentionUsersForBody } from "../data/mention-handles";
 export { mockSessionEnabled } from "../data/mock-session";
 export { mockDecideMemberApplication } from "../data/mock-application-actions";
 export { AccountGate } from "../auth/AccountGate";

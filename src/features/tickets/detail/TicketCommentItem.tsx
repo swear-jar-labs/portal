@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
+import { projectName } from "@/features/projects/contracts";
+import { useMentionNotifier } from "@/features/inbox/contracts";
 import { useShellDialogs, useShellSession } from "@/features/shell";
 import {
   ModerationTargetControls,
@@ -15,6 +17,7 @@ import {
 } from "@/features/moderation/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
+import { useMentionUsers } from "@/shared/useMentionUsers";
 import { formatAge } from "@/shared/age";
 import { ticketCommentSchema } from "../model/schema";
 import { freshTicketAccess } from "../data/mock-ticket-access";
@@ -60,6 +63,7 @@ export function TicketCommentItem({
   const dialogs = useShellDialogs();
   const session = useShellSession();
   const moderation = useModeration();
+  const notifyMentions = useMentionNotifier();
   const target: ModerationTarget = {
     kind: "comment",
     id: comment.id,
@@ -76,6 +80,7 @@ export function TicketCommentItem({
     caseBody && caseBody.currentRevision > 1
       ? (caseBody.currentBody ?? comment.body)
       : comment.body;
+  const mentionUsers = useMentionUsers(currentBody);
   const hiddenRecord = moderation.hidden[targetKey(target)];
   const hidden = hiddenRecord !== undefined;
   const canSeeHidden = session?.admin || session?.user === comment.author.user;
@@ -136,6 +141,17 @@ export function TicketCommentItem({
     }
     setEditing(false);
     ticketStore.editTicketComment(ticket.id, comment.id, parsed.data.body, comment.author.user);
+    // An edit that adds tags notifies under the comment id: the store drops
+    // the repeat when the tags were already there.
+    if (session !== null)
+      notifyMentions({
+        authorUser: session.user,
+        messageId: comment.id,
+        body: parsed.data.body,
+        source: projectName(project.slug),
+        context: ticket.key,
+        target: { kind: "ticket", label: ticket.key, href: ticketPath(ticket.key) },
+      });
     // The save above is author-checked, so a mismatch here is only a session
     // race or a removed target; the ticket store already holds the saved body.
     if (parsed.data.body !== currentBody) markEdited(session, target, parsed.data.body);
@@ -203,7 +219,7 @@ export function TicketCommentItem({
       </Stack>
     </Form>
   ) : (
-    <Markdown>{currentBody}</Markdown>
+    <Markdown mentionUsers={mentionUsers}>{currentBody}</Markdown>
   );
 
   return (

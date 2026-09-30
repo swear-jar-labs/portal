@@ -5,6 +5,7 @@ import {
   summarizeThread,
   type BoardMember,
   type Thread,
+  type ThreadPost,
   type ThreadSummary,
 } from "../model/threads";
 import * as boardStore from "./board-store";
@@ -156,10 +157,13 @@ export function useBoardSession({
     [threadId],
   );
 
+  // Returns the saved post so the caller can notify its mentions: the id is
+  // the event's dedup key (a thread-level id would collapse every reply's
+  // tags into one).
   const addReply = useCallback(
-    (body: string, author: BoardMember, replyTo?: string) => {
-      if (threadId === undefined) return;
-      boardStore.addReply(threadId, body, author, replyTo);
+    (body: string, author: BoardMember, replyTo?: string): ThreadPost | undefined => {
+      if (threadId === undefined) return undefined;
+      return boardStore.addReply(threadId, body, author, replyTo);
     },
     [threadId],
   );

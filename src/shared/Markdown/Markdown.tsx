@@ -10,8 +10,10 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import { Heading, Link, List, Text, cx, type Tone } from "@swearjar/dos";
 import { ALIGN_ATTRIBUTE, TONE_ATTRIBUTE, isTone, remarkToneDirectives } from "@/lib/markdown/tone";
+import { remarkMentions } from "@/lib/markdown/mentions";
 import { MARKDOWN_SRC_PROTOCOLS } from "@/lib/markdown/protocols";
 import { markdownSchema } from "@/lib/markdown/sanitize";
+import { MEMBER_PATH } from "@/shared/members";
 import styles from "./Markdown.module.css";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -72,6 +74,9 @@ const components: Components = {
     </Text>
   ),
   em: ({ children }) => <Text as="em">{children}</Text>,
+  // A resolved @mention renders as a compact member link: no avatar in the
+  // running text, the byline MemberLink keeps that. Unknown handles never
+  // reach this branch — the plugin leaves them plain text.
   a: ({ children, href }) => <Link href={href ?? ""}>{children}</Link>,
   ul: ({ children }) => <List items={listItems(children)} className={styles.paragraph} />,
   ol: ({ children }) => <List ordered items={listItems(children)} className={styles.paragraph} />,
@@ -95,6 +100,9 @@ const components: Components = {
 
 export type MarkdownProps = {
   children: string;
+  // Lower-cased handles allowed to link. Absent means none link: docs and
+  // other non-message surfaces never guess a member from `@text`.
+  mentionUsers?: ReadonlySet<string> | readonly string[];
 };
 
 function markdownUrlTransform(value: string): string {
@@ -106,11 +114,19 @@ function markdownUrlTransform(value: string): string {
   return defaultUrlTransform(value);
 }
 
+const NO_MENTION_USERS: ReadonlySet<string> = new Set();
+
 /** Shared Markdown pipeline for docs and posts: GFM + tone directives, sanitized. */
-export function Markdown({ children }: MarkdownProps) {
+export function Markdown({ children, mentionUsers }: MarkdownProps) {
+  const users = mentionUsers === undefined ? NO_MENTION_USERS : new Set(mentionUsers);
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkDirective, remarkToneDirectives]}
+      remarkPlugins={[
+        remarkGfm,
+        remarkDirective,
+        remarkToneDirectives,
+        [remarkMentions, { basePath: MEMBER_PATH, users }],
+      ]}
       rehypePlugins={[[rehypeSanitize, markdownSchema]]}
       components={components}
       urlTransform={markdownUrlTransform}

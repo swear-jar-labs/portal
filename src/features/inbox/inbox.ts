@@ -12,6 +12,7 @@ export const inboxKinds = [
   "readroom",
   "team",
   "project",
+  "mention",
 ] as const;
 export type InboxKind = (typeof inboxKinds)[number];
 

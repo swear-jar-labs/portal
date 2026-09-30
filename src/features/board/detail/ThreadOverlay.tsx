@@ -24,7 +24,13 @@ export async function loadThreadLayer(id: string, now: string): Promise<ThreadLa
     author: thread.author.user,
     documentTitle: threadDocumentTitle(thread),
     layer: (
-      <ThreadOverlayActions threadId={thread.id} pinned={thread.pinned} locked={thread.locked}>
+      <ThreadOverlayActions
+        threadId={thread.id}
+        title={thread.title}
+        board={thread.board}
+        pinned={thread.pinned}
+        locked={thread.locked}
+      >
         <ThreadPanel thread={thread} now={now} />
       </ThreadOverlayActions>
     ),

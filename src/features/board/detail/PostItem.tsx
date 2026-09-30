@@ -8,6 +8,7 @@ import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { TextAction } from "@/shared/TextAction/TextAction";
 import { MemberAvatar, useMemberIdentity } from "@/shared/MemberIdentity";
+import { useMentionUsers } from "@/shared/useMentionUsers";
 import { MemberLink } from "@/features/members/contracts";
 import {
   ModerationTargetControls,
@@ -115,6 +116,9 @@ export function PostItem({
     caseBody && caseBody.currentRevision > 1
       ? (caseBody.currentBody ?? editedBody ?? post.body)
       : (editedBody ?? post.body);
+  // Session bodies render on the client: resolve their mentions here (the RSC
+  // body above already carries its own).
+  const mentionUsers = useMentionUsers(currentBody);
   const hiddenRecord = moderation.hidden[targetKey(target)];
   const hidden = hiddenRecord !== undefined;
   const canSeeHidden = session?.admin || session?.user === post.author.user;
@@ -226,9 +230,9 @@ export function PostItem({
       </Stack>
     </Form>
   ) : editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1 ? (
-    <Markdown>{currentBody}</Markdown>
+    <Markdown mentionUsers={mentionUsers}>{currentBody}</Markdown>
   ) : (
-    (body ?? <Markdown>{post.body}</Markdown>)
+    (body ?? <Markdown mentionUsers={mentionUsers}>{post.body}</Markdown>)
   );
 
   return (

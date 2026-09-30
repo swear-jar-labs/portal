@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { projectName } from "@/features/projects/contracts";
+import { useMentionNotifier } from "@/features/inbox/contracts";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { avatarFor } from "@/shared/members";
@@ -10,6 +12,7 @@ import { freshTicketAccess } from "../data/mock-ticket-access";
 import { ticketCommentSchema } from "../model/schema";
 import * as ticketStore from "../data/ticket-store";
 import type { Ticket } from "../model/tickets";
+import { ticketPath } from "../model/tickets";
 import { canWriteTicket, isProjectManager, type TicketProject } from "../model/workflow";
 
 const COMMENT_ROWS = 3;
@@ -19,6 +22,7 @@ const COMMENT_ROWS = 3;
 export function TicketCommentForm({ ticket, project }: { ticket: Ticket; project: TicketProject }) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
+  const notifyMentions = useMentionNotifier();
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | undefined>();
 
@@ -41,7 +45,7 @@ export function TicketCommentForm({ ticket, project }: { ticket: Ticket; project
       setError(messages.tickets.dossier.comments.memberRequired);
       return;
     }
-    ticketStore.addTicketComment(
+    const saved = ticketStore.addTicketComment(
       ticket.id,
       {
         author: { user: session.user, avatar: avatarFor(session.user) },
@@ -53,6 +57,14 @@ export function TicketCommentForm({ ticket, project }: { ticket: Ticket; project
         isProjectManager(access.actor, access.project) ||
         (access.project.reviewers ?? []).some((person) => person.user === session.user),
     );
+    notifyMentions({
+      authorUser: session.user,
+      messageId: saved.id,
+      body: parsed.data.body,
+      source: projectName(project.slug),
+      context: ticket.key,
+      target: { kind: "ticket", label: ticket.key, href: ticketPath(ticket.key) },
+    });
     setDraft("");
     setError(undefined);
   }

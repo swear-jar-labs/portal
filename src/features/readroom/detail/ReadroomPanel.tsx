@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Stack } from "@swearjar/dos";
+import { mentionUsersForBody } from "@/features/account/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import type { Ticket } from "@/features/tickets/contracts";
 import type { Readroom } from "../model/readrooms";
@@ -21,9 +22,14 @@ export type ReadroomPanelProps = {
 export function ReadroomPanel({ readroom, tickets, now }: ReadroomPanelProps) {
   const noteBodies: Record<string, ReactNode> = {};
   for (const note of readroom.notes) {
-    noteBodies[note.id] = <Markdown>{note.body}</Markdown>;
+    noteBodies[note.id] = (
+      <Markdown mentionUsers={mentionUsersForBody(note.body)}>{note.body}</Markdown>
+    );
   }
-  const report = readroom.report === undefined ? undefined : <Markdown>{readroom.report}</Markdown>;
+  const report =
+    readroom.report === undefined ? undefined : (
+      <Markdown mentionUsers={mentionUsersForBody(readroom.report)}>{readroom.report}</Markdown>
+    );
 
   return (
     <Stack gap={12}>
@@ -32,7 +38,11 @@ export function ReadroomPanel({ readroom, tickets, now }: ReadroomPanelProps) {
         readroom={readroom}
         tickets={tickets}
         now={now}
-        description={<Markdown>{readroom.description}</Markdown>}
+        description={
+          <Markdown mentionUsers={mentionUsersForBody(readroom.description)}>
+            {readroom.description}
+          </Markdown>
+        }
         noteBodies={noteBodies}
         report={report}
       />

@@ -2,6 +2,7 @@ import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { FEED_PATH, JournalRows, type ThreadSummary } from "@/features/board/contracts";
 import { TicketsOverlayTable, type Ticket } from "@/features/tickets/contracts";
+import { mentionUsersForBody } from "@/features/account/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { formatAge } from "@/shared/age";
 import { ProjectClaimSection } from "./ProjectClaimSection";
@@ -119,7 +120,9 @@ export function ProjectPanel({
           <Stack gap={12}>
             <Stack gap={4}>
               <Heading level={2}>{messages.projects.about.heading}</Heading>
-              <Markdown>{project.description}</Markdown>
+              <Markdown mentionUsers={mentionUsersForBody(project.description)}>
+                {project.description}
+              </Markdown>
               {project.siteUrl === undefined ? null : (
                 <Stack direction="row" gap={6} align="center" wrap navRow>
                   <Text as="span" role="hint">

@@ -17,6 +17,7 @@ import {
 import { formatAge } from "@/shared/age";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
+import { useMentionUsers } from "@/shared/useMentionUsers";
 import { TextAction } from "@/shared/TextAction/TextAction";
 import {
   noteElementId,
@@ -93,6 +94,9 @@ export function ReadroomNoteItem({
     caseBody && caseBody.currentRevision > 1
       ? (caseBody.currentBody ?? editedBody ?? note.body)
       : (editedBody ?? note.body);
+  // A session note (or an edit) renders on the client: the RSC body above
+  // already carries its own resolved handles.
+  const mentionUsers = useMentionUsers(currentBody);
   const hiddenRecord = moderation.hidden[targetKey(target)];
   const hidden = hiddenRecord !== undefined;
   const canSeeHidden = session?.admin || own;
@@ -195,9 +199,9 @@ export function ReadroomNoteItem({
         </Stack>
       </Form>
     ) : editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1 ? (
-      <Markdown>{currentBody}</Markdown>
+      <Markdown mentionUsers={mentionUsers}>{currentBody}</Markdown>
     ) : (
-      (body ?? <Markdown>{note.body}</Markdown>)
+      (body ?? <Markdown mentionUsers={mentionUsers}>{note.body}</Markdown>)
     );
 
   return (

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { mentionUsersForBody } from "@/features/account/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import type { Thread } from "../model/threads";
 import { ThreadView } from "./ThreadView";
@@ -14,7 +15,9 @@ export type ThreadPanelProps = {
 export function ThreadPanel({ thread, now }: ThreadPanelProps) {
   const bodies: Record<string, ReactNode> = {};
   for (const post of thread.posts) {
-    bodies[post.id] = <Markdown>{post.body}</Markdown>;
+    bodies[post.id] = (
+      <Markdown mentionUsers={mentionUsersForBody(post.body)}>{post.body}</Markdown>
+    );
   }
 
   return <ThreadView thread={thread} now={now} bodies={bodies} />;

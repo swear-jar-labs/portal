@@ -50,4 +50,18 @@ describe("Textarea", () => {
     expect(html).toMatch(/class="[^"]*\bgrow\b/);
     expect(html).toContain("min-height:calc(3lh)");
   });
+
+  it("announces the mention popup when asked", () => {
+    const html = renderToStaticMarkup(
+      <Textarea label="Body" name="body" value="hi @ad" onChange={() => {}} hasPopup />,
+    );
+    expect(html).toContain('aria-haspopup="listbox"');
+  });
+
+  it("stays a plain textbox by default", () => {
+    const html = renderToStaticMarkup(
+      <Textarea label="Body" name="body" value="text" onChange={() => {}} />,
+    );
+    expect(html).not.toContain("aria-haspopup");
+  });
 });

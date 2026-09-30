@@ -32,6 +32,7 @@ import {
   subscribeProjectStore,
 } from "@/features/projects/contracts";
 import { avatarFor } from "@/shared/members";
+import { useMentionNotifier } from "@/features/inbox/contracts";
 import { TicketCompose } from "../compose/TicketCompose";
 import { TicketEdit } from "../compose/TicketEdit";
 import { submitTicketEdit, type TicketEditChanges } from "../data/edit-submit";
@@ -110,6 +111,24 @@ export function TicketsStack({
   const projectNames = useMemo(
     () => Object.fromEntries(projects.map((project) => [project.slug, project.name])),
     [projects],
+  );
+  const notifyMentions = useMentionNotifier();
+
+  // A ticket's notify context: the dossier key names it, the project names
+  // the source (the slug stays as the fallback, like the dossier title does).
+  const notifyTicketMentions = useCallback(
+    (messageId: string, body: string, ticketKey: string, projectSlug: string) => {
+      if (session === null) return;
+      notifyMentions({
+        authorUser: session.user,
+        messageId,
+        body,
+        source: projectNames[projectSlug] ?? projectSlug,
+        context: ticketKey,
+        target: { kind: "ticket", label: ticketKey, href: ticketPath(ticketKey) },
+      });
+    },
+    [notifyMentions, projectNames, session],
   );
   const projectBySlug = useMemo(
     () => new Map(projects.map((project) => [project.slug, project])),
@@ -221,6 +240,7 @@ export function TicketsStack({
         return messages.tickets.compose.memberRequired;
       }
       const created = addTicket(input, { user: session.user, avatar: avatarFor(session.user) });
+      notifyTicketMentions(created.id, input.body, created.key, created.project);
       const nextQuery = { ...DEFAULT_TICKET_QUERY, project: input.project };
       setQuery(nextQuery);
       setComposing(false);
@@ -228,7 +248,7 @@ export function TicketsStack({
       setLocalKey(created.key);
       return null;
     },
-    [addTicket, replaceTrackerUrl, requestLogin, session],
+    [addTicket, notifyTicketMentions, replaceTrackerUrl, requestLogin, session],
   );
 
   const closeTicket = useCallback(() => {
@@ -254,11 +274,14 @@ export function TicketsStack({
       if (editing === null || session === null) return "denied" as const;
       const result = await submitTicketEdit(editing, tickets, input, changes);
       if (result) return result;
+      // An edit that adds tags notifies under the ticket id: the store drops
+      // the repeat when the tags were already there.
+      notifyTicketMentions(editing.id, input.body, editing.key, editing.project);
       returnFocusRef.current = ticketEditButtonId;
       setEditing(null);
       return null;
     },
-    [editing, session, tickets],
+    [editing, notifyTicketMentions, session, tickets],
   );
 
   const closeLocalTicket = useCallback(() => {

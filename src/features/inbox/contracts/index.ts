@@ -9,6 +9,15 @@
 // store stay internal — the inbox UI owns read and delete actions.
 
 export { enqueueInboxEvent } from "../inbox-store";
+export {
+  buildMentionEvents,
+  mentionExcerpt,
+  mentionRedactedBody,
+  mentionSubject,
+} from "../mention-events";
+export type { MentionDelivery, MentionEventInput } from "../mention-events";
+export { useMentionNotifier } from "../useMentionNotifier";
+export type { NotifyMentionsInput } from "../useMentionNotifier";
 export type {
   InboxEvent,
   InboxKind,

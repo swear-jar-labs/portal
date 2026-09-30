@@ -93,3 +93,37 @@ describe("Markdown pipeline", () => {
     expect(html).toContain('src="https://example.com/a%20b.jpg"');
   });
 });
+
+describe("Markdown mentions", () => {
+  const renderMentions = (source: string, mentionUsers: readonly string[] = ["ada", "grace"]) =>
+    renderToStaticMarkup(<Markdown mentionUsers={mentionUsers}>{source}</Markdown>);
+
+  it("links resolved handles to the member route", () => {
+    const html = renderMentions("ping @Ada, see this");
+    expect(html).toContain('href="/members/ada"');
+    expect(html).toContain("@Ada");
+  });
+
+  it("leaves text plain without resolved handles", () => {
+    expect(render("ping @ada")).not.toContain("/members/ada");
+    expect(renderMentions("ping @ada", [])).not.toContain("/members/ada");
+  });
+
+  it("leaves unknown handles plain even with a directory", () => {
+    const html = renderMentions("ping @nobody");
+    expect(html).toContain("@nobody");
+    expect(html).not.toContain("/members/nobody");
+  });
+
+  it("does not tag emails or code", () => {
+    expect(renderMentions("mail ada@x.io")).not.toContain("/members/");
+    expect(renderMentions("run `@ada` first")).not.toContain("/members/ada");
+    expect(renderMentions("```\n@ada\n```")).not.toContain("/members/ada");
+  });
+
+  it("does not nest a mention inside a real link", () => {
+    const html = renderMentions("[@ada](https://example.com)");
+    expect(html).toContain('href="https://example.com"');
+    expect(html).not.toContain("/members/ada");
+  });
+});

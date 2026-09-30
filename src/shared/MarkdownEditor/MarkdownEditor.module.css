@@ -3,6 +3,49 @@
   padding: 8px;
 }
 
+/* The @mention popup anchors to this box: the field keeps its width, the
+   roster floats over the text at the caret. */
+.mentionWrap {
+  position: relative;
+  width: 100%;
+}
+
+/* The roster popup: the kit Select/ComboBox list chrome (raised border,
+   popover layer), capped like a short menu. */
+.mentionBox {
+  position: absolute;
+  z-index: var(--dos-z-popover);
+  min-width: 160px;
+  max-width: 100%;
+  /* Room for MAX_MENTION_SUGGESTIONS rows (see mentionComplete.ts): past it
+     the list scrolls internally instead of growing. */
+  max-height: calc(10 * 2em);
+  overflow: auto;
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-border-raised);
+  background: var(--dos-light-gray);
+  color: var(--dos-black);
+  box-shadow: var(--dos-blur-shadow);
+  padding: 2px 0;
+}
+
+.mentionOption {
+  padding: 1px 14px 1px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.mentionActive {
+  background: var(--dos-blue);
+  color: var(--dos-white);
+}
+
+.mentionEmpty {
+  padding: 2px 6px;
+}
+
 .imageRow {
   border: 1px dashed currentColor;
   padding: 8px;

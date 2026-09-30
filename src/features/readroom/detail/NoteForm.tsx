@@ -3,16 +3,19 @@
 import { useState, type Ref } from "react";
 import { Button, Form, Stack } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { useMentionNotifier } from "@/features/inbox/contracts";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { avatarFor } from "@/shared/members";
 import { addNote } from "../data/readroom-store";
+import { readroomPath } from "../model/readrooms";
 import { noteSchema } from "../model/schema";
 
 const NOTE_ROWS = 3;
 
 export type NoteFormProps = {
   readroomId: string;
+  taskTitle: string;
   // The field itself: the view takes the caret back after the author deletes
   // their note and the form returns.
   fieldRef?: Ref<HTMLTextAreaElement>;
@@ -21,9 +24,10 @@ export type NoteFormProps = {
 /** The task's inline note composer: open while the cycle collects and the
  * reader has not posted yet (one note per reader). A guest keeps the draft:
  * the shell's logon prompt takes over. */
-export function NoteForm({ readroomId, fieldRef }: NoteFormProps) {
+export function NoteForm({ readroomId, taskTitle, fieldRef }: NoteFormProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
+  const notifyMentions = useMentionNotifier();
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | undefined>();
 
@@ -39,7 +43,21 @@ export function NoteForm({ readroomId, fieldRef }: NoteFormProps) {
     }
     setError(undefined);
     setDraft("");
-    addNote(readroomId, parsed.data.body, { user: session.user, avatar: avatarFor(session.user) });
+    const saved = addNote(readroomId, parsed.data.body, {
+      user: session.user,
+      avatar: avatarFor(session.user),
+    });
+    // Notes post while the cycle collects: the recipient must not see the
+    // text before the deadline, so the notice stays generic.
+    notifyMentions({
+      authorUser: session.user,
+      messageId: saved.id,
+      body: parsed.data.body,
+      source: messages.readroom.feed.heading,
+      context: taskTitle,
+      target: { kind: "readroom", label: taskTitle, href: readroomPath(readroomId) },
+      redactExcerpt: true,
+    });
   }
 
   return (

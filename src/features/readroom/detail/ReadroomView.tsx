@@ -8,6 +8,8 @@ import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { VoteButton } from "@/features/board/contracts";
 import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
+import { useMentionNotifier } from "@/features/inbox/contracts";
+import { useMentionUsers } from "@/shared/useMentionUsers";
 import {
   formatDeadlineDate,
   hasNoteBy,
@@ -15,6 +17,7 @@ import {
   isLead,
   phaseOf,
   READROOM_CARD_ATTR,
+  readroomPath,
   reportElementId,
   visibleNotes,
   type Readroom,
@@ -73,6 +76,10 @@ export function ReadroomView({
   // The phase reads off the page-open stamp: a deadline passing on an open
   // screen applies on the next navigation, not mid-read.
   const effective = sessionReadroom(readroom, state);
+  // A published session write-up renders on the client: the fixture report
+  // above already carries its own resolved handles.
+  const mentionUsers = useMentionUsers(effective.report ?? "");
+  const notifyMentions = useMentionNotifier();
   const task = readroomStateOf(state, readroom.id);
   const phase = phaseOf(effective, now);
   const { notes, sealed } = visibleNotes(effective, now, session?.user ?? null);
@@ -100,7 +107,7 @@ export function ReadroomView({
     report !== undefined && effective.report === readroom.report ? (
       report
     ) : effective.report === undefined ? undefined : (
-      <Markdown>{effective.report}</Markdown>
+      <Markdown mentionUsers={mentionUsers}>{effective.report}</Markdown>
     );
 
   function addFiles(files: FileList) {
@@ -182,7 +189,24 @@ export function ReadroomView({
               editedBody={task.noteEdits.get(note.id)}
               own={session?.user === note.author.user}
               canEdit={session?.user === note.author.user && phase === "collecting"}
-              onEdit={(body) => editNote(readroom.id, note.id, body)}
+              onEdit={(body) => {
+                editNote(readroom.id, note.id, body);
+                // Edits happen while the cycle collects: same redaction as
+                // the note's own notice.
+                notifyMentions({
+                  authorUser: session?.user ?? null,
+                  messageId: note.id,
+                  body,
+                  source: messages.readroom.feed.heading,
+                  context: effective.title,
+                  target: {
+                    kind: "readroom",
+                    label: effective.title,
+                    href: readroomPath(effective.id),
+                  },
+                  redactExcerpt: true,
+                });
+              }}
               onDelete={() => {
                 returnToNoteForm.current = true;
                 deleteNote(readroom.id, note.id);
@@ -201,7 +225,11 @@ export function ReadroomView({
           posted ? (
             <Text role="hint">{messages.readroom.notes.posted}</Text>
           ) : (
-            <NoteForm readroomId={readroom.id} fieldRef={noteFieldRef} />
+            <NoteForm
+              readroomId={readroom.id}
+              taskTitle={effective.title}
+              fieldRef={noteFieldRef}
+            />
           )
         ) : null}
       </Stack>
@@ -209,7 +237,7 @@ export function ReadroomView({
       {effective.report === undefined ? (
         phase === "reviewing" ? (
           lead ? (
-            <ReadroomReportForm readroomId={readroom.id} />
+            <ReadroomReportForm readroomId={readroom.id} taskTitle={effective.title} />
           ) : (
             <Text role="hint">{messages.readroom.report.inProgress}</Text>
           )

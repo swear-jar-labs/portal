@@ -1311,6 +1311,14 @@ export const messages = {
       readroom: "READROOM",
       team: "TEAM",
       project: "PROJECT",
+      mention: "MENTION",
+    },
+    mention: {
+      // Fragments for mention-events: `${mentioner} ${subjectMentioned} ${context}`.
+      subjectMentioned: "mentioned you in",
+      // The redacted notice: `${mentioner} ${redactedMentioned} ${redactedOpen}`.
+      redactedMentioned: "mentioned you.",
+      redactedOpen: "Open the message to read the context.",
     },
     detail: {
       from: "FROM",
@@ -1335,6 +1343,10 @@ export const messages = {
     writeTab: "WRITE",
     previewTab: "PREVIEW",
     previewEmpty: "Nothing to preview yet.",
+    mentions: {
+      listLabel: "Mention a member",
+      empty: "No member matches that handle.",
+    },
     tools: {
       code: "Code",
       block: "Code block",

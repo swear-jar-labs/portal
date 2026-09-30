@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ChangeEvent, type Ref } from "react";
+import { useId, type ChangeEvent, type KeyboardEvent, type Ref, type SyntheticEvent } from "react";
 import { cx } from "../tone";
 import styles from "../formControls.module.css";
 
@@ -24,6 +24,13 @@ export type TextareaProps = {
   // reply target changes hand it back to the field).
   ref?: Ref<HTMLTextAreaElement>;
   className?: string;
+  // Caret-aware consumers (the mention completion): key handling, caret
+  // tracking, and the popup announcement for the suggestion listbox. The
+  // field stays a plain textbox on purpose: promoting it to a combobox would
+  // rename the role behind every editor consumer and its specs.
+  onKeyDown?: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onSelect?: (event: SyntheticEvent<HTMLTextAreaElement>) => void;
+  hasPopup?: boolean;
 };
 
 export function Textarea({
@@ -39,6 +46,9 @@ export function Textarea({
   autoGrow = false,
   ref,
   className,
+  onKeyDown,
+  onSelect,
+  hasPopup,
 }: TextareaProps) {
   // field-sizing sizes to content from zero, ignoring rows: the minimum comes
   // from the rows count in line units, so each consumer keeps its own base.
@@ -61,12 +71,15 @@ export function Textarea({
         name={name}
         value={value}
         onChange={handleChange}
+        onKeyDown={onKeyDown}
+        onSelect={onSelect}
         rows={rows}
         placeholder={placeholder}
         required={required}
         autoFocus={autoFocus}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
+        aria-haspopup={hasPopup === true ? "listbox" : undefined}
         className={cx(styles.control, autoGrow && styles.grow)}
         style={growStyle}
       />

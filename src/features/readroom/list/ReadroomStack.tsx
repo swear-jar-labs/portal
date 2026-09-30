@@ -24,7 +24,9 @@ import {
   useShellSession,
 } from "@/features/shell";
 import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
+import { useMentionNotifier } from "@/features/inbox/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
+import { useMentionUsers } from "@/shared/useMentionUsers";
 import { avatarFor } from "@/shared/members";
 import type { ReadroomDraft } from "../model/datetime";
 import {
@@ -100,6 +102,8 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     () => new Set(state.addedReadrooms.map((entry) => entry.id)),
     [state.addedReadrooms],
   );
+  // A session-composed task renders its description on the client.
+  const localMentionUsers = useMentionUsers(localTask?.description ?? "");
 
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
@@ -221,6 +225,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
     returnFocusRef.current = readroomComposeButtonId;
     setComposing(false);
   }, []);
+  const notifyMentions = useMentionNotifier();
 
   const submitCompose = useCallback(
     (draft: ReadroomDraft) => {
@@ -232,10 +237,20 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
         user: session.user,
         avatar: avatarFor(session.user),
       });
+      // The task description notifies under the task id: one description per
+      // task, so the id stays a stable per-message key.
+      notifyMentions({
+        authorUser: session.user,
+        messageId: created.id,
+        body: draft.description,
+        source: messages.readroom.feed.heading,
+        context: created.title,
+        target: { kind: "readroom", label: created.title, href: readroomPath(created.id) },
+      });
       setComposing(false);
       setLocalTaskId(created.id);
     },
-    [requestLogin, session],
+    [notifyMentions, requestLogin, session],
   );
 
   const closeTop = useCallback(() => {
@@ -293,7 +308,9 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
               readroom={localTask}
               tickets={tickets}
               now={clock}
-              description={<Markdown>{localTask.description}</Markdown>}
+              description={
+                <Markdown mentionUsers={localMentionUsers}>{localTask.description}</Markdown>
+              }
               noteBodies={{}}
             />
           </Stack>

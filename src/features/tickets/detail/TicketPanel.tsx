@@ -9,6 +9,7 @@ import { type ReadroomRef } from "@/features/readroom/contracts";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import { plural } from "@/lib/plural";
 import { Markdown } from "@/shared/Markdown/Markdown";
+import { useMentionUsers } from "@/shared/useMentionUsers";
 import { formatAge } from "@/shared/age";
 import { TicketBlockedSection } from "./TicketBlockedSection";
 import { TicketCommentForm } from "./TicketCommentForm";
@@ -83,6 +84,7 @@ export function TicketPanel({
   const openOverlay = useOverlayPush();
   const state = useTicketState();
   const live = ticketStore.withSessionState(ticket, state);
+  const mentionUsers = useMentionUsers(live.body);
   const all = useMergedTickets(tickets);
   const canEdit = canEditTicket(session, live, project);
   const canManageLinks = canEdit;
@@ -341,7 +343,7 @@ export function TicketPanel({
       />
 
       <div className={styles.body}>
-        <Markdown>{live.body}</Markdown>
+        <Markdown mentionUsers={mentionUsers}>{live.body}</Markdown>
       </div>
 
       <Stack gap={4} id={ticketLinksSectionId}>

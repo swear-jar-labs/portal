@@ -27,13 +27,16 @@ import {
 import {
   composableBoardIds,
   FEED_PATH,
+  boardTitle,
   threadPath,
+  type BoardId,
   type BoardMember,
   type BoardOption,
   type Thread,
   type ThreadSummary,
 } from "../model/threads";
 import { avatarFor } from "@/shared/members";
+import { useMentionNotifier } from "@/features/inbox/contracts";
 import { ComposePanel } from "../compose/ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
 import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "../model/feed";
@@ -218,6 +221,32 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     [session],
   );
 
+  const notifyMentions = useMentionNotifier();
+
+  // The open thread's notify context: the fixture layer's title, the session
+  // thread's facts, the summaries' board. Absent off-thread (no notify target).
+  const openTitle =
+    thread !== undefined && thread.id === activeThreadId ? thread.title : openedLocalThread?.title;
+  const openBoard: BoardId | undefined =
+    activeThreadId === undefined
+      ? undefined
+      : (openedLocalThread?.board ?? threads.find((entry) => entry.id === activeThreadId)?.board);
+
+  const notifyThreadMentions = useCallback(
+    (messageId: string, body: string, targetId: string) => {
+      if (author === null || openTitle === undefined || openBoard === undefined) return;
+      notifyMentions({
+        authorUser: author.user,
+        messageId,
+        body,
+        source: boardTitle(openBoard),
+        context: openTitle,
+        target: { kind: "thread", label: openTitle, href: threadPath(targetId) },
+      });
+    },
+    [author, notifyMentions, openBoard, openTitle],
+  );
+
   const threadActions = useMemo<ThreadActions | null>(() => {
     if (activeThreadId === undefined) return null;
     // Pin/lock belong to admins alone: the controls hide for anyone else,
@@ -231,7 +260,10 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
       canModerate: admin,
       onToggleThreadVote: () => gate(() => toggleThreadVote(activeThreadId)),
       onTogglePostVote: (postId) => gate(() => togglePostVote(postId)),
-      onEditPost: editPost,
+      onEditPost: (postId, body) => {
+        editPost(postId, body);
+        if (activeThreadId !== undefined) notifyThreadMentions(postId, body, activeThreadId);
+      },
       onDeletePost: deletePost,
       onTogglePin: () => {
         if (admin) togglePin();
@@ -240,7 +272,9 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
         if (admin) toggleLock();
       },
       onReply: (body, replyTo) => {
-        if (author !== null) addReply(body, author, replyTo);
+        if (author === null || activeThreadId === undefined) return;
+        const post = addReply(body, author, replyTo);
+        if (post !== undefined) notifyThreadMentions(post.id, body, activeThreadId);
       },
     };
   }, [
@@ -251,6 +285,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     editPost,
     gate,
     locked,
+    notifyThreadMentions,
     pinned,
     session?.admin,
     state.votedThreads,
@@ -364,12 +399,23 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
         return;
       }
       const id = addThread(input, author);
+      // The opening post notifies under the thread id: one root post per
+      // thread, so the id stays a stable per-message key. Its context is the
+      // composed thread itself, not the open one.
+      notifyMentions({
+        authorUser: author.user,
+        messageId: id,
+        body: input.body,
+        source: boardTitle(input.board),
+        context: input.title,
+        target: { kind: "thread", label: input.title, href: threadPath(id) },
+      });
       // The new card must be visible: the submit moves the feed to its board
       // and drops any text query that would hide it.
       setQuery({ board: input.board, sort: "new", q: "" });
       closeCompose(threadCardId(id));
     },
-    [addThread, author, closeCompose, requestLogin],
+    [addThread, author, closeCompose, notifyMentions, requestLogin],
   );
 
   const closeTop = useCallback(() => {

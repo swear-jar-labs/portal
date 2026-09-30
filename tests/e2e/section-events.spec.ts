@@ -20,16 +20,6 @@ function bumpCard(page: Page) {
   return page.getByRole("region", { name: FEED_REGION }).getByRole("link", { name: BUMP_TITLE });
 }
 
-async function openThread(page: Page) {
-  await page.getByRole("region", { name: FILES }).locator("#file-FORUM").click();
-  await page
-    .getByRole("article")
-    .filter({ hasText: READ_FIRST })
-    .getByRole("link", { name: READ_FIRST })
-    .click();
-  await expect(page.locator(REPLY_LOCATOR)).toBeVisible();
-}
-
 async function logoff(page: Page) {
   await page.getByRole("button", { name: "F9 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();

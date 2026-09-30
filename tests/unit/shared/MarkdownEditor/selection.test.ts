@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { insertAt, wrapCode, wrapFence, wrapRange } from "@/shared/MarkdownEditor/selection";
+import {
+  insertAt,
+  toggleHeading,
+  wrapCode,
+  wrapFence,
+  wrapRange,
+} from "@/shared/MarkdownEditor/selection";
 
 describe("editor selection edits", () => {
   it("wraps a selection and keeps it selected inside the pair", () => {
@@ -47,6 +53,40 @@ describe("editor selection edits", () => {
       value: "see ![alt](https://x/y.png)",
       start: 27,
       end: 27,
+    });
+  });
+
+  it("starts a heading on an empty field", () => {
+    expect(toggleHeading("", 0, 0)).toEqual({ value: "## ", start: 3, end: 3 });
+  });
+
+  it("prefixes the touched line and rides the caret past the prefix", () => {
+    expect(toggleHeading("hello", 5, 5)).toEqual({
+      value: "## hello",
+      start: 8,
+      end: 8,
+    });
+  });
+
+  it("holds a caret placed before the insertion point still", () => {
+    expect(toggleHeading("hello", 0, 5)).toEqual({
+      value: "## hello",
+      start: 0,
+      end: 8,
+    });
+  });
+
+  it("strips any ATX prefix back to plain text", () => {
+    expect(toggleHeading("## hello", 0, 8)).toEqual({ value: "hello", start: 0, end: 5 });
+    expect(toggleHeading("# hello", 0, 7)).toEqual({ value: "hello", start: 0, end: 5 });
+    expect(toggleHeading("##", 0, 2)).toEqual({ value: "", start: 0, end: 0 });
+  });
+
+  it("heads every touched line but leaves blank lines bare", () => {
+    expect(toggleHeading("one\n\ntwo", 0, 8)).toEqual({
+      value: "## one\n\n## two",
+      start: 0,
+      end: 14,
     });
   });
 });

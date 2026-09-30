@@ -1350,6 +1350,7 @@ export const messages = {
     tools: {
       code: "Code",
       block: "Code block",
+      heading: "Heading",
       link: "Link",
     },
     image: {

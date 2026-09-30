@@ -11,6 +11,12 @@ describe("Markdown pipeline", () => {
     expect(html).toContain(">hello</span>");
   });
 
+  it("renders ATX headings as kit headings", () => {
+    const html = render("## Section");
+    expect(html).toContain("<h2");
+    expect(html).toContain("Section</h2>");
+  });
+
   it("keeps bold inside a tone directive", () => {
     const html = render(":yellow[**jar**]");
     expect(html).toContain("--dos-tone-yellow");

@@ -4,6 +4,7 @@ import { Button, Sprite, Stack } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 
 export type EditorToolbarProps = {
+  onHeading: () => void;
   onCode: () => void;
   onFence: () => void;
   onLink: () => void;
@@ -11,10 +12,13 @@ export type EditorToolbarProps = {
 };
 
 /** The editor's formatting row: one button per wrap, no state of its own. */
-export function EditorToolbar({ onCode, onFence, onLink, onImage }: EditorToolbarProps) {
+export function EditorToolbar({ onHeading, onCode, onFence, onLink, onImage }: EditorToolbarProps) {
   const copy = messages.editor;
   return (
     <Stack direction="row" gap={4} wrap>
+      <Button variant="ghost" onClick={onHeading} ariaLabel={copy.tools.heading}>
+        <Sprite name="heading" decorative cell={1} />
+      </Button>
       <Button variant="ghost" onClick={onCode} ariaLabel={copy.tools.code}>
         <Sprite name="code" decorative cell={1} />
       </Button>

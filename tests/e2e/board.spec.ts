@@ -373,7 +373,7 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await page.keyboard.press("ArrowDown");
   await expect(thread.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(thread.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "Heading", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("textbox", { name: "REPLY" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -874,7 +874,7 @@ test("reaches the reply target clear control with the arrows", async ({ page }) 
   // ▲ from the empty caret climbs past the toolbar and the tabs into the
   // target row: the chip is three rows above the field.
   await page.keyboard.press("ArrowUp");
-  await expect(thread.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await expect(thread.getByRole("button", { name: "Heading", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(thread.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
@@ -987,7 +987,7 @@ test("walks the compose layer and returns focus to its button", async ({ page })
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(form.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await expect(form.getByRole("button", { name: "Heading", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(form.getByRole("textbox", { name: "BODY" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -1016,7 +1016,7 @@ test("keeps the caret in the reply textarea inside its row", async ({ page }) =>
   await expect(reply).toBeFocused();
   await page.keyboard.press("Home");
   await page.keyboard.press("ArrowUp");
-  await expect(page.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Heading", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(page.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowUp");

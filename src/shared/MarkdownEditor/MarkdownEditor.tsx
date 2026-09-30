@@ -17,7 +17,14 @@ import {
   type MentionCandidate,
 } from "./mentionComplete";
 import { caretGeometry } from "./caretPosition";
-import { insertAt, wrapCode, wrapFence, wrapRange, type CaretEdit } from "./selection";
+import {
+  insertAt,
+  toggleHeading,
+  wrapCode,
+  wrapFence,
+  wrapRange,
+  type CaretEdit,
+} from "./selection";
 import styles from "./MarkdownEditor.module.css";
 
 const IMAGE_URL_PATTERN = /^https?:\/\/.+/;
@@ -279,6 +286,10 @@ export function MarkdownEditor({
           <>
             <Stack navRow>
               <EditorToolbar
+                onHeading={() => {
+                  const [start, end] = selection();
+                  applyEdit(toggleHeading(value, start, end));
+                }}
                 onCode={() => {
                   const [start, end] = selection();
                   applyEdit(wrapCode(value, start, end));

@@ -16,6 +16,15 @@ test("writes Markdown with the toolbar and previews it before posting", async ({
   const form = page.getByRole("form", { name: "NEW THREAD" });
   await form.getByLabel("TITLE").fill("Editor writes Markdown");
   const body = form.getByLabel("BODY");
+  await body.fill("Findings");
+  await body.press("ControlOrMeta+a");
+  await form.getByRole("button", { name: "Heading", exact: true }).click();
+  await expect(body).toHaveValue("## Findings");
+
+  await form.getByRole("button", { name: "PREVIEW" }).click();
+  await expect(form.getByRole("heading", { name: "Findings" })).toBeVisible();
+  await form.getByRole("button", { name: "WRITE" }).click();
+
   await body.fill("free(ptr);");
   await body.press("ControlOrMeta+a");
   await form.getByRole("button", { name: "Code block", exact: true }).click();
@@ -28,7 +37,7 @@ test("writes Markdown with the toolbar and previews it before posting", async ({
   // Walk order follows the eyes: ▼ from the tabs reaches the toolbar.
   await form.getByRole("button", { name: "WRITE" }).click();
   await page.keyboard.press("ArrowDown");
-  await expect(form.getByRole("button", { name: "Code", exact: true })).toBeFocused();
+  await expect(form.getByRole("button", { name: "Heading", exact: true })).toBeFocused();
 
   await form.getByRole("button", { name: "POST THREAD" }).click();
   const card = feed.getByRole("article").filter({ hasText: "Editor writes Markdown" });

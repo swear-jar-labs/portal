@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Button, Form, Select, Stack, Text, Textarea, type SelectOption } from "@swearjar/dos";
+import { REPORTS_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
+import { buildModerationDecisionEvents, enqueueInboxEvent } from "@/features/inbox/contracts";
 import type { ModerationReport, ResolutionOutcome } from "./model";
 import { decideReport, type ModerationActor } from "./store";
 
@@ -94,6 +96,21 @@ export function ModerationResolveForm({
     if (!result.ok) {
       setError(copy.errors[result.error]);
       return;
+    }
+    // The saved resolution notifies like any other ruling (see the queue).
+    if (actor !== null) {
+      for (const delivery of buildModerationDecisionEvents({
+        reportId: report.id,
+        outcome: selectedOutcome,
+        actorUser: actor.user,
+        actorName: actor.user,
+        reporters: report.complaints.map((complaint) => complaint.reporter),
+        targetAuthor: report.target.author,
+        targetLabel: report.target.label,
+        target: { kind: "report", label: report.target.label, href: REPORTS_PATH },
+        at: new Date().toISOString(),
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
     }
     onResolved();
   }

@@ -32,7 +32,13 @@ import {
   subscribeProjectStore,
 } from "@/features/projects/contracts";
 import { avatarFor } from "@/shared/members";
-import { useMentionNotifier } from "@/features/inbox/contracts";
+import {
+  buildTicketAssignEvents,
+  buildTicketCreatedEvents,
+  buildTicketStatusEvents,
+  enqueueInboxEvent,
+  useMentionNotifier,
+} from "@/features/inbox/contracts";
 import { TicketCompose } from "../compose/TicketCompose";
 import { TicketEdit } from "../compose/TicketEdit";
 import { submitTicketEdit, type TicketEditChanges } from "../data/edit-submit";
@@ -139,17 +145,20 @@ export function TicketsStack({
     [projects, projectPolicies],
   );
 
-  const accessFor = (slug: Ticket["project"]): TicketProject => {
-    const found = projectBySlug.get(slug);
-    return {
-      slug,
-      status: found?.status ?? "archived",
-      lead: found?.lead ?? null,
-      maintainers: found?.maintainers ?? [],
-      reviewers: found?.reviewers ?? [],
-      claimPolicy: policyByProject[slug] ?? DEFAULT_CLAIM_POLICY,
-    };
-  };
+  const accessFor = useCallback(
+    (slug: Ticket["project"]): TicketProject => {
+      const found = projectBySlug.get(slug);
+      return {
+        slug,
+        status: found?.status ?? "archived",
+        lead: found?.lead ?? null,
+        maintainers: found?.maintainers ?? [],
+        reviewers: found?.reviewers ?? [],
+        claimPolicy: policyByProject[slug] ?? DEFAULT_CLAIM_POLICY,
+      };
+    },
+    [policyByProject, projectBySlug],
+  );
 
   useEffect(() => {
     closingRef.current = false;
@@ -241,6 +250,29 @@ export function TicketsStack({
       }
       const created = addTicket(input, { user: session.user, avatar: avatarFor(session.user) });
       notifyTicketMentions(created.id, input.body, created.key, created.project);
+      // A new task pings the project's leads from the saved ticket: the team
+      // learns about queue growth, the opener never self-notifies.
+      const createdAccess = accessFor(created.project);
+      const createdAt = new Date().toISOString();
+      const createdTarget = {
+        kind: "ticket" as const,
+        label: created.key,
+        href: ticketPath(created.key),
+      };
+      for (const delivery of buildTicketCreatedEvents({
+        ticketId: created.id,
+        ticketKey: created.key,
+        projectLabel: projectNames[created.project] ?? created.project,
+        actorUser: session.user,
+        actorName: session.user,
+        leadsAndMaintainers: [
+          createdAccess.lead?.user,
+          ...createdAccess.maintainers.map((person) => person.user),
+        ],
+        target: createdTarget,
+        at: createdAt,
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
       const nextQuery = { ...DEFAULT_TICKET_QUERY, project: input.project };
       setQuery(nextQuery);
       setComposing(false);
@@ -248,7 +280,15 @@ export function TicketsStack({
       setLocalKey(created.key);
       return null;
     },
-    [addTicket, notifyTicketMentions, replaceTrackerUrl, requestLogin, session],
+    [
+      accessFor,
+      addTicket,
+      notifyTicketMentions,
+      projectNames,
+      replaceTrackerUrl,
+      requestLogin,
+      session,
+    ],
   );
 
   const closeTicket = useCallback(() => {
@@ -272,16 +312,66 @@ export function TicketsStack({
   const submitEdit = useCallback(
     async (input: TicketEditInput, changes: TicketEditChanges) => {
       if (editing === null || session === null) return "denied" as const;
+      const before = editing;
       const result = await submitTicketEdit(editing, tickets, input, changes);
       if (result) return result;
       // An edit that adds tags notifies under the ticket id: the store drops
       // the repeat when the tags were already there.
       notifyTicketMentions(editing.id, input.body, editing.key, editing.project);
+      const at = new Date().toISOString();
+      const target = { kind: "ticket" as const, label: editing.key, href: ticketPath(editing.key) };
+      const label = projectNames[editing.project] ?? editing.project;
+      if (input.status !== before.status) {
+        for (const delivery of buildTicketStatusEvents({
+          ticketId: editing.id,
+          ticketKey: editing.key,
+          from: before.status,
+          to: input.status,
+          projectLabel: label,
+          actorUser: session.user,
+          actorName: session.user,
+          ticketAuthor: before.author.user,
+          assignee: before.assignee?.user,
+          target,
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
+      }
+      if (changes.assignee !== undefined) {
+        for (const delivery of buildTicketAssignEvents({
+          ticketId: editing.id,
+          ticketKey: editing.key,
+          projectLabel: label,
+          actorUser: session.user,
+          actorName: session.user,
+          previousAssignee: before.assignee?.user,
+          nextAssignee: changes.assignee ?? undefined,
+          ticketAuthor: before.author.user,
+          target,
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
+      }
+      if (changes.reviewer !== undefined && changes.reviewer !== null) {
+        for (const delivery of buildTicketAssignEvents({
+          ticketId: `${editing.id}:review`,
+          ticketKey: editing.key,
+          projectLabel: label,
+          actorUser: session.user,
+          actorName: session.user,
+          previousAssignee: before.reviewer?.user,
+          nextAssignee: changes.reviewer,
+          ticketAuthor: before.author.user,
+          target,
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
+      }
       returnFocusRef.current = ticketEditButtonId;
       setEditing(null);
       return null;
     },
-    [editing, notifyTicketMentions, session, tickets],
+    [editing, notifyTicketMentions, projectNames, session, tickets],
   );
 
   const closeLocalTicket = useCallback(() => {

@@ -2,7 +2,11 @@
 
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
-import { useMentionNotifier } from "@/features/inbox/contracts";
+import {
+  buildReplyEvents,
+  enqueueInboxEvent,
+  useMentionNotifier,
+} from "@/features/inbox/contracts";
 import { avatarFor } from "@/shared/members";
 import * as boardStore from "../data/board-store";
 import { boardTitle, threadPath, type BoardId } from "../model/threads";
@@ -14,6 +18,9 @@ export type ThreadOverlayActionsProps = {
   // binds the store without the section stack around.
   title: string;
   board: BoardId;
+  threadAuthor: string;
+  // Fixture post authors by post id, for reply notices without the feed around.
+  postAuthors: Readonly<Record<string, string>>;
   // The fixture flags behind the layer: the provider merges the session's
   // admin overrides over them, like the section stack does for its summaries.
   pinned: boolean;
@@ -33,6 +40,8 @@ export function ThreadOverlayActions({
   threadId,
   title,
   board,
+  threadAuthor,
+  postAuthors,
   pinned,
   locked,
   children,
@@ -100,9 +109,37 @@ export function ThreadOverlayActions({
         if (author === null) return;
         const post = boardStore.addReply(threadId, body, author, replyTo);
         notify(post.id, body);
+        const sessionParent = boardStore
+          .boardSnapshot()
+          .threads[threadId]?.addedPosts.find((entry) => entry.id === replyTo)?.author.user;
+        const at = new Date().toISOString();
+        for (const delivery of buildReplyEvents({
+          postId: post.id,
+          threadTitle: title,
+          boardLabel: boardTitle(board),
+          actorUser: author.user,
+          actorName: author.user,
+          threadAuthor,
+          parentAuthor: replyTo === undefined ? undefined : (postAuthors[replyTo] ?? sessionParent),
+          target: { kind: "thread", label: title, href: threadPath(threadId) },
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
       },
     };
-  }, [board, locked, notifyMentions, pinned, requestLogin, session, state, threadId, title]);
+  }, [
+    board,
+    locked,
+    notifyMentions,
+    pinned,
+    postAuthors,
+    requestLogin,
+    session,
+    state,
+    threadAuthor,
+    threadId,
+    title,
+  ]);
 
   return <ThreadActionsProvider actions={actions}>{children}</ThreadActionsProvider>;
 }

@@ -16,7 +16,14 @@ import {
   Textarea,
 } from "@swearjar/dos";
 import { messages } from "@/content/messages";
+import { ADMIN_PATH } from "@/content/commands";
 import { techIds, type TechId } from "@/content/techs";
+import {
+  buildProjectRespondedEvents,
+  buildProjectSubmittedEvents,
+  enqueueInboxEvent,
+} from "@/features/inbox/contracts";
+import { useShellSession } from "@/features/shell";
 import { useClientInteractive } from "@/shared/useClientInteractive";
 import { mockRespondToProject, mockSubmitProject } from "../data/mock-submission-actions";
 import { projectPath } from "../model/projects";
@@ -51,11 +58,15 @@ const initial: ProjectSubmissionInput = {
 export function ProjectProposalForm({
   level,
   submissions,
+  adminUsers,
 }: {
   level: "guest" | "participant" | "member";
   submissions: ProjectSubmission[];
+  // The admin roster, read once by the server layer (see ProjectTeamManage).
+  adminUsers: readonly string[];
 }) {
   const router = useRouter();
+  const session = useShellSession();
   const [values, setValues] = useState<ProjectSubmissionInput>(initial);
   const [stackQuery, setStackQuery] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -99,6 +110,20 @@ export function ProjectProposalForm({
         setSubmitError(copy.errors[result.error]);
         return;
       }
+      // The saved proposal pages the admins under its server id.
+      if (result.id !== undefined && session !== null) {
+        const at = new Date().toISOString();
+        for (const delivery of buildProjectSubmittedEvents({
+          proposalId: result.id,
+          projectName: parsed.data.name,
+          proposer: session.user,
+          proposerName: session.user,
+          admins: adminUsers,
+          target: { kind: "project" as const, label: parsed.data.name, href: ADMIN_PATH },
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
+      }
       setValues(initial);
       setStackQuery("");
       setActiveTab("mine");
@@ -135,6 +160,24 @@ export function ProjectProposalForm({
       if (!result.ok) {
         setReplyError(copy.errors[result.error]);
         return;
+      }
+      // The clarification answer re-pages the admins under a fresh stable id.
+      if (session !== null) {
+        const at = new Date().toISOString();
+        for (const delivery of buildProjectRespondedEvents({
+          proposalId: submission.id,
+          projectName: submission.details.name,
+          proposer: submission.user,
+          proposerName: submission.user,
+          admins: adminUsers,
+          target: {
+            kind: "project" as const,
+            label: submission.details.name,
+            href: ADMIN_PATH,
+          },
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
       }
       setNotes((current) => ({ ...current, [submission.id]: "" }));
       router.refresh();

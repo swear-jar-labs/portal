@@ -8,6 +8,8 @@ import { messages } from "@/content/messages";
 import { formatTimestamp } from "@/lib/format";
 import { useMemberIdentity } from "@/shared/MemberIdentity";
 import type { MemberApplication } from "@/features/account/contracts";
+import { buildApplicationDecisionEvents, enqueueInboxEvent } from "@/features/inbox/contracts";
+import { useShellSession } from "@/features/shell";
 import styles from "./AdminQueue.module.css";
 
 const copy = messages.admin;
@@ -24,6 +26,7 @@ function ApplicationReview({
   onDecide,
 }: ReviewItem & { onDecide: DecideAction }) {
   const router = useRouter();
+  const session = useShellSession();
   const identity = useMemberIdentity({ user: application.user });
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -48,6 +51,20 @@ function ApplicationReview({
       if (!result.ok) {
         setError(messages.account.apply.actionErrors[result.error]);
         return;
+      }
+      // The saved decision notifies the applicant: after they switch actors
+      // in the same SPA, the verdict waits in their inbox.
+      if (session !== null) {
+        for (const delivery of buildApplicationDecisionEvents({
+          applicationId: application.id,
+          decision,
+          actorUser: session.user,
+          actorName: session.user,
+          applicant: application.user,
+          target: { kind: "application" as const, label: "application", href: "/profile" },
+          at: new Date().toISOString(),
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
       }
       setNote("");
       router.refresh();

@@ -34,6 +34,10 @@ export function listMemberUsers(): string[] {
   return registry.memberUsers();
 }
 
+export function listAdminUsers(): string[] {
+  return registry.adminUsers();
+}
+
 export function ensureAccount(user: string, email?: string): Actor {
   return registry.ensure(user, email);
 }

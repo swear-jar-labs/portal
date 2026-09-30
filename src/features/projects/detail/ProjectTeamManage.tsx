@@ -3,15 +3,28 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ComboBox, Heading, Stack, Text } from "@swearjar/dos";
+import { ADMIN_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
+import {
+  buildMaintainerLostEvents,
+  buildTeamEvents,
+  enqueueInboxEvent,
+} from "@/features/inbox/contracts";
 import { useShellSession } from "@/features/shell";
 import { useMemberIdentities } from "@/shared/MemberIdentity";
 import { mockProjectTeamAction } from "../data/mock-team-actions";
-import type { Project } from "../model/projects";
+import { projectPath, type Project } from "../model/projects";
 import type { ProjectTeam, ProjectTeamActionId } from "../data/team-store";
 
-type Props = { project: Project; team: ProjectTeam; memberUsers: readonly string[] };
+type Props = {
+  project: Project;
+  team: ProjectTeam;
+  memberUsers: readonly string[];
+  // The admin roster, read once by the server layer: the client never imports
+  // the account slice for it (the account barrel mixes server-only leaves).
+  adminUsers: readonly string[];
+};
 const copy = messages.projects.team;
 
 // Template tokens live with the sentence in messages.ts, so a locale can
@@ -23,7 +36,7 @@ function unassignLabel(user: string, role: string): string {
   return copy.unassignLabel.replace(USER_TOKEN, user).replace(ROLE_TOKEN, role);
 }
 
-export function ProjectTeamManage({ project, team, memberUsers }: Props) {
+export function ProjectTeamManage({ project, team, memberUsers, adminUsers }: Props) {
   const router = useRouter();
   const session = useShellSession();
   const identities = useMemberIdentities();
@@ -50,6 +63,41 @@ export function ProjectTeamManage({ project, team, memberUsers }: Props) {
       if (!result.ok) {
         setError(result.error);
         return;
+      }
+      // Role mail follows the saved change: the affected member hears, the
+      // manager never self-notifies. Removing the last Maintainer additionally
+      // pages the admins — assignments pause until one is named.
+      if (session !== null && target !== undefined) {
+        const at = new Date().toISOString();
+        const teamTarget = {
+          kind: "project" as const,
+          label: project.slug,
+          href: projectPath(project.slug),
+        };
+        for (const delivery of buildTeamEvents({
+          projectSlug: project.slug,
+          projectLabel: project.name,
+          action: "role",
+          actorUser: session.user,
+          actorName: session.user,
+          affected: target,
+          leadsAndMaintainers: [],
+          target: teamTarget,
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
+        if (action === "maintainer-remove" && team.maintainers.length === 1) {
+          for (const delivery of buildMaintainerLostEvents({
+            projectSlug: project.slug,
+            projectLabel: project.name,
+            actorUser: session.user,
+            actorName: session.user,
+            admins: adminUsers,
+            target: { kind: "project", label: project.slug, href: ADMIN_PATH },
+            at,
+          }))
+            enqueueInboxEvent(delivery.user, delivery.event);
+        }
       }
       router.refresh();
     });

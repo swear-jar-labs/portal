@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
-import { getActorSession, listMemberUsers } from "@/features/account/contracts";
+import { getActorSession, listAdminUsers, listMemberUsers } from "@/features/account/contracts";
 import { countThreadsByBoard, listRecentThreadSummariesByBoard } from "@/features/board/contracts";
 import { listTicketsByProject } from "@/features/tickets/contracts";
 import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
@@ -81,7 +81,12 @@ export async function loadProjectOverlay({
       />
     ),
     manageLayer: (
-      <ProjectTeamManage project={project} team={team} memberUsers={listMemberUsers()} />
+      <ProjectTeamManage
+        project={project}
+        team={team}
+        memberUsers={listMemberUsers()}
+        adminUsers={listAdminUsers()}
+      />
     ),
     editLayer: (
       <ProjectEditForm key={`${project.slug}-${project.contentVersion}`} project={project} />
@@ -135,6 +140,7 @@ export async function loadProjectProposalLayer(): Promise<ProjectProposalLayerDa
       <ProjectProposalForm
         level={actor?.level ?? "guest"}
         submissions={actor ? projectSubmissionsFor(actor.user) : []}
+        adminUsers={listAdminUsers()}
       />
     ),
   };

@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button, Form, Heading, Select, Stack, Text, Textarea } from "@swearjar/dos";
 import type { ZodError } from "zod";
 import { messages } from "@/content/messages";
+import { ADMIN_PATH } from "@/content/commands";
+import {
+  buildApplicationRespondedEvents,
+  buildApplicationSubmittedEvents,
+  enqueueInboxEvent,
+} from "@/features/inbox/contracts";
 import { useClientInteractive } from "@/shared/useClientInteractive";
 import { ApplicationHistory } from "./ApplicationHistory";
 import type { MemberApplication } from "../model/applications";
+import { listAdminUsers } from "../data/mock-accounts";
 import {
   mockRespondToMemberApplication,
   mockSubmitMemberApplication,
@@ -70,6 +77,21 @@ export function ApplyForm({
         setActionError(copy.actionErrors[result.error]);
         return;
       }
+      // The saved application pages the admins: after they switch actors in
+      // the same SPA, the queue notice waits in their inbox.
+      if (result.id !== undefined) {
+        const at = new Date().toISOString();
+        const target = { kind: "application" as const, label: "admin queue", href: ADMIN_PATH };
+        for (const delivery of buildApplicationSubmittedEvents({
+          applicationId: result.id,
+          applicant,
+          applicantName: applicant,
+          admins: listAdminUsers(),
+          target,
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
+      }
       router.refresh();
     });
   }
@@ -87,6 +109,17 @@ export function ApplyForm({
         setActionError(copy.actionErrors[result.error]);
         return;
       }
+      // The clarification answer re-pages the admins under a fresh stable id.
+      const at = new Date().toISOString();
+      for (const delivery of buildApplicationRespondedEvents({
+        applicationId: latest.id,
+        applicant,
+        applicantName: applicant,
+        admins: listAdminUsers(),
+        target: { kind: "application" as const, label: "admin queue", href: ADMIN_PATH },
+        at,
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
       setNote("");
       router.refresh();
     });

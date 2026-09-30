@@ -17,6 +17,7 @@ export {
   MAX_POLICY_NEED,
   MIN_POLICY_NEED,
   isFixtureProjectSlug,
+  PROJECTS_PATH,
   projectCardId,
   projectPath,
   projectSlugs,

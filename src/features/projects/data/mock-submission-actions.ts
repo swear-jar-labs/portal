@@ -10,7 +10,8 @@ import {
   type SubmissionError,
 } from "./submissions";
 
-type ActionResult = { ok: true } | { ok: false; error: SubmissionError | "unavailable" };
+type ActionResult =
+  { ok: true; id?: string } | { ok: false; error: SubmissionError | "unavailable" };
 const responseSchema = z.object({
   id: z.string(),
   version: z.number().int().positive(),
@@ -29,7 +30,12 @@ export async function mockSubmitProject(input: unknown): Promise<ActionResult> {
   if (actor?.level !== "member") return { ok: false, error: "forbidden" };
   const parsed = projectSubmissionSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
-  return finish(submitProject(actor, parsed.data));
+  // The id travels back so the form can address the inbox notice (see the
+  // member-application submit above).
+  const result = submitProject(actor, parsed.data);
+  if (!result.ok) return { ok: false, error: result.error ?? "invalid" };
+  revalidatePath("/", "layout");
+  return { ok: true, id: result.submission.id };
 }
 
 export async function mockRespondToProject(input: unknown): Promise<ActionResult> {

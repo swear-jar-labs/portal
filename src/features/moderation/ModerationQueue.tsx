@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Button, Heading, Link, Stack, Text, Textarea } from "@swearjar/dos";
 import { DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
+import { REPORTS_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
+import { buildModerationDecisionEvents, enqueueInboxEvent } from "@/features/inbox/contracts";
 import { formatTimestamp } from "@/lib/format";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { useOverlayPush, useShellDialogs, useShellSession } from "@/features/shell";
@@ -41,6 +43,24 @@ function Review({
     if (!result.ok) {
       setError(copy.errors[result.error]);
       return;
+    }
+    // The saved ruling notifies the reporters and the material's author: the
+    // case list explains the outcome, the material link stays out of the
+    // notice (it may read hidden for its own author).
+    const at = new Date().toISOString();
+    if (actor !== null) {
+      for (const delivery of buildModerationDecisionEvents({
+        reportId: report.id,
+        outcome: action,
+        actorUser: actor.user,
+        actorName: actor.user,
+        reporters: report.complaints.map((complaint) => complaint.reporter),
+        targetAuthor: report.target.author,
+        targetLabel: report.target.label,
+        target: { kind: "report", label: report.target.label, href: REPORTS_PATH },
+        at,
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
     }
     setError("");
     if (action === "request-edit" || action === "hide") setNote("");

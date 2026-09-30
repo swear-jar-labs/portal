@@ -12,7 +12,8 @@ import {
   submitMemberApplication,
 } from "./mock-applications";
 
-type ActionResult = { ok: true } | { ok: false; error: ApplicationError | "unavailable" };
+type ActionResult =
+  { ok: true; id?: string } | { ok: false; error: ApplicationError | "unavailable" };
 
 const responseSchema = z.object({
   id: z.string(),
@@ -36,7 +37,12 @@ export async function mockSubmitMemberApplication(input: unknown): Promise<Actio
   if (!actor || actor.level !== "participant") return { ok: false, error: "forbidden" };
   const parsed = applySchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
-  return finish(submitMemberApplication(actor, parsed.data));
+  // The id travels back so the form can address the inbox notice: the store
+  // drops a repeated stable id, so a retried submit never double-pages admins.
+  const result = submitMemberApplication(actor, parsed.data);
+  if (!result.ok) return { ok: false, error: result.error ?? "invalid" };
+  revalidatePath("/", "layout");
+  return { ok: true, id: result.application.id };
 }
 
 export async function mockRespondToMemberApplication(input: unknown): Promise<ActionResult> {

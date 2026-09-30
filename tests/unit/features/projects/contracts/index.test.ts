@@ -8,6 +8,7 @@ describe("projects contract", () => {
       "MAX_POLICY_NEED",
       "MAX_PROJECT_NOTE_LENGTH",
       "MIN_POLICY_NEED",
+      "PROJECTS_PATH",
       "archivedProjectSlugs",
       "decideProject",
       "dynamicTicketPrefix",

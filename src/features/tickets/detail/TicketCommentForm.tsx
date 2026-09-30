@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Button, Form, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { projectName } from "@/features/projects/contracts";
-import { useMentionNotifier } from "@/features/inbox/contracts";
+import {
+  buildTicketCommentEvents,
+  enqueueInboxEvent,
+  useMentionNotifier,
+} from "@/features/inbox/contracts";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { avatarFor } from "@/shared/members";
@@ -65,6 +69,21 @@ export function TicketCommentForm({ ticket, project }: { ticket: Ticket; project
       context: ticket.key,
       target: { kind: "ticket", label: ticket.key, href: ticketPath(ticket.key) },
     });
+    // The comment notifies the ticket's people from the saved result: the
+    // author, the assignee and earlier voices — never the commenter.
+    for (const delivery of buildTicketCommentEvents({
+      commentId: saved.id,
+      ticketKey: ticket.key,
+      projectLabel: projectName(project.slug),
+      actorUser: session.user,
+      actorName: session.user,
+      ticketAuthor: ticket.author.user,
+      assignee: ticket.assignee?.user,
+      priorCommenters: ticket.comments.map((comment) => comment.author.user),
+      target: { kind: "ticket", label: ticket.key, href: ticketPath(ticket.key) },
+      at: new Date().toISOString(),
+    }))
+      enqueueInboxEvent(delivery.user, delivery.event);
     setDraft("");
     setError(undefined);
   }

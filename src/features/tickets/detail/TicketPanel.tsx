@@ -5,6 +5,7 @@ import { Button, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
 import { projectPath } from "@/features/projects/contracts";
+import { buildTicketAssignEvents, enqueueInboxEvent } from "@/features/inbox/contracts";
 import { type ReadroomRef } from "@/features/readroom/contracts";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import { plural } from "@/lib/plural";
@@ -14,6 +15,7 @@ import { formatAge } from "@/shared/age";
 import { TicketBlockedSection } from "./TicketBlockedSection";
 import { TicketCommentForm } from "./TicketCommentForm";
 import { TicketCommentItem } from "./TicketCommentItem";
+import { useTicketStallNotifier } from "./useTicketStallNotifier";
 import { TicketLinksSection } from "./TicketLinksSection";
 import * as ticketStore from "../data/ticket-store";
 import { freshTicketAccess } from "../data/mock-ticket-access";
@@ -30,6 +32,7 @@ import {
   ticketSizeTones,
   ticketStatusTones,
   ticketTagTones,
+  ticketPath,
   type Ticket,
 } from "../model/tickets";
 import styles from "../tickets.module.css";
@@ -114,6 +117,17 @@ export function TicketPanel({
   const canLeave = isMine && openWork;
   const record = session === null ? null : countDoneBySize(all, session.user);
   const checkIn = isManager && needsMaintainerCheckIn(live, clock);
+  // A quiet ticket pages its maintainers exactly once per mock session: the
+  // open dossier is the stall signal's only observer (no scheduler runs).
+  useTicketStallNotifier({
+    ticketId: live.id,
+    ticketKey: live.key,
+    projectLabel: projectName,
+    actorUser: session?.user ?? null,
+    stalled: checkIn,
+    maintainers: project.maintainers.map((person) => person.user),
+    lead: project.lead?.user ?? null,
+  });
 
   // The rung as a chip-led row: the size chip replaces the size word, N DONE
   // and EVERYONE read in magenta, the have-tail closes the sentence. The words
@@ -160,6 +174,23 @@ export function TicketPanel({
     const checkedProject = { ...access.project, claimPolicy: project.claimPolicy };
     const denied = ticketStore.tryClaimTicket(live.id, access.actor, checkedProject, tickets);
     setRefused(denied);
+    if (denied === null) {
+      // The claim lands from the saved handover: the author hears, the
+      // claimant is the actor and never self-notifies.
+      for (const delivery of buildTicketAssignEvents({
+        ticketId: live.id,
+        ticketKey: live.key,
+        projectLabel: projectName,
+        actorUser: session.user,
+        actorName: session.user,
+        previousAssignee: live.assignee?.user,
+        nextAssignee: session.user,
+        ticketAuthor: live.author.user,
+        target: { kind: "ticket", label: live.key, href: ticketPath(live.key) },
+        at: new Date().toISOString(),
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
+    }
   }
 
   async function handleLeave() {
@@ -167,6 +198,19 @@ export function TicketPanel({
     const access = await freshTicketAccess(live.project);
     if (access?.actor?.user !== session.user || live.assignee?.user !== session.user) return;
     ticketStore.leaveTicket(live.id, session.user);
+    for (const delivery of buildTicketAssignEvents({
+      ticketId: live.id,
+      ticketKey: live.key,
+      projectLabel: projectName,
+      actorUser: session.user,
+      actorName: session.user,
+      previousAssignee: session.user,
+      nextAssignee: undefined,
+      ticketAuthor: live.author.user,
+      target: { kind: "ticket", label: live.key, href: ticketPath(live.key) },
+      at: new Date().toISOString(),
+    }))
+      enqueueInboxEvent(delivery.user, delivery.event);
   }
 
   return (

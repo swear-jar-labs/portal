@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button, Heading, Link, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { MemberLink } from "@/features/members/contracts";
+import { buildTeamEvents, enqueueInboxEvent } from "@/features/inbox/contracts";
 import { stackMemory, useShellSession } from "@/features/shell";
 import { mockProjectTeamAction } from "../data/mock-team-actions";
 import { useProjectManageRequest } from "../data/project-manage-request";
 import {
   PROJECT_TEAM_MANAGE_BUTTON_ID,
+  projectPath,
   projectTeamManagePath,
   type Project,
 } from "../model/projects";
@@ -41,6 +43,27 @@ export function ProjectTeamSection({ project, team }: Props) {
       if (!result.ok) {
         setError(result.error);
         return;
+      }
+      // Team mail follows the saved roster change: the leads hear about the
+      // move, the mover never self-notifies. Leaving also drops future team
+      // mail — the next events read the live roster, not this snapshot.
+      if (session !== null) {
+        const at = new Date().toISOString();
+        for (const delivery of buildTeamEvents({
+          projectSlug: project.slug,
+          projectLabel: project.name,
+          action,
+          actorUser: session.user,
+          actorName: session.user,
+          affected: session.user,
+          leadsAndMaintainers: [
+            project.lead?.user,
+            ...team.maintainers.map((person) => person.user),
+          ],
+          target: { kind: "project", label: project.slug, href: projectPath(project.slug) },
+          at,
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
       }
       router.refresh();
     });

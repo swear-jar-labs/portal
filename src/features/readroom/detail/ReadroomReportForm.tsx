@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Button, Form, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
-import { useMentionNotifier } from "@/features/inbox/contracts";
+import {
+  buildReadroomReportEvents,
+  enqueueInboxEvent,
+  useMentionNotifier,
+} from "@/features/inbox/contracts";
 import { useShellSession } from "@/features/shell";
 import { MarkdownEditor } from "@/shared/MarkdownEditor/MarkdownEditor";
 import { publishReport } from "../data/readroom-store";
@@ -15,11 +19,17 @@ const REPORT_ROWS = 6;
 export type ReadroomReportFormProps = {
   readroomId: string;
   taskTitle: string;
+  // Every note author on the task: the published write-up notifies them all.
+  noteAuthors: readonly string[];
 };
 
 /** The lead's write-up composer: it appears in the reviewing phase and turns
  * the report fact into the published phase. */
-export function ReadroomReportForm({ readroomId, taskTitle }: ReadroomReportFormProps) {
+export function ReadroomReportForm({
+  readroomId,
+  taskTitle,
+  noteAuthors,
+}: ReadroomReportFormProps) {
   const session = useShellSession();
   const notifyMentions = useMentionNotifier();
   const [draft, setDraft] = useState("");
@@ -42,6 +52,21 @@ export function ReadroomReportForm({ readroomId, taskTitle }: ReadroomReportForm
       context: taskTitle,
       target: { kind: "readroom", label: taskTitle, href: readroomPath(readroomId) },
     });
+    // The report notifies every note author from the saved task: one stable
+    // id, so republishing never re-delivers. The form renders for the lead
+    // only, so the session is the publishing lead here.
+    if (session !== null) {
+      for (const delivery of buildReadroomReportEvents({
+        readroomId,
+        taskTitle,
+        actorUser: session.user,
+        actorName: session.user,
+        noteAuthors,
+        target: { kind: "readroom", label: taskTitle, href: readroomPath(readroomId) },
+        at: new Date().toISOString(),
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
+    }
   }
 
   return (

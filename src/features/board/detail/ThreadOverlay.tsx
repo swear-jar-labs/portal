@@ -28,6 +28,8 @@ export async function loadThreadLayer(id: string, now: string): Promise<ThreadLa
         threadId={thread.id}
         title={thread.title}
         board={thread.board}
+        threadAuthor={thread.author.user}
+        postAuthors={Object.fromEntries(thread.posts.map((post) => [post.id, post.author.user]))}
         pinned={thread.pinned}
         locked={thread.locked}
       >

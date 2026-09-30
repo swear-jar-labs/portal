@@ -36,7 +36,11 @@ import {
   type ThreadSummary,
 } from "../model/threads";
 import { avatarFor } from "@/shared/members";
-import { useMentionNotifier } from "@/features/inbox/contracts";
+import {
+  buildReplyEvents,
+  enqueueInboxEvent,
+  useMentionNotifier,
+} from "@/features/inbox/contracts";
 import { ComposePanel } from "../compose/ComposePanel";
 import { composeButtonId, FeedPanel } from "./FeedPanel";
 import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "../model/feed";
@@ -247,6 +251,35 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     [author, notifyMentions, openBoard, openTitle],
   );
 
+  const notifyThreadReply = useCallback(
+    (postId: string, replyTo: string | undefined, targetId: string) => {
+      if (author === null || openTitle === undefined || openBoard === undefined) return;
+      const summaryAuthor = threads.find((entry) => entry.id === targetId)?.author.user;
+      const corpusThread = corpus.find((entry) => entry.id === targetId);
+      const threadAuthor =
+        openedLocalThread?.id === targetId
+          ? openedLocalThread.author.user
+          : (summaryAuthor ?? corpusThread?.author.user);
+      const fixtureParent = corpusThread?.posts.find((post) => post.id === replyTo);
+      const sessionParent = state.threads[targetId]?.addedPosts.find((post) => post.id === replyTo);
+      const parentAuthor = fixtureParent?.author.user ?? sessionParent?.author.user;
+      const at = new Date().toISOString();
+      for (const delivery of buildReplyEvents({
+        postId,
+        threadTitle: openTitle,
+        boardLabel: boardTitle(openBoard),
+        actorUser: author.user,
+        actorName: author.user,
+        threadAuthor,
+        parentAuthor,
+        target: { kind: "thread", label: openTitle, href: threadPath(targetId) },
+        at,
+      }))
+        enqueueInboxEvent(delivery.user, delivery.event);
+    },
+    [author, corpus, openBoard, openTitle, openedLocalThread, state.threads, threads],
+  );
+
   const threadActions = useMemo<ThreadActions | null>(() => {
     if (activeThreadId === undefined) return null;
     // Pin/lock belong to admins alone: the controls hide for anyone else,
@@ -274,7 +307,10 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
       onReply: (body, replyTo) => {
         if (author === null || activeThreadId === undefined) return;
         const post = addReply(body, author, replyTo);
-        if (post !== undefined) notifyThreadMentions(post.id, body, activeThreadId);
+        if (post !== undefined) {
+          notifyThreadMentions(post.id, body, activeThreadId);
+          notifyThreadReply(post.id, replyTo, activeThreadId);
+        }
       },
     };
   }, [
@@ -286,6 +322,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     gate,
     locked,
     notifyThreadMentions,
+    notifyThreadReply,
     pinned,
     session?.admin,
     state.votedThreads,

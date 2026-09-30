@@ -7,7 +7,9 @@ import { DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "@/content/messages";
 import { formatTimestamp } from "@/lib/format";
 import { MemberName, useMemberIdentity } from "@/shared/MemberIdentity";
-import type { ProjectSubmission } from "@/features/projects/contracts";
+import { PROJECTS_PATH, projectPath, type ProjectSubmission } from "@/features/projects/contracts";
+import { buildProjectDecisionEvents, enqueueInboxEvent } from "@/features/inbox/contracts";
+import { useShellSession } from "@/features/shell";
 import styles from "./AdminQueue.module.css";
 
 const copy = messages.admin;
@@ -24,6 +26,7 @@ function Review({
   onDecide: DecideAction;
 }) {
   const router = useRouter();
+  const session = useShellSession();
   const identity = useMemberIdentity({ user: submission.user });
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -49,6 +52,22 @@ function Review({
       if (!result.ok) {
         setError(messages.projects.proposal.errors[result.error]);
         return;
+      }
+      // The saved decision notifies the proposer: an approval opens the live
+      // project page, anything else returns to the project index.
+      const href = decision === "approved" ? projectPath(submission.details.slug) : PROJECTS_PATH;
+      if (session !== null) {
+        for (const delivery of buildProjectDecisionEvents({
+          proposalId: submission.id,
+          projectLabel: submission.details.name,
+          decision,
+          actorUser: session.user,
+          actorName: session.user,
+          proposer: submission.user,
+          target: { kind: "project" as const, label: submission.details.name, href },
+          at: new Date().toISOString(),
+        }))
+          enqueueInboxEvent(delivery.user, delivery.event);
       }
       setNote("");
       router.refresh();

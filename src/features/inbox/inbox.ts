@@ -16,7 +16,14 @@ export const inboxKinds = [
 ] as const;
 export type InboxKind = (typeof inboxKinds)[number];
 
-export const inboxTargetKinds = ["ticket", "thread", "readroom", "application", "project"] as const;
+export const inboxTargetKinds = [
+  "ticket",
+  "thread",
+  "readroom",
+  "application",
+  "project",
+  "report",
+] as const;
 export type InboxTargetKind = (typeof inboxTargetKinds)[number];
 
 // The only target contract other features need to know: a label for the

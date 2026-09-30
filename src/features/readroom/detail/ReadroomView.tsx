@@ -40,6 +40,7 @@ import { ReadroomLeadControls } from "./ReadroomLeadControls";
 import { ReadroomNoteItem } from "./ReadroomNoteItem";
 import { ReadroomReportForm } from "./ReadroomReportForm";
 import { NoteForm } from "./NoteForm";
+import { useReadroomOpeningNotifier } from "./useReadroomOpeningNotifier";
 import styles from "../readroom.module.css";
 
 export type ReadroomViewProps = {
@@ -87,6 +88,15 @@ export function ReadroomView({
   const posted = hasNoteBy(effective.notes, session?.user ?? null);
   const allTickets = useMergedTickets(tickets);
   const filesEditable = lead && (phase === "collecting" || phase === "reviewing");
+  // The deadline crossing notifies every note author exactly once per mock
+  // session (no note text travels — the notice names the task only).
+  useReadroomOpeningNotifier({
+    readroomId: readroom.id,
+    taskTitle: effective.title,
+    deadlineAt: effective.deadlineAt,
+    now,
+    noteAuthors: effective.notes.map((note) => note.author.user),
+  });
   // A deleted note reopens the form: the caret follows it there.
   const noteFieldRef = useRef<HTMLTextAreaElement | null>(null);
   const returnToNoteForm = useRef(false);
@@ -237,7 +247,11 @@ export function ReadroomView({
       {effective.report === undefined ? (
         phase === "reviewing" ? (
           lead ? (
-            <ReadroomReportForm readroomId={readroom.id} taskTitle={effective.title} />
+            <ReadroomReportForm
+              readroomId={readroom.id}
+              taskTitle={effective.title}
+              noteAuthors={effective.notes.map((note) => note.author.user)}
+            />
           ) : (
             <Text role="hint">{messages.readroom.report.inProgress}</Text>
           )

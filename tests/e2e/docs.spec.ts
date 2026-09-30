@@ -79,7 +79,10 @@ test("centers the how-it-works and rules headings in the manifesto style", async
   ).toBeVisible();
   await expect(
     how.getByText(
-      "Demo build: registration works with demo accounts; Member applications are still in development.",
+      "Pick a section on the left, or type FORUM, ERRATA, READROOM, PROJECTS or TICKETS.",
+      {
+        exact: true,
+      },
     ),
   ).toBeVisible();
 

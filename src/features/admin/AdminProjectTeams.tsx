@@ -59,18 +59,20 @@ export function AdminProjectTeams({ projects }: { projects: readonly Project[] }
             {project.lead === null ? (
               <Text role="danger">{messages.projects.team.leadVacant}</Text>
             ) : null}
-            <Button
-              id={adminManageButtonId(project.slug)}
-              href={projectTeamManagePath(project.slug)}
-              // The management layer opens above the admin page (the fallback
-              // host renders it): the queue keeps its state behind.
-              onClick={pushOverlay(
-                projectTeamManagePath(project.slug),
-                adminManageButtonId(project.slug),
-              )}
-            >
-              {messages.projects.team.manage}
-            </Button>
+            <Stack direction="row" gap={8} wrap>
+              <Button
+                id={adminManageButtonId(project.slug)}
+                href={projectTeamManagePath(project.slug)}
+                // The management layer opens above the admin page (the fallback
+                // host renders it): the queue keeps its state behind.
+                onClick={pushOverlay(
+                  projectTeamManagePath(project.slug),
+                  adminManageButtonId(project.slug),
+                )}
+              >
+                {messages.projects.team.manage}
+              </Button>
+            </Stack>
           </Stack>
         </section>
       ))}

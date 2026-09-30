@@ -147,9 +147,11 @@ export function ApplyForm({
                 rows={MOTIVATION_ROWS}
                 required
               />
-              <Button type="submit" variant="primary" disabled={pending}>
-                {copy.response.submit}
-              </Button>
+              <Stack direction="row" gap={8} wrap>
+                <Button type="submit" variant="primary" disabled={pending}>
+                  {copy.response.submit}
+                </Button>
+              </Stack>
             </Stack>
           </fieldset>
         </Form>
@@ -184,9 +186,11 @@ export function ApplyForm({
                 required
                 error={errors.motivation}
               />
-              <Button type="submit" variant="primary" disabled={pending}>
-                {latest ? copy.reapply : copy.submit}
-              </Button>
+              <Stack direction="row" gap={8} wrap>
+                <Button type="submit" variant="primary" disabled={pending}>
+                  {latest ? copy.reapply : copy.submit}
+                </Button>
+              </Stack>
             </Stack>
           </fieldset>
         </Form>

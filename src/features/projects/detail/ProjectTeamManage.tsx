@@ -209,14 +209,16 @@ export function ProjectTeamManage({ project, team, memberUsers, adminUsers }: Pr
             </Button>
           </Stack>
           {isAdmin && team.leadDecisionRequired ? (
-            <Button
-              onClick={() => {
-                if (chosen !== null) act("resolve-lead", chosen);
-              }}
-              disabled={pending || chosen === null}
-            >
-              {copy.adminSetLead}
-            </Button>
+            <Stack direction="row" gap={8} wrap>
+              <Button
+                onClick={() => {
+                  if (chosen !== null) act("resolve-lead", chosen);
+                }}
+                disabled={pending || chosen === null}
+              >
+                {copy.adminSetLead}
+              </Button>
+            </Stack>
           ) : null}
         </Stack>
       ) : null}

@@ -159,6 +159,9 @@ export function FeedPanel({
             label={messages.board.feed.boardLabel}
             name="board"
             value={query.board ?? BOARD_FILTER_ALL}
+            // The trigger shows the current board; the label stays for
+            // assistive tech only (a compact filter row).
+            hideLabel
             onChange={(value) => {
               onQueryChange({ board: value === BOARD_FILTER_ALL ? undefined : value });
             }}

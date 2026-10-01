@@ -126,7 +126,9 @@ export function ReadroomFeed({
         {messages.readroom.feed.heading}
       </Heading>
 
-      <Stack gap={8} className={styles.filters}>
+      {/* The filter block rides the forum's rhythm: one dense gap between
+          the input row, the picked tags, the mode switch and the count. */}
+      <Stack gap={4} className={styles.filters}>
         {/* The field hugs its CLEAR at the dense chip gap; the tag box rides
             the same row and wraps under the search on mobile. */}
         <Stack direction="row" gap={4} align="center" wrap navRow>

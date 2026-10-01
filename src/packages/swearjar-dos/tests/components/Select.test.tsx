@@ -29,6 +29,21 @@ describe("Select", () => {
     expect(html).toContain(`id="${labelled?.[1]}"`);
   });
 
+  it("hides the label visually without dropping the association", () => {
+    const html = renderToStaticMarkup(
+      <Select
+        label="Role"
+        name="role"
+        value="learner"
+        onChange={() => {}}
+        options={OPTIONS}
+        hideLabel
+      />,
+    );
+    expect(html).toMatch(/<label[^>]*for="[^"]+"[^>]*>Role<\/label>/);
+    expect(html).toContain("visuallyHidden");
+  });
+
   it("submits the value through a named input", () => {
     const html = renderToStaticMarkup(
       <Select label="Role" name="role" value="learner" onChange={() => {}} options={OPTIONS} />,

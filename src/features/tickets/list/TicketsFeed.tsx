@@ -204,6 +204,8 @@ export function TicketsFeed({
             id={SEARCH_FIELD_ID}
             name="q"
             value={query.q}
+            hideLabel
+            placeholder={messages.tickets.feed.filters.search}
             onChange={(q: string) => onQueryChange({ q })}
             // The filter row owns no submit: Enter walks right like ArrowRight.
             onKeyDown={(event) => {

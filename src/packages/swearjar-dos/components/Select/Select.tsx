@@ -22,6 +22,9 @@ export type SelectProps<T extends string> = {
   options: readonly SelectOption<T>[];
   error?: string;
   className?: string;
+  // Hides the label without dropping it from the accessibility tree: the
+  // trigger keeps showing the current option (a compact filter row).
+  hideLabel?: boolean;
   // Puts input focus on the trigger on mount (an opening form hands over
   // focus to its first control); the list itself stays closed.
   autoFocus?: boolean;
@@ -35,6 +38,7 @@ export function Select<T extends string>({
   options,
   error,
   className,
+  hideLabel = false,
   autoFocus = false,
 }: SelectProps<T>) {
   const baseId = useId();
@@ -160,7 +164,11 @@ export function Select<T extends string>({
 
   return (
     <div className={cx(controls.field, className)}>
-      <label id={labelId} className={controls.label} htmlFor={triggerId}>
+      <label
+        id={labelId}
+        className={cx(controls.label, hideLabel && controls.visuallyHidden)}
+        htmlFor={triggerId}
+      >
         {label}
       </label>
       <RadixPopover.Root open={open} onOpenChange={handleOpenChange}>

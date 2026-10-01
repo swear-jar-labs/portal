@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import {
+  isNotificationKindEnabled,
+  notificationKindAdmitted,
+  useNotificationPrefs,
+} from "@/features/shell/notification-prefs";
+import {
   inboxEventToNotification,
   unreadInboxCount,
   type InboxEvent,
@@ -44,13 +49,23 @@ export function ensureInbox(user: string, seed: readonly InboxNotification[]): v
     ...buckets,
     [user]: [
       ...live,
-      ...seed.filter((entry) => !liveIds.has(entry.id) && !deletedIds?.has(entry.id)),
+      ...seed.filter(
+        (entry) =>
+          isNotificationKindEnabled(user, entry.kind) &&
+          !liveIds.has(entry.id) &&
+          !deletedIds?.has(entry.id),
+      ),
     ],
   });
 }
 
-/** Post a section event into the recipient's box; a repeated stable id is dropped. */
+/**
+ * Post a section event into the recipient's box; a muted kind never lands
+ * (mute means "do not accept", not "hide"), and a repeated stable id is
+ * dropped. Untoggled kinds — including the always-on decisions — pass.
+ */
 export function enqueueInboxEvent(user: string, event: InboxEvent): void {
+  if (!isNotificationKindEnabled(user, event.kind)) return;
   updateBucket(user, (list) => {
     if (
       deletedIdsByRecipient.get(user)?.has(event.id) ||
@@ -107,20 +122,27 @@ export type InboxSession = {
 
 /**
  * The recipient's live box: the page's server seed until the first bucket
- * write, the bucket afterwards. The header counter and the list read this
- * same selection, so they never disagree.
+ * write, the bucket afterwards. The notification prefs filter the same
+ * selection for the list and the counter, so muting a kind hides its rows —
+ * seeds and pre-mute mail included — while muted live events never arrive.
  */
 export function useInboxSession(user: string, seed: readonly InboxNotification[]): InboxSession {
   useEffect(() => {
     ensureInbox(user, seed);
   }, [user, seed]);
   // The snapshot stays a stable bucket reference: deriving the counter with
-  // useMemo keeps getSnapshot cached, as useSyncExternalStore requires.
+  // useMemo keeps getSnapshot cached, as useSyncExternalStore requires. The
+  // admitted list derives from it, so the store snapshot itself never changes.
   const list = useSyncExternalStore(
     subscribeInboxStore,
     () => inboxStoreSnapshot()[user] ?? seed,
     () => seed,
   );
-  const unread = useMemo(() => unreadInboxCount(list), [list]);
-  return { list, unread };
+  const boxes = useNotificationPrefs((state) => state.boxes);
+  const admitted = useMemo(
+    () => list.filter((entry) => notificationKindAdmitted(boxes, user, entry.kind)),
+    [list, boxes, user],
+  );
+  const unread = useMemo(() => unreadInboxCount(admitted), [admitted]);
+  return { list: admitted, unread };
 }

@@ -306,6 +306,7 @@ test.describe("member session", () => {
     await page.goto("/settings");
 
     const save = page.getByRole("button", { name: "SAVE" });
+    const first = page.getByRole("checkbox", { name: "Replies to your threads" });
     const toggle = page.getByRole("checkbox", { name: "Starfield after idle" });
     const delay = page.getByLabel("Idle delay");
 
@@ -323,6 +324,10 @@ test.describe("member session", () => {
     await page.locator("#file-SETTINGS").focus();
     await page.keyboard.press("Tab");
     await page.keyboard.press("ArrowDown");
+    await expect(first).toBeFocused();
+    for (let step = 0; step < 5; step++) {
+      await page.keyboard.press("ArrowDown");
+    }
     await expect(toggle).toBeFocused();
     await page.keyboard.press("ArrowDown");
     await expect(delay).toBeFocused();
@@ -1307,7 +1312,6 @@ test.describe("screensaver settings", () => {
     expect(await stored()).toBeNull();
 
     await save.click();
-    await expect(page.getByText("Saved in this browser.")).toBeVisible();
     await expect(save).toBeDisabled();
     await expect.poll(stored).toBe('{"enabled":false,"delayMinutes":1}');
 
@@ -1331,7 +1335,6 @@ test.describe("screensaver settings", () => {
     await expect(save).toBeEnabled();
 
     await page.keyboard.press("Shift+Enter");
-    await expect(page.getByText("Saved in this browser.")).toBeVisible();
     await expect(save).toBeDisabled();
     await expect.poll(stored).toBe('{"enabled":false,"delayMinutes":5}');
 

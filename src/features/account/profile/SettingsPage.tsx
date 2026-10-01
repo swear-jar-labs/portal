@@ -13,7 +13,7 @@ export async function SettingsPage() {
 
   return (
     <ShellPanel title={fileTitle("SETTINGS")}>
-      <SettingsForm />
+      <SettingsForm user={actor.user} />
     </ShellPanel>
   );
 }

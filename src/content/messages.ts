@@ -385,9 +385,15 @@ export const messages = {
         enabled: "Starfield after idle",
         delay: "Idle delay",
       },
+      notifications: {
+        heading: "NOTIFICATIONS",
+        reply: "Replies to your threads",
+        ticket: "Comments and updates on your tickets",
+        mention: "@Mentions of you",
+        readroom: "Reports and notes in your readrooms",
+        team: "Team changes in your projects",
+      },
       save: "SAVE",
-      saved: "Saved in this browser.",
-      hint: "These preferences stay in this browser. They are not synced to an account.",
     },
   },
   admin: {

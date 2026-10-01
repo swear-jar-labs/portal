@@ -9,6 +9,11 @@ import {
   resetInboxForTests,
 } from "@/features/inbox/inbox-store";
 import type { InboxEvent, InboxNotification } from "@/features/inbox/inbox";
+import {
+  defaultNotificationPrefs,
+  resetNotificationPrefsForTests,
+  useNotificationPrefs,
+} from "@/features/shell/notification-prefs";
 
 function entry(overrides: Partial<InboxNotification> = {}): InboxNotification {
   return {
@@ -38,7 +43,10 @@ function event(overrides: Partial<InboxEvent> = {}): InboxEvent {
   };
 }
 
-beforeEach(() => resetInboxForTests());
+beforeEach(() => {
+  resetInboxForTests();
+  resetNotificationPrefsForTests();
+});
 
 describe("inbox store", () => {
   it("seeds a recipient once and keeps the live box afterwards", () => {
@@ -94,5 +102,30 @@ describe("inbox store", () => {
     enqueueInboxEvent("ada", event({ id: "stable-1" }));
     enqueueInboxEvent("ada", event({ id: "stable-2" }));
     expect(inboxStoreSnapshot()["ada"]?.map((item) => item.id)).toEqual(["stable-2", "stable-1"]);
+  });
+
+  it("drops muted kinds for the addressed recipient only", () => {
+    useNotificationPrefs
+      .getState()
+      .setPrefs("grace", { ...defaultNotificationPrefs, mention: false });
+    enqueueInboxEvent("grace", event({ id: "muted-1", kind: "mention" }));
+    enqueueInboxEvent("grace", event({ id: "kept-1", kind: "ticket" }));
+    enqueueInboxEvent("ken", event({ id: "muted-1", kind: "mention" }));
+    expect(inboxStoreSnapshot()["grace"]?.map((item) => item.id)).toEqual(["kept-1"]);
+    expect(inboxStoreSnapshot()["ken"]?.map((item) => item.id)).toEqual(["muted-1"]);
+  });
+
+  it("delivers untoggleable decision kinds without a stored entry", () => {
+    enqueueInboxEvent("grace", event({ id: "decision-1", kind: "application" }));
+    expect(inboxStoreSnapshot()["grace"]?.map((item) => item.id)).toEqual(["decision-1"]);
+  });
+
+  it("seeds only the admitted kinds for the recipient", () => {
+    useNotificationPrefs.getState().setPrefs("grace", { ...defaultNotificationPrefs, team: false });
+    ensureInbox("grace", [
+      entry({ id: "team-seed", kind: "team" }),
+      entry({ id: "reply-seed", kind: "reply" }),
+    ]);
+    expect(inboxStoreSnapshot()["grace"]?.map((item) => item.id)).toEqual(["reply-seed"]);
   });
 });

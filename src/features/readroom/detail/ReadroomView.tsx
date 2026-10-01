@@ -5,7 +5,6 @@ import { Heading, Stack, Text } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { useLoginPrompt, useShellSession } from "@/features/shell";
-import { VoteButton } from "@/features/board/contracts";
 import { useMergedTickets, type Ticket } from "@/features/tickets/contracts";
 import { Markdown } from "@/shared/Markdown/Markdown";
 import { useMentionNotifier } from "@/features/inbox/contracts";
@@ -34,6 +33,7 @@ import {
 } from "../data/readroom-store";
 import { attachmentsFromFiles, releaseAttachments } from "../data/attachments";
 import { useReadroomStore } from "../data/useReadroomSession";
+import { ReadroomDetailsRow } from "../ReadroomDetailsRow";
 import { ReadroomFilesRow } from "./ReadroomFilesRow";
 import { ReadroomTicketRow } from "./ReadroomTicketRow";
 import { ReadroomLeadControls } from "./ReadroomLeadControls";
@@ -167,16 +167,17 @@ export function ReadroomView({
         ) : null}
       </Stack>
 
-      <Stack direction="row" gap={6} navRow>
-        <VoteButton
-          votes={effective.upvotes.length}
-          voted={hasUpvoted(effective.upvotes, session?.user ?? null)}
-          onToggle={toggleVote}
-        />
-      </Stack>
-
       <div className={styles.task} {...{ [READROOM_CARD_ATTR]: "" }}>
-        {description}
+        <Stack gap={6}>
+          <div className={styles.description}>{description}</div>
+          <ReadroomDetailsRow
+            readroom={effective}
+            phase={phase}
+            voted={hasUpvoted(effective.upvotes, session?.user ?? null)}
+            onVote={toggleVote}
+            navRow
+          />
+        </Stack>
       </div>
 
       <Stack gap={6}>

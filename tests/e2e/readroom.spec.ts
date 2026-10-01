@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { DOS_SCROLL_ATTR, DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
+import { DOS_ROW_ATTR, DOS_SCROLL_ATTR, DOS_SURFACE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "../../src/content/messages";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import {
@@ -251,11 +251,30 @@ test("shows the source link and the Markdown pipeline", async ({ page }) => {
     /8f9d6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f/,
   );
   await expect(task.getByText(/DEADLINE \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
+  const details = task
+    .locator(`[${DOS_ROW_ATTR}]`)
+    .filter({ has: page.getByRole("button", { name: "▲ 1 VOTE" }) });
+  await expect(details).toHaveText(/▲ 1 VOTE\s*COLLECTING/);
+  await expect(
+    task
+      .locator(`[${READROOM_CARD_ATTR}]`)
+      .filter({ has: page.getByRole("button", { name: "▲ 1 VOTE" }) }),
+  ).toContainText("O(1) worst case");
+  await expectAbove(task.getByText("O(1) worst case"), details);
+  await expectAbove(
+    task.getByText("SOURCE", { exact: true }),
+    task.getByText("TICKET", { exact: true }),
+  );
+  await expectAbove(
+    task.getByText(DOS_THREE),
+    task.getByText(/DEADLINE \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/),
+  );
+  await expectAbove(task.getByText(/DEADLINE \d{4}/), details);
   // The tone directive renders as its content, not as literal markers.
   await expect(task.getByText("O(1) worst case")).toBeVisible();
   await expect(task.getByText(/:cyan\[/)).toHaveCount(0);
 
-  // The snippet has no repository: no source row at all, only its tag.
+  // The snippet has no repository: its tags stay in the details row.
   await page.goto(readroomPath("lookahead-table"));
   const snippet = page.getByRole("region", { name: /Read the lookahead table/ });
   await expect(snippet.getByText("SOURCE")).toHaveCount(0);
@@ -338,6 +357,22 @@ test("shows the report of a published task and the review hint otherwise", async
   await expect(task.getByRole("heading", { name: "What the code does" })).toBeVisible();
   await expect(task.getByText(/Two lines, one night/)).toBeVisible();
   await expect(task.getByText(/PUBLISHED \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/)).toBeVisible();
+  const details = task
+    .locator(`[${DOS_ROW_ATTR}]`)
+    .filter({ has: page.getByRole("button", { name: "▲ 2 VOTES" }) });
+  await expect(task.locator(`[${READROOM_CARD_ATTR}]`).first()).toContainText(
+    /▲ 2 VOTES\s*PUBLISHED\s*Go\s*Linux/,
+  );
+  await expectAbove(task.getByText(/The write-up reconstructs the night/), details);
+  await expect(details).toHaveText(/▲ 2 VOTES\s*PUBLISHED\s*Go\s*Linux/);
+  await expectSameVerticalCenter(
+    details.getByRole("button", { name: "▲ 2 VOTES" }),
+    details.getByText("PUBLISHED", { exact: true }),
+  );
+  await expectSameVerticalCenter(
+    details.getByText("PUBLISHED", { exact: true }),
+    details.getByText("Go", { exact: true }),
+  );
 
   // Every card of the open task reads white on the silver panel: on
   // retry-loop a guest sees all five (the description, three notes, the
@@ -415,6 +450,10 @@ test("walks the feed and the task by rows", async ({ page }) => {
   await expect(task.getByRole("link", { name: /SmpAllocator\.zig$/ })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(task.getByRole("link", { name: "DOS-3" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(task.getByRole("button", { name: "▲ 1 VOTE" })).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(page.getByRole("dialog", { name: "LOGON REQUIRED" })).toBeVisible();
 });
 
 test("keeps the feed and the task legible", async ({ page }) => {

@@ -52,6 +52,11 @@ div.searchFragment {
   display: inline-flex;
 }
 
+/* The details row supplies the spacing after the Markdown body. */
+.description > :last-child {
+  margin-bottom: 0;
+}
+
 /* The open task reads like a thread: the description, each note and the
    report are white cards on the silver panel (board's .post rules; the
    fallback is white, not board's black — the cards never sit on dark). */

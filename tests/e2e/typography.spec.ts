@@ -2,6 +2,7 @@ import { expect, test, type Locator } from "@playwright/test";
 import { DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
 import { FEED_PATH } from "../../src/features/board/model/threads";
 import { projectPath } from "../../src/features/projects/model/projects";
+import { readroomPath } from "../../src/features/readroom/model/readrooms";
 import { enterShell, expectMinimumContrast, waitForHydration } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
@@ -90,4 +91,35 @@ test("keeps the ladder keywords readable in magenta", async ({ page }) => {
   await panel.getByRole("tab", { name: "TEAM" }).click();
   await expectMinimumContrast(panel.getByText("2 DONE"));
   await expectMinimumContrast(panel.getByText("EVERYONE"));
+});
+
+test("uses compact gray-on-black Markdown code on desktop and mobile", async ({ page }) => {
+  await page.goto(readroomPath("retry-loop"));
+  const task = page.getByRole("region", {
+    name: "Postmortem read: the retry loop that never slept",
+  });
+  const block = task.locator("pre");
+  const fenced = block.locator("code");
+  const inline = task.locator("p code").first();
+  const bodyFont = await task
+    .getByText(/A queue worker with exponential backoff/)
+    .evaluate((element) => getComputedStyle(element).fontFamily);
+
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const code of [fenced, inline]) {
+      await expect(code).toHaveCSS("font-family", bodyFont);
+      await expect(code).toHaveCSS("font-size", "18px");
+      await expect(code).toHaveCSS("font-weight", "400");
+      await expect(code).toHaveCSS("text-shadow", "none");
+      await expect(code).toHaveCSS("color", "rgb(170, 170, 170)");
+    }
+    for (const surface of [block, inline]) {
+      await expect(surface).toHaveCSS("background-color", "rgb(0, 0, 0)");
+      await expectMinimumContrast(surface);
+    }
+  }
 });

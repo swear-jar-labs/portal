@@ -45,7 +45,12 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   // Hot ends with the quietest thread; new ends with the oldest activity.
   await expect(cards.last()).toContainText("Withdrawn: the weekly call");
 
-  await feed.getByRole("button", { name: "NEW", exact: true }).click();
+  const sort = feed.getByRole("group", { name: "SORT", exact: true });
+  await expect(sort.getByRole("button", { name: "HOT", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await sort.getByRole("button", { name: "NEW", exact: true }).click();
   await expect(page).toHaveURL(`${FEED_PATH}?sort=new`);
   await expect(feed.getByRole("button", { name: "NEW", exact: true })).toHaveAttribute(
     "aria-pressed",
@@ -240,6 +245,20 @@ test("walks the feed by rows and remembers the control inside one", async ({ pag
   );
   await page.keyboard.press("ArrowRight");
   await expect(feed.getByRole("button", { name: "NEW", exact: true })).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(page).toHaveURL(`${FEED_PATH}?sort=new`);
+  await expect(feed.getByRole("button", { name: "NEW", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(FEED_PATH);
+  await expect(feed.getByRole("button", { name: "HOT", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.keyboard.press("ArrowRight");
 
   // ▼ leaves the sort row for the compose control (an unmarked row of its
   // own), then for the first card's title (it leads the DOM while the byline

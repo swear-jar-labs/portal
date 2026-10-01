@@ -52,6 +52,7 @@ test("centers the manifesto heading and right-aligns the signature", async ({ pa
   const heading = page.getByRole("heading", { level: 2, name: "THE MANIFESTO" });
   await expect(heading).toBeVisible();
   await expect(heading).toHaveCSS("text-align", "center");
+  await expect(heading).toHaveCSS("letter-spacing", "normal");
   await expect(page.getByText("THE MANIFESTO")).toHaveCSS(
     "color",
     await resolveTone(page, "--dos-tone-yellow"),

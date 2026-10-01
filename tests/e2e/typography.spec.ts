@@ -35,10 +35,10 @@ test("keeps the board secondary text on the surface ink", async ({ page }) => {
   await page.goto(FEED_PATH);
   await waitForHydration(page);
 
-  const sortLabel = page.getByText("SORT", { exact: true });
-  await expect(sortLabel).toHaveCSS("font-weight", "700");
-  await expect(sortLabel).toHaveCSS("-webkit-text-stroke-width", "0px");
-  expect(await sortLabel.evaluate((element) => getComputedStyle(element).textShadow)).not.toBe(
+  const boardLabel = page.getByText("BOARD", { exact: true });
+  await expect(boardLabel).toHaveCSS("font-weight", "700");
+  await expect(boardLabel).toHaveCSS("-webkit-text-stroke-width", "0px");
+  expect(await boardLabel.evaluate((element) => getComputedStyle(element).textShadow)).not.toBe(
     "none",
   );
 

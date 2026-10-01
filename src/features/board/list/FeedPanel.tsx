@@ -6,6 +6,7 @@ import {
   ComboBox,
   Field,
   Heading,
+  SegmentedControl,
   Select,
   Stack,
   Tag,
@@ -30,7 +31,7 @@ import {
   type ThreadTechId,
 } from "../model/threads";
 import { isBlankSearch, type ThreadSearchHit } from "../model/search";
-import { threadSorts, type FeedQuery } from "../model/feed";
+import { threadSorts, type FeedQuery, type ThreadSort } from "../model/feed";
 import { SearchResults } from "./SearchResults";
 import { ThreadCard } from "./ThreadCard";
 import styles from "../board.module.css";
@@ -235,15 +236,17 @@ export function FeedPanel({
           </Stack>
         )}
 
-        <Stack direction="row" gap={4} align="center" wrap navRow className={styles.sortRow}>
-          <Text as="span" role="hint">
-            {messages.board.feed.sortLabel}
-          </Text>
-          {threadSorts.map((sort) => (
-            <Tag key={sort} active={query.sort === sort} onClick={() => onQueryChange({ sort })}>
-              {messages.board.feed.sorts[sort]}
-            </Tag>
-          ))}
+        <Stack direction="row" gap={8} align="center" wrap navRow className={styles.sortRow}>
+          <SegmentedControl
+            mode="buttons"
+            label={messages.board.feed.sortLabel}
+            value={query.sort}
+            onChange={(sort: ThreadSort) => onQueryChange({ sort })}
+            options={threadSorts.map((sort) => ({
+              value: sort,
+              label: messages.board.feed.sorts[sort],
+            }))}
+          />
         </Stack>
 
         <Stack direction="row" gap={8} align="center" justify="space-between" wrap>

@@ -55,6 +55,7 @@ test("ranks the top feed with the stopped task in the list", async ({ page }) =>
   await expect(cards.nth(0)).toContainText("PUBLISHED");
   await expect(cards.nth(0)).toContainText("4W AGO");
   await expect(cards.nth(0).getByRole("button", { name: "▲ 2 VOTES" })).toBeVisible();
+  await expect(cards.nth(0)).toContainText(/▲ 2 VOTES\s*PUBLISHED\s*Go\s*Linux/);
   await expect(cards.nth(1)).toContainText(BUMP);
   await expect(cards.nth(1)).toContainText("2D AGO");
   await expect(cards.nth(1)).toContainText("COLLECTING");
@@ -386,12 +387,17 @@ test("walks the feed and the task by rows", async ({ page }) => {
     await expect(first.getByRole("link").first()).toBeFocused({ timeout: 1_000 });
   }).toPass();
 
-  // ▶ walks from the card title to the lead link and the ticket chip, ◀ back;
+  // ▶ walks from the card title to the lead, vote and ticket, ◀ back;
   // Space on the title opens the task.
   await page.keyboard.press("ArrowRight");
   await expect(first.getByRole("link").nth(1)).toBeFocused();
   await page.keyboard.press("ArrowRight");
+  const vote = first.getByRole("button", { name: "▲ 1 VOTE" });
+  await expect(vote).toBeFocused();
+  await page.keyboard.press("ArrowRight");
   await expect(first.getByRole("link", { name: TICKET_CHIP })).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(vote).toBeFocused();
   await page.keyboard.press("ArrowLeft");
   await expect(first.getByRole("link").nth(1)).toBeFocused();
   await page.keyboard.press("ArrowLeft");

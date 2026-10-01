@@ -481,7 +481,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
 
   return (
     <ThreadActionsProvider actions={threadActions}>
-      <PanelStack onCloseTop={closeTop}>
+      <PanelStack onCloseTop={closeTop} searchable>
         <ShellPanel title={fileTitle("FORUM")}>
           <FeedPanel
             threads={visible}

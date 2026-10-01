@@ -32,9 +32,18 @@
   border-right: 1px solid var(--dos-dark-gray);
 }
 
-.key:hover {
+.key:hover:not(:disabled) {
   background: var(--dos-blue);
   color: var(--dos-white);
+}
+
+.key:disabled {
+  color: var(--dos-dark-gray);
+  cursor: default;
+}
+
+.key:disabled .badge {
+  background: var(--dos-dark-gray);
 }
 
 /* The key cap flips to black: on silver the light-gray cap has no contrast. */

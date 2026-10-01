@@ -11,7 +11,7 @@ const searchBox = (page: Page) => feed(page).getByRole("textbox", { name: "SEARC
 const focusedBody = (page: Page) => page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`);
 
 async function logoff(page: Page) {
-  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "F10 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
 }

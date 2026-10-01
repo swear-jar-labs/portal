@@ -13,6 +13,7 @@ import {
   focusNextControl,
 } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
+import { SEARCH_FIELD_ID } from "@/features/shell";
 import { formatCount } from "@/lib/format";
 import { MAX_TAG_QUERY_LENGTH } from "@/lib/tags";
 import {
@@ -131,6 +132,7 @@ export function ReadroomFeed({
         <Stack direction="row" gap={4} align="center" wrap navRow>
           <Field
             name="q"
+            id={SEARCH_FIELD_ID}
             label={messages.readroom.feed.search.label}
             placeholder={messages.readroom.feed.search.placeholder}
             hideLabel

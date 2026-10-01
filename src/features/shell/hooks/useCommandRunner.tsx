@@ -33,6 +33,7 @@ export type CommandRunnerOptions = {
   commands: readonly AppCommand[];
   groups: readonly FileGroup[];
   signedIn: boolean;
+  focusSearch: () => void;
 };
 
 export function useCommandRunner({
@@ -47,9 +48,11 @@ export function useCommandRunner({
   commands,
   groups,
   signedIn,
+  focusSearch,
 }: CommandRunnerOptions) {
   const handlers = useMemo<Record<ActionCommandId, () => void>>(
     () => ({
+      SEARCH: focusSearch,
       HELP: () =>
         openDialog({
           title: messages.shell.dialogs.help.title,
@@ -88,7 +91,7 @@ export function useCommandRunner({
           ),
         }),
     }),
-    [clearDocument, closeDialog, commands, groups, logoff, openDialog, signedIn],
+    [clearDocument, closeDialog, commands, focusSearch, groups, logoff, openDialog, signedIn],
   );
 
   return useCallback(

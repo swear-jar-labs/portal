@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 async function logoff(page: Page) {
-  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "F10 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
 }

@@ -46,7 +46,7 @@ test.describe("guest account chrome", () => {
     await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Register" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "F10 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
 
     await waitForHydration(page);
@@ -160,7 +160,7 @@ test.describe("member session", () => {
     await expect(currentProfile.getByRole("heading", { level: 1, name: renamed })).toBeVisible();
     await expect(currentProfile.locator('img[src^="data:image/"]')).toHaveCount(0);
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
     await logon(page, handle);
@@ -190,7 +190,7 @@ test.describe("member session", () => {
     await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Profile" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "F10 Logoff" })).toBeVisible();
     await expect(
       page.getByRole("toolbar", { name: "Function keys" }).getByText("ada", { exact: true }),
     ).toBeVisible();
@@ -243,10 +243,10 @@ test.describe("member session", () => {
     await expect(page).toHaveURL("/tickets/FLAG-1");
   });
 
-  test("F9 asks for confirmation and works by keyboard alone", async ({ page }) => {
+  test("F10 asks for confirmation and works by keyboard alone", async ({ page }) => {
     await logon(page);
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByText("End the session?")).toBeVisible();
     await expectNoViolations(page, "logoff confirmation");
@@ -270,15 +270,15 @@ test.describe("member session", () => {
     await page.keyboard.press(" ");
     await expect(dialog).toBeHidden();
     await expect(page).toHaveURL("/forum");
-    await expect(page.getByRole("button", { name: "F9 Logoff" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "F10 Logoff" })).toBeVisible();
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await expect(confirm).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();
     await expect(page).toHaveURL("/");
 
-    await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "F10 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
     const files = page.getByRole("region", { name: FILES_REGION });
     await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
@@ -391,7 +391,7 @@ test.describe("registration and levels", () => {
     await expect(page).toHaveURL("/profile");
 
     // Out and back in on the mailbox: the logon names the same account.
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -471,7 +471,7 @@ test.describe("registration and levels", () => {
     await expect(profile.getByRole("heading", { level: 1, name: "google-newcomer" })).toBeVisible();
     await expect(profile.getByText("Participant")).toBeVisible();
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -496,7 +496,7 @@ test.describe("registration and levels", () => {
     await expect(page.getByRole("menu").getByRole("menuitem", { name: "Apply..." })).toBeVisible();
     await page.keyboard.press("Escape");
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -520,7 +520,7 @@ test.describe("registration and levels", () => {
       page.getByRole("region", { name: "PROFILE.EXE" }).getByText("Participant"),
     ).toBeVisible();
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -530,7 +530,7 @@ test.describe("registration and levels", () => {
     await expect(profile.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
     await expect(profile.getByText("Member")).toBeVisible();
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -576,7 +576,7 @@ test.describe("registration and levels", () => {
     await form.getByRole("button", { name: "CONFIRM" }).click();
     await expect(page).toHaveURL("/profile");
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -609,7 +609,7 @@ test.describe("registration and levels", () => {
     await page.goto("/apply");
     await expect(page.getByRole("heading", { level: 1, name: "MEMBER APPLICATION" })).toBeVisible();
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
 
@@ -1005,7 +1005,7 @@ test.describe("apply form", () => {
 
 test.describe("member application workflow", () => {
   async function logoff(page: Page) {
-    await page.getByRole("button", { name: "F9 Logoff" }).click();
+    await page.getByRole("button", { name: "F10 Logoff" }).click();
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
   }
@@ -1145,10 +1145,10 @@ test.describe("social logon", () => {
     await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
 
-    await page.keyboard.press("F9");
+    await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
     await expect(page).toHaveURL("/");
-    await expect(page.getByRole("button", { name: "F9 Logon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "F10 Logon" })).toBeVisible();
   });
 
   test("maps GitHub to its own demo user", async ({ page }) => {

@@ -14,6 +14,7 @@ import {
   type SelectOption,
 } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
+import { SEARCH_FIELD_ID } from "@/features/shell";
 import { formatCount } from "@/lib/format";
 import { MAX_TAG_QUERY_LENGTH } from "@/lib/tags";
 import {
@@ -168,6 +169,7 @@ export function FeedPanel({
               on mobile it wraps under the search. */}
           <Stack direction="row" gap={4} align="flex-end" wrap>
             <Field
+              id={SEARCH_FIELD_ID}
               label={messages.board.feed.search.label}
               name="q"
               value={query.q}

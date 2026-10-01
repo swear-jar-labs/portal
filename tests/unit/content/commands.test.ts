@@ -11,6 +11,7 @@ import {
   fileTitle,
   HOME_PATH,
   isActionCommand,
+  isSearchablePath,
   joinLocation,
   keyDefsFor,
   loginHref,
@@ -66,7 +67,7 @@ describe("commands content", () => {
 
   it("resolves every command referenced by the function keys in both sessions", () => {
     for (const viewer of VIEWERS) {
-      for (const def of keyDefsFor(viewer)) {
+      for (const def of keyDefsFor(viewer, { searchable: false })) {
         expect(
           commandById.has(def.command),
           `key ${def.key} references unknown ${def.command}`,
@@ -77,15 +78,103 @@ describe("commands content", () => {
 
   it("keeps function keys unique in each session", () => {
     for (const viewer of VIEWERS) {
-      const keys = keyDefsFor(viewer).map((def) => def.key);
+      const keys = keyDefsFor(viewer, { searchable: false }).map((def) => def.key);
       expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+
+  it("keeps ten ordered slots and the agreed commands for every session", () => {
+    for (const viewer of VIEWERS) {
+      const keys = keyDefsFor(viewer, { searchable: true });
+      expect(keys.map((def) => def.key)).toEqual([
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F9",
+        "F10",
+      ]);
+      expect(keys.map((def) => def.command)).toEqual([
+        "HELP",
+        "FORUM",
+        "READROOM",
+        "PROJECTS",
+        "TICKETS",
+        "INBOX",
+        "SEARCH",
+        viewer === null ? "REGISTER" : "PROFILE",
+        "SETTINGS",
+        viewer === null ? "LOGON" : "LOGOFF",
+      ]);
+      expect(keys.filter((def) => def.disabled).map((def) => def.key)).toEqual(
+        viewer === null ? ["F6", "F9"] : [],
+      );
+    }
+  });
+
+  it("disables search independently of the session", () => {
+    for (const viewer of VIEWERS) {
+      expect(
+        keyDefsFor(viewer, { searchable: false }).find((def) => def.key === "F7"),
+      ).toMatchObject({ command: "SEARCH", disabled: true });
+      expect(
+        keyDefsFor(viewer, { searchable: true }).find((def) => def.key === "F7"),
+      ).toMatchObject({ command: "SEARCH", disabled: false });
+    }
+  });
+
+  it.each(["/forum", "/readroom", "/tickets"])("recognizes search list %s", (path) => {
+    expect(isSearchablePath(path)).toBe(true);
+  });
+
+  it.each([
+    "/",
+    "/forum/thread",
+    "/readroom/task",
+    "/tickets/DOS-1",
+    "/forum-archive",
+    "/readroom-old",
+    "/tickets-other",
+    "/projects",
+    "/settings",
+  ])("keeps search unavailable on %s", (path) => {
+    expect(isSearchablePath(path)).toBe(false);
+  });
+
+  it("keeps SEARCH hidden but resolvable and handled in place", () => {
+    expect(resolveCommand(commands, "search")).toMatchObject({ id: "SEARCH", hidden: true });
+    expect(isActionCommand("SEARCH")).toBe(true);
+    for (const viewer of VIEWERS) {
+      expect(
+        fileGroupsFor(viewer).flatMap((group) => group.items.map((item) => item.command)),
+      ).not.toContain("SEARCH");
+    }
+  });
+
+  it("puts DOOM after COFFEE in Help and EXIT last after a separator in Guide", () => {
+    for (const viewer of VIEWERS) {
+      const menus = menuDefsFor(viewer);
+      const help = menus.find((menu) => menu.id === "help");
+      expect(help?.entries.slice(-2)).toEqual([
+        { kind: "command", command: "COFFEE", label: messages.shell.menuBar.labels.COFFEE },
+        { kind: "command", command: "DOOM", label: messages.shell.menuBar.labels.DOOM },
+      ]);
+      const guide = menus.find((menu) => menu.id === "file");
+      expect(guide?.entries.slice(-2)).toEqual([
+        { kind: "separator" },
+        { kind: "command", command: "EXIT", label: messages.shell.menuBar.labels.EXIT },
+      ]);
     }
   });
 
   it("swaps the account keys with the session", () => {
     const accountKeys = (viewer: Viewer) =>
-      keyDefsFor(viewer)
-        .filter((def) => def.key === "F8" || def.key === "F9")
+      keyDefsFor(viewer, { searchable: false })
+        .filter((def) => def.key === "F8" || def.key === "F10")
         .map((def) => def.command);
     expect(accountKeys(null)).toEqual(["REGISTER", "LOGON"]);
     expect(accountKeys({ level: "participant" })).toEqual(["PROFILE", "LOGOFF"]);
@@ -217,7 +306,7 @@ describe("commands content", () => {
         .find((menu) => menu.id === menuId)
         ?.entries.flatMap((entry) => (entry.kind === "command" ? [entry.command] : []));
     for (const viewer of VIEWERS) {
-      expect(entryCommands("file", viewer)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES"]);
+      expect(entryCommands("file", viewer)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES", "EXIT"]);
       expect(entryCommands("board", viewer)).toEqual([
         "FORUM",
         "ERRATA",
@@ -225,7 +314,7 @@ describe("commands content", () => {
         "PROJECTS",
         "TICKETS",
       ]);
-      expect(entryCommands("help", viewer)).toEqual(["HELP", "COFFEE"]);
+      expect(entryCommands("help", viewer)).toEqual(["HELP", "COFFEE", "DOOM"]);
     }
     expect(entryCommands("account", null)).toEqual(["LOGON", "REGISTER"]);
     expect(entryCommands("account", { level: "participant" })).toEqual([
@@ -243,11 +332,13 @@ describe("commands content", () => {
     ]);
   });
 
-  it("removes the STATUS command and leaves F7 unassigned in both sessions", () => {
+  it("removes the STATUS command and assigns F7 to SEARCH in both sessions", () => {
     expect(resolveCommand(commands, "status")).toBeUndefined();
     expect(docs.map((doc) => doc.id)).not.toContain("STATUS");
     for (const viewer of VIEWERS) {
-      expect(keyDefsFor(viewer).map((def) => def.key)).not.toContain("F7");
+      expect(
+        keyDefsFor(viewer, { searchable: false }).find((def) => def.key === "F7"),
+      ).toMatchObject({ command: "SEARCH", disabled: true });
       expect(
         fileGroupsFor(viewer).flatMap((group) => group.items.map((item) => item.command)),
       ).not.toContain("STATUS");

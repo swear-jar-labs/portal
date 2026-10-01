@@ -5,6 +5,7 @@ import { cx } from "../tone";
 import styles from "../formControls.module.css";
 
 export type FieldProps = {
+  id?: string;
   label: string;
   name: string;
   value: string;
@@ -25,6 +26,7 @@ export type FieldProps = {
 };
 
 export function Field({
+  id: providedId,
   label,
   name,
   value,
@@ -39,7 +41,8 @@ export function Field({
   hideLabel = false,
   autoFocus = false,
 }: FieldProps) {
-  const id = useId();
+  const generatedId = useId();
+  const id = providedId ?? generatedId;
   const errorId = `${id}-error`;
   const inputRef = useRef<HTMLInputElement | null>(null);
 

@@ -7,7 +7,7 @@ const FILES = "C:\\SWEARJAR";
 const MENTION_SUBJECT = `ada mentioned you in ${READ_FIRST}`;
 
 async function logoff(page: Page) {
-  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "F10 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
 }

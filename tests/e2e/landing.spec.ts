@@ -273,34 +273,42 @@ test("keeps Enter on the close button a button activation", async ({ page }) => 
   await expect(dialog).toBeHidden();
 });
 
-test("function keys open their commands", async ({ page }) => {
+test("function keys open the community sections and logon", async ({ page }) => {
   const toolbar = page.getByRole("toolbar", { name: "Function keys" });
-  await expect(toolbar.getByRole("button", { name: "F6 Projects" })).toBeVisible();
-  await expect(toolbar.getByRole("button", { name: /^F7\b/ })).toHaveCount(0);
-  await expect(toolbar.getByRole("button", { name: "F8 Register" })).toBeVisible();
-  await expect(toolbar.getByRole("button", { name: "F9 Logon" })).toBeVisible();
-  await expect(toolbar.getByRole("button", { name: "F10 Exit" })).toBeVisible();
+  await expect(toolbar.getByRole("button")).toHaveCount(10);
+  await expect(toolbar.getByRole("button", { name: "F6 Inbox" })).toBeDisabled();
+  await expect(toolbar.getByRole("button", { name: "F7 Search" })).toBeDisabled();
+  await expect(toolbar.getByRole("button", { name: "F9 Settings" })).toBeDisabled();
+  await expect(toolbar.getByRole("button", { name: "F8 Register" })).toBeEnabled();
+  await expect(toolbar.getByRole("button", { name: "F10 Logon" })).toBeEnabled();
 
+  await page.keyboard.press("F2");
+  await expect(page.getByRole("region", { name: "FORUM.EXE", exact: true })).toBeVisible();
   await page.keyboard.press("F3");
-  await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
-
+  await expect(page.getByRole("region", { name: "READROOM.EXE", exact: true })).toBeVisible();
   await page.keyboard.press("F4");
-  await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
-
-  await page.keyboard.press("F7");
-  await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
-
+  await expect(page.getByRole("region", { name: "PROJECTS.EXE", exact: true })).toBeVisible();
   await page.keyboard.press("F5");
-  const doom = page.getByRole("dialog");
-  await expect(doom.getByText("DOOM.EXE", { exact: true })).toBeVisible();
-  await expect(
-    doom.getByText("This is the only OS DOOM has not been ported to yet."),
-  ).toBeVisible();
-  await doom.getByRole("button", { name: "Close" }).click();
-
+  await expect(page.getByRole("region", { name: "TICKETS.EXE", exact: true })).toBeVisible();
   await page.keyboard.press("F10");
+  await expect(page).toHaveURL(/\/login\?next=/);
+});
+
+test("keeps DOOM in Help and EXIT last in Guide", async ({ page }) => {
+  await page.getByRole("menuitem", { name: "Help", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Doom", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("DOOM.EXE", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("You're already logged out. The browser handles the actual exit."),
+    dialog.getByText("This is the only OS DOOM has not been ported to yet."),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await page.getByRole("menuitem", { name: "Guide", exact: true }).click();
+  await expect(page.getByRole("menu").getByRole("menuitem").last()).toHaveText("Exit");
+  await page.getByRole("menuitem", { name: "Exit", exact: true }).click();
+  await expect(
+    dialog.getByText("You're already logged out. The browser handles the actual exit."),
   ).toBeVisible();
 });
 

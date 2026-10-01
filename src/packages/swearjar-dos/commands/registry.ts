@@ -19,7 +19,7 @@ export function nextCompletion(commands: readonly Command[], input: string): str
   return matches[(current + 1) % matches.length]?.id;
 }
 
-// Hidden commands stay resolvable on purpose: F5/F10 and the file manager call them directly.
+// Hidden commands stay resolvable on purpose: shortcuts and manual input call them directly.
 export function resolveCommand<T extends Command>(
   commands: readonly T[],
   input: string,

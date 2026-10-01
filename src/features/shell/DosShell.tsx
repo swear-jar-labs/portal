@@ -30,6 +30,7 @@ import {
   FORUM_PATH,
   HOME_PATH,
   joinLocation,
+  isSearchablePath,
   keyDefsFor,
   loginHref,
   menuDefsFor,
@@ -58,6 +59,8 @@ import { OverlayHost } from "./OverlayHost";
 import { OverlayDocumentTitle, useOverlayFocusReturn } from "./OverlayLayers";
 import { useOverlayHostClaimed, useOverlayLayers } from "./overlay-store";
 import { ShellControlsProvider } from "./ShellControls";
+import { SearchAvailabilityProvider } from "./SearchAvailability";
+import { SEARCH_FIELD_ID } from "./attributes";
 import { resolveShellAddons, type ShellAddon } from "./addons";
 import { FileManagerProvider } from "./FileManager/FileManagerContext";
 import { FileManagerPanel } from "./FileManager/FileManagerPanel";
@@ -130,6 +133,8 @@ export function DosShell({
   const isHome = pathname === HOME_PATH;
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [coins, setCoins] = useState(0);
+  const [searchAvailable, setSearchAvailable] = useState(false);
+  const overlayLayers = useOverlayLayers();
 
   const isMobile = useIsMobile();
   // The boot screen and the welcome dialog belong to the home route only.
@@ -186,7 +191,17 @@ export function DosShell({
     () => fileGroupsFor(session, commandAvailability),
     [session, commandAvailability],
   );
-  const functionKeys = useMemo(() => keyDefsFor(session), [session]);
+  const searchable =
+    isSearchablePath(pathname) &&
+    searchAvailable &&
+    overlayLayers.length === 0 &&
+    !isNavigating &&
+    dialog === null &&
+    !screensaverOn;
+  const functionKeys = useMemo(() => keyDefsFor(session, { searchable }), [session, searchable]);
+  const focusSearch = useCallback(() => {
+    if (searchable) document.getElementById(SEARCH_FIELD_ID)?.focus();
+  }, [searchable]);
   const { tray: trayAddons, fileIcons } = useMemo(() => resolveShellAddons(addons), [addons]);
 
   // The runner needs the file manager (to open docs) and the file manager needs
@@ -199,18 +214,23 @@ export function DosShell({
   // The focus target is the pathname part: query entries (ERRATA) share it.
   // LOGON carries the current location (?next=): a logon started on a page
   // lands back there, a direct /login visit falls back to FORUM.
-  const runFromFiles = useCallback(
+  const runFromNavigation = useCallback(
     (commandId: CommandId) => {
       const command = commandById.get(commandId);
       const href = commandId === "LOGON" && command?.href ? loginHref(location) : command?.href;
       if (href) {
         const target = stripQuery(href);
-        if (target === pathname) focusPanelBody();
-        else panelFocusTarget.current = target;
+        // Re-pushing the same location can replace its RSC panel and lose
+        // the focus just handed to it. A repeated shortcut only focuses.
+        if (href === location) {
+          focusPanelBody();
+          return;
+        }
+        panelFocusTarget.current = target;
       }
       runRef.current(commandId);
     },
-    [location, pathname],
+    [location],
   );
 
   const fileManager = useFileManager({
@@ -221,7 +241,7 @@ export function DosShell({
     onDocumentOpened: goHome,
     groups,
     fileIcons,
-    onCommand: runFromFiles,
+    onCommand: runFromNavigation,
   });
 
   useEffect(() => {
@@ -251,6 +271,7 @@ export function DosShell({
     commands: commandList,
     groups,
     signedIn,
+    focusSearch,
   });
 
   // Every command goes through the runner, except LOGON: it remembers the
@@ -299,7 +320,7 @@ export function DosShell({
   }, [hydrateScreensaverPrefs]);
 
   const controlsEnabled = booted && dialog === null && !screensaverOn;
-  useFunctionKeys(functionKeys, runCommand, controlsEnabled);
+  useFunctionKeys(functionKeys, runFromNavigation, controlsEnabled);
   usePanelNav(controlsEnabled);
   useFileCursorKeys({
     enabled: controlsEnabled,
@@ -317,16 +338,16 @@ export function DosShell({
         <WelcomeBody
           onExplore={() => {
             closeDialog();
-            runFromFiles("FORUM");
+            runFromNavigation("FORUM");
           }}
           onHow={() => {
             closeDialog();
-            runFromFiles("HOW");
+            runFromNavigation("HOW");
           }}
         />
       ),
     });
-  }, [closeDialog, openDialog, runFromFiles]);
+  }, [closeDialog, openDialog, runFromNavigation]);
   // Welcome belongs to the boot: without a boot (deep link into an inner
   // route) entering home must not greet the guest out of nowhere.
   useWelcomeDialog(isHome && booted && bootFired && !signedIn && welcomeEligible, openWelcome);
@@ -355,9 +376,10 @@ export function DosShell({
       functionKeys.map((def) => ({
         key: def.key,
         label: def.label,
-        onSelect: () => runCommand(def.command),
+        disabled: def.disabled || !controlsEnabled,
+        onSelect: () => runFromNavigation(def.command),
       })),
-    [functionKeys, runCommand],
+    [controlsEnabled, functionKeys, runFromNavigation],
   );
 
   if (!booted) {
@@ -398,13 +420,15 @@ export function DosShell({
               fileCount={fileManager.fileCount}
             />
             <ShellControlsProvider enabled={controlsEnabled}>
-              <SessionProvider session={session}>
-                <ShellDialogsProvider dialogs={shellDialogs}>
-                  <Fragment key="overlay">{overlay}</Fragment>
-                  <OverlayDocumentTitle />
-                  <ShellOverlayBody>{children}</ShellOverlayBody>
-                </ShellDialogsProvider>
-              </SessionProvider>
+              <SearchAvailabilityProvider onChange={setSearchAvailable}>
+                <SessionProvider session={session}>
+                  <ShellDialogsProvider dialogs={shellDialogs}>
+                    <Fragment key="overlay">{overlay}</Fragment>
+                    <OverlayDocumentTitle />
+                    <ShellOverlayBody>{children}</ShellOverlayBody>
+                  </ShellDialogsProvider>
+                </SessionProvider>
+              </SearchAvailabilityProvider>
             </ShellControlsProvider>
           </Stack>
         </FileManagerProvider>

@@ -100,7 +100,7 @@ test("a sealed fixture note is absent for guests, its author and admin", async (
     await expect(feed(page).getByRole("article")).toHaveCount(0);
     await expect(feed(page).getByText("0 MATCHES")).toBeVisible();
     if (user === "ada") {
-      await page.getByRole("button", { name: "F9 Logoff" }).click();
+      await page.getByRole("button", { name: "F10 Logoff" }).click();
       await page.getByRole("button", { name: "LOG OFF" }).click();
       await expect(page).toHaveURL("/");
     }

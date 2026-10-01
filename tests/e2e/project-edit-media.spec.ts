@@ -4,7 +4,7 @@ import { PROJECTS_CARD_ATTR } from "@/features/projects/model/projects";
 import { expectNoViolations, logon, waitForHydration } from "./helpers";
 
 async function logoff(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "F10 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
 }

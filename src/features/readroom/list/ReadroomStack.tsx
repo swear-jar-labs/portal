@@ -270,7 +270,7 @@ export function ReadroomStack({ readrooms, tickets, projectRepos, now, task }: R
   }, [closeCompose, closeLocalTask, closeOverlay, closeTask, composing, localTask, overlayOpen]);
 
   return (
-    <PanelStack onCloseTop={closeTop}>
+    <PanelStack onCloseTop={closeTop} searchable>
       <ShellPanel title={fileTitle("READROOM")}>
         <ReadroomFeed
           readrooms={feedReadrooms}

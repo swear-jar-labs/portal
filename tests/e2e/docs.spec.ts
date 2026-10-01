@@ -44,7 +44,10 @@ test("renders the about hero and tone formatting", async ({ page }) => {
 });
 
 test("centers the manifesto heading and right-aligns the signature", async ({ page }) => {
-  await page.keyboard.press("F3");
+  await page
+    .getByRole("region", { name: "C:\\SWEARJAR" })
+    .getByRole("button", { name: "MANIFESTO", exact: true })
+    .click();
 
   const heading = page.getByRole("heading", { level: 2, name: "THE MANIFESTO" });
   await expect(heading).toBeVisible();
@@ -94,7 +97,10 @@ test("centers the how-it-works and rules headings in the manifesto style", async
 });
 
 test("has no detectable accessibility violations on a tone-heavy doc", async ({ page }) => {
-  await page.keyboard.press("F3");
+  await page
+    .getByRole("region", { name: "C:\\SWEARJAR" })
+    .getByRole("button", { name: "MANIFESTO", exact: true })
+    .click();
   await expect(page.getByRole("heading", { level: 2, name: "THE MANIFESTO" })).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();

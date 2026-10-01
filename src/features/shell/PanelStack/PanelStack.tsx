@@ -4,6 +4,7 @@ import { Children, useEffect, useRef, type CSSProperties, type ReactNode } from 
 import { DOS_SCROLL_ATTR, hasCommandModifier, shouldSkipEvent } from "@swearjar/dos";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../attributes";
 import { useShellControls } from "../ShellControls";
+import { usePublishSearchAvailability } from "../SearchAvailability";
 import { panelStackInset } from "./inset";
 import styles from "./PanelStack.module.css";
 
@@ -17,13 +18,15 @@ export type PanelStackProps = {
   children: ReactNode;
   // Esc pops the top layer (the shell's back affordance for deep panels).
   onCloseTop?: () => void;
+  // The base panel owns the shell's search field; other layers make it inert.
+  searchable?: boolean;
 };
 
 /**
  * The right-hand panel stack: layers share one cell, each deeper panel reveals
  * the preceding title bars and everything below the top becomes inert.
  */
-export function PanelStack({ children, onCloseTop }: PanelStackProps) {
+export function PanelStack({ children, onCloseTop, searchable = false }: PanelStackProps) {
   const layers = Children.toArray(children);
   const controlsEnabled = useShellControls();
   const stackRef = useRef<HTMLDivElement>(null);
@@ -31,6 +34,7 @@ export function PanelStack({ children, onCloseTop }: PanelStackProps) {
   // The cascade is a stack property: a lone layer spans the whole panel area;
   // every following layer reveals one more title bar below it.
   const stacked = layers.length > 1;
+  usePublishSearchAvailability(searchable ? !stacked : null);
   const hasTop = stacked && onCloseTop !== undefined;
 
   useEffect(() => {

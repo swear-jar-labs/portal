@@ -76,6 +76,7 @@ export function ReadroomCard({
       }
       actions={
         <Stack direction="row" gap={6} align="center" wrap className={styles.cardDetails}>
+          <VoteButton votes={readroom.upvotes.length} voted={voted} onToggle={onVote} />
           <Tag tone={phaseTones[phase]}>{messages.readroom.phases[phase]}</Tag>
           {readroom.ticket === undefined ? null : (
             <Link
@@ -92,7 +93,6 @@ export function ReadroomCard({
               {messages.readroom.tags[tag]}
             </Tag>
           ))}
-          <VoteButton votes={readroom.upvotes.length} voted={voted} onToggle={onVote} />
         </Stack>
       }
     />

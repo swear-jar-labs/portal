@@ -13,6 +13,7 @@ import {
   type SelectOption,
 } from "@swearjar/dos";
 import { messages, pluralForms } from "@/content/messages";
+import { SEARCH_FIELD_ID } from "@/features/shell";
 import { formatCount } from "@/lib/format";
 import type { ProjectSlug } from "@/features/projects/contracts";
 import type { TicketProject } from "../model/workflow";
@@ -200,6 +201,7 @@ export function TicketsFeed({
           />
           <Field
             label={messages.tickets.feed.filters.search}
+            id={SEARCH_FIELD_ID}
             name="q"
             value={query.q}
             onChange={(q: string) => onQueryChange({ q })}

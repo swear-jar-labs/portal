@@ -68,7 +68,8 @@ test("keeps light surfaces on the real bold with the smear, not a stroke", async
     );
   }
 
-  await page.keyboard.press("F5");
+  await page.getByRole("menuitem", { name: "Help", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Doom", exact: true }).click();
   const doom = page.getByRole("dialog");
   const doomText = doom.getByText("This is the only OS DOOM has not been ported to yet.");
   await expect(doomText).toHaveCSS("font-weight", "700");

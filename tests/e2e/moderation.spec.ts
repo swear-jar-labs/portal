@@ -7,7 +7,7 @@ const THREAD = "/forum/read-first";
 const REPLY = "#board-post-read-first-2";
 
 async function logoff(page: Page) {
-  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "F10 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
 }

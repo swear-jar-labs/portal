@@ -3,3 +3,6 @@
 // target for the file manager.
 export const DOC_LAYER_ATTR = "data-dos-doc-layer";
 export const DOC_TOP_ATTR = "data-dos-doc-top";
+
+// The one search field shared by the section lists and the shell's SEARCH action.
+export const SEARCH_FIELD_ID = "dos-section-search";

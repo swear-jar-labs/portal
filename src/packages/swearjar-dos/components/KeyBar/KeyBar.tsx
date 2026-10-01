@@ -8,6 +8,7 @@ export type KeyBarItem = {
   key: string;
   label: string;
   onSelect?: () => void;
+  disabled?: boolean;
 };
 
 export type KeyBarProps = {
@@ -37,7 +38,13 @@ export function KeyBar({
   return (
     <div className={cx(styles.keyBar, className)} role="toolbar" aria-label={ariaLabel}>
       {items.map((item) => (
-        <button key={item.key} type="button" className={styles.key} onClick={item.onSelect}>
+        <button
+          key={item.key}
+          type="button"
+          className={styles.key}
+          onClick={item.onSelect}
+          disabled={item.disabled}
+        >
           <b className={styles.badge}>{item.key}</b>
           {item.label}
         </button>

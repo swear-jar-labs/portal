@@ -402,7 +402,7 @@ export function TicketsStack({
   ]);
 
   return (
-    <PanelStack onCloseTop={closeTop}>
+    <PanelStack onCloseTop={closeTop} searchable>
       <ShellPanel title={fileTitle("TICKETS")}>
         <TicketsFeed
           tickets={visible}

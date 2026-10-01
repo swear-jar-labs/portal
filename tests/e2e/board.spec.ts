@@ -1281,7 +1281,7 @@ test("pins and locks a thread as admin, and hides the controls from members", as
   await expectNoViolations(page, "forum pin and lock");
 
   // A member sees the thread but neither control.
-  await page.getByRole("button", { name: "F9 Logoff" }).click();
+  await page.getByRole("button", { name: "F10 Logoff" }).click();
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
   await logon(page);

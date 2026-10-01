@@ -13,3 +13,4 @@ export { OverlayClear } from "./OverlayHost";
 export { overlayLayerPanels, useOverlayTop } from "./OverlayLayers";
 export { SettingsForm } from "./SettingsForm";
 export { useFileManagerState } from "./FileManager/FileManagerContext";
+export { SEARCH_FIELD_ID } from "./attributes";

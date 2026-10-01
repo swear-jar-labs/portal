@@ -34,6 +34,8 @@ export const HOME_PATH = "/";
 // The board feed doubles as two section entries: FORUM is the whole feed,
 // ERRATA opens it pre-filtered to the errata board (no new engine or copy).
 export const FORUM_PATH = "/forum";
+export const READROOM_PATH = "/readroom";
+export const TICKETS_PATH = "/tickets";
 export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID}`;
 
 // Guest-only entries: LOGON carries the return location (?next=) so a logon
@@ -125,7 +127,7 @@ const commandDefs = [
   {
     id: "READROOM",
     description: messages.shell.registry.descriptions.READROOM,
-    href: "/readroom",
+    href: READROOM_PATH,
     file: { group: "board", name: "READROOM", ext: "EXE", size: 3072, icon: "book" },
   },
   {
@@ -137,7 +139,7 @@ const commandDefs = [
   {
     id: "TICKETS",
     description: messages.shell.registry.descriptions.TICKETS,
-    href: "/tickets",
+    href: TICKETS_PATH,
     file: { group: "board", name: "TICKETS", ext: "EXE", size: 1024, icon: "ticket" },
   },
   {
@@ -214,6 +216,11 @@ const commandDefs = [
     description: messages.shell.registry.descriptions.EXIT,
     hidden: true,
   },
+  {
+    id: "SEARCH",
+    description: messages.shell.registry.descriptions.SEARCH,
+    hidden: true,
+  },
   { id: "DIR", description: messages.shell.registry.descriptions.DIR },
   { id: "HELP", description: messages.shell.registry.descriptions.HELP },
   { id: "CLS", description: messages.shell.registry.descriptions.CLS },
@@ -246,6 +253,7 @@ export const actionCommandIds = [
   "DOOM",
   "EXIT",
   "LOGOFF",
+  "SEARCH",
 ] as const satisfies readonly CommandId[];
 
 export type ActionCommandId = (typeof actionCommandIds)[number];
@@ -397,6 +405,8 @@ const menuDefs: MenuDef[] = [
       { kind: "command", command: "HOW", label: messages.shell.menuBar.labels.HOW },
       { kind: "command", command: "MANIFESTO", label: messages.shell.menuBar.labels.MANIFESTO },
       { kind: "command", command: "RULES", label: messages.shell.menuBar.labels.RULES },
+      { kind: "separator" },
+      { kind: "command", command: "EXIT", label: messages.shell.menuBar.labels.EXIT },
     ],
   },
   {
@@ -406,6 +416,7 @@ const menuDefs: MenuDef[] = [
       { kind: "command", command: "HELP", label: messages.shell.menuBar.labels.HELP },
       { kind: "separator" },
       { kind: "command", command: "COFFEE", label: messages.shell.menuBar.labels.COFFEE },
+      { kind: "command", command: "DOOM", label: messages.shell.menuBar.labels.DOOM },
     ],
   },
 ];
@@ -437,29 +448,47 @@ export function menuDefsFor(
   }));
 }
 
+export const functionKeys = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"] as const;
+
+export type FunctionKey = (typeof functionKeys)[number];
+
 export type KeyDef = {
-  key: string;
+  key: FunctionKey;
   label: string;
   command: CommandId;
+  disabled: boolean;
 };
 
-const keyDefs: KeyDef[] = [
-  { key: "F1", label: messages.shell.keyBar.labels.HELP, command: "HELP" },
-  { key: "F2", label: messages.shell.keyBar.labels.ABOUT, command: "ABOUT" },
-  { key: "F3", label: messages.shell.keyBar.labels.MANIFESTO, command: "MANIFESTO" },
-  { key: "F4", label: messages.shell.keyBar.labels.RULES, command: "RULES" },
-  { key: "F5", label: messages.shell.keyBar.labels.DOOM, command: "DOOM" },
-  { key: "F6", label: messages.shell.keyBar.labels.PROJECTS, command: "PROJECTS" },
-  { key: "F8", label: messages.shell.keyBar.labels.REGISTER, command: "REGISTER" },
-  { key: "F9", label: messages.shell.keyBar.labels.LOGON, command: "LOGON" },
-  { key: "F8", label: messages.shell.keyBar.labels.PROFILE, command: "PROFILE" },
-  { key: "F9", label: messages.shell.keyBar.labels.LOGOFF, command: "LOGOFF" },
-  { key: "F10", label: messages.shell.keyBar.labels.EXIT, command: "EXIT" },
-];
+type KeyCommand = keyof typeof messages.shell.keyBar.labels & CommandId;
 
-export function keyDefsFor(viewer: Viewer): KeyDef[] {
-  return keyDefs.filter((def) => {
-    const command = commandById.get(def.command);
-    return command === undefined || isVisibleFor(command, viewer);
+// Only list routes have a search field; detail routes keep an inert list beneath them.
+export function isSearchablePath(pathname: string): boolean {
+  return [FORUM_PATH, READROOM_PATH, TICKETS_PATH].includes(pathname);
+}
+
+export function keyDefsFor(viewer: Viewer, { searchable }: { searchable: boolean }): KeyDef[] {
+  const byKey: Record<FunctionKey, KeyCommand> = {
+    F1: "HELP",
+    F2: "FORUM",
+    F3: "READROOM",
+    F4: "PROJECTS",
+    F5: "TICKETS",
+    F6: "INBOX",
+    F7: "SEARCH",
+    F8: viewer === null ? "REGISTER" : "PROFILE",
+    F9: "SETTINGS",
+    F10: viewer === null ? "LOGON" : "LOGOFF",
+  };
+  return functionKeys.map((key) => {
+    const command = byKey[key];
+    const definition = commandById.get(command);
+    return {
+      key,
+      command,
+      label: messages.shell.keyBar.labels[command],
+      disabled:
+        (command === "SEARCH" && !searchable) ||
+        (definition !== undefined && !isVisibleFor(definition, viewer)),
+    };
   });
 }

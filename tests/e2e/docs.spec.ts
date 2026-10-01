@@ -43,7 +43,7 @@ test("renders the about hero and tone formatting", async ({ page }) => {
   await expectMinimumContrast(phrase);
 });
 
-test("centers the manifesto heading and right-aligns the signature", async ({ page }) => {
+test("centers the manifesto heading and left-aligns the signature", async ({ page }) => {
   await page
     .getByRole("region", { name: "C:\\SWEARJAR" })
     .getByRole("button", { name: "MANIFESTO", exact: true })
@@ -59,7 +59,7 @@ test("centers the manifesto heading and right-aligns the signature", async ({ pa
   );
   await expectMinimumContrast(heading);
 
-  await expect(page.getByText("— the team")).toHaveCSS("text-align", "right");
+  await expect(page.getByText("— the team")).toHaveCSS("text-align", "left");
 });
 
 test("centers the how-it-works and rules headings in the manifesto style", async ({ page }) => {

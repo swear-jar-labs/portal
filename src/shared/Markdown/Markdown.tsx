@@ -18,7 +18,7 @@ import styles from "./Markdown.module.css";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
-const ALIGN_CLASSES = { center: styles.center, right: styles.right } as const;
+const ALIGN_CLASSES = { center: styles.center, right: styles.right, left: styles.left } as const;
 type MarkdownAlignment = keyof typeof ALIGN_CLASSES;
 
 function isMarkdownAlignment(value: string): value is MarkdownAlignment {

@@ -15,4 +15,4 @@ title: MANIFESTO.TXT
 
 :brown[**Tools don't take responsibility. People do.**] Use tools you can judge. Own the result.
 
-:cyan[— The team]{align="right"}
+:cyan[— The team]{align="left"}

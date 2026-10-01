@@ -16,7 +16,7 @@ export type AvatarProps = {
 // carry a black letter on the dark feed and on the light form windows alike.
 const FALLBACK_COLORS = [
   "var(--dos-light-cyan)",
-  "var(--dos-yellow)",
+  "var(--dos-brown)",
   "var(--dos-light-green)",
   "var(--dos-light-magenta)",
   "var(--dos-light-red)",

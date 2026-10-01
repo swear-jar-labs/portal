@@ -55,7 +55,7 @@ export type TagId = (typeof tagIds)[number];
 
 export const tagTones: Partial<Record<TagId, Tone>> = {
   proposal: "cyan",
-  question: "yellow",
+  question: "brown",
 };
 
 export function isBoardId(value: string): value is BoardId {

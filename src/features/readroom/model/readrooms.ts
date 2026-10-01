@@ -13,7 +13,7 @@ export type ReadroomPhase = (typeof readroomPhases)[number];
 // The phase reads as a chip; terminal states stay gray, not vivid.
 export const phaseTones: Partial<Record<ReadroomPhase, Tone>> = {
   collecting: "green",
-  reviewing: "yellow",
+  reviewing: "brown",
   published: "cyan",
   archived: "default",
 };

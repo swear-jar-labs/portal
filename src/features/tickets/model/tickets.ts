@@ -19,7 +19,7 @@ export type TicketStatus = (typeof ticketStatuses)[number];
 export const ticketStatusTones: Partial<Record<TicketStatus, Tone>> = {
   open: "green",
   in_progress: "cyan",
-  review: "yellow",
+  review: "brown",
   done: "default",
   closed: "default",
 };
@@ -36,13 +36,13 @@ export function isTicketSize(value: string): value is TicketSize {
   return ticketSizes.some((size) => size === value);
 }
 
-// The ladder chips: free reads green, the tracked rungs cyan and yellow —
+// The ladder chips: free reads green, the tracked rungs cyan and brown —
 // the in_progress/review rhyme, so the queue and the ladder share one
 // color language.
 export const ticketSizeTones: Record<TicketSize, Tone> = {
   S: "green",
   M: "cyan",
-  L: "yellow",
+  L: "brown",
 };
 
 // The queue's order: high first, normal in the middle, low waits. The scale is
@@ -78,7 +78,7 @@ export type TicketTagId = (typeof ticketTagIds)[number];
 // the rest of the vocabulary stays gray.
 export const ticketTagTones: Partial<Record<TicketTagId, Tone>> = {
   "good-first": "green",
-  bug: "yellow",
+  bug: "brown",
   feature: "default",
   docs: "default",
   refactor: "default",

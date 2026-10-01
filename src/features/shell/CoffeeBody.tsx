@@ -32,7 +32,7 @@ export function CoffeeBody() {
         <Text as="span" tone="dim">
           {"-".repeat(BAR_CELLS - filled)}
         </Text>
-        <Text as="span" tone="yellow">{` ${progress}%`}</Text>
+        <Text as="span" tone="brown">{` ${progress}%`}</Text>
       </Text>
       <Text as="div">
         {progress >= BREW_DONE_PERCENT

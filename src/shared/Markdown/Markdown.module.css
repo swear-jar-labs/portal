@@ -2,6 +2,21 @@
   margin-bottom: 12px;
 }
 
+/* Marks a tone directive's span: the class carries no style of its own (the
+   inline tone color still paints the span's text), it only hooks the rule
+   below so a wrapped link can read the wrapper's color. */
+.tone {
+  color: inherit;
+}
+
+/* A link wrapped in a tone directive reads the wrapper's color: the directive
+   owns the line's palette. Hover and focus keep the kit's link treatment, so
+   the interactive states stay out of this rule. */
+.paragraph .tone a:not(:hover):not(:focus-visible),
+.heading .tone a:not(:hover):not(:focus-visible) {
+  color: inherit;
+}
+
 .heading {
   margin-bottom: 12px;
 }

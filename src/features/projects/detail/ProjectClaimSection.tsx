@@ -50,7 +50,7 @@ type RungSize = "S" | "M" | "L";
 
 // Mirrors ticketSizeTones in tickets (a direct import would cycle projects →
 // tickets → projects): the pin test keeps the two in sync.
-export const RUNG_TONES: Record<RungSize, Tone> = { S: "green", M: "cyan", L: "yellow" };
+export const RUNG_TONES: Record<RungSize, Tone> = { S: "green", M: "cyan", L: "brown" };
 
 // One rung as a chip-led row: the size chip replaces the size word, N DONE
 // and EVERYONE read in magenta. A zero need opens the rung to everyone.

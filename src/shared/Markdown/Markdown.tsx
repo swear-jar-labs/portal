@@ -63,11 +63,16 @@ const components: Components = {
       {children}
     </Text>
   ),
-  span: ({ children, node }) => (
-    <Text as="span" tone={toneOf(node)}>
-      {children}
-    </Text>
-  ),
+  span: ({ children, node }) => {
+    // A tone wrapper marks its span for the stylesheet: a link inside reads
+    // the wrapper's color instead of the link blue (see Markdown.module.css).
+    const tone = toneOf(node);
+    return (
+      <Text as="span" tone={tone} className={cx(tone !== undefined && styles.tone)}>
+        {children}
+      </Text>
+    );
+  },
   strong: ({ children }) => (
     <Text as="strong" weight="bold">
       {children}

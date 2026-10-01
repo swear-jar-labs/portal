@@ -12,7 +12,7 @@ export type ProjectStatus = (typeof projectStatuses)[number];
 
 export const projectStatusTones: Partial<Record<ProjectStatus, Tone>> = {
   active: "green",
-  planned: "yellow",
+  planned: "brown",
   archived: "default",
 };
 

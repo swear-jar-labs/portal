@@ -36,7 +36,7 @@
 }
 
 .label {
-  color: var(--dos-field-label, var(--dos-yellow));
+  color: var(--dos-field-label, var(--dos-brown));
   font-weight: 700;
   cursor: pointer;
 }

@@ -55,7 +55,7 @@ test("centers the manifesto heading and right-aligns the signature", async ({ pa
   await expect(heading).toHaveCSS("letter-spacing", "normal");
   await expect(page.getByText("THE MANIFESTO")).toHaveCSS(
     "color",
-    await resolveTone(page, "--dos-tone-yellow"),
+    await resolveTone(page, "--dos-tone-brown"),
   );
   await expectMinimumContrast(heading);
 
@@ -69,12 +69,29 @@ test("centers the how-it-works and rules headings in the manifesto style", async
   const howHeading = page.getByRole("heading", { level: 2, name: "HOW IT WORKS" });
   await expect(howHeading).toBeVisible();
   await expect(howHeading).toHaveCSS("text-align", "center");
-  await expect(howHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-yellow"));
+  await expect(howHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-brown"));
 
   const how = page.getByRole("region", { name: "HOW-IT-WORKS.TXT", exact: true });
-  for (const section of ["FORUM & ERRATA", "READROOM", "PROJECTS"]) {
-    await expect(how.getByText(section, { exact: true })).toBeVisible();
-  }
+  // The section lead-ins link to their sections (ERRATA deep-links its board);
+  // FORUM and READROOM repeat in the register line below.
+  await expect(how.getByRole("link", { name: "FORUM" }).first()).toHaveAttribute("href", "/forum");
+  await expect(how.getByRole("link", { name: "ERRATA" })).toHaveAttribute(
+    "href",
+    "/forum?board=errata",
+  );
+  await expect(how.getByRole("link", { name: "READROOM" }).first()).toHaveAttribute(
+    "href",
+    "/readroom",
+  );
+  await expect(how.getByRole("link", { name: "PROJECTS" })).toHaveAttribute("href", "/projects");
+  await expect(how.getByRole("link", { name: "FORUM" })).toHaveCount(2);
+  await expect(how.getByRole("link", { name: "READROOM" })).toHaveCount(2);
+  // The lead-in links sit in cyan wrappers and read the wrapper's color
+  // instead of the link blue.
+  const errata = how.getByRole("link", { name: "ERRATA" });
+  const wrapperColor = await errata.evaluate((link) => link.parentElement?.style.color ?? "");
+  expect(wrapperColor).toContain("--dos-tone-brown");
+  await expect(errata).toHaveCSS("color", await resolveTone(page, "--dos-tone-brown"));
   await expect(
     how.getByText(
       "Learn to build software by making your own decisions, including the wrong ones.",
@@ -94,7 +111,7 @@ test("centers the how-it-works and rules headings in the manifesto style", async
   const rulesHeading = page.getByRole("heading", { level: 2, name: "THE RULES" });
   await expect(rulesHeading).toBeVisible();
   await expect(rulesHeading).toHaveCSS("text-align", "center");
-  await expect(rulesHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-yellow"));
+  await expect(rulesHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-brown"));
 });
 
 test("has no detectable accessibility violations on a tone-heavy doc", async ({ page }) => {

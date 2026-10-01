@@ -8,7 +8,7 @@ export type Tone =
   | "blue"
   | "cyan"
   | "green"
-  | "yellow"
+  | "brown"
   | "red"
   | "magenta"
   | "muted-magenta";
@@ -35,7 +35,7 @@ export const toneColor: Record<Tone, string> = {
   blue: "var(--dos-tone-blue)",
   cyan: "var(--dos-tone-cyan)",
   green: "var(--dos-tone-green)",
-  yellow: "var(--dos-tone-yellow)",
+  brown: "var(--dos-tone-brown)",
   red: "var(--dos-tone-red)",
   magenta: "var(--dos-tone-magenta)",
   "muted-magenta": "var(--dos-tone-muted-magenta)",
@@ -53,7 +53,7 @@ export const toneBlockColor: Record<Tone, string> = {
   blue: "var(--dos-blue)",
   cyan: "var(--dos-cyan)",
   green: "var(--dos-green)",
-  yellow: "var(--dos-yellow)",
+  brown: "var(--dos-brown)",
   red: "var(--dos-red)",
   magenta: "var(--dos-magenta)",
   "muted-magenta": "var(--dos-muted-magenta)",

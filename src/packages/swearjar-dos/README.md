@@ -70,10 +70,10 @@ and literal colors stay on the `tone` prop — UI text uses a role.
 | ---------- | ------- | ------- | ---------------------------------------------------------- |
 | `body`     | inherit | inherit | The default; the light surface makes it bold               |
 | `hint`     | dim     | inherit | Secondary text: 0.9em and dim; the ink follows the surface |
-| `accent`   | yellow  | inherit | Yellow lines that are not headings                         |
+| `accent`   | brown   | inherit | Brown lines that are not headings                          |
 | `danger`   | red     | bold    | Errors                                                     |
 | `positive` | green   | inherit | Positive states                                            |
-| `heading`  | yellow  | bold    | `Heading` always stamps it; the level adds the size        |
+| `heading`  | brown   | bold    | `Heading` always stamps it; the level adds the size        |
 
 `Text` props split into two mutually exclusive variants: the role variant (`role`, default
 `body`, always stamped) and the content variant (`tone` with optional `weight="bold"`), which

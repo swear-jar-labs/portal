@@ -18,14 +18,20 @@ describe("Markdown pipeline", () => {
   });
 
   it("keeps bold inside a tone directive", () => {
-    const html = render(":yellow[**jar**]");
-    expect(html).toContain("--dos-tone-yellow");
+    const html = render(":brown[**jar**]");
+    expect(html).toContain("--dos-tone-brown");
     expect(html).toContain("<strong");
+  });
+
+  it("nests a link inside a tone directive's span", () => {
+    const html = render(":brown[[**go**](/x)]");
+    expect(html).toContain("--dos-tone-brown");
+    expect(html).toMatch(/<span[^>]*\btone\b[^>]*><a href="\/x"/);
   });
 
   it("aligns a block when the directive fills it", () => {
     expect(render(':cyan[sig]{align="right"}')).toMatch(/class="[^"]*\bright\b/);
-    expect(render('## :yellow[Head]{align="center"}')).toMatch(/class="[^"]*\bcenter\b/);
+    expect(render('## :brown[Head]{align="center"}')).toMatch(/class="[^"]*\bcenter\b/);
   });
 
   it("ignores alignment on a directive inside running text", () => {

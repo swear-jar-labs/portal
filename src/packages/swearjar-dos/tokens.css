@@ -15,7 +15,9 @@
   /* Muted magenta for the tech-vocabulary chips: the neon cut screams on
      dense feeds; this keeps the hue at ~12:1 with black text. */
   --dos-muted-magenta: #d8b8d8;
-  --dos-yellow: #ffff55;
+  /* Brown spans the CGA yellow slot: vivid yellow on dark, amber-brown ink on
+     the light family (the tone remaps below keep it AA-readable there). */
+  --dos-brown: #ffff55;
   --dos-white: #ffffff;
 
   /* Secondary text on black: the CGA dark gray (#555555) sits at ~2.8:1. */
@@ -36,7 +38,7 @@
   --dos-tone-blue: var(--dos-light-blue);
   --dos-tone-cyan: var(--dos-light-cyan);
   --dos-tone-green: var(--dos-light-green);
-  --dos-tone-yellow: var(--dos-yellow);
+  --dos-tone-brown: var(--dos-brown);
   --dos-tone-red: var(--dos-light-red);
   --dos-tone-magenta: var(--dos-light-magenta);
   /* The tech-vocabulary chip spends the high-intensity magenta as its fill;
@@ -132,7 +134,7 @@
 }
 
 [data-dos-role="accent"] {
-  --dos-text-color: var(--dos-tone-yellow);
+  --dos-text-color: var(--dos-tone-brown);
 }
 
 [data-dos-role="danger"] {
@@ -145,7 +147,7 @@
 }
 
 [data-dos-role="heading"] {
-  --dos-text-color: var(--dos-tone-yellow);
+  --dos-text-color: var(--dos-tone-brown);
   --dos-text-weight: var(--dos-weight-bold);
   --dos-text-line-height: var(--dos-text-heading-line-height);
   --dos-text-tracking: var(--dos-text-heading-tracking);
@@ -176,7 +178,7 @@
   --dos-tone-green: #005a00;
   --dos-tone-cyan: #005858;
   --dos-tone-blue: #0000cc;
-  --dos-tone-yellow: #7a3c00;
+  --dos-tone-brown: #7a3c00;
   --dos-tone-red: #a00000;
   --dos-tone-magenta: #8a008a;
   --dos-tone-muted-magenta: #8a008a;
@@ -215,7 +217,7 @@
   --dos-tone-dim: #555555;
   --dos-tone-green: #008400;
   --dos-tone-cyan: #008080;
-  --dos-tone-yellow: #a05a00;
+  --dos-tone-brown: #a05a00;
   --dos-tone-red: #c00000;
   --dos-tone-magenta: #c000c0;
   --dos-tone-muted-magenta: #c000c0;

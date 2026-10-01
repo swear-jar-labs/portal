@@ -18,7 +18,7 @@ export const bootLines: BootLine[] = [
   {
     id: "ai",
     text: "Checking for AI dependencies..........",
-    status: { text: "NOT REQUIRED", tone: "yellow" },
+    status: { text: "NOT REQUIRED", tone: "brown" },
   },
   {
     id: "coffee",

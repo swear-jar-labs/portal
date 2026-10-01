@@ -43,7 +43,7 @@ describe("projects model", () => {
   it("tones active and planned, keeps the archive gray", () => {
     expect(projectStatusTones satisfies Partial<Record<ProjectStatus, string>>).toEqual({
       active: "green",
-      planned: "yellow",
+      planned: "brown",
       archived: "default",
     });
   });

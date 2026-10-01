@@ -43,7 +43,7 @@ const threads: readonly Thread[] = [
           "2. **Show the work.** An example or a reproduction beats a confident guess.",
           "3. **Respect the person.** Critique the work. A dry joke is welcome; a personal dig is not.",
           "",
-          "Tags: :cyan[proposal], :yellow[question], plus the shared tech set.",
+          "Tags: :cyan[proposal], :brown[question], plus the shared tech set.",
         ].join("\n"),
       },
       {

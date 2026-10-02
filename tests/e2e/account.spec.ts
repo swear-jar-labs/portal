@@ -495,7 +495,7 @@ test.describe("registration and levels", () => {
     await expect(files.getByText("3 DIRS, 14 FILES")).toBeVisible();
 
     await page.getByRole("menuitem", { name: "Account" }).click();
-    await expect(page.getByRole("menu").getByRole("menuitem", { name: "Apply..." })).toBeVisible();
+    await expect(page.getByRole("menu").getByRole("menuitem", { name: "Apply" })).toBeVisible();
     await page.keyboard.press("Escape");
 
     await page.keyboard.press("F10");

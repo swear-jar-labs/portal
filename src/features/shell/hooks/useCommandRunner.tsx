@@ -10,7 +10,7 @@ import {
 } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { CoffeeBody } from "../CoffeeBody";
-import { DirBody, DoomBody, ErrorBody, ExitBody, HelpBody, LogoffBody } from "../dialogs";
+import { DirBody, DoomBody, ErrorBody, HelpBody, LogoffBody } from "../dialogs";
 
 export type DialogState = {
   title: string;
@@ -29,7 +29,6 @@ export type CommandRunnerOptions = {
   push: (href: string) => void;
   commands: readonly AppCommand[];
   groups: readonly FileGroup[];
-  signedIn: boolean;
   focusSearch: () => void;
 };
 
@@ -42,7 +41,6 @@ export function useCommandRunner({
   push,
   commands,
   groups,
-  signedIn,
   focusSearch,
 }: CommandRunnerOptions) {
   const handlers = useMemo<Record<ActionCommandId, () => void>>(
@@ -65,11 +63,6 @@ export function useCommandRunner({
           body: <CoffeeBody />,
         }),
       DOOM: () => openDialog({ title: messages.shell.dialogs.doom.title, body: <DoomBody /> }),
-      EXIT: () =>
-        openDialog({
-          title: messages.shell.dialogs.exit.title,
-          body: <ExitBody signedIn={signedIn} />,
-        }),
       // Logging off ends the session, so it asks first.
       LOGOFF: () =>
         openDialog({
@@ -85,7 +78,7 @@ export function useCommandRunner({
           ),
         }),
     }),
-    [closeDialog, commands, focusSearch, groups, logoff, openDialog, signedIn],
+    [closeDialog, commands, focusSearch, groups, logoff, openDialog],
   );
 
   return useCallback(

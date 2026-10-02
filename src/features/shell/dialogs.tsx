@@ -57,19 +57,6 @@ export function DoomBody() {
   );
 }
 
-export function ExitBody({ signedIn }: { signedIn: boolean }) {
-  return (
-    <Stack gap={4}>
-      <Text as="div">
-        {signedIn ? messages.shell.dialogs.exit.memberText : messages.shell.dialogs.exit.text}
-      </Text>
-      <Text as="div" role="hint">
-        {signedIn ? messages.shell.dialogs.exit.memberHint : messages.shell.dialogs.exit.hint}
-      </Text>
-    </Stack>
-  );
-}
-
 export function LogoffBody({
   onConfirm,
   onCancel,

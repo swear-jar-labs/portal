@@ -44,23 +44,10 @@ describe("commands content", () => {
   it("resolves every command referenced by the menus in both sessions", () => {
     for (const viewer of VIEWERS) {
       const menuDefs = menuDefsFor(viewer);
-      const referenced = menuDefs.flatMap((menu) =>
-        menu.entries.flatMap((entry) => (entry.kind === "command" ? [entry.command] : [])),
-      );
+      const referenced = menuDefs.flatMap((menu) => menu.entries.map((entry) => entry.command));
       expect(referenced.length).toBeGreaterThan(0);
       for (const id of referenced) {
         expect(commandById.has(id), `menu references unknown command ${id}`).toBe(true);
-      }
-    }
-  });
-
-  it("keeps menus free of dangling separators in both sessions", () => {
-    for (const viewer of VIEWERS) {
-      for (const menu of menuDefsFor(viewer)) {
-        expect(menu.entries.at(0)?.kind, `${menu.id} starts with a separator`).not.toBe(
-          "separator",
-        );
-        expect(menu.entries.at(-1)?.kind, `${menu.id} ends with a separator`).not.toBe("separator");
       }
     }
   });
@@ -155,19 +142,20 @@ describe("commands content", () => {
     }
   });
 
-  it("puts DOOM after COFFEE in Help and EXIT last after a separator in Guide", () => {
+  it("puts DOOM last in Guide, COFFEE last in Help, and drops EXIT", () => {
     for (const viewer of VIEWERS) {
       const menus = menuDefsFor(viewer);
       const help = menus.find((menu) => menu.id === "help");
-      expect(help?.entries.slice(-2)).toEqual([
-        { kind: "command", command: "COFFEE", label: messages.shell.menuBar.labels.COFFEE },
-        { kind: "command", command: "DOOM", label: messages.shell.menuBar.labels.DOOM },
+      expect(help?.entries.slice(-1)).toEqual([
+        { command: "COFFEE", label: messages.shell.menuBar.labels.COFFEE },
       ]);
       const guide = menus.find((menu) => menu.id === "file");
-      expect(guide?.entries.slice(-2)).toEqual([
-        { kind: "separator" },
-        { kind: "command", command: "EXIT", label: messages.shell.menuBar.labels.EXIT },
+      expect(guide?.entries.slice(-1)).toEqual([
+        { command: "DOOM", label: messages.shell.menuBar.labels.DOOM },
       ]);
+      expect(menus.flatMap((menu) => menu.entries)).not.toContainEqual(
+        expect.objectContaining({ command: "EXIT" }),
+      );
     }
   });
 
@@ -304,9 +292,9 @@ describe("commands content", () => {
     const entryCommands = (menuId: string, viewer: Viewer) =>
       menuDefsFor(viewer)
         .find((menu) => menu.id === menuId)
-        ?.entries.flatMap((entry) => (entry.kind === "command" ? [entry.command] : []));
+        ?.entries.map((entry) => entry.command);
     for (const viewer of VIEWERS) {
-      expect(entryCommands("file", viewer)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES", "EXIT"]);
+      expect(entryCommands("file", viewer)).toEqual(["ABOUT", "HOW", "MANIFESTO", "RULES", "DOOM"]);
       expect(entryCommands("board", viewer)).toEqual([
         "FORUM",
         "ERRATA",
@@ -314,7 +302,7 @@ describe("commands content", () => {
         "PROJECTS",
         "TICKETS",
       ]);
-      expect(entryCommands("help", viewer)).toEqual(["HELP", "COFFEE", "DOOM"]);
+      expect(entryCommands("help", viewer)).toEqual(["HELP", "COFFEE"]);
     }
     expect(entryCommands("account", null)).toEqual(["LOGON", "REGISTER"]);
     expect(entryCommands("account", { level: "participant" })).toEqual([
@@ -400,9 +388,8 @@ describe("commands content", () => {
       "REPORTS",
     );
     expect(menuDefsFor(account, { REPORTS: true }).flatMap((menu) => menu.entries)).toContainEqual({
-      kind: "command",
       command: "REPORTS",
-      label: "Reports...",
+      label: "Reports",
     });
   });
 

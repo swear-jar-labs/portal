@@ -5,9 +5,14 @@ import { type ReactNode } from "react";
 import { cx } from "../tone";
 import styles from "./MenuBar.module.css";
 
-export type MenuBarEntry =
-  | { kind?: "item"; id: string; label: string; onSelect: () => void; disabled?: boolean }
-  | { kind: "separator" };
+export type MenuBarEntry = {
+  id: string;
+  label: string;
+  /** The activation key, shown after a dotted leader; announced as the shortcut. */
+  hint?: string;
+  onSelect: () => void;
+  disabled?: boolean;
+};
 
 export type MenuBarMenu = {
   id: string;
@@ -29,20 +34,22 @@ export function MenuBar({ menus, brand, className }: MenuBarProps) {
           <RadixMenubar.Trigger className={styles.trigger}>{menu.label}</RadixMenubar.Trigger>
           <RadixMenubar.Portal>
             <RadixMenubar.Content className={styles.content} sideOffset={0}>
-              {menu.entries.map((entry, index) =>
-                entry.kind === "separator" ? (
-                  <RadixMenubar.Separator key={`separator-${index}`} className={styles.separator} />
-                ) : (
-                  <RadixMenubar.Item
-                    key={entry.id}
-                    className={styles.item}
-                    disabled={entry.disabled}
-                    onSelect={entry.onSelect}
-                  >
-                    {entry.label}
-                  </RadixMenubar.Item>
-                ),
-              )}
+              {menu.entries.map((entry) => (
+                <RadixMenubar.Item
+                  key={entry.id}
+                  className={styles.item}
+                  disabled={entry.disabled}
+                  aria-keyshortcuts={entry.hint}
+                  onSelect={entry.onSelect}
+                >
+                  <span className={styles.label}>{entry.label}</span>
+                  {entry.hint && (
+                    <span className={styles.hint} aria-hidden="true">
+                      {entry.hint}
+                    </span>
+                  )}
+                </RadixMenubar.Item>
+              ))}
             </RadixMenubar.Content>
           </RadixMenubar.Portal>
         </RadixMenubar.Menu>

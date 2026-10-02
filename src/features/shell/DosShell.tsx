@@ -263,7 +263,6 @@ export function DosShell({
     push,
     commands: commandList,
     groups,
-    signedIn,
     focusSearch,
   });
 
@@ -345,23 +344,24 @@ export function DosShell({
   // (e.g. after a deep link into an inner route) must not greet out of nowhere.
   useWelcomeDialog(isHome && !signedIn && welcomeEligible, openWelcome);
 
+  const commandToFKey = useMemo(
+    () => new Map(functionKeys.map((def) => [def.command, def.key])),
+    [functionKeys],
+  );
+
   const menus = useMemo(
     () =>
       menuDefsFor(session, commandAvailability).map((menu) => ({
         id: menu.id,
         label: menu.label,
-        entries: menu.entries.map((entry) =>
-          entry.kind === "separator"
-            ? { kind: "separator" as const }
-            : {
-                kind: "item" as const,
-                id: `${menu.id}-${entry.command}`,
-                label: entry.label,
-                onSelect: () => runCommand(entry.command),
-              },
-        ),
+        entries: menu.entries.map((entry) => ({
+          id: `${menu.id}-${entry.command}`,
+          label: entry.label,
+          hint: commandToFKey.get(entry.command),
+          onSelect: () => runCommand(entry.command),
+        })),
       })),
-    [commandAvailability, runCommand, session],
+    [commandAvailability, runCommand, session, commandToFKey],
   );
 
   const keyItems = useMemo(

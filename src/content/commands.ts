@@ -216,11 +216,6 @@ const commandDefs = [
     hidden: true,
   },
   {
-    id: "EXIT",
-    description: messages.shell.registry.descriptions.EXIT,
-    hidden: true,
-  },
-  {
     id: "SEARCH",
     description: messages.shell.registry.descriptions.SEARCH,
     hidden: true,
@@ -253,7 +248,6 @@ export const actionCommandIds = [
   "DIR",
   "COFFEE",
   "DOOM",
-  "EXIT",
   "LOGOFF",
   "SEARCH",
 ] as const satisfies readonly CommandId[];
@@ -359,8 +353,7 @@ export function fileGroupsFor(
   }));
 }
 
-export type MenuEntry =
-  { kind: "separator" } | { kind: "command"; command: CommandId; label: string };
+export type MenuEntry = { command: CommandId; label: string };
 
 export type MenuDef = {
   id: string;
@@ -373,66 +366,48 @@ const menuDefs: MenuDef[] = [
     id: "board",
     label: messages.shell.menuBar.titles.board,
     entries: [
-      {
-        kind: "command",
-        command: "FORUM",
-        label: messages.shell.menuBar.labels.FORUM,
-      },
-      { kind: "command", command: "ERRATA", label: messages.shell.menuBar.labels.ERRATA },
-      { kind: "command", command: "READROOM", label: messages.shell.menuBar.labels.READROOM },
-      { kind: "command", command: "PROJECTS", label: messages.shell.menuBar.labels.PROJECTS },
-      { kind: "command", command: "TICKETS", label: messages.shell.menuBar.labels.TICKETS },
+      { command: "FORUM", label: messages.shell.menuBar.labels.FORUM },
+      { command: "ERRATA", label: messages.shell.menuBar.labels.ERRATA },
+      { command: "READROOM", label: messages.shell.menuBar.labels.READROOM },
+      { command: "PROJECTS", label: messages.shell.menuBar.labels.PROJECTS },
+      { command: "TICKETS", label: messages.shell.menuBar.labels.TICKETS },
     ],
   },
   {
     id: "account",
     label: messages.shell.menuBar.titles.account,
     entries: [
-      { kind: "command", command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
-      { kind: "command", command: "REGISTER", label: messages.shell.menuBar.labels.REGISTER },
-      { kind: "command", command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
-      { kind: "command", command: "ADMIN", label: messages.shell.menuBar.labels.ADMIN },
-      { kind: "command", command: "INBOX", label: messages.shell.menuBar.labels.INBOX },
-      { kind: "command", command: "REPORTS", label: messages.shell.menuBar.labels.REPORTS },
-      { kind: "command", command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
-      { kind: "command", command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
-      { kind: "command", command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
+      { command: "LOGON", label: messages.shell.menuBar.labels.LOGON },
+      { command: "REGISTER", label: messages.shell.menuBar.labels.REGISTER },
+      { command: "APPLY", label: messages.shell.menuBar.labels.APPLY },
+      { command: "ADMIN", label: messages.shell.menuBar.labels.ADMIN },
+      { command: "INBOX", label: messages.shell.menuBar.labels.INBOX },
+      { command: "REPORTS", label: messages.shell.menuBar.labels.REPORTS },
+      { command: "PROFILE", label: messages.shell.menuBar.labels.PROFILE },
+      { command: "SETTINGS", label: messages.shell.menuBar.labels.SETTINGS },
+      { command: "LOGOFF", label: messages.shell.menuBar.labels.LOGOFF },
     ],
   },
   {
     id: "file",
     label: messages.shell.menuBar.titles.file,
     entries: [
-      { kind: "command", command: "ABOUT", label: messages.shell.menuBar.labels.ABOUT },
-      { kind: "command", command: "HOW", label: messages.shell.menuBar.labels.HOW },
-      { kind: "command", command: "MANIFESTO", label: messages.shell.menuBar.labels.MANIFESTO },
-      { kind: "command", command: "RULES", label: messages.shell.menuBar.labels.RULES },
-      { kind: "separator" },
-      { kind: "command", command: "EXIT", label: messages.shell.menuBar.labels.EXIT },
+      { command: "ABOUT", label: messages.shell.menuBar.labels.ABOUT },
+      { command: "HOW", label: messages.shell.menuBar.labels.HOW },
+      { command: "MANIFESTO", label: messages.shell.menuBar.labels.MANIFESTO },
+      { command: "RULES", label: messages.shell.menuBar.labels.RULES },
+      { command: "DOOM", label: messages.shell.menuBar.labels.DOOM },
     ],
   },
   {
     id: "help",
     label: messages.shell.menuBar.titles.help,
     entries: [
-      { kind: "command", command: "HELP", label: messages.shell.menuBar.labels.HELP },
-      { kind: "separator" },
-      { kind: "command", command: "COFFEE", label: messages.shell.menuBar.labels.COFFEE },
-      { kind: "command", command: "DOOM", label: messages.shell.menuBar.labels.DOOM },
+      { command: "HELP", label: messages.shell.menuBar.labels.HELP },
+      { command: "COFFEE", label: messages.shell.menuBar.labels.COFFEE },
     ],
   },
 ];
-
-function trimSeparators(entries: MenuEntry[]): MenuEntry[] {
-  const result: MenuEntry[] = [];
-  for (const entry of entries) {
-    const last = result.at(-1);
-    if (entry.kind === "separator" && (last === undefined || last.kind === "separator")) continue;
-    result.push(entry);
-  }
-  while (result.at(-1)?.kind === "separator") result.pop();
-  return result;
-}
 
 export function menuDefsFor(
   viewer: Viewer,
@@ -440,13 +415,10 @@ export function menuDefsFor(
 ): MenuDef[] {
   return menuDefs.map((menu) => ({
     ...menu,
-    entries: trimSeparators(
-      menu.entries.filter((entry) => {
-        if (entry.kind === "separator") return true;
-        const command = commandById.get(entry.command);
-        return command === undefined || isVisibleFor(command, viewer, availability);
-      }),
-    ),
+    entries: menu.entries.filter((entry) => {
+      const command = commandById.get(entry.command);
+      return command === undefined || isVisibleFor(command, viewer, availability);
+    }),
   }));
 }
 

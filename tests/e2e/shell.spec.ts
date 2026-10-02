@@ -40,6 +40,27 @@ test("orders the top menu as COMMUNITY, ACCOUNT, GUIDE and HELP", async ({ page 
   expect(triggers).toEqual(["Community", "Account", "Guide", "Help"]);
 });
 
+test("shows each function key on its menu entry", async ({ page }) => {
+  await enterShell(page);
+
+  await page.getByRole("menuitem", { name: "Account", exact: true }).click();
+  const logon = page.getByRole("menuitem", { name: "Logon", exact: true });
+  // The hint stays out of the accessible name: the shortcut rides ARIA.
+  await expect(logon).toHaveAttribute("aria-keyshortcuts", "F10");
+  await expect(logon.getByText("F10", { exact: true })).toHaveAttribute("aria-hidden", "true");
+  await expect(page.getByRole("menuitem", { name: "Register", exact: true })).toHaveAttribute(
+    "aria-keyshortcuts",
+    "F8",
+  );
+
+  await page.keyboard.press("Escape");
+  await page.getByRole("menuitem", { name: "Guide", exact: true }).click();
+  // An entry without a key carries no shortcut at all.
+  const doom = page.getByRole("menuitem", { name: "Doom", exact: true });
+  await expect(doom).toBeVisible();
+  expect(await doom.getAttribute("aria-keyshortcuts")).toBeNull();
+});
+
 test("keeps the menu dropdown above the file list on a cold inner route", async ({ page }) => {
   // The shell carries no switch-on animation (and no stacking context from it),
   // so the dropdown must carry itself with z-index

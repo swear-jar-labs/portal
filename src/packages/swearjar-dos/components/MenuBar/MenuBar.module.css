@@ -41,6 +41,8 @@
 }
 
 .item {
+  display: flex;
+  align-items: center;
   padding: 1px 14px;
   cursor: pointer;
   white-space: nowrap;
@@ -60,10 +62,29 @@
   cursor: default;
 }
 
-.separator {
+.label {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+}
+
+/* The shortcut sits behind a dotted leader (row-of-dots drawn as dashes) that
+   inherits the ink, so the blue highlight flips it with the text. */
+.item:has(.hint) .label::after {
+  content: "";
+  flex: 1 1 auto;
   height: 2px;
-  margin: 3px 4px;
-  background: var(--dos-dark-gray);
+  margin: 0 8px;
+  background-image: linear-gradient(to right, currentColor 0 2px, transparent 2px 7px);
+  background-size: 7px 2px;
+  background-repeat: repeat-x;
+  opacity: 0.45;
+}
+
+.hint {
+  flex: 0 0 auto;
+  /* F1-F10 column: keys right-align under each other across the menu. */
+  min-width: 3ch;
 }
 
 .brand {

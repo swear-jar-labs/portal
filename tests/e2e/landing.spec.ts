@@ -294,8 +294,17 @@ test("function keys open the community sections and logon", async ({ page }) => 
   await expect(page).toHaveURL(/\/login\?next=/);
 });
 
-test("keeps DOOM in Help and EXIT last in Guide", async ({ page }) => {
+test("keeps DOOM in Guide and drops EXIT", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Help", exact: true }).click();
+  await expect(
+    page.getByRole("menu").getByRole("menuitem", { name: "Doom", exact: true }),
+  ).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await page.getByRole("menuitem", { name: "Guide", exact: true }).click();
+  await expect(page.getByRole("menu").getByRole("menuitem").last()).toHaveText("Doom");
+  await expect(
+    page.getByRole("menu").getByRole("menuitem", { name: "Exit", exact: true }),
+  ).toHaveCount(0);
   await page.getByRole("menuitem", { name: "Doom", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("DOOM.EXE", { exact: true })).toBeVisible();
@@ -304,12 +313,15 @@ test("keeps DOOM in Help and EXIT last in Guide", async ({ page }) => {
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  await page.getByRole("menuitem", { name: "Guide", exact: true }).click();
-  await expect(page.getByRole("menu").getByRole("menuitem").last()).toHaveText("Exit");
-  await page.getByRole("menuitem", { name: "Exit", exact: true }).click();
-  await expect(
-    dialog.getByText("You're already logged out. The browser handles the actual exit."),
-  ).toBeVisible();
+
+  // EXIT is unregistered: the terminal treats it as an unknown command.
+  const input = page.getByLabel("Command line");
+  await input.focus();
+  await page.keyboard.type("EXIT");
+  await page.keyboard.press("Enter");
+  await expect(dialog.getByText("Bad command or file name.")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
 });
 
 test("typing anywhere goes to the command line", async ({ page }) => {

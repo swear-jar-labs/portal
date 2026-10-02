@@ -457,7 +457,10 @@ describe("commands content", () => {
     expect(commandIdForPath("/login")).toBe("LOGON");
     expect(commandIdForPath("/profile")).toBe("PROFILE");
     expect(commandIdForPath("/settings")).toBe("SETTINGS");
-    expect(commandIdForPath(HOME_PATH)).toBeUndefined();
+    expect(commandIdForPath(HOME_PATH)).toBe("ABOUT");
+    expect(commandIdForPath("/how")).toBe("HOW");
+    expect(commandIdForPath("/manifesto")).toBe("MANIFESTO");
+    expect(commandIdForPath("/rules")).toBe("RULES");
     expect(commandIdForPath("/unknown")).toBeUndefined();
   });
 
@@ -477,7 +480,10 @@ describe("commands content", () => {
     // Threads stay on the section entry even with a board filter in the URL.
     expect(commandIdForLocation("/forum/read-first?board=errata")).toBe("FORUM");
     expect(commandIdForLocation("/readroom?board=errata")).toBe("READROOM");
-    expect(commandIdForLocation(HOME_PATH)).toBeUndefined();
+    expect(commandIdForLocation(HOME_PATH)).toBe("ABOUT");
+    expect(commandIdForLocation("/how")).toBe("HOW");
+    expect(commandIdForLocation("/manifesto")).toBe("MANIFESTO");
+    expect(commandIdForLocation("/rules")).toBe("RULES");
     expect(commandIdForLocation("/unknown")).toBeUndefined();
   });
 

@@ -221,12 +221,12 @@ test.describe("member session", () => {
     await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();
   });
 
-  test("opens guide documents in place without bouncing to the forum", async ({ page }) => {
+  test("opens guide documents on their route without bouncing to the forum", async ({ page }) => {
     await logon(page);
     await page.goto("/forum");
 
     await page.locator("#file-MANIFESTO").click();
-    await expect(page).toHaveURL("/");
+    await expect(page).toHaveURL("/manifesto");
     await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
     await expect(page.locator("#file-MANIFESTO")).toHaveAttribute("aria-current", "true");
   });
@@ -732,7 +732,10 @@ test.describe("member threads", () => {
   test("shows the empty state for a member without threads", async ({ page }) => {
     await logon(page, "nobody");
     await page.goto("/profile");
-    await expect(page.getByText("No threads yet. A question is a good start.")).toBeVisible();
+    await expect(page.getByText("No threads yet.")).toBeVisible();
+    const ask = page.getByRole("link", { name: "A question is a good start." });
+    await expect(ask).toBeVisible();
+    await expect(ask).toHaveAttribute("href", "/forum");
   });
 });
 
@@ -770,7 +773,10 @@ test.describe("member readroom tasks", () => {
   test("shows the empty state for a member without tasks", async ({ page }) => {
     await logon(page, "nobody");
     await page.goto("/profile");
-    await expect(page.getByText("No tasks yet. Bring some code and a question.")).toBeVisible();
+    await expect(page.getByText("No tasks yet.")).toBeVisible();
+    const bring = page.getByRole("link", { name: "Bring some code and a question." });
+    await expect(bring).toBeVisible();
+    await expect(bring).toHaveAttribute("href", "/readroom");
   });
 });
 
@@ -797,7 +803,10 @@ test.describe("member projects", () => {
   test("shows the empty state for a member without projects", async ({ page }) => {
     await logon(page, "nobody");
     await page.goto("/profile");
-    await expect(page.getByText("No projects yet. Join a team to get updates.")).toBeVisible();
+    await expect(page.getByText("No projects yet.")).toBeVisible();
+    const join = page.getByRole("link", { name: "Join a team to get updates." });
+    await expect(join).toBeVisible();
+    await expect(join).toHaveAttribute("href", "/projects");
   });
 });
 

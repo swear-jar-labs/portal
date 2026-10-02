@@ -92,24 +92,28 @@ const commandDefs = [
     id: "ABOUT",
     description: messages.shell.registry.descriptions.ABOUT,
     doc: "ABOUT",
+    href: HOME_PATH,
     file: { group: "read", name: "ABOUT", ext: "TXT", size: 1024 },
   },
   {
     id: "HOW",
     description: messages.shell.registry.descriptions.HOW,
     doc: "HOW",
+    href: "/how",
     file: { group: "read", name: "HOW-IT-WORKS", ext: "TXT", size: 2048 },
   },
   {
     id: "MANIFESTO",
     description: messages.shell.registry.descriptions.MANIFESTO,
     doc: "MANIFESTO",
+    href: "/manifesto",
     file: { group: "read", name: "MANIFESTO", ext: "TXT", size: 512 },
   },
   {
     id: "RULES",
     description: messages.shell.registry.descriptions.RULES,
     doc: "RULES",
+    href: "/rules",
     file: { group: "read", name: "RULES", ext: "TXT", size: 640 },
   },
   {
@@ -223,7 +227,6 @@ const commandDefs = [
   },
   { id: "DIR", description: messages.shell.registry.descriptions.DIR },
   { id: "HELP", description: messages.shell.registry.descriptions.HELP },
-  { id: "CLS", description: messages.shell.registry.descriptions.CLS },
 ] as const satisfies readonly AppCommandDef[];
 
 export type CommandId = (typeof commandDefs)[number]["id"];
@@ -248,7 +251,6 @@ export const commandById: ReadonlyMap<CommandId, AppCommand> = new Map(
 export const actionCommandIds = [
   "HELP",
   "DIR",
-  "CLS",
   "COFFEE",
   "DOOM",
   "EXIT",

@@ -174,7 +174,8 @@ test("keeps the keyboard in the list when a doc opens", async ({ page }) => {
   await enterShell(page);
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-  await files.getByRole("button", { name: "MANIFESTO" }).click();
+  await files.getByRole("link", { name: "MANIFESTO" }).click();
+  await expect(page).toHaveURL("/manifesto");
   await expect(page.getByRole("region", { name: "MANIFESTO.TXT" })).toBeVisible();
   await expect(files.locator("#file-MANIFESTO")).toBeFocused();
 });
@@ -224,6 +225,7 @@ test.describe("welcome", () => {
     await page.keyboard.press("Enter");
 
     await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL("/how");
     await expect(page.getByRole("region", { name: "HOW-IT-WORKS.TXT" })).toBeVisible();
   });
 
@@ -257,7 +259,7 @@ test.describe("welcome", () => {
     await files.getByRole("link", { name: "REGISTER" }).click();
     await expect(page).toHaveURL("/register");
 
-    await files.getByRole("button", { name: "MANIFESTO" }).click();
+    await files.getByRole("link", { name: "ABOUT" }).click();
     await expect(page).toHaveURL("/");
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
@@ -266,7 +268,7 @@ test.describe("welcome", () => {
     await page.goto("/register");
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-    await files.getByRole("button", { name: "MANIFESTO" }).click();
+    await files.getByRole("link", { name: "ABOUT" }).click();
 
     await expect(page).toHaveURL("/");
     await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -316,8 +318,8 @@ test.describe("spa navigation", () => {
       "aria-current",
       "true",
     );
-    // Documents belong to the home panel, not to a section route.
-    await expect(files.getByRole("button", { name: "ABOUT" })).not.toHaveAttribute(
+    // Sections own their route; docs are current only on their own route.
+    await expect(files.getByRole("link", { name: "ABOUT" })).not.toHaveAttribute(
       "aria-current",
       "true",
     );

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import localFont from "next/font/local";
 import { Crt } from "@swearjar/dos";
 import "@swearjar/dos/tokens.css";
@@ -11,7 +12,7 @@ import {
   mockLogoff,
 } from "@/features/account";
 import { InboxFileIcon, InboxStatusAddon, listInboxSeed } from "@/features/inbox";
-import { ModerationDosShell } from "@/features/moderation";
+import { ModerationDosShell, reportsSeedCookieName } from "@/features/moderation";
 import { ChildrenPathProvider, type ShellAddon } from "@/features/shell";
 import { messages } from "@/content/messages";
 
@@ -44,6 +45,9 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children, overlay }: LayoutProps<"/">) {
   const session = await getActorSession();
+  // REPORTS visibility otherwise waits for the client store to hydrate and
+  // blinks on reload; the per-user seed cookie carries it into first paint.
+  const reportsSeed = session ? (await cookies()).has(reportsSeedCookieName(session.user)) : false;
   const inboxSeed = session ? await listInboxSeed(session.user) : undefined;
   const addons: ShellAddon[] =
     session && inboxSeed
@@ -67,6 +71,7 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
                 logoff={mockLogoff}
                 overlay={overlay}
                 addons={addons}
+                reportsSeed={reportsSeed}
               >
                 {children}
               </ModerationDosShell>

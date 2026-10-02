@@ -1,9 +1,11 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Avatar, Button, Card, Heading, Stack, Tag, Text } from "@swearjar/dos";
+import { Avatar, Button, Card, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
+import { READROOM_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
 import {
+  FEED_PATH,
   ThreadRows,
   useForumActivity,
   type ForumActivitySeed,
@@ -11,6 +13,7 @@ import {
 } from "@/features/board/contracts";
 import { ReadroomRows, type Readroom } from "@/features/readroom/contracts";
 import {
+  PROJECTS_PATH,
   projectCardId,
   projectPath,
   projectStatusTones,
@@ -89,7 +92,10 @@ export function ProfileView({
       <Stack gap={4}>
         <Heading level={2}>{messages.account.profile.projects.heading}</Heading>
         {projects.length === 0 ? (
-          <Text role="hint">{messages.account.profile.projects.empty}</Text>
+          <Text role="hint">
+            {messages.account.profile.projects.empty}{" "}
+            <Link href={PROJECTS_PATH}>{messages.account.profile.projects.emptyLink}</Link>
+          </Text>
         ) : (
           <Stack gap={8}>
             {projects.map((project) => (
@@ -114,7 +120,10 @@ export function ProfileView({
       <Stack gap={4}>
         <Heading level={2}>{messages.account.profile.threads.heading}</Heading>
         {!hasThreads ? (
-          <Text role="hint">{messages.account.profile.threads.empty}</Text>
+          <Text role="hint">
+            {messages.account.profile.threads.empty}{" "}
+            <Link href={FEED_PATH}>{messages.account.profile.threads.emptyLink}</Link>
+          </Text>
         ) : (
           <>
             {localShownThreads.map((thread) => (
@@ -135,7 +144,12 @@ export function ProfileView({
           user={user}
           readrooms={readrooms}
           now={now}
-          empty={messages.account.profile.tasks.empty}
+          empty={
+            <>
+              {messages.account.profile.tasks.empty}{" "}
+              <Link href={READROOM_PATH}>{messages.account.profile.tasks.emptyLink}</Link>
+            </>
+          }
         />
       </Stack>
     </Stack>

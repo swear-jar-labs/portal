@@ -62,7 +62,7 @@ test("starts the mobile command bar at the session details", async ({ page }) =>
 
 test("opens a static doc from the file manager", async ({ page }) => {
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-  await files.getByRole("button", { name: /RULES/ }).click();
+  await files.getByRole("link", { name: /RULES/ }).click();
   await expect(page.getByRole("heading", { level: 2, name: "RULES.TXT" })).toBeVisible();
   await expect(page.getByText("Be kind. Be specific.")).toBeVisible();
 });
@@ -158,7 +158,7 @@ test("Tab toggles focus between the file list and the document", async ({ page }
 
   // A doc open keeps the keyboard in the list; Tab hands it to the panel and
   // back.
-  await files.getByRole("button", { name: "ABOUT" }).click();
+  await files.getByRole("link", { name: "ABOUT" }).click();
   await expect(files.locator("#file-ABOUT")).toBeFocused();
 
   await page.keyboard.press("Tab");
@@ -316,7 +316,7 @@ test("typing anywhere goes to the command line", async ({ page }) => {
   const input = page.getByLabel("Command line");
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-  await files.getByRole("button", { name: "RULES" }).click();
+  await files.getByRole("link", { name: "RULES" }).click();
   await page.keyboard.type("manifesto");
   await expect(input).toBeFocused();
   await expect(input).toHaveValue("manifesto");
@@ -383,16 +383,16 @@ test.describe("file manager", () => {
   test("moves the selection with arrows without changing the document", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-    await files.getByRole("button", { name: "ABOUT" }).click();
+    await files.getByRole("link", { name: "ABOUT" }).click();
     await page.keyboard.press("ArrowDown");
 
     await expect(files.locator("#file-HOW")).toBeFocused();
     await expect(page.getByRole("heading", { level: 2, name: "ABOUT.TXT" })).toBeVisible();
-    await expect(files.getByRole("button", { name: "ABOUT" })).toHaveAttribute(
+    await expect(files.getByRole("link", { name: "ABOUT" })).toHaveAttribute(
       "aria-current",
       "true",
     );
-    await expect(files.getByRole("button", { name: "MANIFESTO" })).not.toHaveAttribute(
+    await expect(files.getByRole("link", { name: "MANIFESTO" })).not.toHaveAttribute(
       "aria-current",
       "true",
     );
@@ -418,10 +418,11 @@ test.describe("file manager", () => {
   test("opens the selection with ArrowRight", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-    await files.getByRole("button", { name: "ABOUT" }).click();
+    await files.getByRole("link", { name: "ABOUT" }).click();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("ArrowRight");
 
+    await expect(page).toHaveURL("/how");
     await expect(page.getByRole("heading", { level: 2, name: "HOW-IT-WORKS.TXT" })).toBeVisible();
   });
 
@@ -487,14 +488,14 @@ test.describe("file manager", () => {
   test("collapses and expands folders with arrows and clicks", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-    await files.getByRole("button", { name: "ABOUT" }).click();
+    await files.getByRole("link", { name: "ABOUT" }).click();
     await page.keyboard.press("ArrowUp");
     await expect(files.locator("#dir-read")).toBeFocused();
 
     await page.keyboard.press("ArrowLeft");
-    await expect(files.getByRole("button", { name: "ABOUT" })).toBeHidden();
+    await expect(files.getByRole("link", { name: "ABOUT" })).toBeHidden();
     await page.keyboard.press("ArrowRight");
-    await expect(files.getByRole("button", { name: "ABOUT" })).toBeVisible();
+    await expect(files.getByRole("link", { name: "ABOUT" })).toBeVisible();
 
     await files.getByRole("button", { name: /COMMUNITY/ }).click();
     await expect(files.getByRole("link", { name: /FORUM/ })).toBeHidden();
@@ -505,11 +506,12 @@ test.describe("file manager", () => {
   test("activates the selection from an empty command line", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-    await files.getByRole("button", { name: "HOW-IT-WORKS" }).click();
+    await files.getByRole("link", { name: "HOW-IT-WORKS" }).click();
     await page.keyboard.press("ArrowDown");
     await page.getByLabel("Command line").focus();
     await page.keyboard.press("Enter");
 
+    await expect(page).toHaveURL("/manifesto");
     await expect(page.getByRole("heading", { level: 2, name: "MANIFESTO.TXT" })).toBeVisible();
   });
 
@@ -587,7 +589,7 @@ test.describe("mobile file manager", () => {
 
   test("Tab toggles focus between the list and the document", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
-    await files.getByRole("button", { name: "ABOUT" }).click();
+    await files.getByRole("link", { name: "ABOUT" }).click();
     await page.keyboard.press("Tab");
     await expect(docScroll(page)).toBeFocused();
     await page.keyboard.press("Tab");

@@ -46,7 +46,7 @@ test("renders the about hero and tone formatting", async ({ page }) => {
 test("centers the manifesto heading and left-aligns the signature", async ({ page }) => {
   await page
     .getByRole("region", { name: "C:\\SWEARJAR" })
-    .getByRole("button", { name: "MANIFESTO", exact: true })
+    .getByRole("link", { name: "MANIFESTO", exact: true })
     .click();
 
   const heading = page.getByRole("heading", { level: 2, name: "THE MANIFESTO" });
@@ -65,16 +65,28 @@ test("centers the manifesto heading and left-aligns the signature", async ({ pag
 test("centers the how-it-works and rules headings in the manifesto style", async ({ page }) => {
   const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
 
-  await files.getByRole("button", { name: "HOW-IT-WORKS" }).click();
+  await files.getByRole("link", { name: "HOW-IT-WORKS" }).click();
   const howHeading = page.getByRole("heading", { level: 2, name: "HOW IT WORKS" });
   await expect(howHeading).toBeVisible();
   await expect(howHeading).toHaveCSS("text-align", "center");
   await expect(howHeading).toHaveCSS("color", await resolveTone(page, "--dos-tone-brown"));
 
   const how = page.getByRole("region", { name: "HOW-IT-WORKS.TXT", exact: true });
-  // The section lead-ins link to their sections (ERRATA deep-links its board);
-  // FORUM and READROOM repeat in the register line below.
+  // The section lead-ins link to their sections (boards deep-link with
+  // a board query); FORUM and READROOM repeat in the register line below.
   await expect(how.getByRole("link", { name: "FORUM" }).first()).toHaveAttribute("href", "/forum");
+  await expect(how.getByRole("link", { name: "GENERAL" })).toHaveAttribute(
+    "href",
+    "/forum?board=general",
+  );
+  await expect(how.getByRole("link", { name: "IDEAS" })).toHaveAttribute(
+    "href",
+    "/forum?board=ideas",
+  );
+  await expect(how.getByRole("link", { name: "INTERVIEWS" })).toHaveAttribute(
+    "href",
+    "/forum?board=interviews",
+  );
   await expect(how.getByRole("link", { name: "ERRATA" })).toHaveAttribute(
     "href",
     "/forum?board=errata",
@@ -86,12 +98,13 @@ test("centers the how-it-works and rules headings in the manifesto style", async
   await expect(how.getByRole("link", { name: "PROJECTS" })).toHaveAttribute("href", "/projects");
   await expect(how.getByRole("link", { name: "FORUM" })).toHaveCount(2);
   await expect(how.getByRole("link", { name: "READROOM" })).toHaveCount(2);
-  // The lead-in links sit in cyan wrappers and read the wrapper's color
+  // The board links sit in cyan wrappers and read the wrapper's color
   // instead of the link blue.
   const errata = how.getByRole("link", { name: "ERRATA" });
   const wrapperColor = await errata.evaluate((link) => link.parentElement?.style.color ?? "");
-  expect(wrapperColor).toContain("--dos-tone-brown");
-  await expect(errata).toHaveCSS("color", await resolveTone(page, "--dos-tone-brown"));
+  expect(wrapperColor).toContain("--dos-tone-cyan");
+  await expect(errata).toHaveCSS("color", await resolveTone(page, "--dos-tone-cyan"));
+  await expectMinimumContrast(errata);
   await expect(
     how.getByText(
       "Learn to build software by making your own decisions, including the wrong ones.",
@@ -107,7 +120,7 @@ test("centers the how-it-works and rules headings in the manifesto style", async
     ),
   ).toBeVisible();
 
-  await files.getByRole("button", { name: "RULES" }).click();
+  await files.getByRole("link", { name: "RULES" }).click();
   const rulesHeading = page.getByRole("heading", { level: 2, name: "THE RULES" });
   await expect(rulesHeading).toBeVisible();
   await expect(rulesHeading).toHaveCSS("text-align", "center");
@@ -117,7 +130,7 @@ test("centers the how-it-works and rules headings in the manifesto style", async
 test("has no detectable accessibility violations on a tone-heavy doc", async ({ page }) => {
   await page
     .getByRole("region", { name: "C:\\SWEARJAR" })
-    .getByRole("button", { name: "MANIFESTO", exact: true })
+    .getByRole("link", { name: "MANIFESTO", exact: true })
     .click();
   await expect(page.getByRole("heading", { level: 2, name: "THE MANIFESTO" })).toBeVisible();
 

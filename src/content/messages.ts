@@ -127,10 +127,6 @@ export const messages = {
         cancel: "CANCEL",
       },
     },
-    doc: {
-      emptyHeading: "SWEAR JAR LABS",
-      empty: "Screen cleared. Pick a file to read.",
-    },
     notFound: {
       title: "404.TXT",
       heading: "PATH NOT FOUND",
@@ -162,7 +158,6 @@ export const messages = {
         SEARCH: "focus the current section's search",
         DIR: "list files",
         HELP: "this list",
-        CLS: "clear the screen",
       },
     },
   },
@@ -361,17 +356,20 @@ export const messages = {
       },
       threads: {
         heading: "MY LAST THREADS",
-        empty: "No threads yet. A question is a good start.",
+        empty: "No threads yet.",
+        emptyLink: "A question is a good start.",
         sessionOnly: "THIS SESSION",
       },
       tasks: {
         heading: "MY LAST READROOM TASKS",
-        empty: "No tasks yet. Bring some code and a question.",
+        empty: "No tasks yet.",
+        emptyLink: "Bring some code and a question.",
         sessionOnly: "THIS SESSION",
       },
       projects: {
         heading: "MY PROJECTS",
-        empty: "No projects yet. Join a team to get updates.",
+        empty: "No projects yet.",
+        emptyLink: "Join a team to get updates.",
       },
     },
     settings: {

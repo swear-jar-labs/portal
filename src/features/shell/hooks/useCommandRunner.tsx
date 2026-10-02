@@ -6,7 +6,6 @@ import {
   isActionCommand,
   type ActionCommandId,
   type AppCommand,
-  type CommandId,
   type FileGroup,
 } from "@/content/commands";
 import { messages } from "@/content/messages";
@@ -26,8 +25,6 @@ export type CommandRunnerOptions = {
   closeDialog: () => void;
   addCoin: () => void;
   coins: number;
-  openDocument: (commandId: CommandId) => void;
-  clearDocument: () => void;
   logoff: () => void;
   push: (href: string) => void;
   commands: readonly AppCommand[];
@@ -41,8 +38,6 @@ export function useCommandRunner({
   closeDialog,
   addCoin,
   coins,
-  openDocument,
-  clearDocument,
   logoff,
   push,
   commands,
@@ -64,7 +59,6 @@ export function useCommandRunner({
           title: messages.shell.dialogs.dir.title,
           body: <DirBody groups={groups} />,
         }),
-      CLS: clearDocument,
       COFFEE: () =>
         openDialog({
           title: messages.shell.dialogs.coffee.title,
@@ -91,7 +85,7 @@ export function useCommandRunner({
           ),
         }),
     }),
-    [clearDocument, closeDialog, commands, focusSearch, groups, logoff, openDialog, signedIn],
+    [closeDialog, commands, focusSearch, groups, logoff, openDialog, signedIn],
   );
 
   return useCallback(
@@ -110,14 +104,12 @@ export function useCommandRunner({
         handlers[command.id]();
         return;
       }
-      if (command.doc) {
-        openDocument(command.id);
-        return;
-      }
+      // Docs navigate by href like sections; the file manager needs no
+      // document state (see useFileManager).
       if (command.href) {
         push(command.href);
       }
     },
-    [addCoin, coins, commands, handlers, openDialog, openDocument, push],
+    [addCoin, coins, commands, handlers, openDialog, push],
   );
 }

@@ -179,9 +179,6 @@ export function DosShell({
     },
     [router, startNavigation],
   );
-  const goHome = useCallback(() => {
-    if (!isHome) push(HOME_PATH);
-  }, [isHome, push]);
 
   const commandList = useMemo(
     () => visibleCommands(session, commandAvailability),
@@ -204,8 +201,8 @@ export function DosShell({
   }, [searchable]);
   const { tray: trayAddons, fileIcons } = useMemo(() => resolveShellAddons(addons), [addons]);
 
-  // The runner needs the file manager (to open docs) and the file manager needs
-  // the runner (to run LOGOFF): the ref breaks the cycle.
+  // The file manager runs commands through the runner (to run LOGOFF the
+  // runner needs no file manager state): the ref breaks the cycle.
   const runRef = useRef<(commandId: CommandId) => void>(() => {});
 
   // Opening a program (EXE route) hands the keyboard to the right panel; docs
@@ -221,12 +218,16 @@ export function DosShell({
       if (href) {
         const target = stripQuery(href);
         // Re-pushing the same location can replace its RSC panel and lose
-        // the focus just handed to it. A repeated shortcut only focuses.
+        // the focus just handed to it. A repeated shortcut only focuses —
+        // except documents, which never take the keyboard out of the file
+        // list (see "keeps the keyboard in the list when a doc opens").
         if (href === location) {
-          focusPanelBody();
+          if (!command?.doc) focusPanelBody();
           return;
         }
-        panelFocusTarget.current = target;
+        // Documents navigate like sections but keep the keyboard in the file
+        // list.
+        if (!command?.doc) panelFocusTarget.current = target;
       }
       runRef.current(commandId);
     },
@@ -238,7 +239,6 @@ export function DosShell({
     pathname,
     search,
     signedIn,
-    onDocumentOpened: goHome,
     groups,
     fileIcons,
     onCommand: runFromNavigation,
@@ -264,8 +264,6 @@ export function DosShell({
     closeDialog,
     addCoin,
     coins,
-    openDocument: fileManager.openCommand,
-    clearDocument: fileManager.closeDoc,
     logoff: handleLogoff,
     push,
     commands: commandList,

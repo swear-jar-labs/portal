@@ -16,8 +16,10 @@ import {
   markReporterReportSeen,
   markTargetUnavailable,
   moderationSnapshot,
+  reportsSeedCookieName,
   requestReview,
   resetModerationStore,
+  resolveReportsAvailable,
   respondToRequest,
   submitReport,
 } from "@/features/moderation/store";
@@ -311,5 +313,23 @@ describe("review, rounds, and deletion", () => {
     expect(resolve("deleted")).toEqual({ ok: true });
     expect(current().status).toBe("resolved");
     expect(current().events.some((event) => event.kind === "resolved")).toBe(true);
+  });
+});
+
+describe("reports availability seed", () => {
+  it("names the seed cookie per user", () => {
+    expect(reportsSeedCookieName("ada")).toBe("sj_reports_ada");
+    expect(reportsSeedCookieName("ada")).not.toBe(reportsSeedCookieName("ken"));
+  });
+
+  it("shows the file from the store once loaded", () => {
+    expect(resolveReportsAvailable(true, true, false)).toBe(true);
+    expect(resolveReportsAvailable(true, false, false)).toBe(true);
+    expect(resolveReportsAvailable(false, true, false)).toBe(false);
+  });
+
+  it("stands in the seed before the store loads and drops a stale one after", () => {
+    expect(resolveReportsAvailable(false, false, true)).toBe(true);
+    expect(resolveReportsAvailable(false, true, true)).toBe(false);
   });
 });

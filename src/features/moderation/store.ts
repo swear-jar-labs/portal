@@ -25,6 +25,33 @@ const MIN_REASON_LENGTH = 10;
 const MAX_REASON_LENGTH = 2000;
 const MODERATION_STORAGE_KEY = "swearjar-moderation-v2";
 const LEGACY_STORAGE_KEY = "swearjar-moderation-v1";
+// Seed cookie for the REPORTS file: the store hydrates after first paint, so
+// without a server-readable trace a reload blinks the file away and back.
+// One year in seconds; per-user because the mock switches actors in one browser.
+export const REPORTS_SEED_MAX_AGE = 31536000;
+const REPORTS_SEED_COOKIE_PREFIX = "sj_reports_";
+
+export function reportsSeedCookieName(user: string): string {
+  return `${REPORTS_SEED_COOKIE_PREFIX}${user}`;
+}
+
+/** Whether the store finished loading (module state, not snapshot). */
+export function isModerationStoreHydrated(): boolean {
+  return hydrated;
+}
+
+/**
+ * REPORTS availability: the store once loaded, the cookie seed before that.
+ * A stale seed self-corrects on hydrate (a fresh tab with no reports hides
+ * the file again).
+ */
+export function resolveReportsAvailable(
+  storeHas: boolean,
+  storeHydrated: boolean,
+  seed: boolean,
+): boolean {
+  return storeHas || (!storeHydrated && seed);
+}
 let state: ModerationState = INITIAL_MODERATION_STATE;
 let hydrated = false;
 const listeners = new Set<() => void>();

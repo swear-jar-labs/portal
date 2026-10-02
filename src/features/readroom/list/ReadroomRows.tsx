@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type MouseEvent } from "react";
+import { useMemo, type MouseEvent, type ReactNode } from "react";
 import { Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
@@ -17,7 +17,7 @@ export type ReadroomRowsProps = {
   // The profile previews the freshest entries only.
   limit?: number;
   // The empty state reads from the hosting profile (own vs public wording).
-  empty: string;
+  empty: ReactNode;
 };
 
 /** A member's readroom tasks: the feed's cards over the session store, newest

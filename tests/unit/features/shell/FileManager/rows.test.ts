@@ -49,11 +49,11 @@ describe("fallbackRowId", () => {
   const fallbackRowIds = ["dir-read", "file-ABOUT", "file-RULES"];
   const defaultRowId = "file-ABOUT";
 
-  it("prefers the displayed document row", () => {
+  it("prefers the displayed route row", () => {
     expect(fallbackRowId(fallbackRowIds, "file-RULES", defaultRowId)).toBe("file-RULES");
   });
 
-  it("falls back to the default when the document row is hidden", () => {
+  it("falls back to the default when the route row is hidden", () => {
     expect(fallbackRowId(["dir-read", "file-ABOUT"], "file-RULES", defaultRowId)).toBe(
       "file-ABOUT",
     );

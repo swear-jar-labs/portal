@@ -6,12 +6,10 @@ import type { FileTableColumn, FileTableItem } from "@swearjar/dos";
 import {
   commandById,
   commandIdForLocation,
-  HOME_PATH,
   joinLocation,
   type CommandId,
   type FileGroup,
 } from "@/content/commands";
-import type { DocId } from "@/content/docs";
 import { messages } from "@/content/messages";
 import { formatSize } from "@/lib/format";
 import { isPlainActivation } from "@/lib/activation";
@@ -26,10 +24,9 @@ const FILE_COLUMNS: FileTableColumn[] = [
 const FILE_SIZE_ORDER = ["peek", "compact", "full"] as const;
 export type FileListSize = (typeof FILE_SIZE_ORDER)[number];
 
-// The document shown when no route owns the right panel (boot, CLS): the
-// shell's default view.
-const DEFAULT_DOC_ID: DocId = "ABOUT";
-const INITIAL_CURSOR_ID = fileRowId(DEFAULT_DOC_ID);
+// Docs navigate by route like sections, so the boot cursor starts on the
+// ABOUT row: the home panel shows ABOUT.
+const INITIAL_CURSOR_ID = fileRowId("ABOUT");
 
 type CursorState = {
   id: string;
@@ -53,11 +50,10 @@ export type FileManagerOptions = {
   // cursor and the current row follow the full location.
   search: string;
   signedIn: boolean;
-  onDocumentOpened: () => void;
   groups: readonly FileGroup[];
   fileIcons?: Partial<Record<CommandId, ReactNode>>;
-  // Every file row runs through the command runner: it opens documents, pushes
-  // routes in the SPA or runs actions (e.g. LOGOFF).
+  // Every file row runs through the command runner: it pushes routes in the
+  // SPA or runs actions (e.g. LOGOFF).
   onCommand: (commandId: CommandId) => void;
 };
 
@@ -66,13 +62,11 @@ export function useFileManager({
   pathname,
   search,
   signedIn,
-  onDocumentOpened,
   groups,
   fileIcons,
   onCommand,
 }: FileManagerOptions) {
   const location = joinLocation(pathname, search);
-  const [selectedDocId, setSelectedDocId] = useState<DocId | null>(DEFAULT_DOC_ID);
   const [cursor, setCursor] = useState<CursorState>(() => cursorStateFor(location, signedIn));
   const [collapsedGroups, setCollapsedGroups] = useState<readonly string[]>([]);
   const [listSize, setListSize] = useState<FileListSize>("compact");
@@ -86,14 +80,13 @@ export function useFileManager({
 
   const rowIds = useMemo(() => buildRowIds(groups, collapsedGroups), [groups, collapsedGroups]);
 
-  const docRowId = selectedDocId ? fileRowId(selectedDocId) : undefined;
-  const resetCursorId = fallbackRowId(rowIds, docRowId, INITIAL_CURSOR_ID);
   const routeRowId = rowIdForLocation(location);
+  const resetCursorId = fallbackRowId(rowIds, routeRowId, INITIAL_CURSOR_ID);
 
   // Adjusting state during render (React pattern) keeps the stored cursor in
   // sync with the location and the session: a new location stores the entry's
-  // row (or keeps the cursor on `/` and doc routes), a logon/logoff resets to
-  // the displayed document even when the stale row still exists in the other
+  // row (or keeps the cursor where no route owns a row), a logon/logoff resets
+  // to the displayed route even when the stale row still exists in the other
   // session's file list. A row that is gone (collapsed folder) falls back the
   // same way, instead of tracking all that in effects.
   if (cursor.location !== location || cursor.signedIn !== signedIn) {
@@ -144,23 +137,6 @@ export function useFileManager({
     );
   }, []);
 
-  const openCommand = useCallback(
-    (commandId: CommandId) => {
-      const command = commandById.get(commandId);
-      if (!command) return;
-      setCursorId(fileRowId(commandId));
-      if (!command.doc) return;
-      setSelectedDocId(command.doc);
-      const group = command.file?.group;
-      if (group) setCollapsedGroups((collapsed) => collapsed.filter((id) => id !== group));
-      if (isMobile) setListSize("compact");
-      onDocumentOpened();
-    },
-    [isMobile, onDocumentOpened, setCursorId],
-  );
-
-  const closeDoc = useCallback(() => setSelectedDocId(null), []);
-
   const cycleSize = useCallback((direction: 1 | -1) => {
     setListSize((current) => {
       const index = FILE_SIZE_ORDER.indexOf(current);
@@ -171,10 +147,9 @@ export function useFileManager({
 
   const rows = useMemo<FileTableItem[]>(() => {
     const items: FileTableItem[] = [];
-    const onHome = pathname === HOME_PATH;
     // Deep locations belong to their section: /forum/<id> keeps the
     // section row current, ?board=errata picks ERRATA (see
-    // commandIdForLocation).
+    // commandIdForLocation). Docs are current on their own route.
     const routeCommandId = commandIdForLocation(location);
     for (const group of groups) {
       const collapsed = collapsedGroups.includes(group.id);
@@ -197,7 +172,6 @@ export function useFileManager({
       for (const item of group.items) {
         const rowId = fileRowId(item.command);
         const command = commandById.get(item.command);
-        const docId = command?.doc;
         const href = command?.href;
         items.push({
           id: rowId,
@@ -209,9 +183,7 @@ export function useFileManager({
           iconNode: fileIcons?.[item.command],
           nested: true,
           selected: activeCursorId === rowId,
-          // Documents are current only where they are shown (the home panel);
-          // sections are current on their own route and its deep routes.
-          current: docId ? onHome && docId === selectedDocId : routeCommandId === item.command,
+          current: routeCommandId === item.command,
           href,
           onActivate: (event) => {
             setCursorId(rowId);
@@ -233,8 +205,6 @@ export function useFileManager({
     groups,
     location,
     onCommand,
-    pathname,
-    selectedDocId,
     setCursorId,
     toggleGroup,
   ]);
@@ -269,15 +239,12 @@ export function useFileManager({
     rows,
     dirCount: groups.length,
     fileCount,
-    selectedDocId,
     cursorId: activeCursorId,
     collapsedGroups,
     listSize,
     moveCursor,
     toggleGroup,
     activateSelection,
-    openCommand,
-    closeDoc,
     cycleSize,
   };
 }

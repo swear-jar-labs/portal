@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-// Radix DismissableLayer would otherwise close the dialog during the boot→shell swap.
+// Radix DismissableLayer would otherwise close the dialog right after it opens.
 const WELCOME_DELAY_MS = 50;
 
 export function useWelcomeDialog(enabled: boolean, open: () => void) {

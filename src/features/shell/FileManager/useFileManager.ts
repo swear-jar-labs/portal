@@ -24,7 +24,7 @@ const FILE_COLUMNS: FileTableColumn[] = [
 const FILE_SIZE_ORDER = ["peek", "compact", "full"] as const;
 export type FileListSize = (typeof FILE_SIZE_ORDER)[number];
 
-// Docs navigate by route like sections, so the boot cursor starts on the
+// Docs navigate by route like sections, so the initial cursor starts on the
 // ABOUT row: the home panel shows ABOUT.
 const INITIAL_CURSOR_ID = fileRowId("ABOUT");
 

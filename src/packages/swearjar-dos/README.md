@@ -63,7 +63,7 @@ UI text carries one role, stamped as `DOS_ROLE_ATTR` (`data-dos-role`); the role
 `tokens.css` owns color, weight, size, line-height, tracking and the light family's bold
 smear, and `Text`/`Heading` read it through the `--dos-text-*` variables. Role colors come
 from the tone palette, so the
-light surface remap applies to them too; the content palette (markdown directives, boot/welcome)
+light surface remap applies to them too; the content palette (markdown directives, welcome)
 and literal colors stay on the `tone` prop — UI text uses a role.
 
 | Role       | Color   | Weight  | Notes                                                      |
@@ -121,7 +121,7 @@ smears at chip sizes.
   repeat background/color in a compound rule, so the surface owns them against a consumer's
   single-class background; a focused body marks the whole window frame. Disabled buttons
   get their own body color per surface, so they stay visible. The dark palette remains the
-  base for the console chrome outside the windows (boot, command line, screensaver), which
+  base for the console chrome outside the windows (command line, screensaver), which
   carry their own backgrounds.
 - The kit owns the walk (`walk.ts`); the consumer owns zones, gates and closing: the shell
   speaks Norton Commander — **Tab toggles the file list and the right-hand window** (from a

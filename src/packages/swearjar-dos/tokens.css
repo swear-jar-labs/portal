@@ -93,7 +93,6 @@
   --dos-scanline: rgba(0, 0, 0, 0.1);
 
   --dos-blink: 1s steps(1) infinite;
-  --dos-boot-fade: 450ms;
 
   /* One DOS scrollbar for every scroll region (panel bodies, tables): the
      track is the dark chrome, the thumb the light one. */

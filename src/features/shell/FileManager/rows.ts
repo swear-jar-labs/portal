@@ -25,7 +25,7 @@ export function buildRowIds(
 }
 
 // The stored cursor row can disappear (session swap, collapsed folder).
-// Preference order: the displayed route's row, the boot default, the first row.
+// Preference order: the displayed route's row, the initial default, the first row.
 export function fallbackRowId(
   rowIds: readonly string[],
   routeRowId: string | undefined,

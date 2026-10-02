@@ -12,15 +12,14 @@ import { enterShell, expectMinimumContrast } from "./helpers";
 // so the RSC 404 falls back to a full load here.
 const STUB_ROUTE = "/errata";
 
-test("does not boot on inner routes and keeps the shell chrome", async ({ page }) => {
+test("opens inner routes directly and keeps the shell chrome", async ({ page }) => {
   await page.goto(STUB_ROUTE);
 
   await expect(page.getByRole("menubar")).toBeVisible();
   await expect(page.getByRole("region", { name: "C:\\SWEARJAR" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
-  await expect(page.getByText("SWEARJAR.DOS /LOAD")).toHaveCount(0);
 
-  // Without a boot there is no CRT switch-on either.
+  // The shell opens without a switch-on animation.
   const animation = await page.getByRole("menubar").evaluate((element) => {
     const shell = element.parentElement;
     return shell ? getComputedStyle(shell).animationName : "missing";
@@ -42,8 +41,8 @@ test("orders the top menu as COMMUNITY, ACCOUNT, GUIDE and HELP", async ({ page 
 });
 
 test("keeps the menu dropdown above the file list on a cold inner route", async ({ page }) => {
-  // Without a boot the CRT switch-on (and the stacking context its animation
-  // leaves behind) is absent, so the dropdown must carry itself with z-index
+  // The shell carries no switch-on animation (and no stacking context from it),
+  // so the dropdown must carry itself with z-index
   // over the file table's sticky header.
   await page.goto("/apply");
 
@@ -68,9 +67,8 @@ test("keeps the menu dropdown above the file list on a cold inner route", async 
   expect(coveredBy).toBe("");
 });
 
-test("draws the CRT filter above the boot screen and portaled surfaces", async ({ page }) => {
+test("draws the CRT filter above portaled surfaces", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
 
   // The screen's pseudo-elements are the filter: click-through, above every
   // portaled surface (welcome dialog, menu); the screensaver keeps its layer.
@@ -92,7 +90,6 @@ test("draws the CRT filter above the boot screen and portaled surfaces", async (
   expect(filter.scanlines).toContain("repeating-linear-gradient");
   expect(filter.vignette).toContain("radial-gradient");
 
-  await page.keyboard.press("Enter");
   const welcome = page.getByRole("dialog");
   await expect(welcome).toBeVisible();
   const dialogZ = Number(await welcome.evaluate((element) => getComputedStyle(element).zIndex));
@@ -197,8 +194,6 @@ test.describe("file tree", () => {
 test.describe("welcome", () => {
   test("presents the workshop and places on a readable silver surface", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
-    await page.keyboard.press("Enter");
 
     const dialog = page.getByRole("dialog");
     const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
@@ -215,8 +210,6 @@ test.describe("welcome", () => {
 
   test("opens HOW with the keyboard", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
-    await page.keyboard.press("Enter");
 
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("button", { name: "Explore the forum" })).toBeFocused();
@@ -231,8 +224,6 @@ test.describe("welcome", () => {
 
   test("opens the forum from the primary action", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
-    await page.keyboard.press("Enter");
 
     await page.getByRole("dialog").getByRole("button", { name: "Explore the forum" }).click();
     await expect(page).toHaveURL("/forum");
@@ -243,8 +234,6 @@ test.describe("welcome", () => {
   test("fits the welcome actions on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 780 });
     await page.goto("/");
-    await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
-    await page.keyboard.press("Enter");
 
     const dialog = page.getByRole("dialog");
     const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);

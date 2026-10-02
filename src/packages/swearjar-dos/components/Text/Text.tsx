@@ -16,7 +16,7 @@ type TextRoleProps = {
   weight?: never;
 };
 
-// Content text (markdown, boot): tone colors and manual bold on the body role.
+// Content text (markdown, welcome): tone colors and manual bold on the body role.
 type TextContentProps = {
   role?: never;
   tone?: Tone;

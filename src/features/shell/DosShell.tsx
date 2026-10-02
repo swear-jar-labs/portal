@@ -14,7 +14,6 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   CmdLine,
-  cx,
   Dialog,
   KeyBar,
   MenuBar,
@@ -39,13 +38,11 @@ import {
   type CommandId,
   type CommunityLevel,
 } from "@/content/commands";
-import { bootLines, welcome } from "@/content/landing";
+import { welcome } from "@/content/landing";
 import { messages } from "@/content/messages";
 import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "./screensaver-prefs";
-import { BootScreen } from "./BootScreen";
 import { KeyBarClock } from "./KeyBarClock";
 import { LoginPromptBody, WelcomeBody } from "./dialogs";
-import { useBootState } from "./hooks/useBootState";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -137,9 +134,6 @@ export function DosShell({
   const overlayLayers = useOverlayLayers();
 
   const isMobile = useIsMobile();
-  // The boot screen and the welcome dialog belong to the home route only.
-  const { phase, revealed, bootFired } = useBootState(isHome, bootLines.length);
-  const booted = phase === "ready";
   const screensaverPrefs = useScreensaverPrefs((state) => state.prefs);
   const hydrateScreensaverPrefs = useScreensaverPrefs((state) => state.hydrate);
   const screensaverOn = useIdleScreensaver(
@@ -156,9 +150,10 @@ export function DosShell({
     coldOpened.current = true;
     if (signedIn && pathname === HOME_PATH) router.replace(FORUM_PATH);
   }, [signedIn, pathname, router]);
-  // Welcome is a boot-time greeting: guests see it once per load, and neither a
-  // logon nor a logoff mid-session turns it back on.
-  const [welcomeEligible, setWelcomeEligible] = useState(() => !signedIn);
+  // Welcome greets guests cold-opening the home route: they see it once per
+  // load, and neither a logon nor a logoff mid-session turns it back on.
+  // A deep link into an inner route must not greet when home opens later.
+  const [welcomeEligible, setWelcomeEligible] = useState(() => !signedIn && pathname === HOME_PATH);
 
   const openDialog = useCallback((next: DialogState) => setDialog(next), []);
   const closeDialog = useCallback(() => setDialog(null), []);
@@ -317,7 +312,7 @@ export function DosShell({
     hydrateScreensaverPrefs();
   }, [hydrateScreensaverPrefs]);
 
-  const controlsEnabled = booted && dialog === null && !screensaverOn;
+  const controlsEnabled = dialog === null && !screensaverOn;
   useFunctionKeys(functionKeys, runFromNavigation, controlsEnabled);
   usePanelNav(controlsEnabled);
   useFileCursorKeys({
@@ -346,9 +341,9 @@ export function DosShell({
       ),
     });
   }, [closeDialog, openDialog, runFromNavigation]);
-  // Welcome belongs to the boot: without a boot (deep link into an inner
-  // route) entering home must not greet the guest out of nowhere.
-  useWelcomeDialog(isHome && booted && bootFired && !signedIn && welcomeEligible, openWelcome);
+  // Welcome greets guests arriving on home first: entering home later
+  // (e.g. after a deep link into an inner route) must not greet out of nowhere.
+  useWelcomeDialog(isHome && !signedIn && welcomeEligible, openWelcome);
 
   const menus = useMemo(
     () =>
@@ -380,14 +375,9 @@ export function DosShell({
     [controlsEnabled, functionKeys, runFromNavigation],
   );
 
-  if (!booted) {
-    return <BootScreen revealed={revealed} closing={phase === "closing"} />;
-  }
-
   return (
     <Stack as="main" align="center" justify="center" className={styles.stage}>
-      {/* The CRT switch-on belongs to the boot: routes without it open plainly. */}
-      <div className={cx(styles.shell, bootFired && styles.boot)}>
+      <div className={styles.shell}>
         <MenuBar
           menus={menus}
           brand={

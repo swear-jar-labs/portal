@@ -5,9 +5,6 @@ test("the starfield screensaver wakes on any key", async ({ page }) => {
   await page.clock.install();
   await page.goto("/");
   await page.clock.runFor(300);
-  await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
-  await page.keyboard.press("Enter");
-  await page.clock.runFor(600);
 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();

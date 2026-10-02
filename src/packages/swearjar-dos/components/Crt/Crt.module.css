@@ -1,7 +1,6 @@
 .crt {
   position: relative;
-  /* The absolute filter layer needs a full-height box, and on boot the screen's
-     only child is the fixed boot screen. */
+  /* The absolute filter layer needs a full-height box. */
   min-height: 100dvh;
 }
 

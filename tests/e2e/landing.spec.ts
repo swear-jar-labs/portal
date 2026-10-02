@@ -20,7 +20,7 @@ async function tokenColor(page: Page, token: string): Promise<string> {
   }, token);
 }
 
-test("boots into the DOS shell with the file manager and content", async ({ page }) => {
+test("opens the DOS shell with the file manager and content", async ({ page }) => {
   await expect(page.getByRole("menubar")).toBeVisible();
   const keyBar = page.getByRole("toolbar", { name: "Function keys" });
   await expect(keyBar).toBeVisible();
@@ -29,12 +29,12 @@ test("boots into the DOS shell with the file manager and content", async ({ page
   await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
 });
 
-test("switches the CRT on only as the boot completes", async ({ page }) => {
+test("opens the shell without a switch-on animation", async ({ page }) => {
   const animation = await page.getByRole("menubar").evaluate((element) => {
     const shell = element.parentElement;
     return shell ? getComputedStyle(shell).animationName : "missing";
   });
-  expect(animation).toContain("crtOn");
+  expect(animation).toBe("none");
 });
 
 test("hides the brand text on mobile and keeps it on desktop", async ({ page }) => {

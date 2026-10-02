@@ -21,10 +21,7 @@ const SUBMIT_BUTTON = "SUBMIT";
 const LONG_DELAY_MS = screensaverDelayMs(30);
 const MINUTE_MS = 60_000;
 
-async function skipBootAsGuest(page: Page) {
-  await page.clock.runFor(300);
-  await page.keyboard.press("Enter");
-
+async function dismissWelcomeAsGuest(page: Page) {
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Close" }).click();
@@ -1359,7 +1356,7 @@ test.describe("screensaver settings", () => {
     ] as const);
     await page.clock.install();
     await page.goto("/");
-    await skipBootAsGuest(page);
+    await dismissWelcomeAsGuest(page);
 
     await page.clock.runFor(LONG_DELAY_MS + MINUTE_MS);
     await expect(page.getByRole("img", { name: "Starfield screensaver" })).toHaveCount(0);
@@ -1372,7 +1369,7 @@ test.describe("screensaver settings", () => {
     ] as const);
     await page.clock.install();
     await page.goto("/");
-    await skipBootAsGuest(page);
+    await dismissWelcomeAsGuest(page);
 
     await page.clock.runFor(MINUTE_MS + 1_000);
     await expect(page.getByRole("img", { name: "Starfield screensaver" })).toBeVisible();

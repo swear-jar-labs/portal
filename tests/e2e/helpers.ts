@@ -12,9 +12,6 @@ export function docScroll(page: Page): Locator {
 
 export async function enterShell(page: Page) {
   await page.goto("/");
-  await expect(page.getByText("SWEARJAR.DOS /LOAD")).toBeVisible();
-  await page.keyboard.press("Enter");
-
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "SWEAR JAR LABS" })).toBeVisible();

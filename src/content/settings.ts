@@ -23,6 +23,3 @@ export const defaultScreensaver: ScreensaverSettings = {
   enabled: true,
   delayMs: screensaverDelayMs(defaultScreensaverMinutes),
 };
-
-// Mirrors --dos-boot-fade in tokens.css; update both together.
-export const bootFadeMs = 450;

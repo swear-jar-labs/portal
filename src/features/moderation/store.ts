@@ -35,11 +35,6 @@ export function reportsSeedCookieName(user: string): string {
   return `${REPORTS_SEED_COOKIE_PREFIX}${user}`;
 }
 
-/** Whether the store finished loading (module state, not snapshot). */
-export function isModerationStoreHydrated(): boolean {
-  return hydrated;
-}
-
 /**
  * REPORTS availability: the store once loaded, the cookie seed before that.
  * A stale seed self-corrects on hydrate (a fresh tab with no reports hides
@@ -179,31 +174,40 @@ export function hydrateModerationStore(): void {
     const saved = window.sessionStorage.getItem(MODERATION_STORAGE_KEY);
     const legacy = saved ? null : window.sessionStorage.getItem(LEGACY_STORAGE_KEY);
     const parsed: unknown = JSON.parse(saved ?? legacy ?? "null");
-    if (!parsed || typeof parsed !== "object") return;
-    const record = parsed as Record<string, unknown>; // Object checked above; fields checked below.
-    if (!Array.isArray(record.reports) || !Array.isArray(record.unavailable)) return;
-    if (!record.hidden || typeof record.hidden !== "object") return;
-    if (!record.seenByAuthor || typeof record.seenByAuthor !== "object") return;
-    if (legacy) {
-      state = migrateLegacy(
-        record.reports as LegacyReport[],
-        record.hidden as Record<string, { note: string; at: string }>,
-      );
-      state = { ...state, unavailable: new Set(record.unavailable as string[]) };
-      persistState();
-    } else {
-      state = {
-        reports: record.reports as ModerationReport[],
-        hidden: record.hidden as ModerationState["hidden"],
-        unavailable: new Set(record.unavailable as string[]),
-        seenByAuthor: record.seenByAuthor as ModerationState["seenByAuthor"],
-        seenByReporter: (record.seenByReporter ?? {}) as ModerationState["seenByReporter"],
-      };
+    if (parsed && typeof parsed === "object") {
+      const record = parsed as Record<string, unknown>; // Object checked above; fields checked below.
+      if (
+        Array.isArray(record.reports) &&
+        Array.isArray(record.unavailable) &&
+        record.hidden &&
+        typeof record.hidden === "object" &&
+        record.seenByAuthor &&
+        typeof record.seenByAuthor === "object"
+      ) {
+        if (legacy) {
+          state = migrateLegacy(
+            record.reports as LegacyReport[],
+            record.hidden as Record<string, { note: string; at: string }>,
+          );
+          state = { ...state, unavailable: new Set(record.unavailable as string[]) };
+          persistState();
+        } else {
+          state = {
+            reports: record.reports as ModerationReport[],
+            hidden: record.hidden as ModerationState["hidden"],
+            unavailable: new Set(record.unavailable as string[]),
+            seenByAuthor: record.seenByAuthor as ModerationState["seenByAuthor"],
+            seenByReporter: (record.seenByReporter ?? {}) as ModerationState["seenByReporter"],
+          };
+        }
+      }
     }
-    for (const listener of listeners) listener();
   } catch {
     // Malformed storage starts an empty mock session.
   }
+  // The hydrated flag flips even with nothing stored, and the state snapshot
+  // is then unchanged: still notify, so hydrated-flag subscribers re-render.
+  for (const listener of listeners) listener();
 }
 
 export function subscribeModeration(listener: () => void): () => void {
@@ -215,6 +219,12 @@ export function moderationSnapshot(): ModerationState {
 }
 export function moderationServerSnapshot(): ModerationState {
   return INITIAL_MODERATION_STATE;
+}
+export function moderationHydratedSnapshot(): boolean {
+  return hydrated;
+}
+export function moderationHydratedServerSnapshot(): boolean {
+  return false;
 }
 
 export function markAuthorReportSeen(user: string, id: string): void {

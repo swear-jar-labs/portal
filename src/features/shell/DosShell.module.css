@@ -35,3 +35,34 @@
     display: none;
   }
 }
+
+/* The top row: the menu bar plus the jar brand beside it. The brand is a
+   button (it opens the stats dialog), so it cannot live inside the menubar —
+   menubar allows menuitem children only (axe aria-required-children). */
+.topRow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.menuBar {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.brandButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--dos-black);
+  background: var(--dos-light-gray);
+  border: 0;
+  cursor: pointer;
+  /* The brand is a mark, not a menu label: it carries its own stroke, one
+     visible step over the body (mirrors the kit's .brand rule). */
+  -webkit-text-stroke: var(--dos-text-brand-stroke);
+}

@@ -38,7 +38,7 @@ test("opens the shell without a switch-on animation", async ({ page }) => {
 });
 
 test("hides the brand text on mobile and keeps it on desktop", async ({ page }) => {
-  const brandText = page.getByText(/SWEARJAR\.DOS v0\.1/);
+  const brandText = page.getByText(/SWEARJAR\.DOS v0\.9/);
   await expect(brandText).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 780 });
@@ -194,7 +194,7 @@ test("dialogs take the light surface", async ({ page }) => {
   await expect(errorBody).toHaveCSS("background-color", await tokenColor(page, "--dos-silver"));
   // The bold red headline counts as large text, so AA holds at 3:1.
   await expectMinimumContrast(error.getByText("Bad command or file name."), 3);
-  await expectMinimumContrast(error.getByText("The jar clinks. +1 coin."));
+  await expectMinimumContrast(error.getByText("The jar clinks. +1 lesson."));
   await expectMinimumContrast(error.getByText("JAR: 1 COIN", { exact: true }));
   await expectMinimumContrast(error.getByText("Try HELP."));
 

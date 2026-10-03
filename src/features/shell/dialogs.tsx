@@ -1,8 +1,11 @@
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { buildHelp, Button, Heading, Sprite, Stack, Text } from "@swearjar/dos";
 import type { AppCommand, FileGroup } from "@/content/commands";
 import { welcome } from "@/content/landing";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
+import { recentEvents, topBadCommands, type JarEvent } from "./model/jar";
 import styles from "./dialogs.module.css";
 
 export function HelpBody({ commands }: { commands: readonly AppCommand[] }) {
@@ -28,6 +31,58 @@ export function ErrorBody({ coins }: { coins: number }) {
       <Text as="div" role="hint">
         {messages.shell.dialogs.error.hint}
       </Text>
+    </Stack>
+  );
+}
+
+export function JarDialogBody({
+  events,
+  rows,
+  onOpenErrata,
+  onOpenBugs,
+}: {
+  events: readonly JarEvent[];
+  /** Section-owned stat rows (Errata, Bugs), composed by the layout. */
+  rows?: ReactNode;
+  onOpenErrata: () => void;
+  onOpenBugs: () => void;
+}) {
+  const copy = messages.shell.dialogs.jar;
+  // Frozen at open: the dialog reports the moment it was asked, and the
+  // command line behind it stays disabled while it is up.
+  const [now] = useState(() => Date.now());
+  const recent = recentEvents(events, now);
+  const top = topBadCommands(events, now);
+  return (
+    <Stack gap={4}>
+      <Text as="div" role="accent">
+        {events.length === 0
+          ? copy.empty
+          : `${formatCount(events.length, pluralForms.coin)}. ${copy.progress}`}
+      </Text>
+      <Text as="div" role="hint">
+        {copy.window}
+      </Text>
+      {rows}
+      <Text as="div">{`${copy.badCommands}: ${recent.length}`}</Text>
+      {top.length > 0 ? (
+        <Text as="div" role="hint">
+          {copy.topMisses}
+        </Text>
+      ) : null}
+      {top.map((miss) => (
+        <Text key={miss.raw} as="div">
+          {`  ${miss.raw}: ${miss.count}`}
+        </Text>
+      ))}
+      <Stack direction="row" gap={10} wrap>
+        <Button className={styles.action} onClick={onOpenBugs}>
+          {copy.openBugs}
+        </Button>
+        <Button className={styles.action} onClick={onOpenErrata}>
+          {copy.openErrata}
+        </Button>
+      </Stack>
     </Stack>
   );
 }

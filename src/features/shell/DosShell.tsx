@@ -25,8 +25,10 @@ import {
 } from "@swearjar/dos";
 import {
   commandById,
+  ERRATA_HREF,
   fileGroupsFor,
   FORUM_PATH,
+  BUG_TICKETS_HREF,
   HOME_PATH,
   joinLocation,
   isSearchablePath,
@@ -41,8 +43,9 @@ import {
 import { welcome } from "@/content/landing";
 import { messages } from "@/content/messages";
 import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "./screensaver-prefs";
+import { jarSnapshot, recordBadCommand, useJarEvents } from "./data/jar-store";
 import { KeyBarClock } from "./KeyBarClock";
-import { LoginPromptBody, WelcomeBody } from "./dialogs";
+import { JarDialogBody, LoginPromptBody, WelcomeBody } from "./dialogs";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -129,7 +132,8 @@ export function DosShell({
   const pathname = usePathname();
   const isHome = pathname === HOME_PATH;
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const [coins, setCoins] = useState(0);
+  const jarEvents = useJarEvents();
+  const coins = jarEvents.length;
   const [searchAvailable, setSearchAvailable] = useState(false);
   const overlayLayers = useOverlayLayers();
 
@@ -157,7 +161,7 @@ export function DosShell({
 
   const openDialog = useCallback((next: DialogState) => setDialog(next), []);
   const closeDialog = useCallback(() => setDialog(null), []);
-  const addCoin = useCallback(() => setCoins((value) => value + 1), []);
+  const addCoin = useCallback((raw: string) => recordBadCommand(raw), []);
   // The push is a transition, so the shell can tell when the route has arrived:
   // the file manager hands the keyboard to the right panel exactly then.
   const [isNavigating, startNavigation] = useTransition();
@@ -194,7 +198,33 @@ export function DosShell({
   const focusSearch = useCallback(() => {
     if (searchable) document.getElementById(SEARCH_FIELD_ID)?.focus();
   }, [searchable]);
-  const { tray: trayAddons, fileIcons } = useMemo(() => resolveShellAddons(addons), [addons]);
+  const {
+    tray: trayAddons,
+    fileIcons,
+    jarRows,
+  } = useMemo(() => resolveShellAddons(addons), [addons]);
+
+  const openJar = useCallback(() => {
+    openDialog({
+      title: messages.shell.dialogs.jar.title,
+      body: (
+        <JarDialogBody
+          events={jarSnapshot()}
+          rows={jarRows.map(({ id, node }) => (
+            <Fragment key={id}>{node}</Fragment>
+          ))}
+          onOpenErrata={() => {
+            closeDialog();
+            push(ERRATA_HREF);
+          }}
+          onOpenBugs={() => {
+            closeDialog();
+            push(BUG_TICKETS_HREF);
+          }}
+        />
+      ),
+    });
+  }, [closeDialog, jarRows, openDialog, push]);
 
   // The file manager runs commands through the runner (to run LOGOFF the
   // runner needs no file manager state): the ref breaks the cycle.
@@ -378,20 +408,23 @@ export function DosShell({
   return (
     <Stack as="main" align="center" justify="center" className={styles.stage}>
       <div className={styles.shell}>
-        <MenuBar
-          menus={menus}
-          brand={
-            <>
-              <Sprite name="jar" cell={2} decorative />
-              <Text as="span" className={styles.brandName}>
-                {messages.shell.brand.name}{" "}
-                <Text as="span" role="danger">
-                  {messages.shell.brand.version}
-                </Text>
+        <div className={styles.topRow}>
+          <MenuBar menus={menus} className={styles.menuBar} />
+          <button
+            type="button"
+            onClick={openJar}
+            aria-label={messages.shell.dialogs.jar.brandLabel}
+            className={styles.brandButton}
+          >
+            <Sprite name="jar" cell={2} decorative />
+            <Text as="span" className={styles.brandName}>
+              {messages.shell.brand.name}{" "}
+              <Text as="span" role="danger">
+                {messages.shell.brand.version}
               </Text>
-            </>
-          }
-        />
+            </Text>
+          </button>
+        </div>
 
         <FileManagerProvider value={fileManager}>
           <Suspense fallback={null}>

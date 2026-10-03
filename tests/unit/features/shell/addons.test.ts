@@ -27,6 +27,19 @@ describe("resolveShellAddons", () => {
   });
 
   it("returns empty surfaces without addons", () => {
-    expect(resolveShellAddons(undefined)).toEqual({ tray: [], fileIcons: {} });
+    expect(resolveShellAddons(undefined)).toEqual({ tray: [], fileIcons: {}, jarRows: [] });
+  });
+
+  it("collects jar rows in composition order", () => {
+    const { jarRows } = resolveShellAddons([
+      { id: "board", jar: "errata" },
+      { id: "icons-only", fileIcons: { INBOX: "mail" } },
+      { id: "tickets", jar: "bugs" },
+    ]);
+
+    expect(jarRows).toEqual([
+      { id: "board", node: "errata" },
+      { id: "tickets", node: "bugs" },
+    ]);
   });
 });

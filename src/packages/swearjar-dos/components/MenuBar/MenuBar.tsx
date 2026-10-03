@@ -1,7 +1,6 @@
 "use client";
 
 import * as RadixMenubar from "@radix-ui/react-menubar";
-import { type ReactNode } from "react";
 import { cx } from "../tone";
 import styles from "./MenuBar.module.css";
 
@@ -22,11 +21,10 @@ export type MenuBarMenu = {
 
 export type MenuBarProps = {
   menus: MenuBarMenu[];
-  brand?: ReactNode;
   className?: string;
 };
 
-export function MenuBar({ menus, brand, className }: MenuBarProps) {
+export function MenuBar({ menus, className }: MenuBarProps) {
   return (
     <RadixMenubar.Root className={cx(styles.root, className)}>
       {menus.map((menu) => (
@@ -54,7 +52,6 @@ export function MenuBar({ menus, brand, className }: MenuBarProps) {
           </RadixMenubar.Portal>
         </RadixMenubar.Menu>
       ))}
-      {brand ? <span className={styles.brand}>{brand}</span> : null}
     </RadixMenubar.Root>
   );
 }

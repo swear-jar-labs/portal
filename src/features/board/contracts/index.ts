@@ -15,6 +15,9 @@ export { useForumActivity } from "../data/useForumActivity";
 export type { ForumActivitySeed, ForumActivityCounts } from "../data/forum-activity";
 export { JournalRows } from "../list/JournalRows";
 export { ThreadRows } from "../list/ThreadRows";
+// The jar row: the shell's stats dialog renders it as an opaque addon row —
+// a leaf (own store and model only, no feature imports).
+export { ErrataJarRow } from "../jar/ErrataJarRow";
 // The upvote chip: the readroom's cards and task view vote with the same
 // affordance (a leaf — kit, content and lib only, no feature imports).
 export { VoteButton } from "../list/VoteButton";

@@ -5,6 +5,7 @@ import type { ThreadSummary } from "@/features/board/contracts";
 describe("board contract", () => {
   it("publishes exactly the agreed surface", () => {
     expect(Object.keys(boardContract).sort()).toEqual([
+      "ErrataJarRow",
       "FEED_PATH",
       "JournalRows",
       "ThreadRows",

@@ -11,9 +11,11 @@ import {
   MemberIdentityProvider,
   mockLogoff,
 } from "@/features/account";
+import { ErrataJarRow, listThreads } from "@/features/board";
 import { InboxFileIcon, InboxStatusAddon, listInboxSeed } from "@/features/inbox";
 import { ModerationDosShell, reportsSeedCookieName } from "@/features/moderation";
-import { ChildrenPathProvider, type ShellAddon } from "@/features/shell";
+import { ChildrenPathProvider, JAR_WINDOW_MS, type ShellAddon } from "@/features/shell";
+import { BugJarRow, listTickets } from "@/features/tickets";
 import { messages } from "@/content/messages";
 
 const greybeard18 = localFont({
@@ -49,8 +51,13 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
   // blinks on reload; the per-user seed cookie carries it into first paint.
   const reportsSeed = session ? (await cookies()).has(reportsSeedCookieName(session.user)) : false;
   const inboxSeed = session ? await listInboxSeed(session.user) : undefined;
-  const addons: ShellAddon[] =
-    session && inboxSeed
+  // The jar's section rows: fixture seeds ride the layout into the shell's
+  // dialog, the session's composed threads and tickets merge in on the client.
+  const [jarThreads, jarTickets] = await Promise.all([listThreads(), listTickets()]);
+  const addons: ShellAddon[] = [
+    { id: "jar-bugs", jar: <BugJarRow tickets={jarTickets} windowMs={JAR_WINDOW_MS} /> },
+    { id: "jar-errata", jar: <ErrataJarRow threads={jarThreads} windowMs={JAR_WINDOW_MS} /> },
+    ...(session && inboxSeed
       ? [
           {
             id: "inbox",
@@ -58,7 +65,8 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
             fileIcons: { INBOX: <InboxFileIcon user={session.user} seed={inboxSeed} /> },
           },
         ]
-      : [];
+      : []),
+  ];
 
   return (
     <html lang="en" className={`${greybeard18.variable} ${greybeard16.variable}`}>

@@ -337,6 +337,14 @@ export function filterTickets(tickets: readonly Ticket[], query: TicketQuery): T
 // inside a rank, the key breaking the last tie.
 const PRIORITY_RANK: Record<TicketPriority, number> = { high: 0, normal: 1, low: 2 };
 
+/** Bug tickets created inside the jar window (fixtures and session-composed
+ * alike): the shell's jar dialog reads the tracker through it, never the store. */
+export function countRecentBugs(tickets: readonly Ticket[], now: number, windowMs: number): number {
+  return tickets.filter(
+    (ticket) => ticket.tags.includes("bug") && now - Date.parse(ticket.createdAt) < windowMs,
+  ).length;
+}
+
 /** The tracker order: priority first, then the freshest update, then the key. */
 export function sortTickets(tickets: readonly Ticket[]): Ticket[] {
   return [...tickets].sort((a, b) => {

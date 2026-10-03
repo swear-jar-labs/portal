@@ -37,6 +37,9 @@ export const FORUM_PATH = "/forum";
 export const READROOM_PATH = "/readroom";
 export const TICKETS_PATH = "/tickets";
 export const ERRATA_HREF = `${FORUM_PATH}?${BOARD_QUERY_PARAM}=${ERRATA_BOARD_ID}`;
+// The jar's bug row lands on the tracker pre-filtered to the bug tag (the
+// tracker reads ?tag=, see features/tickets/model/tickets.ts).
+export const BUG_TICKETS_HREF = `${TICKETS_PATH}?tag=bug`;
 
 // Guest-only entries: LOGON carries the return location (?next=) so a logon
 // started on a page lands back there; a direct visit falls back to FORUM.

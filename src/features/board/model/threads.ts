@@ -144,3 +144,16 @@ export function summarizeThread(thread: Thread): ThreadSummary {
 export function formatAge(iso: string, nowIso: string): string {
   return formatRelativeAge(iso, nowIso, messages.board.age);
 }
+
+/** Errata threads created inside the jar window (fixtures and session-composed
+ * alike): the shell's jar dialog reads the board through it, never the store. */
+export function countRecentErrata(
+  summaries: readonly ThreadSummary[],
+  now: number,
+  windowMs: number,
+): number {
+  return summaries.filter(
+    (summary) =>
+      summary.board === ERRATA_BOARD_ID && now - Date.parse(summary.createdAt) < windowMs,
+  ).length;
+}

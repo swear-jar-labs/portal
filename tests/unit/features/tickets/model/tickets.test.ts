@@ -3,6 +3,7 @@ import {
   DEFAULT_TICKET_QUERY,
   TICKETS_PATH,
   blockEdges,
+  countRecentBugs,
   filterTickets,
   isBlocked,
   isDefaultTicketQuery,
@@ -67,6 +68,18 @@ describe("tickets model", () => {
   it("owns the tracker and dossier URL canon", () => {
     expect(TICKETS_PATH).toBe("/tickets");
     expect(ticketPath("DOS-3")).toBe("/tickets/DOS-3");
+  });
+
+  it("counts only fresh bug tickets for the jar", () => {
+    const hour = 60 * 60 * 1000;
+    const now = Date.parse("2026-10-03T12:00:00.000Z");
+    const at = (hoursAgo: number) => new Date(now - hoursAgo * hour).toISOString();
+    const rows = [
+      ticket({ key: "DOS-1", project: "swearjar-dos", tags: ["bug"], createdAt: at(2) }),
+      ticket({ key: "DOS-2", project: "swearjar-dos", tags: ["bug"], createdAt: at(25) }),
+      ticket({ key: "DOS-3", project: "swearjar-dos", tags: ["feature"], createdAt: at(1) }),
+    ];
+    expect(countRecentBugs(rows, now, 24 * hour)).toBe(1);
   });
 });
 

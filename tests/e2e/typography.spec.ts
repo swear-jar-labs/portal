@@ -20,7 +20,7 @@ test("keeps hints smaller and on the surface ink", async ({ page }) => {
   await page.keyboard.press("Enter");
 
   const dialog = page.getByRole("dialog");
-  const body = dialog.getByText("The jar clinks. +1 coin.");
+  const body = dialog.getByText("The jar clinks. +1 lesson.");
   const hint = dialog.getByText("Try HELP.");
 
   // A hint is dim and 0.9em; its weight and ink follow the surface, so on the

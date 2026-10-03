@@ -4,6 +4,7 @@ import * as ticketsContract from "@/features/tickets/contracts";
 describe("tickets contract", () => {
   it("publishes exactly the agreed surface", () => {
     expect(Object.keys(ticketsContract).sort()).toEqual([
+      "BugJarRow",
       "TicketsOverlayTable",
       "countDoneBySize",
       "listTickets",

@@ -14,7 +14,7 @@ export const messages = {
       "A workshop for people who want to understand how software works — and how to build it well.",
   },
   shell: {
-    brand: { name: "SWEARJAR.DOS", version: "v0.1" },
+    brand: { name: "SWEARJAR.DOS", version: "v0.9" },
     menuBar: {
       titles: { file: "Guide", board: "Community", account: "Account", help: "Help" },
       labels: {
@@ -100,9 +100,22 @@ export const messages = {
       error: {
         title: "ERROR",
         headline: "Bad command or file name.",
-        jar: "The jar clinks. +1 coin.",
+        jar: "The jar clinks. +1 lesson.",
         jarTotal: "JAR",
         hint: "Try HELP.",
+      },
+      jar: {
+        title: "JAR",
+        brandLabel: "Open the swear jar stats",
+        empty: "The jar is empty. Learning in progress.",
+        progress: "Learning in progress.",
+        window: "LAST 24 HOURS",
+        badCommands: "BAD COMMANDS",
+        topMisses: "TOP MISSES",
+        errata: "ERRATA THREADS",
+        bugs: "BUG TICKETS",
+        openErrata: "OPEN ERRATA",
+        openBugs: "OPEN BUG TICKETS",
       },
       logoff: {
         title: "LOGOFF",

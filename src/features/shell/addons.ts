@@ -11,6 +11,8 @@ export type ShellAddon = {
   tray?: ReactNode;
   /** File-row icons replacing a command's default sprite. */
   fileIcons?: Partial<Record<CommandId, ReactNode>>;
+  /** Extra stat rows of the JAR dialog (Errata, Bugs), in composition order. */
+  jar?: ReactNode;
 };
 
 type ShellTrayEntry = {
@@ -21,15 +23,18 @@ type ShellTrayEntry = {
 type ResolvedShellAddons = {
   tray: readonly ShellTrayEntry[];
   fileIcons: Partial<Record<CommandId, ReactNode>>;
+  jarRows: readonly ShellTrayEntry[];
 };
 
-/** Flattens the addon list into the two shell surfaces; later icons win. */
+/** Flattens the addon list into the shell surfaces; later icons win. */
 export function resolveShellAddons(addons: readonly ShellAddon[] | undefined): ResolvedShellAddons {
   const tray: ShellTrayEntry[] = [];
+  const jarRows: ShellTrayEntry[] = [];
   const fileIcons: Partial<Record<CommandId, ReactNode>> = {};
   for (const addon of addons ?? []) {
     if (addon.tray !== undefined) tray.push({ id: addon.id, node: addon.tray });
+    if (addon.jar !== undefined) jarRows.push({ id: addon.id, node: addon.jar });
     if (addon.fileIcons) Object.assign(fileIcons, addon.fileIcons);
   }
-  return { tray, fileIcons };
+  return { tray, fileIcons, jarRows };
 }

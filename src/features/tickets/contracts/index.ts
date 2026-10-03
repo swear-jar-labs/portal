@@ -14,3 +14,6 @@ export { TicketsOverlayTable } from "../list/TicketsOverlayTable";
 export type { Ticket } from "../model/tickets";
 export { subscribeTicketEvents, ticketEventsSnapshot } from "../data/ticket-events";
 export type { TicketEvent, TicketEventKind } from "../data/ticket-events";
+// The jar row: the shell's stats dialog renders it as an opaque addon row —
+// a leaf (own store and model only, no feature imports).
+export { BugJarRow } from "../jar/BugJarRow";

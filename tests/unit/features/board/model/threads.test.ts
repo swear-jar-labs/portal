@@ -4,6 +4,7 @@ import {
   boardIds,
   boardTitle,
   composableBoardIds,
+  countRecentErrata,
   isBoardId,
   isTagId,
   isThreadTechId,
@@ -12,6 +13,7 @@ import {
   tagTones,
   threadPath,
   threadTechIds,
+  type ThreadSummary,
 } from "@/features/board/model/threads";
 
 describe("board taxonomy", () => {
@@ -68,5 +70,31 @@ describe("board taxonomy", () => {
 
   it("owns the thread URL canon", () => {
     expect(threadPath("read-first")).toBe("/forum/read-first");
+  });
+
+  it("counts only fresh errata for the jar", () => {
+    const hour = 60 * 60 * 1000;
+    const now = Date.parse("2026-10-03T12:00:00.000Z");
+    const at = (hoursAgo: number) => new Date(now - hoursAgo * hour).toISOString();
+    const summary = (id: string, board: string, createdAt: string): ThreadSummary => ({
+      id,
+      board,
+      title: id,
+      author: { user: "ada", role: "member" },
+      tags: [],
+      techs: [],
+      pinned: false,
+      locked: false,
+      createdAt,
+      votes: 0,
+      replies: 0,
+      lastActivityAt: createdAt,
+    });
+    const rows = [
+      summary("fresh-errata", "errata", at(2)),
+      summary("stale-errata", "errata", at(25)),
+      summary("fresh-general", "general", at(1)),
+    ];
+    expect(countRecentErrata(rows, now, 24 * hour)).toBe(1);
   });
 });

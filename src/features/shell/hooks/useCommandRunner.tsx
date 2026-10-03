@@ -23,7 +23,7 @@ export type DialogState = {
 export type CommandRunnerOptions = {
   openDialog: (dialog: DialogState) => void;
   closeDialog: () => void;
-  addCoin: () => void;
+  addCoin: (raw: string) => void;
   coins: number;
   logoff: () => void;
   push: (href: string) => void;
@@ -85,7 +85,7 @@ export function useCommandRunner({
     (raw: string) => {
       const command = resolveCommand(commands, raw);
       if (!command) {
-        addCoin();
+        addCoin(raw);
         openDialog({
           title: messages.shell.dialogs.error.title,
           tone: "error",

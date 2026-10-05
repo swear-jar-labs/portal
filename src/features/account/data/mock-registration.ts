@@ -1,69 +1,17 @@
 import type { SocialProvider } from "./mock-session";
-import { createAccountRegistry, type Actor } from "../model/actor";
+import type { Actor } from "../model/actor";
 import {
   createVerificationStore,
   type PendingVerification,
   type VerificationCheck,
   type VerificationStart,
 } from "../model/verification";
+import { emailTaken, ensureAccount, resolveAccount } from "./account-registry";
 
-// The demo roster: ada and grace back the social buttons and the existing
-// member-path specs; admin and coadmin review the application queue. Every
-// other handle provisions as a Participant on first contact, so fixture
-// authors (ken, lin) and fresh registrations need no roster entry. Mock-only:
-// production auth resolves levels from the
-// backend, and this module never ships real credentials.
-const registry = createAccountRegistry([
-  { user: "ada", level: "member" },
-  { user: "grace", level: "member" },
-  { user: "ken", level: "member" },
-  { user: "lin", level: "member" },
-  { user: "admin", level: "member", admin: true },
-  { user: "coadmin", level: "member", admin: true },
-  { user: "demo-candidate", level: "participant" },
-  { user: "demo-second", level: "participant" },
-]);
-
+// The registration half of the mock accounts: the OTP store is server-only
+// (node:crypto), so this module never reaches a client component — the
+// roster itself lives in account-registry.ts, which is client-safe.
 const verifications = createVerificationStore();
-
-export function resolveAccount(user: string): Actor | null {
-  return registry.resolve(user);
-}
-
-export function listMemberUsers(): string[] {
-  return registry.memberUsers();
-}
-
-export function listAdminUsers(): string[] {
-  return registry.adminUsers();
-}
-
-export function ensureAccount(user: string, email?: string): Actor {
-  return registry.ensure(user, email);
-}
-
-// The logon credential is a handle or a mailbox: a mailbox resolves to its
-// verified account (unknown mailboxes refuse — they never provision), a
-// handle passes through to the first-contact provisioning.
-export function resolveLogonUser(login: string): string | null {
-  if (!login.includes("@")) return login;
-  return registry.userForEmail(login);
-}
-
-export function promoteAccount(user: string): Actor | null {
-  return registry.setLevel(user, "member");
-}
-
-export function updateAccountProfile(
-  key: string,
-  input: { username: string; bio: string; avatar?: string | null },
-) {
-  return registry.updateProfile(key, input);
-}
-
-export function memberIdentities() {
-  return registry.identities();
-}
 
 // Social signup provisions its own demo Participant per provider: unlike the
 // social logon (which lands the provider's long-lived demo Member), a fresh
@@ -75,7 +23,7 @@ const socialRegisterUsers = {
 } as const satisfies Record<SocialProvider, string>;
 
 export function ensureSocialAccount(provider: SocialProvider): Actor {
-  return registry.ensure(socialRegisterUsers[provider]);
+  return ensureAccount(socialRegisterUsers[provider]);
 }
 
 // Email registration is two steps: the code goes out (shown on screen in the
@@ -90,10 +38,10 @@ export function startRegistration(
   email: string,
   start: VerificationStart = {},
 ): RegistrationStartResult {
-  if (registry.resolve(user)) return { ok: false, error: "taken" };
+  if (resolveAccount(user)) return { ok: false, error: "taken" };
   // The pending store claims its mailbox too: two handles must not verify the
   // same address in parallel.
-  if (registry.emailTaken(email) || verifications.hasPendingEmail(email, user)) {
+  if (emailTaken(email) || verifications.hasPendingEmail(email, user)) {
     return { ok: false, error: "email-taken" };
   }
   return { ok: true, pending: verifications.start(user, email, start) };
@@ -114,8 +62,8 @@ export function confirmRegistration(
   // provisions it): refuse without burning the code, so the form can ask for
   // another handle. The mailbox is claimed by the pending code itself (see
   // startRegistration), so only the handle is re-checked here.
-  if (registry.resolve(user)) return { result: "taken", actor: null };
+  if (resolveAccount(user)) return { result: "taken", actor: null };
   const checked = verifications.confirm(user, input, now);
   if (checked !== "ok") return { result: checked, actor: null };
-  return { result: "ok", actor: registry.ensure(user, pending.email) };
+  return { result: "ok", actor: ensureAccount(user, pending.email) };
 }

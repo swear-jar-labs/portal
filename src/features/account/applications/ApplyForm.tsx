@@ -14,7 +14,7 @@ import {
 import { useClientInteractive } from "@/shared/useClientInteractive";
 import { ApplicationHistory } from "./ApplicationHistory";
 import type { MemberApplication } from "../model/applications";
-import { listAdminUsers } from "../data/mock-accounts";
+import { listAdminUsers } from "../data/account-registry";
 import {
   mockRespondToMemberApplication,
   mockSubmitMemberApplication,

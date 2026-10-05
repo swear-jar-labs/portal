@@ -240,7 +240,7 @@ export const messages = {
     login: {
       metadata: {
         title: "Logon — Swear Jar Labs",
-        description: "Sign in to Swear Jar Labs. This build uses demo accounts.",
+        description: "Sign in to Swear Jar Labs.",
       },
       heading: "LOGON",
       fields: {
@@ -248,8 +248,6 @@ export const messages = {
         password: "Password",
       },
       hint: "Usernames use letters, digits, - or _. Letters are saved in lower case. You can also sign in with your registration email.",
-      demoHint:
-        "Development demo: use a made-up password. Google and GitHub buttons also simulate sign-in; no real accounts are connected.",
       submit: "LOG ON",
       sso: {
         label: "OR LOG ON WITH",
@@ -262,8 +260,7 @@ export const messages = {
         user: "Enter your username (2-32 characters: letters, digits, - or _) or your email.",
         password: "A password is needed.",
         invalid: "Incorrect username, email, or password.",
-        unavailable:
-          "Sign-in is not available in this build. Demo sign-in works in development only.",
+        unavailable: "Sign-in is temporarily unavailable. Try again later.",
       },
       registerPrompt: "Don't have an account?",
       registerLink: "REGISTER",
@@ -271,13 +268,12 @@ export const messages = {
     register: {
       metadata: {
         title: "Register — Swear Jar Labs",
-        description: "Create a Swear Jar Labs demo account and join as a Participant.",
+        description: "Create a Swear Jar Labs account and join as a Participant.",
       },
       heading: "REGISTER",
       intro: "Pick a username to join the workshop. New accounts start as Participants.",
       hint: "Usernames use letters, digits, - or _. Letters are saved in lower case.",
-      demoHint:
-        "Development demo: use a made-up password and any mailbox. The account lives in this build only; sign-in stays mocked until real auth lands.",
+      passwordHint: "Passwords need at least {min} characters.",
       fields: {
         user: "Username",
         email: "Email",
@@ -295,23 +291,12 @@ export const messages = {
         user: "2-32 characters: letters, digits, - or _.",
         email: "Enter a valid email address.",
         password: "A password is needed.",
+        passwordShort: "Use at least 8 characters.",
+        passwordLong: "Use at most 128 characters.",
         taken: "That username is taken. Pick another one, or log on.",
         emailTaken: "That email is already registered. Log on instead.",
         form: "Check the fields and try again.",
-      },
-      code: {
-        heading: "CHECK YOUR EMAIL",
-        text: "No mail leaves this build: the demo code is shown below. Type it to finish registration.",
-        demoCode: "Demo code:",
-        label: "Email code",
-        submit: "CONFIRM",
-        back: "BACK",
-        errors: {
-          invalid: "Six digits, no spaces.",
-          mismatch: "Wrong code. Check the demo code and try again.",
-          expired: "The code expired. Send a fresh one.",
-          missing: "No code was sent for this handle. Start over.",
-        },
+        unavailable: "Registration is temporarily unavailable. Try again later.",
       },
     },
     profile: {

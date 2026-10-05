@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getActorSession, mockSessionEnabled } from "@/features/account/contracts";
+import { fixturesEnabled } from "@/shared/mock";
+import { getActorSession } from "@/features/account/contracts";
 import { respondToProject, submitProject } from "./mock-submissions";
 import {
   MAX_PROJECT_NOTE_LENGTH,
@@ -25,7 +26,7 @@ function finish(result: { ok: boolean; error?: SubmissionError }): ActionResult 
 }
 
 export async function mockSubmitProject(input: unknown): Promise<ActionResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const actor = await getActorSession();
   if (actor?.level !== "member") return { ok: false, error: "forbidden" };
   const parsed = projectSubmissionSchema.safeParse(input);
@@ -39,7 +40,7 @@ export async function mockSubmitProject(input: unknown): Promise<ActionResult> {
 }
 
 export async function mockRespondToProject(input: unknown): Promise<ActionResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const parsed = responseSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const actor = await getActorSession();

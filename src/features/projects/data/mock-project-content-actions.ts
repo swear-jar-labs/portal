@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getActorSession, mockSessionEnabled } from "@/features/account/contracts";
+import { fixturesEnabled } from "@/shared/mock";
+import { getActorSession } from "@/features/account/contracts";
 import { projectContentSchema, type ProjectContentError } from "../model/project-content";
 import { projectContent } from "./project-content-store";
 import { getProject } from "./queries";
@@ -9,7 +10,7 @@ import { getProject } from "./queries";
 type Result = { ok: true } | { ok: false; error: ProjectContentError | "unavailable" };
 
 export async function mockSaveProjectContent(input: unknown): Promise<Result> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const parsed = projectContentSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const actor = await getActorSession();

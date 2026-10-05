@@ -1,6 +1,6 @@
+import { fixturesEnabled } from "@/shared/mock";
 import { createApplicationStore } from "../model/applications";
-import { promoteAccount, resolveAccount } from "./mock-accounts";
-import { mockSessionEnabled } from "./mock-session";
+import { promoteAccount, resolveAccount } from "./account-registry";
 import type { Actor } from "../model/actor";
 
 // Shared with the account and admin slices through the account contract.
@@ -46,7 +46,7 @@ function seedStore(target: MemberApplicationStore): void {
 function getStore(): MemberApplicationStore {
   if (!store) {
     store = createApplicationStore(promoteAccount);
-    if (mockSessionEnabled()) seedStore(store);
+    if (fixturesEnabled()) seedStore(store);
   }
   return store;
 }

@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { SettingsForm, ShellPanel } from "@/features/shell";
+import { isSignedIn } from "../model/gates";
 import { AccountGate } from "../auth/AccountGate";
-import { getActorSession } from "../data/mock-session.server";
+import { getActorSession } from "../data/auth-session.server";
 
 export const settingsMetadata: Metadata = messages.account.settings.metadata;
 
 export async function SettingsPage() {
   const actor = await getActorSession();
-  if (!actor) return <AccountGate title={fileTitle("SETTINGS")} />;
+  if (!isSignedIn(actor)) return <AccountGate title={fileTitle("SETTINGS")} />;
 
   return (
     <ShellPanel title={fileTitle("SETTINGS")}>

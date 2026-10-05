@@ -4,6 +4,7 @@ import { messages } from "@/content/messages";
 import {
   ApplicationHistory,
   getActorSession,
+  isAdmin,
   listMemberApplications,
   mockDecideMemberApplication,
 } from "@/features/account/contracts";
@@ -20,10 +21,11 @@ export const adminMetadata: Metadata = messages.admin.metadata;
 
 export async function AdminPage() {
   const actor = await getActorSession();
-  const projects = actor?.admin ? await listProjects() : [];
+  const admin = isAdmin(actor);
+  const projects = admin ? await listProjects() : [];
   return (
     <AdminStack>
-      {actor?.admin ? (
+      {admin ? (
         <AdminWorkspace
           memberQueue={
             <AdminQueue

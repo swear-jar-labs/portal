@@ -4,7 +4,8 @@ import { fileTitle, FORUM_PATH, parseLoginReturn } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 import { LogonForm } from "./LogonForm";
-import { getActorSession } from "../data/mock-session.server";
+import { getActorSession } from "../data/auth-session.server";
+import { socialAuth } from "../data/social-auth.server";
 
 export const loginMetadata: Metadata = messages.account.login.metadata;
 
@@ -20,10 +21,12 @@ export async function LoginPage({ searchParams }: LoginPageProps) {
   const returnTo = parseLoginReturn(Array.isArray(raw) ? raw[0] : raw);
   const actor = await getActorSession();
   if (actor) redirect(returnTo ?? FORUM_PATH);
+  // One mapping point for the provider row (mock under the seeded e2e run).
+  const { providers, mode } = socialAuth();
 
   return (
     <ShellPanel title={fileTitle("LOGON")}>
-      <LogonForm returnTo={returnTo} />
+      <LogonForm returnTo={returnTo} providers={providers} social={mode} />
     </ShellPanel>
   );
 }

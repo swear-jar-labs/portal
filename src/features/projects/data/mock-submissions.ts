@@ -1,5 +1,5 @@
 import type { Actor } from "@/features/account/contracts";
-import { isMockMode } from "@/shared/mock";
+import { fixturesEnabled } from "@/shared/mock";
 import { createProjectSubmissionStore, type ProjectSubmission } from "./submissions";
 
 // The proposal queue is a server-process mock (see mock-applications in the
@@ -79,7 +79,7 @@ function seedStore(target: ProjectSubmissionStore): void {
 function getStore(): ProjectSubmissionStore {
   if (!store) {
     store = createProjectSubmissionStore();
-    if (isMockMode()) seedStore(store);
+    if (fixturesEnabled()) seedStore(store);
   }
   return store;
 }

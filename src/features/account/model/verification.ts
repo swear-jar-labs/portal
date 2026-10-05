@@ -43,7 +43,7 @@ export type VerificationStart = {
 
 // Pending codes live in module state next to the account registry: a server
 // restart drops them, same as dynamic registrations. Tests build their own
-// store; the slice keeps one singleton (see mock-accounts.ts).
+// store; the slice keeps one singleton (see data/mock-registration.ts).
 export function createVerificationStore() {
   const pending = new Map<string, PendingVerification>();
 

@@ -2,20 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import {
-  confirmRegistration,
-  ensureAccount,
-  ensureSocialAccount,
-  resolveLogonUser,
-  startRegistration,
-} from "./mock-accounts";
+import { isSeededE2e } from "@/shared/mock";
+import { confirmRegistration, ensureSocialAccount, startRegistration } from "./mock-registration";
+import { ensureAccount, resolveLogonUser } from "./account-registry";
 import {
   MOCK_SESSION_COOKIE,
   MOCK_SESSION_MAX_AGE_S,
   mockLogonSchema,
   mockRegisterConfirmSchema,
   mockRegisterStartSchema,
-  mockSessionEnabled,
   mockSocialLogonSchema,
   socialProviderUsers,
 } from "./mock-session";
@@ -43,7 +38,7 @@ async function setMockSession(user: string): Promise<void> {
 }
 
 export async function mockLogon(input: unknown): Promise<MockLogonResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!isSeededE2e()) return { ok: false, error: "unavailable" };
 
   const parsed = mockLogonSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -59,7 +54,7 @@ export async function mockLogon(input: unknown): Promise<MockLogonResult> {
 }
 
 export async function mockStartRegistration(input: unknown): Promise<MockRegisterStartResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!isSeededE2e()) return { ok: false, error: "unavailable" };
 
   const parsed = mockRegisterStartSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -73,7 +68,7 @@ export async function mockStartRegistration(input: unknown): Promise<MockRegiste
 }
 
 export async function mockConfirmRegistration(input: unknown): Promise<MockRegisterConfirmResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!isSeededE2e()) return { ok: false, error: "unavailable" };
 
   const parsed = mockRegisterConfirmSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -86,7 +81,7 @@ export async function mockConfirmRegistration(input: unknown): Promise<MockRegis
 }
 
 export async function mockSocialRegister(input: unknown): Promise<MockLogonResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!isSeededE2e()) return { ok: false, error: "unavailable" };
 
   const parsed = mockSocialLogonSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -97,7 +92,7 @@ export async function mockSocialRegister(input: unknown): Promise<MockLogonResul
 }
 
 export async function mockSocialLogon(input: unknown): Promise<MockLogonResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!isSeededE2e()) return { ok: false, error: "unavailable" };
 
   const parsed = mockSocialLogonSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -105,10 +100,4 @@ export async function mockSocialLogon(input: unknown): Promise<MockLogonResult> 
   const user = socialProviderUsers[parsed.data.provider];
   await setMockSession(user);
   return { ok: true, user };
-}
-
-export async function mockLogoff(): Promise<void> {
-  const store = await cookies();
-  store.delete(MOCK_SESSION_COOKIE);
-  revalidatePath("/", "layout");
 }

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { emailSchema, OTP_LENGTH, USER_PATTERN, userSchema } from "../model/schema";
-import { isMockMode } from "@/shared/mock";
 
 // Mock session until Better Auth lands (Phase 5, see TECH.md): the cookie
 // carries the user, nothing is signed. Presentation only — never a security
@@ -56,8 +55,4 @@ export function parseMockSession(value: string | undefined): MockSession | null 
   const user = value.trim();
   if (!USER_PATTERN.test(user)) return null;
   return { user };
-}
-
-export function mockSessionEnabled(): boolean {
-  return isMockMode();
 }

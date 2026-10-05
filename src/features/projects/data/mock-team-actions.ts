@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getActorSession, mockSessionEnabled, resolveAccount } from "@/features/account/contracts";
+import { fixturesEnabled } from "@/shared/mock";
+import { getActorSession, resolveAccount } from "@/features/account/contracts";
 import { changeProjectTeam } from "./team-operations";
 import { projectTeamActionIds, type TeamError } from "./team-store";
 
@@ -14,7 +15,7 @@ const actionSchema = z.object({
 type ActionResult = { ok: true } | { ok: false; error: TeamError | "invalid" | "unavailable" };
 
 export async function mockProjectTeamAction(input: unknown): Promise<ActionResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const parsed = actionSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const { slug, action, target } = parsed.data;

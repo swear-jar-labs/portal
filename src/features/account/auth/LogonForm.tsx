@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button, Field, Form, Heading, Link, Stack, Text } from "@swearjar/dos";
 import { FORUM_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { mockLogonSchema, socialProviders, type SocialProvider } from "../data/mock-session";
-import { mockLogon, mockSocialLogon } from "../data/mock-session-actions";
+import { authClient } from "@/lib/auth-client";
+import { signInSchema, type SignInError, type SocialAuthMode } from "../model/credentials";
+import type { SocialProvider } from "../data/mock-session";
+import { mockSocialLogon } from "../data/mock-session-actions";
+import { signIn } from "../data/session-actions";
 import styles from "./LogonForm.module.css";
 
 type LogonErrors = {
@@ -19,9 +22,14 @@ export type LogonFormProps = {
   // Where a successful logon lands: the page the logon started from (?next=),
   // or the member home (FORUM) for a direct visit.
   returnTo?: string;
+  // SSO buttons render only for providers with credentials configured.
+  providers: readonly SocialProvider[];
+  // Seeded e2e keeps the deterministic mock social logon; everywhere else
+  // the buttons start a real OAuth roundtrip.
+  social: SocialAuthMode;
 };
 
-export function LogonForm({ returnTo }: LogonFormProps) {
+export function LogonForm({ returnTo, providers, social }: LogonFormProps) {
   const router = useRouter();
   const landing = returnTo ?? FORUM_PATH;
   const [user, setUser] = useState("");
@@ -29,14 +37,14 @@ export function LogonForm({ returnTo }: LogonFormProps) {
   const [errors, setErrors] = useState<LogonErrors>({});
   const [pending, startTransition] = useTransition();
 
-  function errorText(error: "invalid" | "unavailable"): string {
+  function errorText(error: SignInError): string {
     return error === "unavailable"
       ? messages.account.login.errors.unavailable
       : messages.account.login.errors.invalid;
   }
 
   function handleSubmit() {
-    const parsed = mockLogonSchema.safeParse({ user, password });
+    const parsed = signInSchema.safeParse({ user, password });
     if (!parsed.success) {
       setErrors({
         user: parsed.error.issues.some((issue) => issue.path[0] === "user")
@@ -50,9 +58,10 @@ export function LogonForm({ returnTo }: LogonFormProps) {
     }
     setErrors({});
     startTransition(async () => {
-      const result = await mockLogon(parsed.data);
+      const result = await signIn(parsed.data);
       if (result.ok) {
         router.push(landing);
+        router.refresh();
         return;
       }
       setErrors({ form: errorText(result.error) });
@@ -62,12 +71,18 @@ export function LogonForm({ returnTo }: LogonFormProps) {
   function handleProvider(provider: SocialProvider) {
     setErrors({});
     startTransition(async () => {
-      const result = await mockSocialLogon({ provider });
-      if (result.ok) {
-        router.push(landing);
+      if (social === "mock") {
+        const result = await mockSocialLogon({ provider });
+        if (result.ok) {
+          router.push(landing);
+          router.refresh();
+          return;
+        }
+        setErrors({ form: errorText(result.error) });
         return;
       }
-      setErrors({ form: errorText(result.error) });
+      const result = await authClient.signIn.social({ provider, callbackURL: landing });
+      if (result.error) setErrors({ form: errorText("unavailable") });
     });
   }
 
@@ -75,7 +90,6 @@ export function LogonForm({ returnTo }: LogonFormProps) {
     <Form onSubmit={handleSubmit} ariaLabel={messages.account.login.heading}>
       <Stack gap={10}>
         <Heading level={1}>{messages.account.login.heading}</Heading>
-        <Text role="hint">{messages.account.login.demoHint}</Text>
 
         <Field
           label={messages.account.login.fields.user}
@@ -107,16 +121,20 @@ export function LogonForm({ returnTo }: LogonFormProps) {
           </Button>
         </Stack>
 
-        <Text role="hint" className={styles.divider}>
-          {messages.account.login.sso.label}
-        </Text>
-        <Stack direction="row" gap={10} wrap>
-          {socialProviders.map((provider) => (
-            <Button key={provider} onClick={() => handleProvider(provider)} disabled={pending}>
-              {messages.account.login.sso.providers[provider]}
-            </Button>
-          ))}
-        </Stack>
+        {providers.length > 0 ? (
+          <>
+            <Text role="hint" className={styles.divider}>
+              {messages.account.login.sso.label}
+            </Text>
+            <Stack direction="row" gap={10} wrap>
+              {providers.map((provider) => (
+                <Button key={provider} onClick={() => handleProvider(provider)} disabled={pending}>
+                  {messages.account.login.sso.providers[provider]}
+                </Button>
+              ))}
+            </Stack>
+          </>
+        ) : null}
 
         <Text>
           {messages.account.login.registerPrompt}{" "}

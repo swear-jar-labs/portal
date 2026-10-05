@@ -1,6 +1,7 @@
 "use server";
 
-import { getActorSession, mockSessionEnabled, resolveAccount } from "@/features/account/contracts";
+import { fixturesEnabled } from "@/shared/mock";
+import { getActorSession, resolveAccount } from "@/features/account/contracts";
 import { getProject } from "@/features/projects/contracts";
 import type { TicketActor, TicketProject } from "../model/workflow";
 
@@ -9,7 +10,7 @@ export type FreshTicketAccess = { actor: TicketActor; project: TicketProject };
 /** Recheck process-local account and project roles immediately before a mock
  * mutation. A tab opened before revocation cannot keep its former seat. */
 export async function freshTicketAccess(slug: string): Promise<FreshTicketAccess | null> {
-  if (!mockSessionEnabled()) return null;
+  if (!fixturesEnabled()) return null;
   const [actor, project] = await Promise.all([getActorSession(), getProject(slug)]);
   if (!project) return null;
   return {
@@ -26,5 +27,5 @@ export async function freshTicketAccess(slug: string): Promise<FreshTicketAccess
 }
 
 export async function isCurrentMember(user: string): Promise<boolean> {
-  return mockSessionEnabled() && resolveAccount(user)?.level === "member";
+  return fixturesEnabled() && resolveAccount(user)?.level === "member";
 }

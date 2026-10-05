@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  confirmRegistration,
-  ensureAccount,
-  startRegistration,
-} from "@/features/account/data/mock-accounts";
+import { ensureAccount } from "@/features/account/data/account-registry";
+import { confirmRegistration, startRegistration } from "@/features/account/data/mock-registration";
 
 // The flow is a singleton over the server-process module state: every case
 // works on a handle and a mailbox of its own.

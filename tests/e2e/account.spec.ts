@@ -334,7 +334,7 @@ test.describe("member session", () => {
 });
 
 test.describe("registration and levels", () => {
-  test("registers a guest by email code and lands on the profile", async ({ page }) => {
+  test("registers a guest and lands on the profile", async ({ page }) => {
     await enterShell(page);
     const files = page.getByRole("region", { name: FILES_REGION });
     await files.getByRole("link", { name: "REGISTER" }).click();
@@ -346,23 +346,8 @@ test.describe("registration and levels", () => {
     const form = page.getByRole("form", { name: "REGISTER" });
     await form.getByLabel(USER_LABEL).fill(handle);
     await form.getByLabel("Email").fill(`${handle}@example.com`);
-    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByLabel(PASSWORD_LABEL).fill("secret00");
     await form.getByRole("button", { name: "REGISTER" }).click();
-
-    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
-    // No mail leaves the demo: the issued code is shown on screen, and the
-    // step takes the keyboard for immediate typing.
-    const codeField = form.getByLabel("Email code");
-    await expect(codeField).toBeFocused();
-    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
-      const match = /([0-9]{6})/.exec(element.textContent ?? "");
-      if (!match?.[1]) throw new Error("the demo code is not shown");
-      return match[1];
-    });
-    await expectNoViolations(page, "/register code step");
-
-    await codeField.fill(demoCode);
-    await form.getByRole("button", { name: "CONFIRM" }).click();
 
     await expect(page).toHaveURL("/profile");
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
@@ -379,17 +364,8 @@ test.describe("registration and levels", () => {
     const form = page.getByRole("form", { name: "REGISTER" });
     await form.getByLabel(USER_LABEL).fill(handle);
     await form.getByLabel("Email").fill(mailbox);
-    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByLabel(PASSWORD_LABEL).fill("secret00");
     await form.getByRole("button", { name: "REGISTER" }).click();
-
-    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
-    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
-      const match = /([0-9]{6})/.exec(element.textContent ?? "");
-      if (!match?.[1]) throw new Error("the demo code is not shown");
-      return match[1];
-    });
-    await form.getByLabel("Email code").fill(demoCode);
-    await form.getByRole("button", { name: "CONFIRM" }).click();
     await expect(page).toHaveURL("/profile");
 
     // Out and back in on the mailbox: the logon names the same account.
@@ -404,7 +380,7 @@ test.describe("registration and levels", () => {
       logonForm.getByText("You can also sign in with your registration email."),
     ).toBeVisible();
     await logonForm.getByLabel(LOGIN_USER_LABEL).fill(mailbox);
-    await logonForm.getByLabel(PASSWORD_LABEL).fill("secret");
+    await logonForm.getByLabel(PASSWORD_LABEL).fill("secret00");
     await logonForm.getByRole("button", { name: "LOG ON" }).click();
     await expect(page).toHaveURL("/forum");
 
@@ -424,43 +400,29 @@ test.describe("registration and levels", () => {
     await expect(page).toHaveURL("/login");
   });
 
-  test("rejects a wrong email code without creating the account", async ({ page }) => {
+  test("rejects a wrong password without signing in", async ({ page }) => {
     await page.goto("/register");
     const handle = `quinn-wrong-${Date.now().toString(36)}`;
     const form = page.getByRole("form", { name: "REGISTER" });
     await form.getByLabel(USER_LABEL).fill(handle);
     await form.getByLabel("Email").fill(`${handle}@example.com`);
-    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByLabel(PASSWORD_LABEL).fill("secret00");
     await form.getByRole("button", { name: "REGISTER" }).click();
-
-    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
-    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
-      const match = /([0-9]{6})/.exec(element.textContent ?? "");
-      if (!match?.[1]) throw new Error("the demo code is not shown");
-      return match[1];
-    });
-    const wrong = demoCode.startsWith("0") ? `1${demoCode.slice(1)}` : `0${demoCode.slice(1)}`;
-    await form.getByLabel("Email code").fill(wrong);
-    await form.getByRole("button", { name: "CONFIRM" }).click();
-
-    await expect(form.getByText("Wrong code. Check the demo code and try again.")).toBeVisible();
-    await expect(page).toHaveURL("/register");
-
-    // Back to the details keeps the typed mailbox for a quick fix.
-    await form.getByRole("button", { name: "BACK" }).click();
-    await expect(form.getByLabel("Email")).toHaveValue(`${handle}@example.com`);
-
-    // The retry reissues the code; the fresh one still lands the account.
-    await form.getByRole("button", { name: "REGISTER" }).click();
-    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
-    const retryCode = await form.getByText("Demo code:").evaluate((element) => {
-      const match = /([0-9]{6})/.exec(element.textContent ?? "");
-      if (!match?.[1]) throw new Error("the demo code is not shown");
-      return match[1];
-    });
-    await form.getByLabel("Email code").fill(retryCode);
-    await form.getByRole("button", { name: "CONFIRM" }).click();
     await expect(page).toHaveURL("/profile");
+
+    await page.keyboard.press("F10");
+    await page.getByRole("button", { name: "LOG OFF" }).click();
+    await expect(page).toHaveURL("/");
+
+    await page.goto("/login");
+    await waitForHydration(page);
+    const logonForm = page.getByRole("form", { name: "LOGON" });
+    await logonForm.getByLabel(LOGIN_USER_LABEL).fill(handle);
+    await logonForm.getByLabel(PASSWORD_LABEL).fill("wrong-password");
+    await logonForm.getByRole("button", { name: "LOG ON" }).click();
+
+    await expect(logonForm.getByText("Incorrect username, email, or password.")).toBeVisible();
+    await expect(page).toHaveURL("/login");
   });
 
   test("registers fresh participants through the social buttons", async ({ page }) => {
@@ -555,7 +517,7 @@ test.describe("registration and levels", () => {
 
     await form.getByLabel(USER_LABEL).fill("ada");
     await form.getByLabel("Email").fill("ada@example.com");
-    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByLabel(PASSWORD_LABEL).fill("secret00");
     await form.getByRole("button", { name: "REGISTER" }).click();
     await expect(
       form.getByText("That username is taken. Pick another one, or log on."),
@@ -567,15 +529,8 @@ test.describe("registration and levels", () => {
     const mailbox = `${first}@example.com`;
     await form.getByLabel(USER_LABEL).fill(first);
     await form.getByLabel("Email").fill(mailbox);
+    await form.getByLabel(PASSWORD_LABEL).fill("secret00");
     await form.getByRole("button", { name: "REGISTER" }).click();
-    await expect(form.getByRole("heading", { name: "CHECK YOUR EMAIL" })).toBeVisible();
-    const demoCode = await form.getByText("Demo code:").evaluate((element) => {
-      const match = /([0-9]{6})/.exec(element.textContent ?? "");
-      if (!match?.[1]) throw new Error("the demo code is not shown");
-      return match[1];
-    });
-    await form.getByLabel("Email code").fill(demoCode);
-    await form.getByRole("button", { name: "CONFIRM" }).click();
     await expect(page).toHaveURL("/profile");
 
     await page.keyboard.press("F10");
@@ -586,7 +541,7 @@ test.describe("registration and levels", () => {
     const retry = page.getByRole("form", { name: "REGISTER" });
     await retry.getByLabel(USER_LABEL).fill(`quinn-mail-2-${Date.now().toString(36)}`);
     await retry.getByLabel("Email").fill(mailbox);
-    await retry.getByLabel(PASSWORD_LABEL).fill("secret");
+    await retry.getByLabel(PASSWORD_LABEL).fill("secret00");
     await retry.getByRole("button", { name: "REGISTER" }).click();
     await expect(
       retry.getByText("That email is already registered. Log on instead."),
@@ -651,15 +606,11 @@ test.describe("registration and levels", () => {
     const handle = `quinn-keys-${Date.now().toString(36)}`;
     await user.fill(handle);
     await email.fill(`${handle}@example.com`);
-    await password.fill("secret");
+    await password.fill("secret00");
     await form.getByRole("button", { name: "REGISTER" }).click();
 
-    const code = form.getByLabel("Email code");
-    await expect(code).toBeVisible();
-    await code.focus();
-    await page.keyboard.type("000000");
-    await expect(code).toHaveValue("000000");
-    await expectNoViolations(page, "/register code step");
+    await expect(page).toHaveURL("/profile");
+    await expectNoViolations(page, "/register success");
   });
 });
 

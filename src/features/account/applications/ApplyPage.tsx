@@ -4,15 +4,16 @@ import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { ShellPanel } from "@/features/shell";
 import { ApplyForm } from "./ApplyForm";
+import { isSignedIn, meetsLevel } from "../model/gates";
 import { memberApplicationsFor } from "../data/mock-applications";
-import { getActorSession } from "../data/mock-session.server";
+import { getActorSession } from "../data/auth-session.server";
 
 export const applyMetadata: Metadata = messages.account.apply.metadata;
 
 export async function ApplyPage() {
   const actor = await getActorSession();
-  if (!actor) redirect("/register");
-  if (actor.level === "member") redirect("/profile");
+  if (!isSignedIn(actor)) redirect("/register");
+  if (meetsLevel(actor, "member")) redirect("/profile");
 
   return (
     <ShellPanel title={fileTitle("APPLY")}>

@@ -5,17 +5,18 @@ import { forumActivitySeed, listThreadSummariesByAuthor } from "@/features/board
 import { listMemberProjects } from "@/features/projects/contracts";
 import { listReadrooms } from "@/features/readroom/contracts";
 import { listTickets } from "@/features/tickets/contracts";
+import { isSignedIn } from "../model/gates";
 import { AccountGate } from "../auth/AccountGate";
 import { getOwnProfile } from "../data/queries";
 import { memberApplicationsFor } from "../data/mock-applications";
-import { getActorSession } from "../data/mock-session.server";
+import { getActorSession } from "../data/auth-session.server";
 import { ProfileStack } from "./ProfileStack";
 
 export const profileMetadata: Metadata = messages.account.profile.metadata;
 
 export async function ProfilePage() {
   const actor = await getActorSession();
-  if (!actor) return <AccountGate title={fileTitle("PROFILE")} />;
+  if (!isSignedIn(actor)) return <AccountGate title={fileTitle("PROFILE")} />;
 
   const profile = await getOwnProfile(actor.user, actor);
   const [threads, forumSeed, tickets, readrooms, projects] = await Promise.all([

@@ -3,7 +3,7 @@ import {
   extractMentionHandles,
   resolveMentionHandles,
 } from "@/shared/mentions";
-import { memberIdentities } from "./mock-accounts";
+import { memberIdentities } from "./account-registry";
 
 // Server-side mention resolution for the RSC panels: which lower-cased
 // handles of a fixture body name a known account. The client twin is

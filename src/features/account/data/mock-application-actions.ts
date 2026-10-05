@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { fixturesEnabled } from "@/shared/mock";
 import { applySchema } from "../model/schema";
 import { MAX_NOTE_LENGTH, type ApplicationError } from "../model/applications";
-import { getActorSession } from "./mock-session.server";
-import { mockSessionEnabled } from "./mock-session";
+import { getActorSession } from "./auth-session.server";
 import {
   decideMemberApplication,
   respondToMemberApplication,
@@ -32,7 +32,7 @@ function finish(result: { ok: boolean; error?: ApplicationError }): ActionResult
 }
 
 export async function mockSubmitMemberApplication(input: unknown): Promise<ActionResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const actor = await getActorSession();
   if (!actor || actor.level !== "participant") return { ok: false, error: "forbidden" };
   const parsed = applySchema.safeParse(input);
@@ -46,7 +46,7 @@ export async function mockSubmitMemberApplication(input: unknown): Promise<Actio
 }
 
 export async function mockRespondToMemberApplication(input: unknown): Promise<ActionResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const actor = await getActorSession();
   const parsed = responseSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -56,7 +56,7 @@ export async function mockRespondToMemberApplication(input: unknown): Promise<Ac
 }
 
 export async function mockDecideMemberApplication(input: unknown): Promise<ActionResult> {
-  if (!mockSessionEnabled()) return { ok: false, error: "unavailable" };
+  if (!fixturesEnabled()) return { ok: false, error: "unavailable" };
   const actor = await getActorSession();
   if (!actor?.admin) return { ok: false, error: "forbidden" };
   const parsed = decisionSchema.safeParse(input);

@@ -4,9 +4,21 @@ import { z } from "zod";
 // session. When the backend lands (Phase 5) the function bodies change, the
 // pages and signatures do not (TECH.md §5).
 
-export const USER_PATTERN = /^[a-z0-9_-]{2,32}$/;
-const USER_INPUT_PATTERN = /^[A-Za-z0-9_-]{2,32}$/;
+// Handle bounds are named so the Better Auth username plugin can read the same
+// canon (see src/auth.ts) instead of repeating the numbers.
+export const USER_MIN_LENGTH = 2;
+export const USER_MAX_LENGTH = 32;
+export const USER_PATTERN = new RegExp(`^[a-z0-9_-]{${USER_MIN_LENGTH},${USER_MAX_LENGTH}}$`);
+const USER_INPUT_PATTERN = new RegExp(`^[A-Za-z0-9_-]{${USER_MIN_LENGTH},${USER_MAX_LENGTH}}$`);
 const MAX_TEXT_LENGTH = 2000;
+
+// The handle canon for the Better Auth username plugin (see src/auth.ts): the
+// plugin validates the value the caller typed — case included — but stores and
+// looks up the lower-cased form, so the predicate accepts any case and the
+// normalization stays the single step that decides what is saved.
+export function isUserHandle(candidate: string): boolean {
+  return USER_PATTERN.test(candidate.toLowerCase());
+}
 
 export const userSchema = z
   .string()

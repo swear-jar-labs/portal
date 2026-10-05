@@ -1,10 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { ensureAccount, resolveLogonUser } from "@/features/account/data/mock-accounts";
+import { describe, expect, it } from "vitest";
+import { ensureAccount, resolveLogonUser } from "@/features/account/data/account-registry";
 import {
   mockLogonSchema,
   mockRegisterConfirmSchema,
   mockRegisterStartSchema,
-  mockSessionEnabled,
   mockSocialLogonSchema,
   parseMockSession,
   socialProviderUsers,
@@ -111,21 +110,6 @@ describe("mockRegisterStartSchema", () => {
     expect(mockRegisterConfirmSchema.safeParse({ user: "quinn", code: "123456" }).success).toBe(
       true,
     );
-  });
-});
-
-describe("mockSessionEnabled", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("is on outside production", () => {
-    expect(mockSessionEnabled()).toBe(true);
-  });
-
-  it("is off in production", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    expect(mockSessionEnabled()).toBe(false);
   });
 });
 

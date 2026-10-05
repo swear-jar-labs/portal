@@ -7,9 +7,9 @@ import "@swearjar/dos/base.css";
 import "./globals.css";
 import {
   getActorSession,
+  logoff,
   memberIdentities,
   MemberIdentityProvider,
-  mockLogoff,
 } from "@/features/account";
 import { ErrataJarRow, listThreads } from "@/features/board";
 import { InboxFileIcon, InboxStatusAddon, listInboxSeed } from "@/features/inbox";
@@ -76,7 +76,7 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
             <ChildrenPathProvider>
               <ModerationDosShell
                 session={session}
-                logoff={mockLogoff}
+                logoff={logoff}
                 overlay={overlay}
                 addons={addons}
                 reportsSeed={reportsSeed}

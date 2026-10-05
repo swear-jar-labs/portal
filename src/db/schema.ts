@@ -1,6 +1,7 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   pgEnum,
@@ -10,9 +11,19 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
+// Timestamps are `timestamptz`: the mock phase used naive timestamps and the
+// readroom clocks were the first to notice. `updatedAt` columns carry an
+// app-level $onUpdate; database triggers stay in the backlog.
+
 export const projectStatus = pgEnum("project_status", ["planned", "active", "archived"]);
+export const forgeId = pgEnum("forge_id", ["github", "gitlab"]);
+// Membership, project roles and the lead are independent relations: one row
+// per (project, user, role), so a person may subscribe, review and maintain at
+// once, and the lead is a single partial-unique row.
+export const projectRole = pgEnum("project_role", ["member", "reviewer", "maintainer", "lead"]);
 export const ticketStatus = pgEnum("ticket_status", [
   "open",
   "in_progress",
@@ -23,14 +34,30 @@ export const ticketStatus = pgEnum("ticket_status", [
 export const ticketSize = pgEnum("ticket_size", ["S", "M", "L"]);
 export const ticketPriority = pgEnum("ticket_priority", ["low", "normal", "high"]);
 export const ticketLinkKind = pgEnum("ticket_link_kind", ["pr", "commit", "file", "diff"]);
-export const tagKind = pgEnum("tag_kind", ["topic", "skill"]);
-export const voteTarget = pgEnum("vote_target", ["post", "thread", "ticket", "readroom_note"]);
-export const applicationRole = pgEnum("application_role", ["op", "learner"]);
-export const applicationStatus = pgEnum("application_status", [
-  "new",
-  "reviewing",
-  "accepted",
+// Member applications and project proposals share one review vocabulary
+// (applications.ts / submissions.ts): statuses, versions and event history.
+export const submissionStatus = pgEnum("submission_status", [
+  "pending",
+  "needs-info",
+  "approved",
   "rejected",
+]);
+export const submissionEventKind = pgEnum("submission_event_kind", [
+  "submitted",
+  "clarification-requested",
+  "clarification-sent",
+  "approved",
+  "rejected",
+]);
+// Taxonomies (`tags`, `thread_tags`, `ticket_tags`) keep their current shape:
+// the board, tickets and readroom cards rework them against their consumers.
+export const tagKind = pgEnum("tag_kind", ["topic", "skill"]);
+export const voteTarget = pgEnum("vote_target", [
+  "post",
+  "thread",
+  "ticket",
+  "readroom_note",
+  "readroom",
 ]);
 
 export const user = pgTable("user", {
@@ -41,9 +68,16 @@ export const user = pgTable("user", {
   image: text("image"),
   username: text("username").unique(),
   displayUsername: text("display_username"),
-  role: text("role").notNull().default("caller"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  // Community level (participant|member) is text + zod (TECH §3/§4): admin is
+  // a separate flag, never a level; project roles live on project_members.
+  level: text("level").notNull().default("participant"),
+  admin: boolean("admin").notNull().default(false),
+  bio: text("bio").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const session = pgTable(
@@ -51,14 +85,17 @@ export const session = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     token: text("token").notNull().unique(),
-    expiresAt: timestamp("expires_at").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: uuid("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [index("session_user_id_idx").on(table.userId)],
 );
@@ -75,12 +112,15 @@ export const account = pgTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at"),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [index("account_user_id_idx").on(table.userId)],
 );
@@ -89,9 +129,25 @@ export const verification = pgTable("verification", {
   id: uuid("id").primaryKey().defaultRandom(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+// The settings the shell persists per account: the screensaver switch and its
+// delay (see NEXT-STEPS §8; the UI phase kept them in localStorage).
+export const userSettings = pgTable("user_settings", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  screensaverEnabled: boolean("screensaver_enabled").notNull().default(true),
+  screensaverDelayMinutes: integer("screensaver_delay_minutes").notNull().default(5),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const sections = pgTable("sections", {
@@ -100,7 +156,7 @@ export const sections = pgTable("sections", {
   title: text("title").notNull(),
   description: text("description"),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const projects = pgTable("projects", {
@@ -109,10 +165,64 @@ export const projects = pgTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   repoUrl: text("repo_url"),
-  stack: text("stack"),
+  // Structural forge coordinates (forge-integration): the URL stays the UI
+  // link, counters read project_forge_stats.
+  forge: forgeId("forge"),
+  repoHost: text("repo_host"),
+  repoPath: text("repo_path"),
+  siteUrl: text("site_url"),
+  // The stack as shared tech ids (the board/readroom vocabulary): the list is
+  // small and ordered, so a text array instead of a join table.
+  techs: text("techs")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  contributors: text("contributors"),
   status: projectStatus("status").notNull().default("planned"),
+  // The claim ladder (RULES §15): done S tickets open M, done M open L;
+  // 0 opens the rung to everyone.
+  claimMinSForM: integer("claim_min_s_for_m").notNull().default(2),
+  claimMinMForL: integer("claim_min_m_for_l").notNull().default(1),
   requiredApprovals: integer("required_approvals").notNull().default(1),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: projectRole("role").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.userId, table.role] }),
+    index("project_members_user_id_idx").on(table.userId),
+    // One lead per project; a vacancy is the absence of the row.
+    uniqueIndex("project_members_lead_unique")
+      .on(table.projectId)
+      .where(sql`${table.role} = 'lead'`),
+  ],
+);
+
+export const projectForgeStats = pgTable("project_forge_stats", {
+  projectId: uuid("project_id")
+    .primaryKey()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  forge: forgeId("forge").notNull(),
+  openPrs: integer("open_prs").notNull().default(0),
+  merged30d: integer("merged_30d").notNull().default(0),
+  commits7d: integer("commits_7d").notNull().default(0),
+  releaseTag: text("release_tag"),
+  releaseAt: timestamp("release_at", { withTimezone: true }),
+  lastActivityAt: timestamp("last_activity_at", { withTimezone: true }),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+  etag: text("etag"),
+  error: text("error"),
 });
 
 export const threads = pgTable(
@@ -129,10 +239,13 @@ export const threads = pgTable(
     title: text("title").notNull(),
     pinned: boolean("pinned").notNull().default(false),
     locked: boolean("locked").notNull().default(false),
-    lastPostAt: timestamp("last_post_at"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-    deletedAt: timestamp("deleted_at"),
+    lastPostAt: timestamp("last_post_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     index("threads_section_id_idx").on(table.sectionId),
@@ -152,10 +265,14 @@ export const posts = pgTable(
     authorId: uuid("author_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    // The answered post: the list stays flat, the marker carries the context.
+    replyToId: uuid("reply_to_id").references((): AnyPgColumn => posts.id, {
+      onDelete: "set null",
+    }),
     body: text("body").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    editedAt: timestamp("edited_at"),
-    deletedAt: timestamp("deleted_at"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     index("posts_thread_id_idx").on(table.threadId),
@@ -178,20 +295,26 @@ export const tickets = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     assigneeId: uuid("assignee_id").references(() => user.id, { onDelete: "set null" }),
+    // Claiming assigns one project reviewer alongside the assignee.
+    reviewerId: uuid("reviewer_id").references(() => user.id, { onDelete: "set null" }),
     title: text("title").notNull(),
     body: text("body").notNull(),
     status: ticketStatus("status").notNull().default("open"),
     // The size flag of RULES §15 and the queue order; the app sets both.
     size: ticketSize("size").notNull().default("S"),
     priority: ticketPriority("priority").notNull().default("normal"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-    closedAt: timestamp("closed_at"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
   },
   (table) => [
     index("tickets_project_id_idx").on(table.projectId),
     index("tickets_status_idx").on(table.status),
     index("tickets_assignee_id_idx").on(table.assigneeId),
+    index("tickets_reviewer_id_idx").on(table.reviewerId),
   ],
 );
 
@@ -206,9 +329,9 @@ export const ticketComments = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     body: text("body").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    editedAt: timestamp("edited_at"),
-    deletedAt: timestamp("deleted_at"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [index("ticket_comments_ticket_id_idx").on(table.ticketId)],
 );
@@ -227,7 +350,7 @@ export const ticketLinks = pgTable(
     addedBy: uuid("added_by")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("ticket_links_ticket_url_unique").on(table.ticketId, table.url),
@@ -247,7 +370,7 @@ export const ticketBlocks = pgTable(
     blockedId: uuid("blocked_id")
       .notNull()
       .references(() => tickets.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("ticket_blocks_pair_unique").on(table.blockerId, table.blockedId),
@@ -263,16 +386,19 @@ export const readrooms = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     sourceUrl: text("source_url"),
-    deadlineAt: timestamp("deadline_at").notNull(),
-    archivedAt: timestamp("archived_at"),
+    deadlineAt: timestamp("deadline_at", { withTimezone: true }).notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     leadId: uuid("lead_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }),
     ticketId: uuid("ticket_id").references(() => tickets.id, { onDelete: "set null" }),
     report: text("report"),
-    reportAt: timestamp("report_at"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    reportAt: timestamp("report_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [index("readrooms_deadline_at_idx").on(table.deadlineAt)],
 );
@@ -288,9 +414,9 @@ export const readroomNotes = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     body: text("body").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    editedAt: timestamp("edited_at"),
-    deletedAt: timestamp("deleted_at"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [index("readroom_notes_readroom_id_idx").on(table.readroomId)],
 );
@@ -300,7 +426,7 @@ export const tags = pgTable("tags", {
   slug: text("slug").notNull().unique(),
   label: text("label").notNull(),
   kind: tagKind("kind").notNull().default("topic"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const threadTags = pgTable(
@@ -344,7 +470,7 @@ export const votes = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     targetType: voteTarget("target_type").notNull(),
     targetId: uuid("target_id").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("votes_user_target_unique").on(table.userId, table.targetType, table.targetId),
@@ -356,30 +482,116 @@ export const applications = pgTable(
   "applications",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    role: applicationRole("role").notNull(),
-    user: text("user").notNull(),
-    email: text("email").notNull(),
-    experience: text("experience"),
-    weeklyHours: text("weekly_hours"),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: submissionStatus("status").notNull().default("pending"),
+    // Optimistic-concurrency counter: the applicant and the admin answer the
+    // revision they saw; history carries every step.
+    version: integer("version").notNull().default(1),
+    experience: text("experience").notNull().default(""),
+    weeklyHours: text("weekly_hours").notNull(),
     motivation: text("motivation").notNull(),
-    status: applicationStatus("status").notNull().default("new"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
-  (table) => [index("applications_status_idx").on(table.status)],
+  (table) => [
+    index("applications_user_id_idx").on(table.userId),
+    index("applications_status_idx").on(table.status),
+  ],
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const applicationEvents = pgTable(
+  "application_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("application_id")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    kind: submissionEventKind("kind").notNull(),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("application_events_application_id_idx").on(table.applicationId)],
+);
+
+export const projectSubmissions = pgTable(
+  "project_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    goal: text("goal").notNull(),
+    repoUrl: text("repo_url"),
+    stack: text("stack")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    contributors: text("contributors").notNull().default(""),
+    status: submissionStatus("status").notNull().default("pending"),
+    version: integer("version").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("project_submissions_user_id_idx").on(table.userId),
+    index("project_submissions_status_idx").on(table.status),
+  ],
+);
+
+export const projectSubmissionEvents = pgTable(
+  "project_submission_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submissionId: uuid("submission_id").notNull(),
+    kind: submissionEventKind("kind").notNull(),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("project_submission_events_submission_id_idx").on(table.submissionId),
+    // Named by hand: the generated name would exceed PostgreSQL's 63-character
+    // identifier limit and come back truncated.
+    foreignKey({
+      columns: [table.submissionId],
+      foreignColumns: [projectSubmissions.id],
+      name: "project_submission_events_submission_id_fk",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
+  settings: one(userSettings),
   threads: many(threads),
   posts: many(posts),
   ticketComments: many(ticketComments),
   ticketLinks: many(ticketLinks),
   authoredTickets: many(tickets, { relationName: "ticket_author" }),
   assignedTickets: many(tickets, { relationName: "ticket_assignee" }),
+  reviewedTickets: many(tickets, { relationName: "ticket_reviewer" }),
   readroomsLed: many(readrooms),
   readroomNotes: many(readroomNotes),
   votes: many(votes),
+  applications: many(applications),
+  projectSubmissions: many(projectSubmissions),
+  projectMemberships: many(projectMembers),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -390,13 +602,28 @@ export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, { fields: [account.userId], references: [user.id] }),
 }));
 
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(user, { fields: [userSettings.userId], references: [user.id] }),
+}));
+
 export const sectionRelations = relations(sections, ({ many }) => ({
   threads: many(threads),
 }));
 
-export const projectRelations = relations(projects, ({ many }) => ({
+export const projectRelations = relations(projects, ({ many, one }) => ({
   threads: many(threads),
   tickets: many(tickets),
+  members: many(projectMembers),
+  forgeStats: one(projectForgeStats),
+}));
+
+export const projectMemberRelations = relations(projectMembers, ({ one }) => ({
+  project: one(projects, { fields: [projectMembers.projectId], references: [projects.id] }),
+  user: one(user, { fields: [projectMembers.userId], references: [user.id] }),
+}));
+
+export const projectForgeStatsRelations = relations(projectForgeStats, ({ one }) => ({
+  project: one(projects, { fields: [projectForgeStats.projectId], references: [projects.id] }),
 }));
 
 export const threadRelations = relations(threads, ({ one, many }) => ({
@@ -407,9 +634,15 @@ export const threadRelations = relations(threads, ({ one, many }) => ({
   threadTags: many(threadTags),
 }));
 
-export const postRelations = relations(posts, ({ one }) => ({
+export const postRelations = relations(posts, ({ one, many }) => ({
   thread: one(threads, { fields: [posts.threadId], references: [threads.id] }),
   author: one(user, { fields: [posts.authorId], references: [user.id] }),
+  replyTo: one(posts, {
+    fields: [posts.replyToId],
+    references: [posts.id],
+    relationName: "post_reply",
+  }),
+  replies: many(posts, { relationName: "post_reply" }),
 }));
 
 export const readroomRelations = relations(readrooms, ({ one, many }) => ({
@@ -434,6 +667,11 @@ export const ticketRelations = relations(tickets, ({ one, many }) => ({
     fields: [tickets.assigneeId],
     references: [user.id],
     relationName: "ticket_assignee",
+  }),
+  reviewer: one(user, {
+    fields: [tickets.reviewerId],
+    references: [user.id],
+    relationName: "ticket_reviewer",
   }),
   comments: many(ticketComments),
   links: many(ticketLinks),
@@ -482,4 +720,30 @@ export const ticketTagRelations = relations(ticketTags, ({ one }) => ({
 
 export const voteRelations = relations(votes, ({ one }) => ({
   user: one(user, { fields: [votes.userId], references: [user.id] }),
+}));
+
+export const applicationRelations = relations(applications, ({ one, many }) => ({
+  user: one(user, { fields: [applications.userId], references: [user.id] }),
+  events: many(applicationEvents),
+}));
+
+export const applicationEventRelations = relations(applicationEvents, ({ one }) => ({
+  application: one(applications, {
+    fields: [applicationEvents.applicationId],
+    references: [applications.id],
+  }),
+  actor: one(user, { fields: [applicationEvents.actorId], references: [user.id] }),
+}));
+
+export const projectSubmissionRelations = relations(projectSubmissions, ({ one, many }) => ({
+  user: one(user, { fields: [projectSubmissions.userId], references: [user.id] }),
+  events: many(projectSubmissionEvents),
+}));
+
+export const projectSubmissionEventRelations = relations(projectSubmissionEvents, ({ one }) => ({
+  submission: one(projectSubmissions, {
+    fields: [projectSubmissionEvents.submissionId],
+    references: [projectSubmissions.id],
+  }),
+  actor: one(user, { fields: [projectSubmissionEvents.actorId], references: [user.id] }),
 }));

@@ -27,6 +27,7 @@ export type CommandRunnerOptions = {
   coins: number;
   logoff: () => void;
   push: (href: string) => void;
+  reopenLanding: () => void;
   commands: readonly AppCommand[];
   groups: readonly FileGroup[];
   focusSearch: () => void;
@@ -39,6 +40,7 @@ export function useCommandRunner({
   coins,
   logoff,
   push,
+  reopenLanding,
   commands,
   groups,
   focusSearch,
@@ -63,6 +65,8 @@ export function useCommandRunner({
           body: <CoffeeBody />,
         }),
       DOOM: () => openDialog({ title: messages.shell.dialogs.doom.title, body: <DoomBody /> }),
+      // The landing window closed into the shell; WELCOME rings it back.
+      WELCOME: reopenLanding,
       // Logging off ends the session, so it asks first.
       LOGOFF: () =>
         openDialog({
@@ -78,7 +82,7 @@ export function useCommandRunner({
           ),
         }),
     }),
-    [closeDialog, commands, focusSearch, groups, logoff, openDialog],
+    [closeDialog, commands, focusSearch, groups, logoff, openDialog, reopenLanding],
   );
 
   return useCallback(

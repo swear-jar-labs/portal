@@ -1,0 +1,389 @@
+/* The landing window content: hero on black, sections on paper, footer on
+   black. Palette and motion mirror the kit tokens; pixel art stays square
+   through image-rendering: pixelated. */
+
+.landing {
+  background: var(--dos-paper);
+  color: var(--dos-black);
+  /* The shell gives the window body a definite flex height, so the height
+     chain below is exact: the black hero fills the whole first screen. */
+  height: 100%;
+  min-height: 100%;
+}
+
+.heroBand {
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.heroInner {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px 32px 40px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.heroGrid {
+  display: flex;
+  align-items: flex-start;
+  gap: 48px;
+  padding-top: 36px;
+}
+
+.heroCopy {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 660px;
+}
+
+.slogan {
+  color: var(--dos-brown);
+  font-size: 64px;
+  line-height: 1.05;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.hook {
+  color: var(--dos-light-cyan);
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 700;
+  margin-bottom: 22px;
+}
+
+.lead {
+  color: var(--dos-light-gray);
+  margin-bottom: 12px;
+  max-width: 62ch;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.heroArt {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  width: 576px;
+}
+
+.scene {
+  image-rendering: pixelated;
+}
+
+.sceneHero {
+  width: 576px;
+  height: 360px;
+}
+
+.diskBox {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sceneBox {
+  width: 96px;
+  height: 96px;
+}
+
+.boxCaption p {
+  margin: 0;
+}
+
+.boxTitle {
+  color: var(--dos-white);
+  font-weight: 700;
+}
+
+.boxTitle b {
+  color: var(--dos-brown);
+}
+
+.boxSub {
+  color: var(--dos-light-gray);
+}
+
+.boxSubDim {
+  color: var(--dos-text-dim);
+  font-family: var(--dos-font-small);
+  font-size: var(--dos-font-size-small);
+  line-height: var(--dos-line-height-small);
+  margin-top: 4px;
+}
+
+.boxSubDim a {
+  color: var(--dos-light-cyan);
+  text-decoration: underline;
+}
+
+.boxSubDim a:hover {
+  color: var(--dos-white);
+}
+
+.pageSections {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 32px 23px;
+  /* Paper typography mirrors the kit's light family: bold body plus the
+     whole-pixel smear, so landing text matches the product panels. */
+  font-weight: 700;
+  text-shadow: var(--dos-text-light-shadow);
+}
+
+.sec {
+  /* Symmetric breathing room: the top border lands mid-gap between blocks.
+     Gaps come from section padding only — the last child never adds its
+     own bottom margin (buttons and paragraphs would double the air). */
+  padding: 23px 0;
+  border-top: var(--dos-border-width) solid var(--dos-dark-gray);
+}
+
+.sec > :last-child {
+  margin-bottom: 0;
+}
+
+.sec:first-child {
+  margin-top: 23px;
+  border-top: 0;
+}
+
+.secTitle {
+  color: var(--dos-tone-brown);
+  font-size: 27px;
+  line-height: 1.1;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.secLead {
+  font-size: 18px;
+  line-height: 22px;
+  max-width: 56ch;
+  margin-bottom: 14px;
+}
+
+.sec p {
+  max-width: 78ch;
+  margin-bottom: 12px;
+  color: var(--dos-tone-dim);
+}
+
+.places {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px 32px;
+  /* Top only: the bottom air comes from the section padding (see .sec). */
+  margin: 26px 0 0;
+}
+
+.place {
+  min-width: 0;
+}
+
+.crtFrame {
+  background: var(--dos-silver);
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-border-raised);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  padding: 12px 12px 20px;
+  margin-bottom: 22px;
+}
+
+.crtScreen {
+  background: var(--dos-black);
+  border: var(--dos-border-width) solid var(--dos-dark-gray);
+  overflow: hidden;
+}
+
+.crtScreen img {
+  width: 100%;
+  height: auto;
+}
+
+.placeName {
+  color: var(--dos-tone-brown);
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.placeFirst {
+  margin: 0;
+  color: var(--dos-black);
+  font-weight: 700;
+  max-width: none;
+}
+
+/* The middle step between thin and bold: regular cut, dim ink, no smear. */
+.placeSecond {
+  margin: 0;
+  color: var(--dos-tone-dim);
+  max-width: none;
+  font-weight: 400;
+  text-shadow: none;
+}
+
+.placeGo {
+  margin: 14px 0 0;
+  max-width: none;
+}
+
+.footerBand {
+  background: var(--dos-black);
+  color: var(--dos-light-gray);
+  border-top: var(--dos-border-width) solid var(--dos-dark-gray);
+}
+
+.footerInner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 36px 32px 28px;
+}
+
+.footerLine {
+  color: var(--dos-brown);
+  font-size: 27px;
+  line-height: 32px;
+  font-weight: 700;
+}
+
+.footerBrand {
+  color: var(--dos-white);
+  font-weight: 700;
+  margin-top: 20px;
+}
+
+.footerBrand a {
+  color: var(--dos-light-cyan);
+  text-decoration: underline;
+}
+
+/* The fullscreen window chrome (the shell only positions the overlay). */
+.window {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--dos-silver);
+  color: var(--dos-black);
+  border: var(--dos-border-width) solid;
+  border-color: var(--dos-border-raised);
+  box-shadow:
+    0 0 0 var(--dos-border-width) var(--dos-black),
+    8px 8px 0 rgba(0, 0, 0, 0.65);
+}
+
+.windowTitle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--dos-blue);
+  color: var(--dos-white);
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.windowName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.windowBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: var(--dos-paper);
+  color: var(--dos-black);
+}
+
+/* The modal body takes focus (the scroll region needs it), but draws no ring:
+   focus is contained in the window, so the ring would only flicker with the
+   input modality; the controls keep their own rings (same rule as the kit). */
+.windowBody:focus-visible {
+  outline: none;
+}
+
+.windowBody::-webkit-scrollbar {
+  width: var(--dos-scrollbar-size);
+  height: var(--dos-scrollbar-size);
+}
+
+.windowBody::-webkit-scrollbar-track {
+  background: var(--dos-scrollbar-track);
+}
+
+.windowBody::-webkit-scrollbar-thumb {
+  background: var(--dos-scrollbar-thumb);
+  border: 2px solid var(--dos-scrollbar-track);
+}
+
+@media (max-width: 1100px) {
+  .heroGrid {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .heroArt {
+    width: 100%;
+  }
+
+  .sceneHero {
+    width: min(100%, 576px);
+    height: auto;
+  }
+
+  .slogan {
+    font-size: 48px;
+  }
+
+  .hook {
+    font-size: 27px;
+  }
+}
+
+@media (max-width: 720px) {
+  .heroInner,
+  .pageSections,
+  .footerInner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .slogan {
+    font-size: 36px;
+  }
+
+  .hook {
+    font-size: 22px;
+  }
+
+  .secTitle {
+    font-size: 24px;
+  }
+
+  .places {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}

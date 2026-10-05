@@ -376,7 +376,7 @@ test.describe("file manager", () => {
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "TYPE" })).toBeVisible();
     await expect(files.getByRole("columnheader", { name: "SIZE" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
   });
 
   test("lists COMMUNITY, ACCOUNT and GUIDE in order", async ({ page }) => {
@@ -545,7 +545,7 @@ test.describe("mobile file manager", () => {
   test("cycles peek, compact and full via the header and footer", async ({ page }) => {
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
     await expect(files.getByRole("columnheader", { name: "NAME" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
 
     const scroller = files.locator("table").locator("..");
     const height = () => scroller.evaluate((el) => el.clientHeight);

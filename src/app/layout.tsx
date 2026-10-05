@@ -13,6 +13,7 @@ import {
 } from "@/features/account";
 import { ErrataJarRow, listThreads } from "@/features/board";
 import { InboxFileIcon, InboxStatusAddon, listInboxSeed } from "@/features/inbox";
+import { LandingWindow } from "@/features/landing";
 import { ModerationDosShell, reportsSeedCookieName } from "@/features/moderation";
 import { ChildrenPathProvider, JAR_WINDOW_MS, type ShellAddon } from "@/features/shell";
 import { BugJarRow, listTickets } from "@/features/tickets";
@@ -79,6 +80,7 @@ export default async function RootLayout({ children, overlay }: LayoutProps<"/">
                 logoff={mockLogoff}
                 overlay={overlay}
                 addons={addons}
+                landing={<LandingWindow />}
                 reportsSeed={reportsSeed}
               >
                 {children}

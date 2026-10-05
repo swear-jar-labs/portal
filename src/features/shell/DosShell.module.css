@@ -25,6 +25,16 @@
   background: var(--dos-black);
 }
 
+/* The landing window layer: a fullscreen DOS window over the shell (below
+   the CRT filter and the screensaver). The shell behind goes inert while
+   it is open, so the keyboard stays inside the window. */
+.landingOverlay {
+  position: fixed;
+  inset: 6px;
+  z-index: var(--dos-z-window);
+  display: flex;
+}
+
 @media (max-width: 720px) {
   .shell {
     width: 100%;

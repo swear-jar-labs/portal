@@ -14,7 +14,9 @@ export async function enterShell(page: Page) {
   await page.goto("/");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "SWEAR JAR LABS" })).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "MAKE SOFTWARE ENGINEERING GREAT AGAIN" }),
+  ).toBeVisible();
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(dialog).toBeHidden();
 }

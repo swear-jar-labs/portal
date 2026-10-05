@@ -431,6 +431,32 @@ export const sprites = {
       "................",
     ],
   },
+  // The reception bell: rung to be greeted again (WELCOME reopens the landing).
+  bell: {
+    palette: {
+      K: "#000000",
+      y: "#FFFF55",
+      W: "#FFFFFF",
+    },
+    map: [
+      "................",
+      "................",
+      "................",
+      ".......KK.......",
+      "......KyyK......",
+      ".....KyyyyK.....",
+      "....KyyyyyyK....",
+      "....KyyWWyyK....",
+      "...KyyyyyyyyK...",
+      "...KyyyyyyyyK...",
+      "..KKKKKKKKKKKK..",
+      "..KyyyyyyyyyyK..",
+      "..KKKKKKKKKKKK..",
+      "................",
+      "................",
+      "................",
+    ],
+  },
   // Editor toolbar icons (20x20): the same EGA hand, more room for the glyph.
   code: {
     palette: {

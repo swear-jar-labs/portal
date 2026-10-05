@@ -40,20 +40,19 @@ import {
   type CommandId,
   type CommunityLevel,
 } from "@/content/commands";
-import { welcome } from "@/content/landing";
 import { messages } from "@/content/messages";
 import { screensaverDelayMsForPrefs, useScreensaverPrefs } from "./screensaver-prefs";
 import { jarSnapshot, recordBadCommand, useJarEvents } from "./data/jar-store";
 import { KeyBarClock } from "./KeyBarClock";
-import { JarDialogBody, LoginPromptBody, WelcomeBody } from "./dialogs";
+import { JarDialogBody, LoginPromptBody } from "./dialogs";
 import { useFunctionKeys } from "./hooks/useFunctionKeys";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { usePanelNav } from "./hooks/usePanelNav";
-import { useWelcomeDialog } from "./hooks/useWelcomeDialog";
 import { useCommandRunner, type DialogState } from "./hooks/useCommandRunner";
 import { CMD_ZONE } from "./zones";
 import { SessionProvider } from "./SessionContext";
+import { LandingCloseProvider } from "./landing-close";
 import { ShellDialogsProvider, type ShellDialogs } from "./ShellDialogs";
 import { OverlayHost } from "./OverlayHost";
 import { OverlayDocumentTitle, useOverlayFocusReturn } from "./OverlayLayers";
@@ -90,6 +89,10 @@ export type DosShellProps = {
   // Section-owned chrome (the inbox unread counter and its file icon): the
   // layout composes the addons, so the shell never imports a section.
   addons?: readonly ShellAddon[];
+  // The landing window body, composed by the layout like the addons: the
+  // shell owns the layer (when it shows, focus, background input) but never
+  // imports the landing slice.
+  landing?: ReactNode;
   commandAvailability?: Partial<Record<CommandId, boolean>>;
 };
 
@@ -126,6 +129,7 @@ export function DosShell({
   session,
   logoff,
   addons,
+  landing,
   commandAvailability,
 }: DosShellProps) {
   const router = useRouter();
@@ -154,10 +158,20 @@ export function DosShell({
     coldOpened.current = true;
     if (signedIn && pathname === HOME_PATH) router.replace(FORUM_PATH);
   }, [signedIn, pathname, router]);
-  // Welcome greets guests cold-opening the home route: they see it once per
-  // load, and neither a logon nor a logoff mid-session turns it back on.
-  // A deep link into an inner route must not greet when home opens later.
-  const [welcomeEligible, setWelcomeEligible] = useState(() => !signedIn && pathname === HOME_PATH);
+  // The landing window replaces the old welcome dialog. Guests opening
+  // the home route see it once per load; members only on demand through
+  // WELCOME (they never land on home cold). Neither a logon nor a logoff
+  // mid-session turns it back on. A deep link into an inner route must not
+  // greet when home opens later.
+  const [landingEligible, setLandingEligible] = useState(() => !signedIn && pathname === HOME_PATH);
+  const [landingManual, setLandingManual] = useState(false);
+  const landingOpen =
+    landing !== undefined && isHome && landingEligible && (!signedIn || landingManual);
+  const closeLanding = useCallback(() => {
+    setLandingEligible(false);
+    setLandingManual(false);
+    focusPanelBody();
+  }, []);
 
   const openDialog = useCallback((next: DialogState) => setDialog(next), []);
   const closeDialog = useCallback(() => setDialog(null), []);
@@ -178,6 +192,16 @@ export function DosShell({
     },
     [router, startNavigation],
   );
+
+  // WELCOME rings the landing window back: from home it opens in place,
+  // from elsewhere the shell lands home first and greets on arrival.
+  // Manual reopening works for members too; the unprompted greeting stays
+  // a guest privilege.
+  const reopenLanding = useCallback(() => {
+    if (!isHome) push(HOME_PATH);
+    setLandingEligible(true);
+    setLandingManual(true);
+  }, [isHome, push]);
 
   const commandList = useMemo(
     () => visibleCommands(session, commandAvailability),
@@ -280,7 +304,7 @@ export function DosShell({
   }, [isNavigating, pathname]);
 
   const handleLogoff = useCallback(() => {
-    setWelcomeEligible(false);
+    setLandingEligible(false);
     void logoff().then(() => router.push(HOME_PATH));
   }, [logoff, router]);
 
@@ -291,6 +315,7 @@ export function DosShell({
     coins,
     logoff: handleLogoff,
     push,
+    reopenLanding,
     commands: commandList,
     groups,
     focusSearch,
@@ -341,7 +366,7 @@ export function DosShell({
     hydrateScreensaverPrefs();
   }, [hydrateScreensaverPrefs]);
 
-  const controlsEnabled = dialog === null && !screensaverOn;
+  const controlsEnabled = dialog === null && !screensaverOn && !landingOpen;
   useFunctionKeys(functionKeys, runFromNavigation, controlsEnabled);
   usePanelNav(controlsEnabled);
   useFileCursorKeys({
@@ -352,27 +377,6 @@ export function DosShell({
     toggleGroup: fileManager.toggleGroup,
     activate: fileManager.activateSelection,
   });
-
-  const openWelcome = useCallback(() => {
-    openDialog({
-      title: welcome.title,
-      body: (
-        <WelcomeBody
-          onExplore={() => {
-            closeDialog();
-            runFromNavigation("FORUM");
-          }}
-          onHow={() => {
-            closeDialog();
-            runFromNavigation("HOW");
-          }}
-        />
-      ),
-    });
-  }, [closeDialog, openDialog, runFromNavigation]);
-  // Welcome greets guests arriving on home first: entering home later
-  // (e.g. after a deep link into an inner route) must not greet out of nowhere.
-  useWelcomeDialog(isHome && !signedIn && welcomeEligible, openWelcome);
 
   const commandToFKey = useMemo(
     () => new Map(functionKeys.map((def) => [def.command, def.key])),
@@ -407,7 +411,7 @@ export function DosShell({
 
   return (
     <Stack as="main" align="center" justify="center" className={styles.stage}>
-      <div className={styles.shell}>
+      <div className={styles.shell} inert={landingOpen || undefined}>
         <div className={styles.topRow}>
           <MenuBar menus={menus} className={styles.menuBar} />
           <button
@@ -459,7 +463,7 @@ export function DosShell({
           onSubmit={runCommand}
           onSubmitEmpty={fileManager.activateSelection}
           onNavigate={fileManager.moveCursor}
-          captureDisabled={dialog !== null || screensaverOn}
+          captureDisabled={dialog !== null || screensaverOn || landingOpen}
           ariaLabel={messages.shell.cmdLine.ariaLabel}
           zone={CMD_ZONE}
         />
@@ -480,6 +484,12 @@ export function DosShell({
           }
         />
       </div>
+
+      {landingOpen && landing ? (
+        <div className={styles.landingOverlay}>
+          <LandingCloseProvider close={closeLanding}>{landing}</LandingCloseProvider>
+        </div>
+      ) : null}
 
       <Dialog
         open={dialog !== null}

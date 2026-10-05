@@ -1,4 +1,5 @@
 export { DosShell, type DosShellProps, type ShellSession } from "./DosShell";
+export { LandingCloseProvider, useCloseLanding } from "./landing-close";
 export type { ShellAddon } from "./addons";
 export { JAR_WINDOW_MS } from "./model/jar";
 export { useShellSession } from "./SessionContext";

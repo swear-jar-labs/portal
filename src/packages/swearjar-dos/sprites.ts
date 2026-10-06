@@ -432,27 +432,29 @@ export const sprites = {
     ],
   },
   // The reception bell: rung to be greeted again (WELCOME reopens the landing).
+  // The plunger button and the plinth carry the read: without them the dome
+  // melts into a lightbulb, and the old white glint read as eyes on paper.
   bell: {
     palette: {
       K: "#000000",
       y: "#FFFF55",
-      W: "#FFFFFF",
+      g: "#555555",
     },
     map: [
       "................",
       "................",
-      "................",
-      ".......KK.......",
+      "......KKKK......",
       "......KyyK......",
-      ".....KyyyyK.....",
+      ".......KK.......",
+      ".....KKKKKK.....",
       "....KyyyyyyK....",
-      "....KyyWWyyK....",
       "...KyyyyyyyyK...",
-      "...KyyyyyyyyK...",
-      "..KKKKKKKKKKKK..",
       "..KyyyyyyyyyyK..",
+      "..KyyyyyyyyyyK..",
+      "..KyyyyyyyyyyK..",
+      ".KKKKKKKKKKKKKK.",
+      "..KggggggggggK..",
       "..KKKKKKKKKKKK..",
-      "................",
       "................",
       "................",
     ],

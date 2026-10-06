@@ -98,9 +98,9 @@ const eslintConfig = defineConfig([
               message: "Features never import the routing layer (src/app).",
             },
             {
-              regex: "^@/features/(?!shell(?:/|$)|[^/]+/contracts$).+$",
+              regex: "^@/features/(?!shell(?:/|$)|[^/]+/contracts(?:/ui)?$).+$",
               message:
-                "Cross-feature imports are forbidden; a feature may import only the shell or a feature contract.",
+                "Cross-feature imports are forbidden; a feature may import only the shell or a feature contract (its index or contracts/ui).",
             },
           ],
         },

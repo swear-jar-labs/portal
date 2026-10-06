@@ -63,8 +63,8 @@ UI text carries one role, stamped as `DOS_ROLE_ATTR` (`data-dos-role`); the role
 `tokens.css` owns color, weight, size, line-height, tracking and the light family's bold
 smear, and `Text`/`Heading` read it through the `--dos-text-*` variables. Role colors come
 from the tone palette, so the
-light surface remap applies to them too; the content palette (markdown directives, welcome)
-and literal colors stay on the `tone` prop — UI text uses a role.
+light surface remap applies to them too; the content palette (markdown directives, landing
+copy) and literal colors stay on the `tone` prop — UI text uses a role.
 
 | Role       | Color   | Weight  | Notes                                                      |
 | ---------- | ------- | ------- | ---------------------------------------------------------- |

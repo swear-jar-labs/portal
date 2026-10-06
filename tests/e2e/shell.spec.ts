@@ -1,12 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import {
-  DOS_CRT_ATTR,
-  DOS_SCROLL_ATTR,
-  DOS_SURFACE_ATTR,
-  DOS_WINDOW_BODY_ATTR,
-} from "@swearjar/dos/contracts";
-import { enterShell, expectMinimumContrast } from "./helpers";
+import { DOS_CRT_ATTR, DOS_SCROLL_ATTR, DOS_WINDOW_BODY_ATTR } from "@swearjar/dos/contracts";
+import { enterShell, expectMinimumContrast, logon } from "./helpers";
 
 // /errata has no page of its own: ERRATA opens the feed with ?board=errata,
 // so the RSC 404 falls back to a full load here.
@@ -92,7 +87,7 @@ test("draws the CRT filter above portaled surfaces", async ({ page }) => {
   await page.goto("/");
 
   // The screen's pseudo-elements are the filter: click-through, above every
-  // portaled surface (welcome dialog, menu); the screensaver keeps its layer.
+  // portaled surface (landing window, menu); the screensaver keeps its layer.
   const screen = page.locator(`[${DOS_CRT_ATTR}]`);
   await expect(screen).toBeVisible();
   const filter = await screen.evaluate((element) => {
@@ -113,7 +108,13 @@ test("draws the CRT filter above portaled surfaces", async ({ page }) => {
 
   const welcome = page.getByRole("dialog");
   await expect(welcome).toBeVisible();
-  const dialogZ = Number(await welcome.evaluate((element) => getComputedStyle(element).zIndex));
+  // The landing window positions through its overlay layer: the filter must
+  // sit above that layer.
+  const dialogZ = Number(
+    await welcome.evaluate((element) =>
+      element.parentElement ? getComputedStyle(element.parentElement).zIndex : "auto",
+    ),
+  );
   expect(filter.zIndex).toBeGreaterThan(dialogZ);
   await welcome.getByRole("button", { name: "Close" }).click();
 
@@ -212,57 +213,101 @@ test.describe("file tree", () => {
   });
 });
 
-test.describe("welcome", () => {
-  test("presents the workshop and places on a readable silver surface", async ({ page }) => {
+test.describe("landing", () => {
+  test("presents the hero in the fullscreen window on first open", async ({ page }) => {
     await page.goto("/");
 
-    const dialog = page.getByRole("dialog");
-    const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
-    const heading = dialog.getByRole("heading", { name: "SWEAR JAR LABS" });
-    const place = dialog.getByText("FORUM", { exact: true });
-    await expect(body).toHaveAttribute(DOS_SURFACE_ATTR, "light");
-    await expectMinimumContrast(heading);
-    await expectMinimumContrast(place);
-    await expect(dialog.getByText("A workshop for curious developers")).toBeVisible();
-    await expect(dialog.getByText("Build something together.")).toBeVisible();
+    const window = page.getByRole("dialog");
+    await expect(
+      window.getByRole("heading", { name: "MAKE SOFTWARE ENGINEERING GREAT AGAIN" }),
+    ).toBeVisible();
+    await expect(window.getByText("How will you write code when AI rises?")).toBeVisible();
+    await expect(window.getByRole("link", { name: "JOIN THE TEAM" })).toBeVisible();
+    await expect(window.getByRole("link", { name: "HOW IT WORKS" })).toBeVisible();
+    await expectMinimumContrast(window.getByText("How will you write code when AI rises?"));
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     expect(results.violations).toEqual([]);
   });
 
-  test("opens HOW with the keyboard", async ({ page }) => {
+  test("hands focus to the window body on open and closes with Escape", async ({ page }) => {
     await page.goto("/");
 
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("button", { name: "Explore the forum" })).toBeFocused();
-    await page.keyboard.press("ArrowRight");
-    await expect(dialog.getByRole("button", { name: "How it works" })).toBeFocused();
-    await page.keyboard.press("Enter");
-
-    await expect(dialog).toBeHidden();
-    await expect(page).toHaveURL("/how");
-    await expect(page.getByRole("region", { name: "HOW-IT-WORKS.TXT" })).toBeVisible();
+    const window = page.getByRole("dialog");
+    const body = window.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
+    await expect(body).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(window).toBeHidden();
   });
 
-  test("opens the forum from the primary action", async ({ page }) => {
+  test("joins the team from the primary action", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("dialog").getByRole("button", { name: "Explore the forum" }).click();
+    await page.getByRole("dialog").getByRole("link", { name: "JOIN THE TEAM" }).click();
     await expect(page).toHaveURL("/forum");
     await expect(page.getByRole("dialog")).toBeHidden();
     await expect(page.getByRole("region", { name: "FORUM.EXE" })).toBeVisible();
   });
 
-  test("fits the welcome actions on mobile", async ({ page }) => {
+  test("scrolls to the box from HOW IT WORKS without leaving home", async ({ page }) => {
+    await page.goto("/");
+
+    const window = page.getByRole("dialog");
+    await window.getByRole("link", { name: "HOW IT WORKS" }).click();
+    await expect(page).toHaveURL("/");
+    await expect(window.getByRole("heading", { name: "WHAT'S IN THE BOX" })).toBeInViewport();
+    await expect(window.getByRole("link", { name: "OPEN FORUM" })).toBeVisible();
+  });
+
+  test("closes into the shell", async ({ page }) => {
+    await page.goto("/");
+
+    const window = page.getByRole("dialog");
+    await window.getByRole("button", { name: "Close" }).click();
+    await expect(window).toBeHidden();
+    await expect(page.getByRole("menubar")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "SWEAR JAR LABS" })).toBeVisible();
+  });
+
+  test("rings the window back from WELCOME", async ({ page }) => {
+    await enterShell(page);
+
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+    await files.getByRole("button", { name: "WELCOME" }).click();
+
+    const window = page.getByRole("dialog");
+    await expect(
+      window.getByRole("heading", { name: "MAKE SOFTWARE ENGINEERING GREAT AGAIN" }),
+    ).toBeVisible();
+  });
+
+  test("rings the window back from WELCOME as a member", async ({ page }) => {
+    await logon(page);
+    await page.goto("/forum");
+
+    const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
+    await expect(files.getByRole("button", { name: "WELCOME" })).toBeVisible();
+    await files.getByRole("button", { name: "WELCOME" }).click();
+
+    await expect(page).toHaveURL("/");
+    const window = page.getByRole("dialog");
+    await expect(
+      window.getByRole("heading", { name: "MAKE SOFTWARE ENGINEERING GREAT AGAIN" }),
+    ).toBeVisible();
+    await window.getByRole("button", { name: "Close" }).click();
+    await expect(window).toBeHidden();
+  });
+
+  test("fits the place actions on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 780 });
     await page.goto("/");
 
-    const dialog = page.getByRole("dialog");
-    const body = dialog.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
-    await expect(dialog.getByRole("button", { name: "How it works" })).toBeVisible();
+    const window = page.getByRole("dialog");
+    const body = window.locator(`[${DOS_WINDOW_BODY_ATTR}]`);
+    await expect(window.getByRole("link", { name: "OPEN PROJECTS" })).toBeVisible();
     expect(await body.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   });
 
-  test("does not greet again when a routed file leads back home", async ({ page }) => {
+  test("does not show again when a routed file leads back home", async ({ page }) => {
     await enterShell(page);
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });
@@ -274,7 +319,7 @@ test.describe("welcome", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
-  test("does not greet when home opens after a deep link", async ({ page }) => {
+  test("does not show when home opens after a deep link", async ({ page }) => {
     await page.goto("/register");
 
     const files = page.getByRole("region", { name: "C:\\SWEARJAR" });

@@ -17,6 +17,9 @@ export type ProjectsCardProps = {
   now: string;
   current?: boolean;
   eagerScreenshot?: boolean;
+  // The profile rows reuse the feed card without the gallery: the same
+  // byline, excerpt, site link and stack chips, but no screenshots.
+  hideScreenshots?: boolean;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
 };
 
@@ -25,6 +28,7 @@ export function ProjectsCard({
   now,
   current = false,
   eagerScreenshot = false,
+  hideScreenshots = false,
   onActivate,
 }: ProjectsCardProps) {
   return (
@@ -76,7 +80,7 @@ export function ProjectsCard({
               </Tag>
             ))}
           </Stack>
-          {project.screenshots?.length ? (
+          {hideScreenshots ? null : project.screenshots?.length ? (
             <ProjectScreenshotTiles
               screenshots={project.screenshots.slice(0, 2)}
               compact

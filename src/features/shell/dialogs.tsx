@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { buildHelp, Button, Heading, Sprite, Stack, Text } from "@swearjar/dos";
+import { buildHelp, Button, Stack, Text } from "@swearjar/dos";
 import type { AppCommand, FileGroup } from "@/content/commands";
-import { welcome } from "@/content/landing";
 import { messages, pluralForms } from "@/content/messages";
 import { formatCount } from "@/lib/format";
 import { recentEvents, topBadCommands, type JarEvent } from "./model/jar";
@@ -156,40 +155,6 @@ export function LoginPromptBody({
         </Button>
         <Button className={styles.action} onClick={onCancel}>
           {messages.shell.dialogs.login.cancel}
-        </Button>
-      </Stack>
-    </Stack>
-  );
-}
-
-export function WelcomeBody({ onExplore, onHow }: { onExplore: () => void; onHow: () => void }) {
-  return (
-    <Stack gap={16} className={styles.welcome}>
-      <Stack direction="row" align="center" gap={16} className={styles.welcomeHeader}>
-        <Sprite name="jar" cell={4} decorative />
-        <Stack gap={4}>
-          <Heading level={2}>{welcome.heading}</Heading>
-          <Text>{welcome.intro}</Text>
-        </Stack>
-      </Stack>
-      <Text>{welcome.description}</Text>
-      <Stack as="ul" gap={4} className={styles.welcomePlaces}>
-        {welcome.places.map((place) => (
-          <li key={place.name} className={styles.welcomePlace}>
-            <Text as="span" role="accent">
-              {place.name}
-            </Text>
-            <Text as="span">{place.description}</Text>
-          </li>
-        ))}
-      </Stack>
-      <Text role="hint">{welcome.footer}</Text>
-      <Stack direction="row" gap={10} wrap>
-        <Button variant="primary" className={styles.action} onClick={onExplore}>
-          {welcome.explore}
-        </Button>
-        <Button className={styles.action} onClick={onHow}>
-          {welcome.how}
         </Button>
       </Stack>
     </Stack>

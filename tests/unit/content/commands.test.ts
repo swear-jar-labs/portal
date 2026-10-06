@@ -213,15 +213,15 @@ describe("commands content", () => {
     }
   });
 
-  it("keeps the expected file summary (3 DIRS, 11 FILES as guest, 14 as participant, 13 as member)", () => {
+  it("keeps the expected file summary (3 DIRS, 12 FILES as guest, 15 as participant, 14 as member)", () => {
     const count = (viewer: Viewer) => {
       const groups = fileGroupsFor(viewer);
       expect(groups).toHaveLength(3);
       return groups.reduce((total, group) => total + group.items.length, 0);
     };
-    expect(count(null)).toBe(11);
-    expect(count({ level: "participant" })).toBe(14);
-    expect(count({ level: "member" })).toBe(13);
+    expect(count(null)).toBe(12);
+    expect(count({ level: "participant" })).toBe(15);
+    expect(count({ level: "member" })).toBe(14);
   });
 
   it("names the COMMUNITY, ACCOUNT and GUIDE groups in order", () => {
@@ -245,7 +245,25 @@ describe("commands content", () => {
       "HOW",
       "MANIFESTO",
       "RULES",
+      "WELCOME",
     ]);
+  });
+
+  it("reopens the landing window as a guest action without a route", () => {
+    const welcome = commandById.get("WELCOME");
+    expect(welcome?.href).toBeUndefined();
+    expect(isActionCommand("WELCOME")).toBe(true);
+    expect(welcome?.file).toEqual({
+      group: "read",
+      name: "WELCOME",
+      ext: "EXE",
+      size: 512,
+      icon: "bell",
+    });
+    expect(fileTitle("WELCOME")).toBe("WELCOME.EXE");
+    for (const viewer of VIEWERS) {
+      expect(visibleCommands(viewer).map((command) => command.id)).toContain("WELCOME");
+    }
   });
 
   it("opens ERRATA on the errata board of the existing feed", () => {

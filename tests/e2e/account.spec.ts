@@ -22,7 +22,7 @@ const SUBMIT_BUTTON = "SUBMIT";
 const LONG_DELAY_MS = screensaverDelayMs(30);
 const MINUTE_MS = 60_000;
 
-async function dismissWelcomeAsGuest(page: Page) {
+async function dismissLandingAsGuest(page: Page) {
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Close" }).click();
@@ -41,7 +41,7 @@ test.describe("guest account chrome", () => {
     await expect(files.getByRole("link", { name: "PROFILE" })).toHaveCount(0);
     await expect(files.getByRole("link", { name: "SETTINGS" })).toHaveCount(0);
     await expect(files.getByRole("button", { name: "LOGOFF" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Register" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F10 Logon" })).toBeVisible();
@@ -185,7 +185,7 @@ test.describe("member session", () => {
     await expect(files.getByRole("link", { name: "SETTINGS" })).toBeVisible();
     await expect(files.getByRole("button", { name: "LOGOFF" })).toBeVisible();
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 14 FILES")).toBeVisible();
 
     await expect(page.getByRole("button", { name: "F8 Profile" })).toBeVisible();
     await expect(page.getByRole("button", { name: "F10 Logoff" })).toBeVisible();
@@ -279,7 +279,7 @@ test.describe("member session", () => {
     await expect(page.getByRole("button", { name: "F10 Logon" })).toBeVisible();
     await expect(page.getByText("GUEST", { exact: true })).toBeVisible();
     const files = page.getByRole("region", { name: FILES_REGION });
-    await expect(files.getByText("3 DIRS, 11 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 12 FILES")).toBeVisible();
 
     // The cursor lands on the displayed document (ABOUT), not on the first row:
     // one ArrowDown step from ABOUT reaches HOW-IT-WORKS.
@@ -461,7 +461,7 @@ test.describe("registration and levels", () => {
     await logon(page, "quinn-sees-apply");
     const files = page.getByRole("region", { name: FILES_REGION });
     await expect(files.getByRole("link", { name: "APPLY" })).toBeVisible();
-    await expect(files.getByText("3 DIRS, 14 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 15 FILES")).toBeVisible();
 
     await page.getByRole("menuitem", { name: "Account" }).click();
     await expect(page.getByRole("menu").getByRole("menuitem", { name: "Apply" })).toBeVisible();
@@ -473,7 +473,7 @@ test.describe("registration and levels", () => {
 
     await logon(page);
     await expect(files.getByRole("link", { name: "APPLY" })).toHaveCount(0);
-    await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
+    await expect(files.getByText("3 DIRS, 14 FILES")).toBeVisible();
   });
 
   test("refuses an unknown logon instead of provisioning a stranger", async ({ page }) => {
@@ -1321,7 +1321,7 @@ test.describe("screensaver settings", () => {
     ] as const);
     await page.clock.install();
     await page.goto("/");
-    await dismissWelcomeAsGuest(page);
+    await dismissLandingAsGuest(page);
 
     await page.clock.runFor(LONG_DELAY_MS + MINUTE_MS);
     await expect(page.getByRole("img", { name: "Starfield screensaver" })).toHaveCount(0);
@@ -1334,7 +1334,7 @@ test.describe("screensaver settings", () => {
     ] as const);
     await page.clock.install();
     await page.goto("/");
-    await dismissWelcomeAsGuest(page);
+    await dismissLandingAsGuest(page);
 
     await page.clock.runFor(MINUTE_MS + 1_000);
     await expect(page.getByRole("img", { name: "Starfield screensaver" })).toBeVisible();

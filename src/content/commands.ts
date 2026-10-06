@@ -225,6 +225,14 @@ const commandDefs = [
   },
   { id: "DIR", description: messages.shell.registry.descriptions.DIR },
   { id: "HELP", description: messages.shell.registry.descriptions.HELP },
+  // No route: the file row renders as a button that reopens the landing
+  // window. Everyone sees it; guests get the window unprompted, members
+  // only on demand (they never land on home cold).
+  {
+    id: "WELCOME",
+    description: messages.shell.registry.descriptions.WELCOME,
+    file: { group: "read", name: "WELCOME", ext: "EXE", size: 512, icon: "bell" },
+  },
 ] as const satisfies readonly AppCommandDef[];
 
 export type CommandId = (typeof commandDefs)[number]["id"];
@@ -253,6 +261,7 @@ export const actionCommandIds = [
   "DOOM",
   "LOGOFF",
   "SEARCH",
+  "WELCOME",
 ] as const satisfies readonly CommandId[];
 
 export type ActionCommandId = (typeof actionCommandIds)[number];

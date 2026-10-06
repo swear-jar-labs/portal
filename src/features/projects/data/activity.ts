@@ -1,4 +1,4 @@
-import { listRecentThreadSummariesByBoard } from "@/features/board/contracts";
+import { listRecentThreadSummariesByBoard } from "@/features/board/contracts/server";
 import type { Project } from "../model/projects";
 
 /** The index ranking base: the freshest journal activity per project slug,

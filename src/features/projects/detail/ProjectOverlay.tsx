@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { messages } from "@/content/messages";
 import { getActorSession, listAdminUsers, listMemberUsers } from "@/features/account/contracts";
-import { countThreadsByBoard, listRecentThreadSummariesByBoard } from "@/features/board/contracts";
+import {
+  countThreadsByBoard,
+  listRecentThreadSummariesByBoard,
+} from "@/features/board/contracts/server";
 import { listTicketsByProject } from "@/features/tickets/contracts";
 import { OverlayOutlet, type WithDocumentTitle } from "@/features/shell";
 import { getProject } from "../data/queries";

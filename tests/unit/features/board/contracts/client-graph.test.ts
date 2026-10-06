@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -53,6 +53,11 @@ function resolveFile(base: string): string | null {
 function isServerBoundary(source: string): boolean {
   const prologue = source.replace(/^(\s*\/\*[\s\S]*?\*\/|\s*\/\/[^\n]*|\s*)/, "").slice(0, 32);
   return prologue.startsWith('"use server"') || prologue.startsWith("'use server'");
+}
+
+function isClientModule(source: string): boolean {
+  const prologue = source.replace(/^(\s*\/\*[\s\S]*?\*\/|\s*\/\/[^\n]*|\s*)/, "").slice(0, 32);
+  return prologue.startsWith('"use client"') || prologue.startsWith("'use client'");
 }
 
 // A value import that only names types still vanishes: `import { type X }`
@@ -136,4 +141,58 @@ describe("board contract client graph", () => {
       ),
     ).toEqual([]);
   });
+
+  it("keeps every client-side board importer free of server modules", () => {
+    const entries = collectClientBoardImporters();
+    // The sweep must actually find importers; an empty entry list would
+    // vacuously pass while the boundary rots.
+    expect(entries.length).toBeGreaterThan(0);
+    const violations = entries.flatMap((entry) =>
+      walkClientGraph(entry).map(
+        ({ file, spec, chain }) =>
+          `${path.relative(SRC, entry)} :: ` +
+          chain
+            .map((node) => path.relative(SRC, node))
+            .concat(`${path.relative(SRC, file)} imports ${spec}`)
+            .join(" -> "),
+      ),
+    );
+    expect(violations).toEqual([]);
+  });
 });
+
+// Reverse sweep: every "use client" module under src/ whose runtime imports
+// resolve into the board slice. A client entry importing the server reads
+// (contracts/server, the facade, or data/queries directly) flags here —
+// those entries are server-component-only by rule.
+function collectClientBoardImporters(): string[] {
+  const boardDir = path.join(SRC, "features/board") + path.sep;
+  const entries: string[] = [];
+  const visit = (dir: string): void => {
+    for (const name of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, name.name);
+      if (name.isDirectory()) {
+        visit(full);
+        continue;
+      }
+      if (!name.isFile() || (!full.endsWith(".ts") && !full.endsWith(".tsx"))) continue;
+      let source: string;
+      try {
+        source = readFileSync(full, "utf8");
+      } catch {
+        continue;
+      }
+      if (!isClientModule(source)) continue;
+      const importsBoard = runtimeImportsStrict(source).some((spec) => {
+        if (!spec.startsWith("./") && !spec.startsWith("../") && !spec.startsWith("@/")) {
+          return false;
+        }
+        const resolved = resolveSpec(spec, path.dirname(full));
+        return resolved !== null && (resolved + path.sep).startsWith(boardDir);
+      });
+      if (importsBoard) entries.push(full);
+    }
+  };
+  visit(SRC);
+  return entries.sort();
+}

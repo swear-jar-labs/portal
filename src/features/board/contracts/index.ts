@@ -3,7 +3,8 @@
 // internals, nothing else. Client-safe by rule: every leaf here must
 // resolve without server modules (@/db, node builtins), because client
 // components import this barrel and anything it pulls lands in the browser
-// bundle. Server reads live in data/queries.ts and are imported directly
+// bundle. Cross-feature RSC reads go through contracts/server.ts instead.
+// Server reads live in data/queries.ts and are imported directly
 // (relative, server components only) — never re-exported here. The
 // contract test pins the published list; the client-graph test pins the
 // boundary.

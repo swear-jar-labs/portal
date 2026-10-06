@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { fileTitle } from "@/content/commands";
 import { messages } from "@/content/messages";
-import { forumActivitySeed, listThreadSummariesByAuthor } from "@/features/board/contracts";
+import { forumActivitySeed, listThreadSummariesByAuthor } from "@/features/board/contracts/server";
 import { listMemberProjects } from "@/features/projects/contracts";
 import { listReadrooms } from "@/features/readroom/contracts";
 import { listTickets } from "@/features/tickets/contracts";

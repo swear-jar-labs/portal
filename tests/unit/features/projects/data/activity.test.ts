@@ -8,7 +8,9 @@ import { projectSlugs } from "@/features/projects/model/projects";
 // server read, so there is no value import to grab it from.
 const { mockRecent } = vi.hoisted(() => ({ mockRecent: vi.fn() as Mock }));
 
-vi.mock("@/features/board/contracts", () => ({ listRecentThreadSummariesByBoard: mockRecent }));
+vi.mock("@/features/board/contracts/server", () => ({
+  listRecentThreadSummariesByBoard: mockRecent,
+}));
 
 function journalEntry(id: string, lastActivityAt: string): { id: string; lastActivityAt: string } {
   return { id, lastActivityAt };

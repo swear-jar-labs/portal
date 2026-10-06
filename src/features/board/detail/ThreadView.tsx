@@ -40,12 +40,14 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   ];
 
   // The marker and the chip quote the parent as it stands now: a session edit
-  // wins over the fixture body, a tombstone keeps the name and loses the text.
+  // wins over the fixture body, a tombstone (session or server) keeps the
+  // name and loses the text.
   function resolveTarget(id: string): ReplyTarget | undefined {
     const parent = posts.find((entry) => entry.post.id === id)?.post;
     if (parent === undefined) return undefined;
     const parentExcerpt =
       state.deletedPosts.has(parent.id) ||
+      parent.deletedAt !== undefined ||
       moderation.hidden[targetKey({ kind: "post", id: parent.id })]
         ? ""
         : excerpt(state.edits.get(parent.id) ?? parent.body, REPLY_EXCERPT_LENGTH);
@@ -96,7 +98,7 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
               votes={root ? thread.votes : post.votes}
               voted={root ? actions.votedThread : state.votedPosts.has(post.id)}
               editedBody={state.edits.get(post.id)}
-              deleted={state.deletedPosts.has(post.id)}
+              deleted={state.deletedPosts.has(post.id) || post.deletedAt !== undefined}
               canEdit={session?.user === post.author.user}
               canReply={!view.locked}
               replyTo={post.replyTo === undefined ? undefined : resolveTarget(post.replyTo)}

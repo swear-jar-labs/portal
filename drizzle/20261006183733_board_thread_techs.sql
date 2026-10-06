@@ -1,0 +1,1 @@
+ALTER TABLE "threads" ADD COLUMN "techs" text[] DEFAULT '{}'::text[] NOT NULL;

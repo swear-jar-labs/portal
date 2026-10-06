@@ -9,6 +9,7 @@ import {
   type ThreadSummary,
 } from "../model/threads";
 import * as boardStore from "./board-store";
+import * as boardActions from "./board-actions";
 import { filterThreads, rankThreads, type FeedQuery } from "../model/feed";
 import { isBlankSearch, searchThreads, type ThreadSearchHit } from "../model/search";
 import {
@@ -35,12 +36,13 @@ export type BoardSessionOptions = {
   viewer?: SearchViewer;
 };
 
-/** The UI-first board's data layer: ranks the feed over the fixture summaries
- * and the session's composed threads, and binds the store's transitions to the
- * open thread. Under a query it searches the session-merged threads instead:
- * the same board/tag filters narrow the corpus first, the current sort still
- * orders the hit threads. Phase 5 replaces the store with server actions,
- * the components do not change. */
+/** The UI-first board's data layer: ranks the feed over the server summaries
+ * and binds the store's transitions to the open thread. Votes, edits and
+ * deletions apply locally first and sync to the server behind the action;
+ * replies and composed threads commit server-first (their ids are real, so
+ * the thread route resolves at once). Under a query it searches the
+ * session-merged threads instead: the same board/tag filters narrow the
+ * corpus first, the current sort still orders the hit threads. */
 export function useBoardSession({
   threads,
   now,
@@ -129,14 +131,29 @@ export function useBoardSession({
     );
   }, [hits, now, query, searchActive, withVotes]);
 
+  // Optimistic session deltas with a server sync behind them: the local
+  // toggle shows at once, a failed write rolls back and warns (the next
+  // refresh heals either way). The guest gate lives where the action is
+  // bound (the section stack prompts for logon); the server refuses guests
+  // all the same.
   const toggleThreadVote = useCallback((id: string) => {
     boardStore.toggleThreadVote(id);
+    void boardActions.toggleThreadVote(id).then((result) => {
+      if (result.ok) return;
+      boardStore.toggleThreadVote(id);
+      console.warn("[board] thread vote not saved", result.error);
+    });
   }, []);
 
   const togglePostVote = useCallback(
     (postId: string) => {
       if (threadId === undefined) return;
       boardStore.togglePostVote(threadId, postId);
+      void boardActions.togglePostVote(postId).then((result) => {
+        if (result.ok) return;
+        boardStore.togglePostVote(threadId, postId);
+        console.warn("[board] post vote not saved", result.error);
+      });
     },
     [threadId],
   );
@@ -145,6 +162,9 @@ export function useBoardSession({
     (postId: string, body: string) => {
       if (threadId === undefined) return;
       boardStore.editPost(threadId, postId, body);
+      void boardActions.editPost(postId, { body }).then((result) => {
+        if (!result.ok) console.warn("[board] edit not saved", result.error);
+      });
     },
     [threadId],
   );
@@ -153,24 +173,48 @@ export function useBoardSession({
     (postId: string) => {
       if (threadId === undefined) return;
       boardStore.deletePost(threadId, postId);
+      void boardActions.deletePost(postId).then((result) => {
+        if (!result.ok) console.warn("[board] delete not saved", result.error);
+      });
     },
     [threadId],
   );
 
-  // Returns the saved post so the caller can notify its mentions: the id is
-  // the event's dedup key (a thread-level id would collapse every reply's
-  // tags into one).
+  // Server-first: the action commits the reply (the id is real) before the
+  // store renders it. Callers notify mentions under the returned id, so a
+  // failed write notifies nothing.
   const addReply = useCallback(
-    (body: string, author: BoardMember, replyTo?: string): ThreadPost | undefined => {
+    async (
+      body: string,
+      author: BoardMember,
+      replyTo?: string,
+    ): Promise<ThreadPost | undefined> => {
       if (threadId === undefined) return undefined;
-      return boardStore.addReply(threadId, body, author, replyTo);
+      const result = await boardActions.replyToThread(threadId, {
+        body,
+        ...(replyTo === undefined ? {} : { replyTo }),
+      });
+      if (!result.ok) {
+        console.warn("[board] reply not saved", result.error);
+        return undefined;
+      }
+      const post: ThreadPost = {
+        id: result.id,
+        author,
+        body,
+        ...(replyTo === undefined ? {} : { replyTo }),
+        createdAt: result.createdAt ?? new Date().toISOString(),
+        votes: 0,
+      };
+      boardStore.addConfirmedPost(threadId, post);
+      return post;
     },
     [threadId],
   );
 
-  const addThread = useCallback((input: ComposeInput, author: BoardMember): string => {
-    return boardStore.addThread(input, author).id;
-  }, []);
+  // Composed threads commit server-side and return the action outcome: the
+  // caller navigates to the new thread's route from the returned id.
+  const composeThread = useCallback((input: ComposeInput) => boardActions.composeThread(input), []);
 
   // The open thread's pin/lock as the session sees them: the fixture flags
   // with the admin overrides merged in. The toggles flip the effective flag;
@@ -217,6 +261,6 @@ export function useBoardSession({
     togglePin,
     toggleLock,
     addReply,
-    addThread,
+    composeThread,
   };
 }

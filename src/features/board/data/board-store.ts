@@ -1,5 +1,4 @@
-import type { BoardMember, Thread, ThreadPost, ThreadSummary } from "../model/threads";
-import type { ComposeInput } from "../model/schema";
+import type { Thread, ThreadPost, ThreadSummary } from "../model/threads";
 
 // The board's session memory: the mock state outlives the route remount (the
 // feed unmounts when a thread opens) and dies with the page reload. The store
@@ -41,17 +40,6 @@ const INITIAL_BOARD_STATE: BoardState = {
   threads: {},
   flags: {},
 };
-
-const LOCAL_THREAD_ID_PREFIX = "local-thread-";
-const LOCAL_POST_ID_PREFIX = "local-post-";
-
-export function isLocalThreadId(id: string): boolean {
-  return id.startsWith(LOCAL_THREAD_ID_PREFIX);
-}
-
-function localId(prefix: string): string {
-  return `${prefix}${crypto.randomUUID()}`;
-}
 
 let state: BoardState = INITIAL_BOARD_STATE;
 const listeners = new Set<() => void>();
@@ -117,45 +105,16 @@ export function deletePost(threadId: string, postId: string): void {
   });
 }
 
-/** A session reply: authored by the logged-on member, zero votes. `replyTo`
- * names the post it answers; a thread's root reply has none. */
-export function addReply(
-  threadId: string,
-  body: string,
-  author: BoardMember,
-  replyTo?: string,
-): ThreadPost {
-  const post: ThreadPost = {
-    id: localId(LOCAL_POST_ID_PREFIX),
-    author,
-    body,
-    ...(replyTo === undefined ? {} : { replyTo }),
-    createdAt: new Date().toISOString(),
-    votes: 0,
-  };
-  updateThread(threadId, (current) => ({ ...current, addedPosts: [...current.addedPosts, post] }));
-  return post;
-}
-
-/** A thread composed in this session: one root post, no votes yet. */
-export function addThread(input: ComposeInput, author: BoardMember): Thread {
-  const id = localId(LOCAL_THREAD_ID_PREFIX);
-  const now = new Date().toISOString();
-  const thread: Thread = {
-    id,
-    board: input.board,
-    title: input.title,
-    author,
-    tags: input.tags,
-    techs: input.techs,
-    pinned: false,
-    locked: false,
-    createdAt: now,
-    votes: 0,
-    posts: [{ id: `${id}-root`, author, body: input.body, createdAt: now, votes: 0 }],
-  };
-  setState({ ...state, addedThreads: [...state.addedThreads, thread] });
-  return thread;
+/** A server-confirmed post: the action committed it (the id is real and the
+ * thread route resolves), the store renders it until the next refresh
+ * revalidates the thread. `replyTo` names the post it answers; a thread's
+ * root reply has none. */
+export function addConfirmedPost(threadId: string, post: ThreadPost): void {
+  updateThread(threadId, (current) =>
+    current.addedPosts.some((entry) => entry.id === post.id)
+      ? current
+      : { ...current, addedPosts: [...current.addedPosts, post] },
+  );
 }
 
 export function subscribeBoard(listener: () => void): () => void {

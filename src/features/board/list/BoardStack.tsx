@@ -48,7 +48,6 @@ import { postElementId, postHash, postIdFromHash } from "../model/post-anchor";
 import type { ComposeInput } from "../model/schema";
 import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
 import { threadCardId } from "./ThreadCard";
-import { ThreadView } from "../detail/ThreadView";
 import { useBoardSession } from "../data/useBoardSession";
 
 export type BoardThreadLayer = {
@@ -75,6 +74,10 @@ export type BoardStackProps = {
 export function BoardFallback() {
   return <ShellPanel title={fileTitle("FORUM")}>{null}</ShellPanel>;
 }
+
+// Composed threads commit server-side with a real route, so the feed holds
+// no session threads anymore; the panel prop stays (owned by the feed).
+const EMPTY_THREAD_IDS: ReadonlySet<string> = new Set();
 
 export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }: BoardStackProps) {
   const moderation = useModeration();
@@ -109,7 +112,6 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     (composableBoardIds.some((board) => board === query.board) ||
       projectBoards.some((board) => board.id === query.board && !board.archived));
   const [composing, setComposing] = useState(initialCompose);
-  const [localThreadId, setLocalThreadId] = useState<string | null>(null);
   // The control a closed layer owes focus to (the compose button, a new card).
   const returnFocusRef = useRef<string | null>(null);
   // A close owns the navigation until the route changes: a second Esc (or [X])
@@ -119,7 +121,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
   // yields) and renders the store layers as the top of this PanelStack.
   const { overlayLayers, overlayOpen, closeOverlay } = useOverlayTop(closingRef);
 
-  const activeThreadId = thread?.id ?? localThreadId ?? undefined;
+  const activeThreadId = thread?.id;
 
   const {
     state,
@@ -135,7 +137,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     togglePin,
     toggleLock,
     addReply,
-    addThread,
+    composeThread,
   } = useBoardSession({
     threads,
     now,
@@ -145,16 +147,6 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     moderation,
     viewer,
   });
-
-  const openedLocalThread = useMemo(
-    () => state.addedThreads.find((entry) => entry.id === localThreadId) ?? null,
-    [localThreadId, state.addedThreads],
-  );
-
-  const localThreadIds = useMemo(
-    () => new Set(state.addedThreads.map((entry) => entry.id)),
-    [state.addedThreads],
-  );
 
   // A new top layer (or the feed) ends the close that was in flight.
   useEffect(() => {
@@ -191,7 +183,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     const post = document.getElementById(postElementId(postId));
     post?.focus();
     post?.scrollIntoView({ block: "center" });
-  }, [localThreadId]);
+  }, [thread?.id]);
 
   // The compose layer hands focus back to the control that opened it (or to the
   // card it just created). A card hidden by the active filters falls back to
@@ -227,14 +219,13 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
 
   const notifyMentions = useMentionNotifier();
 
-  // The open thread's notify context: the fixture layer's title, the session
-  // thread's facts, the summaries' board. Absent off-thread (no notify target).
-  const openTitle =
-    thread !== undefined && thread.id === activeThreadId ? thread.title : openedLocalThread?.title;
+  // The open thread's notify context: the layer's title and the summaries'
+  // board. Absent off-thread (no notify target).
+  const openTitle = thread?.title;
   const openBoard: BoardId | undefined =
     activeThreadId === undefined
       ? undefined
-      : (openedLocalThread?.board ?? threads.find((entry) => entry.id === activeThreadId)?.board);
+      : threads.find((entry) => entry.id === activeThreadId)?.board;
 
   const notifyThreadMentions = useCallback(
     (messageId: string, body: string, targetId: string) => {
@@ -256,10 +247,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
       if (author === null || openTitle === undefined || openBoard === undefined) return;
       const summaryAuthor = threads.find((entry) => entry.id === targetId)?.author.user;
       const corpusThread = corpus.find((entry) => entry.id === targetId);
-      const threadAuthor =
-        openedLocalThread?.id === targetId
-          ? openedLocalThread.author.user
-          : (summaryAuthor ?? corpusThread?.author.user);
+      const threadAuthor = summaryAuthor ?? corpusThread?.author.user;
       const fixtureParent = corpusThread?.posts.find((post) => post.id === replyTo);
       const sessionParent = state.threads[targetId]?.addedPosts.find((post) => post.id === replyTo);
       const parentAuthor = fixtureParent?.author.user ?? sessionParent?.author.user;
@@ -277,7 +265,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
       }))
         enqueueInboxEvent(delivery.user, delivery.event);
     },
-    [author, corpus, openBoard, openTitle, openedLocalThread, state.threads, threads],
+    [author, corpus, openBoard, openTitle, state.threads, threads],
   );
 
   const threadActions = useMemo<ThreadActions | null>(() => {
@@ -306,11 +294,14 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
       },
       onReply: (body, replyTo) => {
         if (author === null || activeThreadId === undefined) return;
-        const post = addReply(body, author, replyTo);
-        if (post !== undefined) {
-          notifyThreadMentions(post.id, body, activeThreadId);
-          notifyThreadReply(post.id, replyTo, activeThreadId);
-        }
+        const authorNow = author;
+        const targetId = activeThreadId;
+        void (async () => {
+          const post = await addReply(body, authorNow, replyTo);
+          if (post === undefined) return;
+          notifyThreadMentions(post.id, body, targetId);
+          notifyThreadReply(post.id, replyTo, targetId);
+        })();
       },
     };
   }, [
@@ -339,17 +330,11 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
 
   const activateThread = useCallback(
     (threadId: string, event?: MouseEvent<HTMLElement>) => {
-      // A composed thread has no route to navigate to (and no link in its card):
-      // it opens in place. Keep the native behavior for real routes.
-      if (state.addedThreads.some((entry) => entry.id === threadId)) {
-        setLocalThreadId(threadId);
-        return;
-      }
       // The root slot intercepts the thread above the current stack: the card
       // stays mounted and returns focus when the overlay peels.
       pushOverlay(threadPath(threadId), threadCardId(threadId))(event);
     },
-    [pushOverlay, state.addedThreads],
+    [pushOverlay],
   );
 
   const voteThread = useCallback(
@@ -360,29 +345,16 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
   );
 
   // A search jump: the title opens the thread at its head, a reply lands on
-  // the post's anchor (focused and scrolled like a deep link). Session threads
-  // have no route, so they open in place with the hash set first — the feed
-  // effect below picks it up.
+  // the post's anchor (focused and scrolled like a deep link).
   const jumpToMatch = useCallback(
     (threadId: string, postId: string | undefined, event?: MouseEvent<HTMLElement>) => {
       if (postId === undefined) {
         activateThread(threadId, event);
         return;
       }
-      if (state.addedThreads.some((entry) => entry.id === threadId)) {
-        if (threadId === localThreadId) {
-          const post = document.getElementById(postElementId(postId));
-          post?.focus();
-          post?.scrollIntoView({ block: "center" });
-          return;
-        }
-        window.history.replaceState(window.history.state, "", postHash(postId));
-        setLocalThreadId(threadId);
-        return;
-      }
       pushOverlay(`${threadPath(threadId)}${postHash(postId)}`, threadCardId(threadId))(event);
     },
-    [activateThread, localThreadId, pushOverlay, state.addedThreads],
+    [activateThread, pushOverlay],
   );
 
   const closeThread = useCallback(() => {
@@ -403,21 +375,6 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     }
   }, [query, router, thread]);
 
-  const closeLocalThread = useCallback(() => {
-    if (openedLocalThread === null) return;
-    stackMemory.requestCardFocus(openedLocalThread.id);
-    // The hash of a jump inside the local thread dies with it: the feed must
-    // not keep an anchor to a layer that is gone.
-    if (window.location.hash !== "") {
-      window.history.replaceState(
-        window.history.state,
-        "",
-        `${window.location.pathname}${window.location.search}`,
-      );
-    }
-    setLocalThreadId(null);
-  }, [openedLocalThread]);
-
   const openCompose = useCallback(() => {
     gate(() => {
       setComposing(true);
@@ -435,24 +392,35 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
         requestLogin();
         return;
       }
-      const id = addThread(input, author);
-      // The opening post notifies under the thread id: one root post per
-      // thread, so the id stays a stable per-message key. Its context is the
-      // composed thread itself, not the open one.
-      notifyMentions({
-        authorUser: author.user,
-        messageId: id,
-        body: input.body,
-        source: boardTitle(input.board),
-        context: input.title,
-        target: { kind: "thread", label: input.title, href: threadPath(id) },
-      });
-      // The new card must be visible: the submit moves the feed to its board
-      // and drops any text query that would hide it.
-      setQuery({ board: input.board, sort: "new", q: "" });
-      closeCompose(threadCardId(id));
+      const authorNow = author;
+      void (async () => {
+        const result = await composeThread(input);
+        if (!result.ok) {
+          if (result.error === "login-required") requestLogin();
+          else console.warn("[board] thread not composed", result.error);
+          return;
+        }
+        const id = result.id;
+        // The opening post notifies under the thread id: one root post per
+        // thread, so the id stays a stable per-message key. Its context is
+        // the composed thread itself, not the open one.
+        notifyMentions({
+          authorUser: authorNow.user,
+          messageId: id,
+          body: input.body,
+          source: boardTitle(input.board),
+          context: input.title,
+          target: { kind: "thread", label: input.title, href: threadPath(id) },
+        });
+        // The new card must be visible: the submit moves the feed to its board
+        // and drops any text query that would hide it, then opens the thread
+        // at its fresh route.
+        setQuery({ board: input.board, sort: "new", q: "" });
+        closeCompose(threadCardId(id));
+        pushOverlay(threadPath(id), threadCardId(id))();
+      })();
     },
-    [addThread, author, closeCompose, notifyMentions, requestLogin],
+    [author, closeCompose, composeThread, notifyMentions, pushOverlay, requestLogin],
   );
 
   const closeTop = useCallback(() => {
@@ -464,20 +432,8 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
       closeCompose();
       return;
     }
-    if (openedLocalThread !== null) {
-      closeLocalThread();
-      return;
-    }
     closeThread();
-  }, [
-    closeCompose,
-    closeLocalThread,
-    closeOverlay,
-    closeThread,
-    composing,
-    openedLocalThread,
-    overlayOpen,
-  ]);
+  }, [closeCompose, closeOverlay, closeThread, composing, overlayOpen]);
 
   return (
     <ThreadActionsProvider actions={threadActions}>
@@ -489,7 +445,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
             query={query}
             currentThreadId={activeThreadId}
             votedThreadIds={state.votedThreads}
-            localThreadIds={localThreadIds}
+            localThreadIds={EMPTY_THREAD_IDS}
             searchHits={searchHits}
             onQueryChange={applyQuery}
             onActivateThread={activateThread}
@@ -511,22 +467,6 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
             actions={<CloseButton onClose={closeThread} label={messages.shell.window.closeLabel} />}
           >
             {thread.layer}
-          </ShellPanel>
-        ) : null}
-        {openedLocalThread ? (
-          <ShellPanel
-            title={
-              isThreadHidden(moderation, openedLocalThread.id) &&
-              !session?.admin &&
-              session?.user !== openedLocalThread.author.user
-                ? messages.moderation.hiddenThread
-                : openedLocalThread.title
-            }
-            actions={
-              <CloseButton onClose={closeLocalThread} label={messages.shell.window.closeLabel} />
-            }
-          >
-            <ThreadView thread={openedLocalThread} now={now} />
           </ShellPanel>
         ) : null}
         {composing ? (

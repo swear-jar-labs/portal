@@ -237,6 +237,13 @@ export const threads = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
+    // The shared tech vocabulary (content/techs), like projects.techs: a small
+    // ordered list, so a text array instead of join rows. Status tags
+    // (proposal/question) stay in thread_tags.
+    techs: text("techs")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     pinned: boolean("pinned").notNull().default(false),
     locked: boolean("locked").notNull().default(false),
     lastPostAt: timestamp("last_post_at", { withTimezone: true }),

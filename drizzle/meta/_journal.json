@@ -8,6 +8,13 @@
       "when": 1791196862670,
       "tag": "20261005104102_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791311853820,
+      "tag": "20261006183733_board_thread_techs",
+      "breakpoints": true
     }
   ]
 }

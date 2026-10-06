@@ -104,6 +104,12 @@ export type ThreadPost = {
   replyTo?: string;
   createdAt: string;
   votes: number;
+  // Server-managed revision markers (backend-board): edits persist the body
+  // with editedAt, deletes tombstone the row (the body reads back empty).
+  // The thread view renders both from these flags; the session store keeps
+  // only its own optimistic deltas over them.
+  editedAt?: string;
+  deletedAt?: string;
 };
 
 export type Thread = {

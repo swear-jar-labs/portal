@@ -1,7 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import {
-  addReply,
-  addThread,
+  addConfirmedPost,
   boardSnapshot,
   deletePost,
   resetBoardStore,
@@ -9,38 +8,90 @@ import {
 import { forumActivitySeed } from "@/features/board/data/queries";
 import { forumActivityCounts, localForumThreads } from "@/features/board/data/forum-activity";
 
-beforeEach(resetBoardStore);
+// The seed reads through the mocked database (no connection in units);
+// session deltas stay in the store.
+vi.mock("@/db", () => ({
+  db: {
+    query: { user: { findFirst: vi.fn() }, posts: { findMany: vi.fn() } },
+    select: vi.fn(),
+    selectDistinctOn: vi.fn(),
+  },
+}));
+
+import { db } from "@/db";
+
+const mockDb = db as unknown as {
+  query: { user: { findFirst: Mock }; posts: { findMany: Mock } };
+  select: Mock;
+  selectDistinctOn: Mock;
+};
+
+function selectChain(value: unknown): unknown {
+  const chain = {
+    from: () => chain,
+    where: () => chain,
+    orderBy: () => chain,
+    then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) =>
+      Promise.resolve(value).then(resolve, reject),
+  };
+  return chain;
+}
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  resetBoardStore();
+});
+
+const ada = { user: "ada", role: "member" } as const;
+const ken = { user: "ken", role: "member" } as const;
 
 describe("forum activity", () => {
-  it("counts fixture posts and replies separately", async () => {
+  it("counts database posts and replies separately", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue({ id: "user-ada" });
+    mockDb.select.mockReturnValue(selectChain([{ total: 2 }]));
+    mockDb.query.posts.findMany.mockResolvedValue([
+      { id: "reply-1", threadId: "thread-1", createdAt: new Date("2026-09-16T10:00:00.000Z") },
+      { id: "reply-2", threadId: "thread-1", createdAt: new Date("2026-09-17T10:00:00.000Z") },
+    ]);
+    mockDb.selectDistinctOn.mockReturnValue(
+      selectChain([
+        { threadId: "thread-1", createdAt: new Date("2026-09-12T10:00:00.000Z"), id: "root" },
+      ]),
+    );
     const seed = await forumActivitySeed("ada");
-    expect(seed.posts).toBeGreaterThan(0);
-    expect(seed.replies.length).toBeGreaterThan(0);
+    expect(seed.posts).toBe(2);
+    expect(seed.replies).toHaveLength(2);
     expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({
       posts: seed.posts,
       replies: seed.replies.length,
     });
   });
 
-  it("adds session posts and replies, then drops tombstoned replies", () => {
+  it("adds session replies, then drops tombstoned replies", () => {
     const seed = {
       posts: 1,
       replies: [{ threadId: "fixture", postId: "fixture-reply" }],
     };
-    const ada = { user: "ada", role: "member" } as const;
-    const ken = { user: "ken", role: "member" } as const;
-    const thread = addThread(
-      { board: "general", tags: [], techs: [], title: "A post", body: "Body" },
-      ada,
-    );
-    addThread({ board: "general", tags: [], techs: [], title: "Another", body: "Body" }, ken);
-    const reply = addReply(thread.id, "Reply", ada);
-    addReply(thread.id, "Other", ken);
-    expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 2, replies: 2 });
-    expect(localForumThreads("ada", boardSnapshot())).toEqual([{ id: thread.id, title: "A post" }]);
+    addConfirmedPost("thread-1", {
+      id: "reply-ada",
+      author: ada,
+      body: "Reply",
+      createdAt: "2026-09-18T10:00:00.000Z",
+      votes: 0,
+    });
+    addConfirmedPost("thread-1", {
+      id: "reply-ken",
+      author: ken,
+      body: "Other",
+      createdAt: "2026-09-18T11:00:00.000Z",
+      votes: 0,
+    });
+    expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 1, replies: 2 });
+    // Composed threads live server-side now: the session tracks no threads.
+    expect(localForumThreads("ada", boardSnapshot())).toEqual([]);
 
     deletePost("fixture", "fixture-reply");
-    deletePost(thread.id, reply.id);
-    expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 2, replies: 0 });
+    deletePost("thread-1", "reply-ada");
+    expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 1, replies: 0 });
   });
 });

@@ -183,6 +183,40 @@ describe("withLocalActivity", () => {
     const [both] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
     expect(both).toMatchObject({ replies: 5 });
   });
+
+  it("keeps the exact summary when every session reply is echoed", () => {
+    const summaries = [summary("a", 3, "2026-09-18T12:00:00.000Z")];
+    store.addConfirmedPost("a", confirmedPost("echoed", "echoed", "2026-09-18T12:00:00.000Z"));
+
+    const [echoed] = store.withLocalActivity(
+      summaries,
+      store.boardSnapshot().threads,
+      store.echoedConfirmedPosts(store.boardSnapshot().threads),
+    );
+    // A fully echoed thread reads the server count untouched: the journal
+    // cards never double a confirmed reply after revalidation.
+    expect(echoed).toBe(summaries[0]);
+  });
+});
+
+describe("echoedConfirmedPosts", () => {
+  it("keys every session post id by thread", () => {
+    store.addConfirmedPost("a", confirmedPost("a-1", "first", "2026-09-18T10:00:00.000Z"));
+    store.addConfirmedPost("a", confirmedPost("a-2", "second", "2026-09-18T11:00:00.000Z"));
+    store.addConfirmedPost("b", confirmedPost("b-1", "other", "2026-09-18T12:00:00.000Z"));
+
+    expect(store.echoedConfirmedPosts(store.boardSnapshot().threads)).toEqual(
+      new Map([
+        ["a", new Set(["a-1", "a-2"])],
+        ["b", new Set(["b-1"])],
+      ]),
+    );
+  });
+
+  it("skips threads without session posts", () => {
+    expect(store.echoedConfirmedPosts(store.boardSnapshot().threads)).toEqual(new Map());
+    expect(store.echoedConfirmedPosts({})).toEqual(new Map());
+  });
 });
 
 describe("withSessionFlags", () => {

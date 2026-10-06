@@ -6,7 +6,7 @@ import {
   resetBoardStore,
 } from "@/features/board/data/board-store";
 import { forumActivitySeed } from "@/features/board/data/queries";
-import { forumActivityCounts, localForumThreads } from "@/features/board/data/forum-activity";
+import { forumActivityCounts } from "@/features/board/data/forum-activity";
 
 // The seed reads through the mocked database (no connection in units);
 // session deltas stay in the store.
@@ -87,11 +87,26 @@ describe("forum activity", () => {
       votes: 0,
     });
     expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 1, replies: 2 });
-    // Composed threads live server-side now: the session tracks no threads.
-    expect(localForumThreads("ada", boardSnapshot())).toEqual([]);
 
     deletePost("fixture", "fixture-reply");
     deletePost("thread-1", "reply-ada");
     expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 1, replies: 0 });
+  });
+
+  it("counts a revalidated confirmed reply once", () => {
+    // The profile seed refreshes under the SPA session: once it echoes the
+    // confirmed reply, the session copy must not count again.
+    const seed = {
+      posts: 1,
+      replies: [{ threadId: "thread-1", postId: "reply-ada" }],
+    };
+    addConfirmedPost("thread-1", {
+      id: "reply-ada",
+      author: ada,
+      body: "Reply",
+      createdAt: "2026-09-18T10:00:00.000Z",
+      votes: 0,
+    });
+    expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 1, replies: 1 });
   });
 });

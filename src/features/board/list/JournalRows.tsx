@@ -48,15 +48,21 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
     action();
   };
 
-  const rows = useMemo(
-    () =>
-      boardStore
-        .withSessionFlags(boardStore.withLocalActivity([...threads], state.threads), state.flags)
-        .map((summary) =>
-          state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
-        ),
-    [threads, state.flags, state.threads, state.votedThreads],
-  );
+  const rows = useMemo(() => {
+    // The journal reads summaries only, so unlike the feed it cannot dedupe
+    // confirmed replies against server post ids: every session post counts
+    // as echoed (commitReply adds only server-confirmed ones). Counts may
+    // lag until the refetch lands, but never double after revalidation.
+    const echoed = boardStore.echoedConfirmedPosts(state.threads);
+    return boardStore
+      .withSessionFlags(
+        boardStore.withLocalActivity([...threads], state.threads, echoed),
+        state.flags,
+      )
+      .map((summary) =>
+        state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
+      );
+  }, [threads, state.flags, state.threads, state.votedThreads]);
 
   const activateThread = (threadId: string, event?: MouseEvent<HTMLElement>) => {
     // The root slot intercepts the thread above the current stack: the

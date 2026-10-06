@@ -7,14 +7,11 @@ export type ForumActivitySeed = {
 
 export type ForumActivityCounts = { posts: number; replies: number };
 
-export function localForumThreads(): { id: string; title: string }[] {
-  // Composed threads commit server-side now (their authors arrive through
-  // the seed), so the session tracks none. The shape stays for the
-  // profile's forum section, which reads it through useForumActivity.
-  return [];
-}
-
-/** Fixture contributions plus live session changes; a deleted reply drops from the count. */
+/** Seed contributions plus live session changes; a deleted reply drops from
+ * the count. Session replies the revalidated seed already echoes (same
+ * post id) count once — the profile seed refreshes under the SPA session,
+ * so without the filter every confirmed reply would double for the whole
+ * session, not just a window. */
 export function forumActivityCounts(
   user: string,
   seed: ForumActivitySeed,
@@ -24,11 +21,13 @@ export function forumActivityCounts(
   const fixtureReplies = seed.replies.filter(
     ({ threadId, postId }) => !state.threads[threadId]?.deletedPosts.has(postId),
   ).length;
+  const echoedIds = new Set(seed.replies.map(({ postId }) => postId));
   const sessionReplies = Object.values(state.threads).reduce(
     (count, thread) =>
       count +
       thread.addedPosts.filter(
-        (post) => post.author.user === user && !thread.deletedPosts.has(post.id),
+        (post) =>
+          post.author.user === user && !thread.deletedPosts.has(post.id) && !echoedIds.has(post.id),
       ).length,
     0,
   );

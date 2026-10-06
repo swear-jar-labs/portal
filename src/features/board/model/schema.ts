@@ -2,8 +2,8 @@ import { z } from "zod";
 import { MAX_TAGS } from "@/lib/tags";
 import { composableBoardIds, tagIds, threadTechIds } from "./threads";
 
-// UI-first slice: input schemas of the board's forms. When the backend lands
-// (Phase 5) the same schemas guard the server actions; the forms do not change.
+// Board forms' input schemas: the same schemas guard the server actions in
+// data/board-actions.ts; the forms do not change.
 
 // A post's text: matches the reply composer and the edit draft.
 const MAX_BODY_LENGTH = 4000;

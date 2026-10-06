@@ -187,6 +187,23 @@ export function withLocalActivity(
   });
 }
 
+/** Every session post keyed as echoed, by thread: commitReply adds only
+ * server-confirmed posts, so surfaces without post-level server data (the
+ * journal cards read summaries only, and their props are fixed by contract)
+ * treat them all as echoed. Counts may lag until the refetch lands, but a
+ * revalidated journal never double-counts a confirmed reply. */
+export function echoedConfirmedPosts(
+  threads: Readonly<Record<string, ThreadState>>,
+): Map<string, ReadonlySet<string>> {
+  const echoed = new Map<string, ReadonlySet<string>>();
+  for (const [threadId, local] of Object.entries(threads)) {
+    if (local.addedPosts.length > 0) {
+      echoed.set(threadId, new Set(local.addedPosts.map((post) => post.id)));
+    }
+  }
+  return echoed;
+}
+
 /** The feed's view of admin pin/lock overrides: a set flag replaces the
  * fixture one before ranking, so a pinned thread tops the feed and a locked
  * one reads locked on its card. Threads without an override keep their exact

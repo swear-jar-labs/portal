@@ -56,9 +56,16 @@ Members can propose projects from PROJECTS, choosing technologies from the share
 
 Playwright starts a fresh dev server on `http://localhost:3100` for each run and
 stores its build output in `.next-e2e`. It does not reuse the interactive server
-on port 3000, so accounts and application queues start from their seed data.
-The runner sets `SWEARJAR_E2E=1` automatically: fixtures sign in through an
-in-process mock instead of the database, so the suite needs no PostgreSQL. Failed tests retain a trace in `test-results`; open it
+on port 3000. The suite needs PostgreSQL: the runner manages the local compose
+service `db-e2e` itself — it starts it (same server version, separate instance
+on `:5433`, database `swearjar_e2e`) when it is down, and stops it afterwards
+only if it started it. Set `E2E_DATABASE_URL` to point the run at an external
+database (CI, a long-running local instance) and the harness leaves Docker
+alone. The runner also sets `SWEARJAR_E2E=1` and recreates the e2e schema
+before the run: migrations apply, fixture accounts seed, and every spec signs
+in through real Better Auth sessions — Google/GitHub buttons run a genuine
+OAuth handshake against loopback stand-ins, so no traffic leaves the machine.
+Failed tests retain a trace in `test-results`; open it
 with `npx playwright show-trace <path-to-trace.zip>`.
 
 Read [CONTRIBUTING.md](./CONTRIBUTING.md) first. The short version: keep changes readable and expect review.

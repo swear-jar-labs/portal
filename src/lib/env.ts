@@ -4,6 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   SWEARJAR_E2E: z.literal("1").optional(),
   DATABASE_URL: z.string().url(),
+  E2E_DATABASE_URL: z.string().url().optional(),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string().optional(),

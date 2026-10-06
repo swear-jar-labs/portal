@@ -2,7 +2,13 @@ import { expect, test, type Page } from "@playwright/test";
 import { threadPath } from "../../src/features/board/model/threads";
 import { readroomPath } from "../../src/features/readroom/model/readrooms";
 import { TICKETS_PATH, ticketPath } from "../../src/features/tickets/model/tickets";
-import { expectNoViolations, logon, waitForHydration } from "./helpers";
+import {
+  ensureE2eAccount,
+  E2E_PASSWORD,
+  expectNoViolations,
+  logon,
+  waitForHydration,
+} from "./helpers";
 
 const READ_FIRST = "READ FIRST: how this board works";
 const FILES = "C:\\SWEARJAR";
@@ -27,9 +33,10 @@ async function logoff(page: Page) {
 }
 
 async function logonSpa(page: Page, user: string) {
+  await ensureE2eAccount(user, E2E_PASSWORD);
   await page.getByRole("region", { name: FILES }).locator("#file-LOGON").click();
   await page.getByLabel("Username or email").fill(user);
-  await page.getByLabel("Password").fill("secret");
+  await page.getByLabel("Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "LOG ON" }).click();
   await expect(page).toHaveURL("/", { timeout: 15_000 });
 }

@@ -21,12 +21,12 @@ export async function LoginPage({ searchParams }: LoginPageProps) {
   const returnTo = parseLoginReturn(Array.isArray(raw) ? raw[0] : raw);
   const actor = await getActorSession();
   if (actor) redirect(returnTo ?? FORUM_PATH);
-  // One mapping point for the provider row (mock under the seeded e2e run).
-  const { providers, mode } = socialAuth();
+  // One mapping point for the provider row.
+  const { providers } = socialAuth();
 
   return (
     <ShellPanel title={fileTitle("LOGON")}>
-      <LogonForm returnTo={returnTo} providers={providers} social={mode} />
+      <LogonForm returnTo={returnTo} providers={providers} />
     </ShellPanel>
   );
 }

@@ -6,9 +6,7 @@ import { Button, Field, Form, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { authClient } from "@/lib/auth-client";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, signUpSchema } from "../model/credentials";
-import type { SessionActionError, SocialAuthMode } from "../model/credentials";
-import type { SocialProvider } from "../data/mock-session";
-import { mockSocialRegister } from "../data/mock-session-actions";
+import type { SessionActionError, SocialProvider } from "../model/credentials";
 import { signUp } from "../data/session-actions";
 import styles from "./LogonForm.module.css";
 
@@ -22,9 +20,6 @@ type RegisterErrors = {
 export type RegisterFormProps = {
   // SSO buttons render only for providers with credentials configured.
   providers: readonly SocialProvider[];
-  // Seeded e2e keeps the deterministic mock social signup; everywhere else
-  // the buttons start a real OAuth roundtrip.
-  social: SocialAuthMode;
 };
 
 const copy = messages.account.register;
@@ -48,7 +43,7 @@ const REGISTER_ERROR_FIELDS = {
   invalid: { field: "form", message: copy.errors.form },
 } as const satisfies Record<SessionActionError, { field: keyof RegisterErrors; message: string }>;
 
-export function RegisterForm({ providers, social }: RegisterFormProps) {
+export function RegisterForm({ providers }: RegisterFormProps) {
   const router = useRouter();
   const [user, setUser] = useState("");
   const [email, setEmail] = useState("");
@@ -87,16 +82,6 @@ export function RegisterForm({ providers, social }: RegisterFormProps) {
   function handleProvider(provider: SocialProvider) {
     setErrors({});
     startTransition(async () => {
-      if (social === "mock") {
-        const result = await mockSocialRegister({ provider });
-        if (result.ok) {
-          router.push("/profile");
-          router.refresh();
-          return;
-        }
-        setErrors({ form: copy.errors.unavailable });
-        return;
-      }
       const result = await authClient.signIn.social({ provider, callbackURL: "/profile" });
       if (result.error) setErrors({ form: copy.errors.unavailable });
     });

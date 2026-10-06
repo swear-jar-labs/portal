@@ -5,6 +5,7 @@ import { SCREENSAVER_PREFS_STORAGE_KEY } from "../../src/features/shell/screensa
 import { screensaverDelayMs } from "../../src/content/settings";
 import {
   docScroll,
+  E2E_PASSWORD,
   enterShell,
   expectMinimumContrast,
   expectNoViolations,
@@ -235,7 +236,7 @@ test.describe("member session", () => {
     await expect(page).toHaveURL("/login?next=%2Ftickets%2FFLAG-1");
 
     await page.getByLabel(LOGIN_USER_LABEL).fill("ada");
-    await page.getByLabel(PASSWORD_LABEL).fill("secret");
+    await page.getByLabel(PASSWORD_LABEL).fill(E2E_PASSWORD);
     await page.getByRole("button", { name: "LOG ON" }).click();
     await expect(page).toHaveURL("/tickets/FLAG-1");
   });
@@ -394,7 +395,7 @@ test.describe("registration and levels", () => {
     await waitForHydration(page);
     const form = page.getByRole("form", { name: "LOGON" });
     await form.getByLabel(LOGIN_USER_LABEL).fill(`nobody-${Date.now().toString(36)}@example.com`);
-    await form.getByLabel(PASSWORD_LABEL).fill("secret");
+    await form.getByLabel(PASSWORD_LABEL).fill(E2E_PASSWORD);
     await form.getByRole("button", { name: "LOG ON" }).click();
     await expect(form.getByText("Incorrect username, email, or password.")).toBeVisible();
     await expect(page).toHaveURL("/login");
@@ -426,14 +427,19 @@ test.describe("registration and levels", () => {
   });
 
   test("registers fresh participants through the social buttons", async ({ page }) => {
+    // The seeded run signs the loopback handshake for real: each provider
+    // vouches for its seeded fixture account (google → ada, github → grace),
+    // so the register buttons land on those members instead of minting
+    // demo newcomers.
     await page.goto("/register");
     const form = page.getByRole("form", { name: "REGISTER" });
 
     await form.getByRole("button", { name: "GOOGLE" }).click();
     await expect(page).toHaveURL("/profile");
+    await waitForHydration(page);
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
-    await expect(profile.getByRole("heading", { level: 1, name: "google-newcomer" })).toBeVisible();
-    await expect(profile.getByText("Participant")).toBeVisible();
+    await expect(profile.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
+    await expect(profile.getByText("Member · JOINED")).toBeVisible();
 
     await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
@@ -445,9 +451,10 @@ test.describe("registration and levels", () => {
       .getByRole("button", { name: "GITHUB" })
       .click();
     await expect(page).toHaveURL("/profile");
+    await waitForHydration(page);
     const second = page.getByRole("region", { name: "PROFILE.EXE" });
-    await expect(second.getByRole("heading", { level: 1, name: "github-newcomer" })).toBeVisible();
-    await expect(second.getByText("Participant")).toBeVisible();
+    await expect(second.getByRole("heading", { level: 1, name: "grace" })).toBeVisible();
+    await expect(second.getByText("Member · JOINED")).toBeVisible();
   });
 
   test("shows apply to participants only", async ({ page }) => {
@@ -469,12 +476,18 @@ test.describe("registration and levels", () => {
     await expect(files.getByText("3 DIRS, 13 FILES")).toBeVisible();
   });
 
-  test("provisions an unknown logon as a participant", async ({ page }) => {
-    await logon(page, "quinn-provision");
-    await page.goto("/profile");
-    const profile = page.getByRole("region", { name: "PROFILE.EXE" });
-    await expect(profile.getByRole("heading", { level: 1, name: "quinn-provision" })).toBeVisible();
-    await expect(profile.getByText("Participant")).toBeVisible();
+  test("refuses an unknown logon instead of provisioning a stranger", async ({ page }) => {
+    // The mock run provisioned any handle on first contact; real auth names
+    // an account or refuses it. Fresh participants register first (the logon
+    // helper does exactly that) — a bare logon with an unknown handle fails.
+    await page.goto("/login");
+    await waitForHydration(page);
+    const form = page.getByRole("form", { name: "LOGON" });
+    await form.getByLabel(LOGIN_USER_LABEL).fill(`quinn-stranger-${Date.now().toString(36)}`);
+    await form.getByLabel(PASSWORD_LABEL).fill(E2E_PASSWORD);
+    await form.getByRole("button", { name: "LOG ON" }).click();
+    await expect(form.getByText("Incorrect username, email, or password.")).toBeVisible();
+    await expect(page).toHaveURL("/login");
   });
 
   test("switching actors keeps their levels", async ({ page }) => {
@@ -492,7 +505,7 @@ test.describe("registration and levels", () => {
     await page.goto("/profile");
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
     await expect(profile.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
-    await expect(profile.getByText("Member")).toBeVisible();
+    await expect(profile.getByText("Member · JOINED")).toBeVisible();
 
     await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
@@ -554,7 +567,7 @@ test.describe("registration and levels", () => {
     await page.goto("/profile");
     const profile = page.getByRole("region", { name: "PROFILE.EXE" });
     await expect(profile.getByRole("heading", { level: 1, name: "admin" })).toBeVisible();
-    await expect(profile.getByText("Member")).toBeVisible();
+    await expect(profile.getByText("Member · ADMIN")).toBeVisible();
     await expect(profile.getByText("JOINED")).toContainText("ADMIN");
   });
 
@@ -1106,6 +1119,7 @@ test.describe("social logon", () => {
     await expect(page).toHaveURL("/forum");
     await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1, name: "ada" })).toBeVisible();
+    await waitForHydration(page);
 
     await page.keyboard.press("F10");
     await page.getByRole("button", { name: "LOG OFF" }).click();
@@ -1161,7 +1175,7 @@ test.describe("logon window", () => {
     const form = page.getByRole("form", { name: "LOGON" });
     await expect(
       form.getByText(
-        "Development demo: use a made-up password. Google and GitHub buttons also simulate sign-in; no real accounts are connected.",
+        "Usernames use letters, digits, - or _. Letters are saved in lower case. You can also sign in with your registration email.",
       ),
     ).toBeVisible();
     const user = page.getByLabel(LOGIN_USER_LABEL);

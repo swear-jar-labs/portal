@@ -1,10 +1,15 @@
+// Load .env before anything reads process.env: the config resolves the e2e
+// database URL (E2E_DATABASE_URL or the local default) and the global setup
+// compares it against DATABASE_URL — both sides must see the same values.
+import "dotenv/config";
+
 import { defineConfig, devices } from "@playwright/test";
 
-const E2E_PORT = 3100;
-const E2E_BASE_URL = `http://localhost:${E2E_PORT}`;
+import { E2E_BASE_URL, E2E_PORT, resolveE2eDatabaseUrl } from "./tests/e2e/e2e-accounts";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -29,7 +34,14 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run dev -- --port ${E2E_PORT}`,
-    env: { SWEARJAR_E2E: "1" },
+    env: {
+      SWEARJAR_E2E: "1",
+      // The run owns its database: the global setup recreates it, so the
+      // server must point at it — never at the development database. The
+      // OAuth callbacks are loopback too, hence the port-3100 base URL.
+      DATABASE_URL: resolveE2eDatabaseUrl(),
+      BETTER_AUTH_URL: E2E_BASE_URL,
+    },
     url: E2E_BASE_URL,
     reuseExistingServer: false,
   },

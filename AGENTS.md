@@ -89,10 +89,15 @@ history; the name is not optional in spirit: without it the tool writes a random
 three-word file name that tells a reader nothing. Never rename migration files
 by hand — the journal and the snapshot chain reference them.
 
-`SWEARJAR_E2E=1` (see `src/shared/mock.ts`) switches the session to a
-deterministic in-process mock, so the suite does not need PostgreSQL. The e2e
-run is not a statement about which parts of the app are server-backed — that is
-what README.md describes, and it changes as features land.
+`SWEARJAR_E2E=1` (see `src/shared/mock.ts`) marks the seeded run: the global
+setup recreates the e2e schema and seeds fixture accounts, and specs sign in
+through real Better Auth sessions (loopback OAuth stand-ins behind the
+`google`/`github` ids). The suite needs PostgreSQL: by default the global
+setup starts the local compose service `db-e2e` when it is down and stops it
+after the run only if it started it; `E2E_DATABASE_URL` points the run at an
+external database and disables that management. The e2e run is not a statement
+about which parts of the app are server-backed — that is what README.md
+describes, and it changes as features land.
 
 ## Wiring a feature to the server
 

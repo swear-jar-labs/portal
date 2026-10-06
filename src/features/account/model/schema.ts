@@ -44,10 +44,6 @@ export const emailSchema = z
   .pipe(z.email())
   .transform((value) => value.toLowerCase());
 
-// Email ownership proof at registration: a numeric one-time code of this
-// length, valid for OTP_TTL_MS (see verification.ts, server-only).
-export const OTP_LENGTH = 6;
-
 export const weeklyHourIds = ["under-5", "5-10", "over-10"] as const;
 export type WeeklyHoursId = (typeof weeklyHourIds)[number];
 

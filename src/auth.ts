@@ -1,14 +1,21 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { genericOAuth } from "better-auth/plugins/generic-oauth";
 import { username } from "better-auth/plugins/username";
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/features/account/model/credentials";
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  socialProviders,
+  type SocialProvider,
+} from "@/features/account/model/credentials";
 import { handleBaseFromEmail, pickFreeHandle } from "@/features/account/model/handle";
 import { isUserHandle, USER_MAX_LENGTH, USER_MIN_LENGTH } from "@/features/account/model/schema";
 import { env } from "@/lib/env";
+import { isSeededE2e } from "@/shared/mock";
 
 // How long a signed session cookie may answer renders without consulting
 // Postgres (Better Auth validates the signature instead). Shorter window =
@@ -27,8 +34,8 @@ const SESSION_CACHE_MAX_AGE_S = 5 * 60;
 // querying Postgres. Sign-out clears the cache; the window only delays
 // server-side revocation (an admin action, not a feature yet).
 
-// Wave 0 (backend-auth): Better Auth replaces the mock session
-// (sj_mock_session + registry in features/account). The UI prop-model
+// Better Auth is the single session source (wave 0: backend-auth; the mock
+// session it replaced was removed in backend-e2e-auth). The UI prop-model
 // (ShellSession/audience) stays unchanged — getActorSession bridges here.
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
@@ -79,25 +86,47 @@ export const auth = betterAuth({
       },
     },
   },
-  socialProviders: {
-    ...(env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined
-      ? {
-          google: {
-            clientId: env.GOOGLE_CLIENT_ID,
-            clientSecret: env.GOOGLE_CLIENT_SECRET,
-          },
-        }
-      : {}),
-    ...(env.GITHUB_CLIENT_ID !== undefined && env.GITHUB_CLIENT_SECRET !== undefined
-      ? {
-          github: {
-            clientId: env.GITHUB_CLIENT_ID,
-            clientSecret: env.GITHUB_CLIENT_SECRET,
-          },
-        }
-      : {}),
-  },
+  socialProviders: isSeededE2e()
+    ? {}
+    : {
+        ...(env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined
+          ? {
+              google: {
+                clientId: env.GOOGLE_CLIENT_ID,
+                clientSecret: env.GOOGLE_CLIENT_SECRET,
+              },
+            }
+          : {}),
+        ...(env.GITHUB_CLIENT_ID !== undefined && env.GITHUB_CLIENT_SECRET !== undefined
+          ? {
+              github: {
+                clientId: env.GITHUB_CLIENT_ID,
+                clientSecret: env.GITHUB_CLIENT_SECRET,
+              },
+            }
+          : {}),
+      },
   plugins: [
+    // The seeded e2e run registers loopback stand-ins under the real provider
+    // ids (see tasks/backend-e2e-auth): the handshake is the genuine library
+    // path (state cookie, callback, verification, account, session), only the
+    // issuer at the other end is fake. Real credentials are ignored here, so a
+    // run never reaches the outside world even when a developer happens to
+    // have them set. The plugin entry stays unconditional (empty outside the
+    // run) so the tuple type — and the username-augmented session user it
+    // infers — never splits into a union.
+    genericOAuth({
+      config: isSeededE2e()
+        ? socialProviders.map((providerId) => ({
+            providerId,
+            clientId: `e2e-${providerId}`,
+            clientSecret: "e2e-local-only",
+            authorizationUrl: `${env.BETTER_AUTH_URL}/api/e2e/oauth/authorize/${providerId}`,
+            tokenUrl: `${env.BETTER_AUTH_URL}/api/e2e/oauth/token`,
+            userInfoUrl: `${env.BETTER_AUTH_URL}/api/e2e/oauth/userinfo`,
+          }))
+        : [],
+    }),
     username({
       minUsernameLength: USER_MIN_LENGTH,
       maxUsernameLength: USER_MAX_LENGTH,
@@ -111,14 +140,15 @@ export const auth = betterAuth({
 });
 
 // Providers with credentials present: the logon/registration forms render
-// SSO buttons only for these. Mirrors the SocialProvider list in
-// features/account/data/mock-session.ts (kept separate — that module is
-// client-safe, this one pulls in the DB driver).
-const SOCIAL_CREDENTIALS = {
+// SSO buttons only for these. The seeded e2e run always offers both — the
+// loopback stand-ins above stand behind the same ids.
+const SOCIAL_CREDENTIALS: Record<SocialProvider, readonly (string | undefined)[]> = {
   google: [env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET],
   github: [env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET],
-} as const;
+};
 
-export const configuredSocialProviders = (
-  Object.keys(SOCIAL_CREDENTIALS) as (keyof typeof SOCIAL_CREDENTIALS)[]
-).filter((provider) => SOCIAL_CREDENTIALS[provider].every((value) => value !== undefined));
+export const configuredSocialProviders: readonly SocialProvider[] = isSeededE2e()
+  ? [...socialProviders]
+  : (Object.keys(SOCIAL_CREDENTIALS) as SocialProvider[]).filter((provider) =>
+      SOCIAL_CREDENTIALS[provider].every((value) => value !== undefined),
+    );

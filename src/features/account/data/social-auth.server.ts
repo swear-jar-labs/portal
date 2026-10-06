@@ -1,18 +1,14 @@
 import { configuredSocialProviders } from "@/auth";
-import { isSeededE2e } from "@/shared/mock";
-import type { SocialAuthMode } from "../model/credentials";
-import { socialProviders, type SocialProvider } from "./mock-session";
+import type { SocialProvider } from "../model/credentials";
 
-// The provider row has one mapping point: the seeded e2e run keeps the
-// deterministic mock buttons, everywhere else the buttons render only for
-// providers with credentials configured (see src/auth.ts). Server-only:
+// The provider row has one mapping point: the buttons render only for
+// providers with credentials configured (see src/auth.ts) — in the seeded
+// e2e run those are the loopback stand-ins behind the same ids. Server-only:
 // configuredSocialProviders reads the env through the Better Auth instance.
 export type SocialAuth = {
   providers: readonly SocialProvider[];
-  mode: SocialAuthMode;
 };
 
 export function socialAuth(): SocialAuth {
-  if (isSeededE2e()) return { providers: socialProviders, mode: "mock" };
-  return { providers: configuredSocialProviders, mode: "oauth" };
+  return { providers: configuredSocialProviders };
 }

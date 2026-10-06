@@ -36,7 +36,9 @@ export type SignInError = Extract<SessionActionError, "invalid" | "unavailable">
 
 export type SignInResult = { ok: true; user: string } | { ok: false; error: SignInError };
 
-// What the provider buttons do: the seeded e2e run signs in through the mock
-// server action, everywhere else they start a real OAuth roundtrip. The mode
-// is chosen once in data/social-auth.server.ts, not per form.
-export type SocialAuthMode = "mock" | "oauth";
+// The SSO providers the shell knows (Google, GitHub): one vocabulary for the
+// logon/registration buttons, the auth wiring and the seeded-e2e fake IdP.
+// Client-safe (no node APIs).
+export const socialProviders = ["google", "github"] as const;
+
+export type SocialProvider = (typeof socialProviders)[number];

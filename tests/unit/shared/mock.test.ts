@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixturesEnabled, isSeededE2e } from "@/shared/mock";
 
 // The two modes are separate contracts: fixtures gate demo stores and actions
-// (off in production), the seeded e2e run gates the mock session only.
+// (off in production), the seeded e2e run marks the Playwright suite (real
+// sessions against the e2e database, loopback OAuth stand-ins).
 describe("fixturesEnabled", () => {
   afterEach(() => {
     vi.unstubAllEnvs();

@@ -99,7 +99,7 @@ describe("account registry", () => {
     expect(accounts.emailTaken("quinn@example.com")).toBe(true);
     expect(accounts.emailTaken("nobody@example.com")).toBe(false);
     // A taken handle keeps its own record: the registration flow rejects the
-    // claim instead of attaching (see mock-registration.test.ts).
+    // claim instead of attaching it to the newcomer.
     expect(accounts.ensure("ada", "ada@example.com").email).toBeNull();
     expect(accounts.emailTaken("ada@example.com")).toBe(false);
   });

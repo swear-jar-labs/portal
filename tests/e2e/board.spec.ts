@@ -8,7 +8,9 @@ import {
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { FEED_PATH, threadPath } from "../../src/features/board/model/threads";
 import {
+  ensureE2eAccount,
   enterShell,
+  E2E_PASSWORD,
   expectAbove,
   expectNoViolations,
   expectSameVerticalCenter,
@@ -626,8 +628,9 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   // The logon started on the thread, so it carries the way back (?next=).
   await expect(page).toHaveURL("/login?next=%2Fforum%2Fci-cache-poisoning");
 
+  await ensureE2eAccount("ada", E2E_PASSWORD);
   await page.getByLabel("Username or email").fill("ada");
-  await page.getByLabel("Password").fill("secret");
+  await page.getByLabel("Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "LOG ON" }).click();
   // The logon lands back on the thread. The typed draft does not survive the
   // page change (it lives in the thread panel, not the session store); the

@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { READROOM_PATH, readroomPath } from "../../src/features/readroom/model/readrooms";
-import { expectNoViolations, logon, waitForHydration } from "./helpers";
+import {
+  ensureE2eAccount,
+  E2E_PASSWORD,
+  expectNoViolations,
+  logon,
+  waitForHydration,
+} from "./helpers";
 
 const FEED_REGION = "READROOM.EXE";
 const BUMP = "Dissect the allocator that hides a free list behind a bump pointer";
@@ -28,10 +34,11 @@ async function gotoReadroomSpa(page: Page) {
 }
 
 async function logonSpa(page: Page, user: string) {
+  await ensureE2eAccount(user, E2E_PASSWORD);
   await page.getByRole("region", { name: FILES_REGION }).locator("#file-LOGON").click();
   await expect(page).toHaveURL(/\/login/);
   await page.getByLabel("Username or email").fill(user);
-  await page.getByLabel("Password").fill("secret");
+  await page.getByLabel("Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "LOG ON" }).click();
   // The file manager carries ?next=%2F, so the return lands on the landing.
   await expect(page).toHaveURL("/", { timeout: 15_000 });

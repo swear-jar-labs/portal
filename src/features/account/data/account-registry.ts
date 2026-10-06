@@ -19,8 +19,7 @@ const registry = createAccountRegistry([
 
 // Client-safe: the registry is plain module state (see model/actor.ts) with no
 // node APIs, so client components may read it (the apply form lists admin
-// reviewers). The registration half lives in mock-registration.ts — that one owns
-// the OTP store and stays server-only.
+// reviewers).
 export function resolveAccount(user: string): Actor | null {
   return registry.resolve(user);
 }

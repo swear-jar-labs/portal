@@ -2,7 +2,13 @@ import { expect, test, type Page } from "@playwright/test";
 import { DOS_SCROLL_ATTR } from "@swearjar/dos/contracts";
 import { DOC_TOP_ATTR } from "../../src/features/shell/attributes";
 import { FEED_PATH, threadPath } from "../../src/features/board/model/threads";
-import { expectNoViolations, logon, waitForHydration } from "./helpers";
+import {
+  ensureE2eAccount,
+  E2E_PASSWORD,
+  expectNoViolations,
+  logon,
+  waitForHydration,
+} from "./helpers";
 
 const FEED_REGION = "FORUM.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
@@ -17,9 +23,10 @@ async function logoff(page: Page) {
 }
 
 async function logonSpa(page: Page, user: string) {
+  await ensureE2eAccount(user, E2E_PASSWORD);
   await page.getByRole("region", { name: FILES_REGION }).locator("#file-LOGON").click();
   await page.getByLabel("Username or email").fill(user);
-  await page.getByLabel("Password").fill("secret");
+  await page.getByLabel("Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "LOG ON" }).click();
   await expect(page).toHaveURL("/", { timeout: 15_000 });
 }

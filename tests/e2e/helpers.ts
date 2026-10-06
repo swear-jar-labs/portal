@@ -1,8 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, request, type Locator, type Page } from "@playwright/test";
 import { DOS_SCROLL_ATTR, DOS_ZONE_ATTR } from "@swearjar/dos/contracts";
 import { messages } from "../../src/content/messages";
 import { DOC_ZONE } from "../../src/features/shell/zones";
+import { E2E_BASE_URL, E2E_PASSWORD, e2eMailboxFor } from "./e2e-accounts";
+
+export { E2E_PASSWORD };
 
 // The right-hand document's scroll body. The file list carries a keyboard
 // scroll region of its own, so the bare scroll attribute matches both.
@@ -50,16 +53,36 @@ export async function repeatKey(page: Page, key: keyof typeof ARROW_KEY_CODES): 
   await client.detach();
 }
 
-// The mock logon: any spec that needs a member session starts here. A plain
-// logon lands on the member home (FORUM); a ?next= return is covered by the
-// account spec, not by every consumer of this helper.
-export async function logon(page: Page, user = "ada") {
+// The real logon: the account is provisioned through the sign-up endpoint
+// first (idempotent — a taken handle or mailbox is left alone), then the form
+// signs in through the UI, so every spec exercises the genuine session path.
+// A plain logon lands on the member home (FORUM); a ?next= return is covered
+// by the account spec, not by every consumer of this helper.
+export async function logon(page: Page, user = "ada", password: string = E2E_PASSWORD) {
+  await ensureE2eAccount(user, password);
   await page.goto("/login");
   await waitForHydration(page);
   await page.getByLabel("Username or email").fill(user);
-  await page.getByLabel("Password").fill("secret");
+  await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "LOG ON" }).click();
   await expect(page).toHaveURL("/forum", { timeout: 15_000 });
+}
+
+// The sign-up half of the logon helper: a detached API context (no cookies,
+// so the origin check stays out of the way) registers the handle the spec
+// names. Client errors are the happy path for reruns — the account is
+// already there; only a transport failure throws. Specs with their own
+// inline logon flow (logonSpa) call it directly before typing the password.
+export async function ensureE2eAccount(user: string, password: string): Promise<void> {
+  const username = user.includes("@") ? user.slice(0, user.indexOf("@")) : user;
+  const api = await request.newContext({ baseURL: E2E_BASE_URL });
+  try {
+    await api.post("/api/auth/sign-up/email", {
+      data: { name: username, username, email: e2eMailboxFor(user), password },
+    });
+  } finally {
+    await api.dispose();
+  }
 }
 
 // Client-side navigation swaps <title> through an empty gap: React unmounts

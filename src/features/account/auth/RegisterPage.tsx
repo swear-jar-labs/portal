@@ -12,12 +12,12 @@ export const registerMetadata: Metadata = messages.account.register.metadata;
 export async function RegisterPage() {
   const actor = await getActorSession();
   if (actor) redirect("/profile");
-  // One mapping point for the provider row (mock under the seeded e2e run).
-  const { providers, mode } = socialAuth();
+  // One mapping point for the provider row.
+  const { providers } = socialAuth();
 
   return (
     <ShellPanel title={fileTitle("REGISTER")}>
-      <RegisterForm providers={providers} social={mode} />
+      <RegisterForm providers={providers} />
     </ShellPanel>
   );
 }

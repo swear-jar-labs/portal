@@ -28,6 +28,32 @@ services:
       timeout: 5s
       retries: 5
 
+  # The e2e database: same server version, separate instance and volume, so a
+  # seeded run can recreate its schema without touching development data.
+  # The 18+ image layouts PGDATA in versioned subdirectories, so the volume
+  # mounts one level above the data dir (unlike the legacy db service below).
+  # A leaf service with a published port: it joins Docker's default bridge
+  # instead of a per-project network — one network less per worktree, and the
+  # run does not depend on the daemon's address pools (exhausted pools failed
+  # `up` with "all predefined address pools have been fully subnetted").
+  db-e2e:
+    image: postgres:18-alpine
+    restart: "no"
+    network_mode: bridge
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: swearjar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-swearjar}
+      POSTGRES_DB: swearjar_e2e
+    volumes:
+      - db-e2e-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swearjar -d swearjar_e2e"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -45,5 +71,6 @@ services:
 
 volumes:
   db-data:
+  db-e2e-data:
   caddy-data:
   caddy-config:

@@ -6,9 +6,7 @@ import { Button, Field, Form, Heading, Link, Stack, Text } from "@swearjar/dos";
 import { FORUM_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
 import { authClient } from "@/lib/auth-client";
-import { signInSchema, type SignInError, type SocialAuthMode } from "../model/credentials";
-import type { SocialProvider } from "../data/mock-session";
-import { mockSocialLogon } from "../data/mock-session-actions";
+import { signInSchema, type SignInError, type SocialProvider } from "../model/credentials";
 import { signIn } from "../data/session-actions";
 import styles from "./LogonForm.module.css";
 
@@ -24,12 +22,9 @@ export type LogonFormProps = {
   returnTo?: string;
   // SSO buttons render only for providers with credentials configured.
   providers: readonly SocialProvider[];
-  // Seeded e2e keeps the deterministic mock social logon; everywhere else
-  // the buttons start a real OAuth roundtrip.
-  social: SocialAuthMode;
 };
 
-export function LogonForm({ returnTo, providers, social }: LogonFormProps) {
+export function LogonForm({ returnTo, providers }: LogonFormProps) {
   const router = useRouter();
   const landing = returnTo ?? FORUM_PATH;
   const [user, setUser] = useState("");
@@ -71,16 +66,6 @@ export function LogonForm({ returnTo, providers, social }: LogonFormProps) {
   function handleProvider(provider: SocialProvider) {
     setErrors({});
     startTransition(async () => {
-      if (social === "mock") {
-        const result = await mockSocialLogon({ provider });
-        if (result.ok) {
-          router.push(landing);
-          router.refresh();
-          return;
-        }
-        setErrors({ form: errorText(result.error) });
-        return;
-      }
       const result = await authClient.signIn.social({ provider, callbackURL: landing });
       if (result.error) setErrors({ form: errorText("unavailable") });
     });

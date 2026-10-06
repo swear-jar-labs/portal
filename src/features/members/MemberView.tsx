@@ -1,9 +1,9 @@
 import { Avatar, Heading, Stack, Text } from "@swearjar/dos";
 import { messages } from "@/content/messages";
 import { ThreadRows, type BoardMember, type ThreadSummary } from "@/features/board/contracts";
+import { ProjectRows } from "@/features/projects/contracts/ui";
 import type { Project } from "@/features/projects/contracts";
 import { ReadroomRows, type Readroom } from "@/features/readroom/contracts";
-import { MemberProjects } from "./MemberProjects";
 
 export type MemberViewProps = {
   member: BoardMember;
@@ -44,7 +44,7 @@ export function MemberView({
         {projects.length === 0 ? (
           <Text role="hint">{messages.members.projects.empty}</Text>
         ) : (
-          <MemberProjects projects={projects} />
+          <ProjectRows projects={projects} now={now} />
         )}
       </Stack>
 

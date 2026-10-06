@@ -1,7 +1,6 @@
 "use client";
 
-import type { MouseEvent } from "react";
-import { Avatar, Button, Card, Heading, Link, Stack, Tag, Text } from "@swearjar/dos";
+import { Avatar, Button, Heading, Link, Stack, Text } from "@swearjar/dos";
 import { READROOM_PATH } from "@/content/commands";
 import { messages } from "@/content/messages";
 import {
@@ -11,15 +10,9 @@ import {
   type ForumActivitySeed,
   type ThreadSummary,
 } from "@/features/board/contracts";
+import { ProjectRows } from "@/features/projects/contracts/ui";
 import { ReadroomRows, type Readroom } from "@/features/readroom/contracts";
-import {
-  PROJECTS_PATH,
-  projectCardId,
-  projectPath,
-  projectStatusTones,
-  type Project,
-} from "@/features/projects/contracts";
-import { useOverlayPush } from "@/features/shell";
+import { PROJECTS_PATH, type Project } from "@/features/projects/contracts";
 import type { Ticket } from "@/features/tickets/contracts";
 import { PROFILE_RECENT_COUNT } from "@/shared/profile";
 import type { MemberProfile } from "../data/queries";
@@ -58,13 +51,6 @@ export function ProfileView({
   // the first preview slots and the fixtures fill the rest.
   const localShownThreads = forum.localThreads.slice(0, PROFILE_RECENT_COUNT);
   const threadLimit = PROFILE_RECENT_COUNT - localShownThreads.length;
-  const pushOverlay = useOverlayPush();
-
-  // Memberships are few, so the profile lists every project as a compact row
-  // (title plus lifecycle): the full feed card stays where the registry is.
-  const activateProject = (project: Project) => (event?: MouseEvent<HTMLElement>) => {
-    pushOverlay(projectPath(project.slug), projectCardId(project.slug))(event);
-  };
 
   return (
     <Stack gap={10}>
@@ -97,23 +83,7 @@ export function ProfileView({
             <Link href={PROJECTS_PATH}>{messages.account.profile.projects.emptyLink}</Link>
           </Text>
         ) : (
-          <Stack gap={8}>
-            {projects.map((project) => (
-              <Card
-                key={project.slug}
-                id={projectCardId(project.slug)}
-                title={project.name}
-                href={projectPath(project.slug)}
-                onActivate={activateProject(project)}
-                meta={
-                  <Tag tone={projectStatusTones[project.status]}>
-                    {messages.projects.statuses[project.status]}
-                  </Tag>
-                }
-                metaPosition="before"
-              />
-            ))}
-          </Stack>
+          <ProjectRows projects={projects} now={now} />
         )}
       </Stack>
 

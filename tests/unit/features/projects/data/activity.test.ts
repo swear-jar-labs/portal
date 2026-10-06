@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { collectActivity } from "@/features/projects/data/activity";
-import { listRecentThreadSummariesByBoard } from "@/features/board/contracts";
 import { projectSlugs } from "@/features/projects/model/projects";
 
 // The journal reads server-side now: the aggregation is driven over canned
 // contract answers (the feed↔seed coherence itself is e2e territory).
-vi.mock("@/features/board/contracts", () => ({ listRecentThreadSummariesByBoard: vi.fn() }));
+// The mock handle lives in vi.hoisted: the barrel no longer exports the
+// server read, so there is no value import to grab it from.
+const { mockRecent } = vi.hoisted(() => ({ mockRecent: vi.fn() as Mock }));
 
-const mockRecent = listRecentThreadSummariesByBoard as unknown as Mock;
+vi.mock("@/features/board/contracts", () => ({ listRecentThreadSummariesByBoard: mockRecent }));
 
 function journalEntry(id: string, lastActivityAt: string): { id: string; lastActivityAt: string } {
   return { id, lastActivityAt };

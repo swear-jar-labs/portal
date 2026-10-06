@@ -1,611 +1,335 @@
-// UI-first board data: fixtures and the async getters over them. The board
-// pages and the contract manifest consume it; when the backend lands (Phase 5),
-// the bodies change to queries while the signatures stay put (TECH.md §5).
+// Server-backed board reads: Drizzle over Postgres, same signatures the
+// board pages and the contract manifest consume (backend-board; Phase 5).
+// Ranking (pinned/hot/new) and the board/tag filters stay the pure
+// model/feed.ts functions over the SQL-fetched set; SQL owns filtering by
+// board/author, counting, ordering and limits.
 
+import { and, asc, count, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { z } from "zod";
+
+import { db } from "@/db";
+import { posts, sections, threads, user as users, votes } from "@/db/schema";
 import { avatarFor } from "@/shared/members";
 import type { ForumActivitySeed } from "./forum-activity";
 import { filterThreads, rankThreads } from "../model/feed";
 import {
+  isTagId,
+  isThreadTechId,
   summarizeThread,
   type BoardId,
   type BoardMember,
+  type BoardRoleId,
   type Thread,
+  type ThreadPost,
   type ThreadSummary,
 } from "../model/threads";
 
-const ada: BoardMember = { user: "ada", role: "maintainer", avatar: avatarFor("ada") };
-const grace: BoardMember = { user: "grace", role: "contributor", avatar: avatarFor("grace") };
-const ken: BoardMember = { user: "ken", role: "member" };
-const lin: BoardMember = { user: "lin", role: "member" };
+const uuidSchema = z.string().uuid();
 
-const threads: readonly Thread[] = [
-  {
-    id: "read-first",
-    board: "general",
-    title: "READ FIRST: how this board works",
-    author: ada,
-    tags: [],
-    techs: [],
-    pinned: true,
-    locked: false,
-    createdAt: "2026-08-01T09:00:00.000Z",
-    votes: 45,
-    posts: [
-      {
-        id: "read-first-1",
-        author: ada,
-        createdAt: "2026-08-01T09:00:00.000Z",
-        votes: 45,
-        body: [
-          "Bring questions, show your reasoning, and leave room to change your mind.",
-          "",
-          "1. **Own your contribution.** Understand what you post and be ready to discuss it.",
-          "2. **Show the work.** An example or a reproduction beats a confident guess.",
-          "3. **Respect the person.** Critique the work. A dry joke is welcome; a personal dig is not.",
-          "",
-          "Tags: :cyan[proposal], :brown[question], plus the shared tech set.",
-        ].join("\n"),
-      },
-      {
-        id: "read-first-2",
-        author: grace,
-        replyTo: "read-first-1",
-        createdAt: "2026-08-02T14:20:00.000Z",
-        votes: 6,
-        body: "Pinned. If a thread drifts, we point here and carry on.",
-      },
-      {
-        id: "read-first-3",
-        author: ada,
-        createdAt: "2026-09-14T10:00:00.000Z",
-        votes: 3,
-        body: "GENERAL is for questions and the work in progress. IDEAS holds a project's seed before it becomes a proposal. INTERVIEWS is for prep: mock questions and answer reviews, not job offers. ERRATA is for mistakes and what they taught you, from here or your own practice. Project boards keep the work in context; tags help people find it.",
-      },
-    ],
-  },
-  {
-    id: "by-hand-ritual",
-    board: "general",
-    title: "Weekly ritual: what did you build, and what did it teach you?",
-    author: grace,
-    tags: [],
-    techs: [],
-    pinned: true,
-    locked: false,
-    createdAt: "2026-09-01T18:00:00.000Z",
-    votes: 21,
-    posts: [
-      {
-        id: "by-hand-ritual-1",
-        author: grace,
-        createdAt: "2026-09-01T18:00:00.000Z",
-        votes: 21,
-        body: [
-          "This week's thread: one thing you worked on, one decision you made, and something you learned when it met reality.",
-          "",
-          "No demo reel, no launch. A terminal capture is enough.",
-        ].join("\n"),
-      },
-      {
-        id: "by-hand-ritual-2",
-        author: ken,
-        createdAt: "2026-09-05T09:45:00.000Z",
-        votes: 8,
-        body: "A 200-line regex engine, written on a train, tested in the station coffee queue.",
-      },
-      {
-        id: "by-hand-ritual-3",
-        author: lin,
-        createdAt: "2026-09-16T07:30:00.000Z",
-        votes: 4,
-        body: "My first patch to the readroom parser went in this week. Hands still shaking.",
-      },
-      {
-        id: "by-hand-ritual-4",
-        author: ken,
-        createdAt: "2026-09-17T18:20:00.000Z",
-        votes: 7,
-        body: [
-          "This week's proof: the whole rig mid-refactor, two people and one cable at a time.",
-          "",
-          "![Glen Beck and Betty Snyder programming the ENIAC by hand, 1946](/media/eniac-programmers.jpg)",
-          "",
-          "The screens changed. Debugging still takes people.",
-        ].join("\n"),
-      },
-    ],
-  },
-  {
-    id: "handwritten-parsers",
-    board: "compiler",
-    title: "Why we write our own parsers: a case for recursive descent",
-    author: grace,
-    tags: ["proposal", "question"],
-    techs: ["c"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-10T12:00:00.000Z",
-    votes: 18,
-    posts: [
-      {
-        id: "handwritten-parsers-1",
-        author: grace,
-        createdAt: "2026-09-10T12:00:00.000Z",
-        votes: 18,
-        body: [
-          "Generated parsers are a black box with good manners. A hand-written recursive descent parser is 400 lines you can *debug at 3am*.",
-          "",
-          "Proposal: every new grammar in the lab starts as recursive descent. Generators are allowed only with a benchmark that proves the pain.",
-        ].join("\n"),
-      },
-      {
-        id: "handwritten-parsers-2",
-        author: ada,
-        createdAt: "2026-09-11T08:30:00.000Z",
-        votes: 9,
-        body: "Agreed, with one exception: the SQL front-end stays generated. Nobody hand-writes that much ambiguity for sport.",
-      },
-      {
-        id: "handwritten-parsers-3",
-        author: lin,
-        replyTo: "handwritten-parsers-2",
-        createdAt: "2026-09-16T09:10:00.000Z",
-        votes: 5,
-        body: "The stack traces alone are worth it. A generator error message is a fortune cookie.",
-      },
-      {
-        id: "handwritten-parsers-4",
-        author: lin,
-        createdAt: "2026-09-17T08:20:00.000Z",
-        votes: 6,
-        body: [
-          "My parser, boiled down to the one loop that matters:",
-          "",
-          "```ts",
-          "function term(input: Cursor): Node {",
-          "  let node = atom(input);",
-          '  while (input.peek() === "*" || input.peek() === "/") {',
-          "    node = binary(input.next(), node, atom(input));",
-          "  }",
-          "  return node;",
-          "}",
-          "```",
-          "",
-          "Forty lines like this and the grammar stops being a black box. The `while` is where precedence lives — you can point at it.",
-        ].join("\n"),
-      },
-    ],
-  },
-  {
-    id: "swearjar-boot",
-    board: "swearjar-dos",
-    title: "Boot sequence: CRT-on before first paint",
-    author: grace,
-    tags: ["proposal"],
-    techs: ["typescript"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-15T10:00:00.000Z",
-    votes: 9,
-    posts: [
-      {
-        id: "swearjar-boot-1",
-        author: grace,
-        createdAt: "2026-09-15T10:00:00.000Z",
-        votes: 9,
-        body: [
-          "The shell must feel like a power-on, not a page load: scanlines, then the prompt.",
-          "",
-          "Rule: no content paints before the CRT-on finishes. A terminal that flashes white is a broken promise.",
-        ].join("\n"),
-      },
-      {
-        id: "swearjar-boot-2",
-        author: ken,
-        createdAt: "2026-09-18T09:00:00.000Z",
-        votes: 3,
-        body: "Timed it on a cold cache: 250ms per line, two pauses, safety at 8s. Feels like hardware.",
-      },
-    ],
-  },
-  {
-    id: "swearjar-palette",
-    board: "swearjar-dos",
-    title: "Palette check: CGA against the CRT glow",
-    author: ken,
-    tags: ["question"],
-    techs: ["typescript"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-16T12:00:00.000Z",
-    votes: 5,
-    posts: [
-      {
-        id: "swearjar-palette-1",
-        author: ken,
-        createdAt: "2026-09-16T12:00:00.000Z",
-        votes: 5,
-        body: [
-          "Dark cyan won the primary-button coin toss, but under the scanline overlay it reads darker than the spec.",
-          "",
-          "Question: do we calibrate the palette under the overlay, or trust the hex and move on?",
-        ].join("\n"),
-      },
-    ],
-  },
-  {
-    id: "token-cache-evict",
-    board: "token-cache",
-    title: "Eviction policy: LRU lies about recency",
-    author: lin,
-    tags: [],
-    techs: ["go"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-08-28T10:00:00.000Z",
-    votes: 4,
-    posts: [
-      {
-        id: "token-cache-evict-1",
-        author: lin,
-        createdAt: "2026-08-28T10:00:00.000Z",
-        votes: 4,
-        body: [
-          "The cache evicted the hottest token first. The access counter updated on read, but the sweep ran on a stale snapshot.",
-          "",
-          "Lesson filed: a cache that cannot say what it holds is a jar with a hole.",
-        ].join("\n"),
-      },
-      {
-        id: "token-cache-evict-2",
-        author: ken,
-        replyTo: "token-cache-evict-1",
-        createdAt: "2026-08-30T14:00:00.000Z",
-        votes: 2,
-        body: "Same class of bug as the staging dump: two sources of truth, one of them lying. Freeze it and move on.",
-      },
-    ],
-  },
-  {
-    id: "heap-postmortem",
-    board: "general",
-    title: "Postmortem: heap corruption at 3am",
-    author: ken,
-    tags: ["question"],
-    techs: ["c"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-12T22:15:00.000Z",
-    votes: 12,
-    posts: [
-      {
-        id: "heap-postmortem-1",
-        author: ken,
-        createdAt: "2026-09-12T22:15:00.000Z",
-        votes: 12,
-        body: [
-          "The crash was a `free()` on a pointer that had been reallocated three frames up. The fix was one line; the search was six hours.",
-          "",
-          "Question: what is your first move when the heap smells wrong? Valgrind, canaries, or the classic `printf` archaeology?",
-        ].join("\n"),
-      },
-      {
-        id: "heap-postmortem-2",
-        author: ada,
-        replyTo: "heap-postmortem-1",
-        createdAt: "2026-09-15T20:45:00.000Z",
-        votes: 7,
-        body: "Canaries first, always. Instrument the allocator before you instrument your assumptions.",
-      },
-      {
-        id: "heap-postmortem-3",
-        author: ken,
-        createdAt: "2026-09-16T21:40:00.000Z",
-        votes: 4,
-        body: [
-          "Here is the crime scene, trimmed to the bones. The pointer outlived its buffer by exactly one `realloc()`:",
-          "",
-          "```c",
-          "buf = realloc(buf, len + extra);   /* may move */",
-          "write_thing(old_buf);              /* old_buf is now stale */",
-          "```",
-          "",
-          "Valgrind found it in the coffee queue:",
-          "",
-          "```text",
-          "==531== Invalid write of size 8",
-          "==531==    at 0x4012A3: write_thing",
-          "==531==  Address 0x5a1c0a0 is 0 bytes after a block of size 64 alloc'd",
-          "```",
-          "",
-          "A bug older than my keyboard, by the way:",
-          "",
-          "![The first computer bug: a moth taped into the Harvard Mark II logbook, 1947](/media/bug-1947.jpg)",
-        ].join("\n"),
-      },
-    ],
-  },
-  {
-    id: "tabs-vs-spaces",
-    board: "general",
-    title: "Bikeshed closed: tabs, and here is why",
-    author: ken,
-    tags: [],
-    techs: [],
-    pinned: false,
-    locked: true,
-    createdAt: "2026-08-20T15:00:00.000Z",
-    votes: 9,
-    posts: [
-      {
-        id: "tabs-vs-spaces-1",
-        author: ken,
-        createdAt: "2026-08-20T15:00:00.000Z",
-        votes: 9,
-        body: "Tabs for indentation, spaces for alignment. The argument lasted nine years. It is over.",
-      },
-      {
-        id: "tabs-vs-spaces-2",
-        author: grace,
-        replyTo: "tabs-vs-spaces-1",
-        createdAt: "2026-09-02T11:00:00.000Z",
-        votes: 11,
-        body: "Locking this before someone reopens it with a study about reading speed.",
-      },
-    ],
-  },
-  {
-    id: "ci-cache-poisoning",
-    board: "tooling",
-    title: "CI cache poisoning: how we lost a day",
-    author: ada,
-    tags: ["question"],
-    techs: ["ci"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-14T08:30:00.000Z",
-    votes: 14,
-    posts: [
-      {
-        id: "ci-cache-poisoning-1",
-        author: ada,
-        createdAt: "2026-09-14T08:30:00.000Z",
-        votes: 14,
-        body: [
-          "A stale object file outlived its header. The build was green, the binary was wrong, and the cache was proud of itself.",
-          "",
-          "How do you key your build caches so a header edit cannot slip through?",
-        ].join("\n"),
-      },
-      {
-        id: "ci-cache-poisoning-2",
-        author: grace,
-        replyTo: "ci-cache-poisoning-1",
-        createdAt: "2026-09-16T06:05:00.000Z",
-        votes: 6,
-        body: "Hash the compiler version and the full dependency tree, not the mtime. It costs a second and saves the week.",
-      },
-    ],
-  },
-  {
-    id: "no-ai-commits",
-    board: "general",
-    title: "Decision: tools can help, but the author owns the code",
-    author: ada,
-    tags: [],
-    techs: [],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-03T10:00:00.000Z",
-    votes: 33,
-    posts: [
-      {
-        id: "no-ai-commits-1",
-        author: ada,
-        createdAt: "2026-09-03T10:00:00.000Z",
-        votes: 33,
-        body: [
-          "**The author of a commit is responsible for understanding it.** That includes code suggested by a tool.",
-          "",
-          "You may use AI tools in project work, provided you review all generated code yourself and take responsibility for it. If you cannot assess it yet, write it yourself and ask for review.",
-        ].join("\n"),
-      },
-      {
-        id: "no-ai-commits-2",
-        author: ken,
-        createdAt: "2026-09-04T13:10:00.000Z",
-        votes: 12,
-        body: "Useful distinction: the tool can suggest a fix, but it cannot answer the review comments for you.",
-      },
-      {
-        id: "no-ai-commits-3",
-        author: grace,
-        createdAt: "2026-09-13T19:20:00.000Z",
-        votes: 10,
-        body: "For beginners, we recommend minimal AI assistance: make your own decisions, then work through the mistakes with someone more experienced. That's the practice we're here for.",
-      },
-    ],
-  },
-  {
-    id: "staging-dump-errata",
-    board: "errata",
-    title: 'Errata: I dropped a table to "clean up" a staging dump',
-    author: grace,
-    tags: [],
-    techs: ["sql", "postgres"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-12T09:15:00.000Z",
-    votes: 7,
-    posts: [
-      {
-        id: "staging-dump-errata-1",
-        author: grace,
-        createdAt: "2026-09-12T09:15:00.000Z",
-        votes: 7,
-        body: [
-          'I restored a staging dump over the wrong database and dropped the table I had just spent a week filling. No backup, of course — staging is "disposable".',
-          "",
-          "What it taught me: **staging is production with a lying label.** The restore now goes through a script that refuses any database whose name does not end in `_scratch`.",
-        ].join("\n"),
-      },
-      {
-        id: "staging-dump-errata-2",
-        author: ken,
-        replyTo: "staging-dump-errata-1",
-        createdAt: "2026-09-13T18:40:00.000Z",
-        votes: 4,
-        body: "The name check is a one-line guard, and it already saved me once this week.",
-      },
-    ],
-  },
-  {
-    id: "pocket-analyzer-idea",
-    board: "ideas",
-    title: "Idea: a pocket logic analyzer for the lab bench",
-    author: ken,
-    tags: ["proposal"],
-    techs: ["rust"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-18T10:00:00.000Z",
-    votes: 6,
-    posts: [
-      {
-        id: "pocket-analyzer-idea-1",
-        author: ken,
-        createdAt: "2026-09-18T10:00:00.000Z",
-        votes: 6,
-        body: [
-          "A weekend build: an 8-channel logic analyzer on a microcontroller, dumping captures over USB for the bench upstairs.",
-          "",
-          "Open questions: the analog front-end, and whether the firmware fits next to the USB stack. Looking for one person who has held a soldering iron.",
-        ].join("\n"),
-      },
-      {
-        id: "pocket-analyzer-idea-2",
-        author: grace,
-        replyTo: "pocket-analyzer-idea-1",
-        createdAt: "2026-09-19T09:00:00.000Z",
-        votes: 2,
-        body: "Count me in for the firmware side. I would start with the capture loop and let the hardware tell us what the front-end must survive.",
-      },
-    ],
-  },
-  {
-    id: "rate-limiter-mock",
-    board: "interviews",
-    title: "Mock question: a rate limiter in 45 minutes",
-    author: lin,
-    tags: ["question"],
-    techs: ["python"],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-18T14:00:00.000Z",
-    votes: 4,
-    posts: [
-      {
-        id: "rate-limiter-mock-1",
-        author: lin,
-        createdAt: "2026-09-18T14:00:00.000Z",
-        votes: 4,
-        body: [
-          "The prompt: design a per-user rate limiter for an API gateway, then defend it out loud.",
-          "",
-          "My attempt: a sliding window log in memory, one counter per user, swept every minute. Where does this fall apart once a second instance appears?",
-        ].join("\n"),
-      },
-      {
-        id: "rate-limiter-mock-2",
-        author: ada,
-        replyTo: "rate-limiter-mock-1",
-        createdAt: "2026-09-19T11:00:00.000Z",
-        votes: 5,
-        body: "Two instances double the budget unless the counters move to one place. Say that first, then argue about which place: the sweep you described already names the cost.",
-      },
-    ],
-  },
-  {
-    id: "withdrawn-call",
-    board: "general",
-    title: "Withdrawn: the weekly call",
-    author: lin,
-    tags: [],
-    techs: [],
-    pinned: false,
-    locked: false,
-    createdAt: "2026-09-15T10:00:00.000Z",
-    votes: 0,
-    posts: [],
-  },
-];
+// Vote targets share the row ids they count, so one aggregate query serves a
+// whole thread list (thread votes and post votes alike).
+const THREAD_VOTE_TARGET = "thread" as const;
+const POST_VOTE_TARGET = "post" as const;
 
-function byId(a: ThreadSummary, b: ThreadSummary): number {
-  if (a.id === b.id) return 0;
-  return a.id < b.id ? -1 : 1;
+// The board canon in the database: a board id is a sections slug, for the
+// static boards and the project journals alike (backend-seed-demo owns the
+// rows). A thread's project link stays informational: reads resolve the
+// board through the section alone.
+type SectionRef = { slug: string };
+
+type AuthorRef = {
+  username: string | null;
+  image: string | null;
+  level: string;
+  admin: boolean;
+};
+
+type PostRow = typeof posts.$inferSelect & { author: AuthorRef };
+
+type ThreadRow = typeof threads.$inferSelect & {
+  section: SectionRef;
+  author: AuthorRef;
+  posts: PostRow[];
+  threadTags: { tag: { slug: string } }[];
+};
+
+// The with-shape stays inline at the single call site (not shared) so the
+// relational query builder keeps its contextual typing. It fetches the
+// section (the board), the author, all posts with their authors in
+// chronological order (tombstones included — the mapper turns them into
+// empty-bodied markers), and the status tags. The root post is the earliest
+// (created_at, id): writers insert a thread's posts one row per action, so
+// ties cannot occur outside manual seeding.
+
+// The author's board face from a user row: admins maintain, community
+// members contribute, everyone else takes part. The avatar prefers the
+// account's image over the bundled registry face.
+function mapBoardAuthor(author: AuthorRef): BoardMember | null {
+  if (author.username === null) return null;
+  const role: BoardRoleId = author.admin
+    ? "maintainer"
+    : author.level === "member"
+      ? "contributor"
+      : "member";
+  const avatar = author.image ?? avatarFor(author.username);
+  return { user: author.username, role, ...(avatar === undefined ? {} : { avatar }) };
+}
+
+function voteKey(targetType: string, targetId: string): string {
+  return `${targetType}:${targetId}`;
+}
+
+function mapThreadPost(row: PostRow, counts: ReadonlyMap<string, number>): ThreadPost | null {
+  const author = mapBoardAuthor(row.author);
+  if (author === null) return null;
+  const tombstoned = row.deletedAt !== null;
+  return {
+    id: row.id,
+    author,
+    // A tombstone keeps its place (reply markers still resolve) but loses
+    // its text: the body never reaches the search corpus or the RSC markup.
+    body: tombstoned ? "" : row.body,
+    ...(row.replyToId === null ? {} : { replyTo: row.replyToId }),
+    createdAt: row.createdAt.toISOString(),
+    votes: counts.get(voteKey(POST_VOTE_TARGET, row.id)) ?? 0,
+    ...(row.editedAt === null ? {} : { editedAt: row.editedAt.toISOString() }),
+    ...(tombstoned && row.deletedAt !== null ? { deletedAt: row.deletedAt.toISOString() } : {}),
+  };
+}
+
+function mapThread(row: ThreadRow, counts: ReadonlyMap<string, number>): Thread | null {
+  const author = mapBoardAuthor(row.author);
+  if (author === null) return null;
+  const mappedPosts: ThreadPost[] = [];
+  for (const post of row.posts) {
+    const mapped = mapThreadPost(post, counts);
+    if (mapped !== null) mappedPosts.push(mapped);
+  }
+  return {
+    id: row.id,
+    board: row.section.slug,
+    title: row.title,
+    author,
+    tags: row.threadTags.map((entry) => entry.tag.slug).filter(isTagId),
+    techs: (row.techs ?? []).filter(isThreadTechId),
+    pinned: row.pinned,
+    locked: row.locked,
+    createdAt: row.createdAt.toISOString(),
+    votes: counts.get(voteKey(THREAD_VOTE_TARGET, row.id)) ?? 0,
+    posts: mappedPosts,
+  };
+}
+
+// The list face of a thread: the shared summary derivation, with tombstones
+// dropped from the reply count (like the session overlay does) while the
+// last activity still counts every post.
+function toSummary(thread: Thread): ThreadSummary {
+  const live = thread.posts.filter((post) => post.deletedAt === undefined).length;
+  return { ...summarizeThread(thread), replies: Math.max(0, live - 1) };
+}
+
+// Vote totals for a batch of thread and post ids: one GROUP BY query counts
+// both target kinds at once; ids outside the table simply have no row.
+async function loadVoteCounts(ids: readonly string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (ids.length === 0) return counts;
+  const rows = await db
+    .select({ targetType: votes.targetType, targetId: votes.targetId, total: count() })
+    .from(votes)
+    .where(
+      and(
+        inArray(votes.targetType, [THREAD_VOTE_TARGET, POST_VOTE_TARGET]),
+        inArray(votes.targetId, [...ids]),
+      ),
+    )
+    .groupBy(votes.targetType, votes.targetId);
+  for (const row of rows) counts.set(voteKey(row.targetType, row.targetId), row.total);
+  return counts;
+}
+
+type ThreadListOptions = {
+  where?: SQL | undefined;
+  orderBy?: SQL[];
+  limit?: number;
+};
+
+// Every list read funnels through here: one relational fetch (section,
+// author, posts, status tags) plus one vote aggregate, mapped to the board
+// model. Soft-deleted threads never surface; their route id resolves to
+// null (the thread page answers notFound, as for unknown ids).
+async function loadThreads(options: ThreadListOptions = {}): Promise<Thread[]> {
+  const rows = await db.query.threads.findMany({
+    where: and(isNull(threads.deletedAt), options.where),
+    with: {
+      section: { columns: { slug: true } },
+      author: { columns: { username: true, image: true, level: true, admin: true } },
+      posts: {
+        with: {
+          author: { columns: { username: true, image: true, level: true, admin: true } },
+        },
+        orderBy: [asc(posts.createdAt), asc(posts.id)],
+      },
+      threadTags: { with: { tag: { columns: { slug: true } } } },
+    },
+    ...(options.orderBy === undefined ? {} : { orderBy: options.orderBy }),
+    ...(options.limit === undefined ? {} : { limit: options.limit }),
+  });
+  if (rows.length === 0) return [];
+  const counts = await loadVoteCounts([
+    ...rows.map((row) => row.id),
+    ...rows.flatMap((row) => row.posts.map((post) => post.id)),
+  ]);
+  const threadsList: Thread[] = [];
+  for (const row of rows) {
+    const thread = mapThread(row, counts);
+    if (thread !== null) threadsList.push(thread);
+  }
+  return threadsList;
+}
+
+async function findSectionId(slug: string): Promise<string | null> {
+  const row = await db.query.sections.findFirst({
+    where: eq(sections.slug, slug),
+    columns: { id: true },
+  });
+  return row?.id ?? null;
+}
+
+async function findUserId(username: string): Promise<string | null> {
+  const row = await db.query.user.findFirst({
+    where: eq(users.username, username),
+    columns: { id: true },
+  });
+  return row?.id ?? null;
+}
+
+function isUuid(id: string): boolean {
+  return uuidSchema.safeParse(id).success;
+}
+
+// Freshest activity first for SQL-ordered lists: threads.last_post_at is
+// maintained by the board mutations (compose/reply refresh it), so the
+// journal and the profile read the order without fetching every post.
+function activityOrder() {
+  return [sql`${threads.lastPostAt} DESC NULLS LAST`, desc(threads.createdAt), asc(threads.id)];
 }
 
 export async function listThreads(): Promise<ThreadSummary[]> {
-  return threads.map(summarizeThread);
+  // Deliberately unpaginated: the feed ranks globally in memory, and hot
+  // needs every thread — any SQL window would corrupt the rank. Journals
+  // and profiles (bounded surfaces) page in SQL instead. Revisit with a
+  // cursor feed when the corpus outgrows one fetch; the no-limit unit below
+  // pins the contract until then.
+  const loaded = await loadThreads({ orderBy: [asc(threads.createdAt), asc(threads.id)] });
+  return loaded.map(toSummary);
 }
 
-/** The search corpus: full fixture threads (titles plus every reply body,
- * code fences included). The forum search merges the session's composed
- * threads, replies, edits and deletions over it on the client; Phase 5
- * replaces the body with a backend query while the signature stays put. */
+/** The search corpus: full threads (titles plus every live reply body).
+ * Tombstoned bodies read back empty, so deleted text never matches. */
 export async function listThreadDocuments(): Promise<readonly Thread[]> {
-  return threads;
+  return loadThreads({ orderBy: [asc(threads.createdAt), asc(threads.id)] });
 }
 
 export async function getThread(id: string): Promise<Thread | null> {
-  return threads.find((thread) => thread.id === id) ?? null;
+  if (!isUuid(id)) return null;
+  const loaded = await loadThreads({ where: eq(threads.id, id), limit: 1 });
+  return loaded[0] ?? null;
 }
 
-/** A public board member: the first authored post is the fixture source of
- * truth until the member registry arrives with the backend. */
+/** A public board member: the first authored post names them, like the
+ * fixture source of truth did until the member registry arrives. */
 export async function getBoardMember(user: string): Promise<BoardMember | null> {
-  for (const thread of threads) {
-    const post = thread.posts.find((candidate) => candidate.author.user === user);
-    if (post) return post.author;
-  }
-  return null;
+  const userId = await findUserId(user);
+  if (userId === null) return null;
+  const row = await db.query.posts.findFirst({
+    where: and(eq(posts.authorId, userId), isNull(posts.deletedAt)),
+    with: {
+      author: { columns: { username: true, image: true, level: true, admin: true } },
+    },
+    orderBy: [asc(posts.createdAt), asc(posts.id)],
+  });
+  if (!row) return null;
+  return mapBoardAuthor(row.author);
 }
 
 /** A member's threads, freshest activity first (for account and public profiles). */
 export async function listThreadSummariesByAuthor(user: string): Promise<ThreadSummary[]> {
-  return threads
-    .filter((thread) => thread.author.user === user)
-    .map(summarizeThread)
-    .sort((a, b) => Date.parse(b.lastActivityAt) - Date.parse(a.lastActivityAt) || byId(a, b));
+  const userId = await findUserId(user);
+  if (userId === null) return [];
+  const loaded = await loadThreads({
+    where: eq(threads.authorId, userId),
+    orderBy: activityOrder(),
+  });
+  return loaded.map(toSummary);
 }
 
-/** The fixture part of a profile's forum counts; session changes are applied on the client. */
+/** The database part of a profile's forum counts: authored threads plus the
+ * member's non-root posts (the root is the thread's earliest post). */
 export async function forumActivitySeed(user: string): Promise<ForumActivitySeed> {
-  return {
-    posts: threads.filter((thread) => thread.author.user === user).length,
-    replies: threads.flatMap((thread) =>
-      thread.posts
-        .slice(1)
-        .flatMap((post) =>
-          post.author.user === user ? [{ threadId: thread.id, postId: post.id }] : [],
-        ),
-    ),
-  };
+  const userId = await findUserId(user);
+  if (userId === null) return { posts: 0, replies: [] };
+  const authored = await db
+    .select({ total: count() })
+    .from(threads)
+    .where(and(eq(threads.authorId, userId), isNull(threads.deletedAt)));
+  const mine = await db.query.posts.findMany({
+    where: and(eq(posts.authorId, userId), isNull(posts.deletedAt)),
+    columns: { id: true, threadId: true, createdAt: true },
+  });
+  if (mine.length === 0) return { posts: authored[0]?.total ?? 0, replies: [] };
+  const threadIds = [...new Set(mine.map((post) => post.threadId))];
+  const firsts = await db
+    .selectDistinctOn([posts.threadId], {
+      threadId: posts.threadId,
+      createdAt: posts.createdAt,
+      id: posts.id,
+    })
+    .from(posts)
+    .where(and(inArray(posts.threadId, threadIds), isNull(posts.deletedAt)))
+    .orderBy(posts.threadId, asc(posts.createdAt), asc(posts.id));
+  const firstKey = new Map(firsts.map((post) => [post.threadId, post] as const));
+  const replies = mine
+    .filter((post) => {
+      const first = firstKey.get(post.threadId);
+      return (
+        first === undefined ||
+        first.createdAt.getTime() !== post.createdAt.getTime() ||
+        first.id !== post.id
+      );
+    })
+    .map((post) => ({ threadId: post.threadId, postId: post.id }));
+  return { posts: authored[0]?.total ?? 0, replies };
 }
 
 /** The full size of one project journal, independent of its preview limit. */
 export async function countThreadsByBoard(board: BoardId): Promise<number> {
-  return threads.filter((thread) => thread.board === board).length;
+  const sectionId = await findSectionId(board);
+  if (sectionId === null) return 0;
+  const rows = await db
+    .select({ total: count() })
+    .from(threads)
+    .where(and(eq(threads.sectionId, sectionId), isNull(threads.deletedAt)));
+  return rows[0]?.total ?? 0;
 }
 
 /** One board's newest summaries, pinned first: a project journal reads the
  * board through it, never a copied sort. `now` is a parameter so the ranking
- * is pure and testable. */
+ * is pure and testable. SQL pages pinned-first by activity; the pure rank
+ * pass keeps the contract even if the data drifts. */
 export async function listRecentThreadSummariesByBoard(
   board: BoardId,
   limit: number,
   now: number = Date.now(),
 ): Promise<ThreadSummary[]> {
-  const summaries = await listThreads();
-  return rankThreads(filterThreads(summaries, { board }), "new", now).slice(0, Math.max(0, limit));
+  const capped = Math.max(0, limit);
+  if (capped === 0) return [];
+  const sectionId = await findSectionId(board);
+  if (sectionId === null) return [];
+  const loaded = await loadThreads({
+    where: eq(threads.sectionId, sectionId),
+    orderBy: [desc(threads.pinned), ...activityOrder()],
+    limit: capped,
+  });
+  const summaries = loaded.map(toSummary);
+  return rankThreads(filterThreads(summaries, { board }), "new", now).slice(0, capped);
 }

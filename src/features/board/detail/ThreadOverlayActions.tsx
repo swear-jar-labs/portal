@@ -9,6 +9,13 @@ import {
 } from "@/features/inbox/contracts";
 import { avatarFor } from "@/shared/members";
 import * as boardStore from "../data/board-store";
+import {
+  commitReply,
+  syncPostDelete,
+  syncPostEdit,
+  syncPostVote,
+  syncThreadVote,
+} from "../data/thread-mutations";
 import { boardTitle, threadPath, type BoardId } from "../model/threads";
 import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
 
@@ -90,13 +97,13 @@ export function ThreadOverlayActions({
       pinned: pinnedNow,
       locked: lockedNow,
       canModerate: admin,
-      onToggleThreadVote: () => gate(() => boardStore.toggleThreadVote(threadId)),
-      onTogglePostVote: (postId) => gate(() => boardStore.togglePostVote(threadId, postId)),
+      onToggleThreadVote: () => gate(() => syncThreadVote(threadId)),
+      onTogglePostVote: (postId) => gate(() => syncPostVote(threadId, postId)),
       onEditPost: (postId, body) => {
-        boardStore.editPost(threadId, postId, body);
+        syncPostEdit(threadId, postId, body);
         notify(postId, body);
       },
-      onDeletePost: (postId) => boardStore.deletePost(threadId, postId),
+      onDeletePost: (postId) => syncPostDelete(threadId, postId),
       onTogglePin: () => {
         if (!admin) return;
         boardStore.setThreadFlag(threadId, "pinned", !pinnedNow);
@@ -107,24 +114,28 @@ export function ThreadOverlayActions({
       },
       onReply: (body, replyTo) => {
         if (author === null) return;
-        const post = boardStore.addReply(threadId, body, author, replyTo);
-        notify(post.id, body);
-        const sessionParent = boardStore
-          .boardSnapshot()
-          .threads[threadId]?.addedPosts.find((entry) => entry.id === replyTo)?.author.user;
-        const at = new Date().toISOString();
-        for (const delivery of buildReplyEvents({
-          postId: post.id,
-          threadTitle: title,
-          boardLabel: boardTitle(board),
-          actorUser: author.user,
-          actorName: author.user,
-          threadAuthor,
-          parentAuthor: replyTo === undefined ? undefined : (postAuthors[replyTo] ?? sessionParent),
-          target: { kind: "thread", label: title, href: threadPath(threadId) },
-          at,
-        }))
-          enqueueInboxEvent(delivery.user, delivery.event);
+        const authorNow = author;
+        void commitReply(threadId, authorNow, body, replyTo).then((post) => {
+          if (post === undefined) return;
+          notify(post.id, body);
+          const sessionParent = boardStore
+            .boardSnapshot()
+            .threads[threadId]?.addedPosts.find((entry) => entry.id === replyTo)?.author.user;
+          const at = new Date().toISOString();
+          for (const delivery of buildReplyEvents({
+            postId: post.id,
+            threadTitle: title,
+            boardLabel: boardTitle(board),
+            actorUser: authorNow.user,
+            actorName: authorNow.user,
+            threadAuthor,
+            parentAuthor:
+              replyTo === undefined ? undefined : (postAuthors[replyTo] ?? sessionParent),
+            target: { kind: "thread", label: title, href: threadPath(threadId) },
+            at,
+          }))
+            enqueueInboxEvent(delivery.user, delivery.event);
+        });
       },
     };
   }, [

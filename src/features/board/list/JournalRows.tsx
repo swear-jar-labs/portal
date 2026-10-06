@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Stack } from "@swearjar/dos";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import * as boardStore from "../data/board-store";
+import { syncThreadVote } from "../data/thread-mutations";
 import {
   FEED_PATH,
   threadPath,
@@ -24,11 +25,10 @@ export type JournalRowsProps = {
 };
 
 /** One board's journal as the board's own cards: the same ThreadCard the feed
- * renders, over the session store directly (no feed query to fake) — votes and
- * session replies overlay the fixtures, so the journal reads what the board
- * reads. Threads composed in this session have no route yet, so the journal
- * skips them (the board opens them in place); tag filtering stays global, as
- * on the board. */
+ * renders, over the session store directly (no feed query to fake) — votes
+ * overlay the server summaries through the shared mutation sync, so the
+ * journal reads what the board reads. Tag filtering stays global, as on
+ * the board. */
 export function JournalRows({ board, threads, now }: JournalRowsProps) {
   const router = useRouter();
   const pushOverlay = useOverlayPush();
@@ -48,15 +48,21 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
     action();
   };
 
-  const rows = useMemo(
-    () =>
-      boardStore
-        .withSessionFlags(boardStore.withLocalActivity([...threads], state.threads), state.flags)
-        .map((summary) =>
-          state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
-        ),
-    [threads, state.flags, state.threads, state.votedThreads],
-  );
+  const rows = useMemo(() => {
+    // The journal reads summaries only, so unlike the feed it cannot dedupe
+    // confirmed replies against server post ids: every session post counts
+    // as echoed (commitReply adds only server-confirmed ones). Counts may
+    // lag until the refetch lands, but never double after revalidation.
+    const echoed = boardStore.echoedConfirmedPosts(state.threads);
+    return boardStore
+      .withSessionFlags(
+        boardStore.withLocalActivity([...threads], state.threads, echoed),
+        state.flags,
+      )
+      .map((summary) =>
+        state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
+      );
+  }, [threads, state.flags, state.threads, state.votedThreads]);
 
   const activateThread = (threadId: string, event?: MouseEvent<HTMLElement>) => {
     // The root slot intercepts the thread above the current stack: the
@@ -82,7 +88,7 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
             now={now}
             voted={state.votedThreads.has(thread.id)}
             onActivate={(event) => activateThread(thread.id, event)}
-            onVote={() => gate(() => boardStore.toggleThreadVote(thread.id))}
+            onVote={() => gate(() => syncThreadVote(thread.id))}
             onFilterTag={filterTag}
             onFilterTech={filterTech}
           />

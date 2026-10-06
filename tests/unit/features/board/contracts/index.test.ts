@@ -4,17 +4,15 @@ import type { ThreadSummary } from "@/features/board/contracts";
 
 describe("board contract", () => {
   it("publishes exactly the agreed surface", () => {
+    // Client-safe leaves only: server reads (data/queries.ts) must never
+    // come back here — client components import this barrel, and anything
+    // it pulls lands in the browser bundle (see client-graph.test.ts).
     expect(Object.keys(boardContract).sort()).toEqual([
       "ErrataJarRow",
       "FEED_PATH",
       "JournalRows",
       "ThreadRows",
       "VoteButton",
-      "countThreadsByBoard",
-      "forumActivitySeed",
-      "getBoardMember",
-      "listRecentThreadSummariesByBoard",
-      "listThreadSummariesByAuthor",
       "useForumActivity",
     ]);
   });

@@ -34,18 +34,26 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   const { state } = actions;
   const [replyTargetId, setReplyTargetId] = useState<string | undefined>();
 
+  // Server posts first, session replies after — minus the confirmed ones
+  // the revalidated thread already echoes by id, so a reply never renders
+  // twice.
+  const serverIds = new Set(thread.posts.map((post) => post.id));
   const posts = [
     ...thread.posts.map((post) => ({ post, body: bodies[post.id] })),
-    ...state.addedPosts.map((post) => ({ post, body: undefined })),
+    ...state.addedPosts
+      .filter((post) => !serverIds.has(post.id))
+      .map((post) => ({ post, body: undefined })),
   ];
 
   // The marker and the chip quote the parent as it stands now: a session edit
-  // wins over the fixture body, a tombstone keeps the name and loses the text.
+  // wins over the fixture body, a tombstone (session or server) keeps the
+  // name and loses the text.
   function resolveTarget(id: string): ReplyTarget | undefined {
     const parent = posts.find((entry) => entry.post.id === id)?.post;
     if (parent === undefined) return undefined;
     const parentExcerpt =
       state.deletedPosts.has(parent.id) ||
+      parent.deletedAt !== undefined ||
       moderation.hidden[targetKey({ kind: "post", id: parent.id })]
         ? ""
         : excerpt(state.edits.get(parent.id) ?? parent.body, REPLY_EXCERPT_LENGTH);
@@ -96,7 +104,7 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
               votes={root ? thread.votes : post.votes}
               voted={root ? actions.votedThread : state.votedPosts.has(post.id)}
               editedBody={state.edits.get(post.id)}
-              deleted={state.deletedPosts.has(post.id)}
+              deleted={state.deletedPosts.has(post.id) || post.deletedAt !== undefined}
               canEdit={session?.user === post.author.user}
               canReply={!view.locked}
               replyTo={post.replyTo === undefined ? undefined : resolveTarget(post.replyTo)}

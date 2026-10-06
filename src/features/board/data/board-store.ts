@@ -1,5 +1,4 @@
-import type { BoardMember, Thread, ThreadPost, ThreadSummary } from "../model/threads";
-import type { ComposeInput } from "../model/schema";
+import type { ThreadPost, ThreadSummary } from "../model/threads";
 
 // The board's session memory: the mock state outlives the route remount (the
 // feed unmounts when a thread opens) and dies with the page reload. The store
@@ -21,7 +20,6 @@ export type ThreadFlagOverrides = Readonly<Record<string, Partial<Record<ThreadF
 
 export type BoardState = {
   votedThreads: ReadonlySet<string>;
-  addedThreads: readonly Thread[];
   threads: Readonly<Record<string, ThreadState>>;
   // Admin pin/lock overrides over the fixture flags: set in this session, die
   // with the reload. Absent means the fixture flag stands.
@@ -37,21 +35,9 @@ export const EMPTY_THREAD_STATE: ThreadState = {
 
 const INITIAL_BOARD_STATE: BoardState = {
   votedThreads: new Set(),
-  addedThreads: [],
   threads: {},
   flags: {},
 };
-
-const LOCAL_THREAD_ID_PREFIX = "local-thread-";
-const LOCAL_POST_ID_PREFIX = "local-post-";
-
-export function isLocalThreadId(id: string): boolean {
-  return id.startsWith(LOCAL_THREAD_ID_PREFIX);
-}
-
-function localId(prefix: string): string {
-  return `${prefix}${crypto.randomUUID()}`;
-}
 
 let state: BoardState = INITIAL_BOARD_STATE;
 const listeners = new Set<() => void>();
@@ -117,45 +103,40 @@ export function deletePost(threadId: string, postId: string): void {
   });
 }
 
-/** A session reply: authored by the logged-on member, zero votes. `replyTo`
- * names the post it answers; a thread's root reply has none. */
-export function addReply(
-  threadId: string,
-  body: string,
-  author: BoardMember,
-  replyTo?: string,
-): ThreadPost {
-  const post: ThreadPost = {
-    id: localId(LOCAL_POST_ID_PREFIX),
-    author,
-    body,
-    ...(replyTo === undefined ? {} : { replyTo }),
-    createdAt: new Date().toISOString(),
-    votes: 0,
-  };
-  updateThread(threadId, (current) => ({ ...current, addedPosts: [...current.addedPosts, post] }));
-  return post;
+/** Drop a session edit override: the render falls back to the stored body.
+ * Rollback for a failed edit sync, which never reached the server. */
+export function clearPostEdit(threadId: string, postId: string): void {
+  updateThread(threadId, (current) => {
+    if (!current.edits.has(postId)) return current;
+    const edits = new Map(current.edits);
+    edits.delete(postId);
+    return { ...current, edits };
+  });
 }
 
-/** A thread composed in this session: one root post, no votes yet. */
-export function addThread(input: ComposeInput, author: BoardMember): Thread {
-  const id = localId(LOCAL_THREAD_ID_PREFIX);
-  const now = new Date().toISOString();
-  const thread: Thread = {
-    id,
-    board: input.board,
-    title: input.title,
-    author,
-    tags: input.tags,
-    techs: input.techs,
-    pinned: false,
-    locked: false,
-    createdAt: now,
-    votes: 0,
-    posts: [{ id: `${id}-root`, author, body: input.body, createdAt: now, votes: 0 }],
-  };
-  setState({ ...state, addedThreads: [...state.addedThreads, thread] });
-  return thread;
+/** Drop a session tombstone: the render falls back to the stored row.
+ * Rollback for a failed delete — and settle for a successful one, whose
+ * server tombstone arrives with the revalidation (keeping the delta would
+ * subtract the reply twice from the card count). */
+export function restorePost(threadId: string, postId: string): void {
+  updateThread(threadId, (current) => {
+    if (!current.deletedPosts.has(postId)) return current;
+    const deletedPosts = new Set(current.deletedPosts);
+    deletedPosts.delete(postId);
+    return { ...current, deletedPosts };
+  });
+}
+
+/** A server-confirmed post: the action committed it (the id is real and the
+ * thread route resolves), the store renders it until the next refresh
+ * revalidates the thread. `replyTo` names the post it answers; a thread's
+ * root reply has none. */
+export function addConfirmedPost(threadId: string, post: ThreadPost): void {
+  updateThread(threadId, (current) =>
+    current.addedPosts.some((entry) => entry.id === post.id)
+      ? current
+      : { ...current, addedPosts: [...current.addedPosts, post] },
+  );
 }
 
 export function subscribeBoard(listener: () => void): () => void {
@@ -180,16 +161,22 @@ export function threadStateOf(snapshot: BoardState, threadId: string): ThreadSta
 /** The feed's view of session replies: their count and the freshest activity
  * reach the card, so the list reads the same as the open thread. Tombstones
  * drop out of the count — a deleted fixture reply and a deleted session
- * reply alike — so the card matches the profile's forum counter. */
+ * reply alike — so the card matches the profile's forum counter. Server
+ * posts echoed by id (the revalidated thread already includes a confirmed
+ * reply) drop out too, so the reply is never counted twice. */
 export function withLocalActivity(
   summaries: readonly ThreadSummary[],
   threads: Readonly<Record<string, ThreadState>>,
+  serverPostIds: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): ThreadSummary[] {
   return summaries.map((summary) => {
     const local = threads[summary.id];
     if (local === undefined) return summary;
+    const echoed = serverPostIds.get(summary.id);
     const addedIds = new Set(local.addedPosts.map((post) => post.id));
-    const liveAdded = local.addedPosts.filter((post) => !local.deletedPosts.has(post.id));
+    const liveAdded = local.addedPosts.filter(
+      (post) => !local.deletedPosts.has(post.id) && !(echoed?.has(post.id) ?? false),
+    );
     const removedFixtures = [...local.deletedPosts].filter((id) => !addedIds.has(id)).length;
     if (liveAdded.length === 0 && removedFixtures === 0) return summary;
     return {
@@ -198,6 +185,23 @@ export function withLocalActivity(
       lastActivityAt: liveAdded.at(-1)?.createdAt ?? summary.lastActivityAt,
     };
   });
+}
+
+/** Every session post keyed as echoed, by thread: commitReply adds only
+ * server-confirmed posts, so surfaces without post-level server data (the
+ * journal cards read summaries only, and their props are fixed by contract)
+ * treat them all as echoed. Counts may lag until the refetch lands, but a
+ * revalidated journal never double-counts a confirmed reply. */
+export function echoedConfirmedPosts(
+  threads: Readonly<Record<string, ThreadState>>,
+): Map<string, ReadonlySet<string>> {
+  const echoed = new Map<string, ReadonlySet<string>>();
+  for (const [threadId, local] of Object.entries(threads)) {
+    if (local.addedPosts.length > 0) {
+      echoed.set(threadId, new Set(local.addedPosts.map((post) => post.id)));
+    }
+  }
+  return echoed;
 }
 
 /** The feed's view of admin pin/lock overrides: a set flag replaces the

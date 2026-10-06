@@ -18,8 +18,6 @@ export type SearchResultsProps = {
   now: string;
   hits: ReadonlyMap<string, ThreadSearchHit>;
   currentThreadId?: string;
-  // Session-composed threads: their cards activate in place, without a link.
-  localThreadIds: ReadonlySet<string>;
   onJumpToMatch: (
     threadId: string,
     postId: string | undefined,
@@ -60,7 +58,6 @@ export function SearchResults({
   now,
   hits,
   currentThreadId,
-  localThreadIds,
   onJumpToMatch,
 }: SearchResultsProps) {
   return (
@@ -80,11 +77,10 @@ export function SearchResults({
               const meta = [messages.board.roles[role], formatAge(match.createdAt, now)];
               const jump = (event?: MouseEvent<HTMLElement>) =>
                 onJumpToMatch(thread.id, match.postId, event);
-              // A composed thread has no route: the card activates in place
-              // instead of linking to a page that does not exist.
-              const activation = localThreadIds.has(thread.id)
-                ? { onActivate: jump }
-                : { href: matchHref(thread.id, match.postId), onActivate: jump };
+              const activation = {
+                href: matchHref(thread.id, match.postId),
+                onActivate: jump,
+              };
               return (
                 <Stack key={match.postId ?? "title"} navRow>
                   <Card

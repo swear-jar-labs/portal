@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { messages } from "@/content/messages";
 import { resolveAccount } from "@/features/account/contracts";
-import {
-  getBoardMember,
-  listThreadSummariesByAuthor,
-  type BoardMember,
-} from "@/features/board/contracts";
+import { getBoardMember, listThreadSummariesByAuthor } from "@/features/board/contracts/server";
+import { type BoardMember } from "@/features/board/contracts";
 import { listMemberProjects } from "@/features/projects/contracts";
 import { listReadrooms } from "@/features/readroom/contracts";
 import { OverlayOutlet } from "@/features/shell";

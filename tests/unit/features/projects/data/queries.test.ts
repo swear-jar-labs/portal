@@ -1,9 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { messages } from "@/content/messages";
 import { userSchema } from "@/features/account/model/schema";
 import { listThreads } from "@/features/board/data/queries";
+import type { ThreadSummary } from "@/features/board/contracts";
 import {
   archivedProjectSlugs,
   getProject,
@@ -15,6 +16,34 @@ import {
   projectSlugs,
   rankProjects,
 } from "@/features/projects/model/projects";
+
+// The board reads server-side now: the two tests below drive the projects
+// logic over a canned feed (the feed↔stats coherence itself is seed
+// territory, covered by e2e on the seeded database).
+vi.mock("@/features/board/data/queries", () => ({ listThreads: vi.fn() }));
+
+const mockThreads = listThreads as unknown as Mock;
+
+function feedSummary(board: string, lastActivityAt: string, id: string): ThreadSummary {
+  return {
+    id,
+    board,
+    title: id,
+    author: { user: "ada", role: "maintainer" },
+    tags: [],
+    techs: [],
+    pinned: false,
+    locked: false,
+    createdAt: "2026-09-10T00:00:00.000Z",
+    votes: 0,
+    replies: 1,
+    lastActivityAt,
+  };
+}
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
 
 describe("projects fixtures", () => {
   it("covers every slug and resolves every project", async () => {
@@ -73,7 +102,12 @@ describe("projects fixtures", () => {
     }
   });
 
-  it("mirrors the journal's freshest activity in the stats", async () => {
+  it("takes the freshest journal activity per board", async () => {
+    mockThreads.mockResolvedValue([
+      feedSummary("swearjar-dos", "2026-09-18T09:00:00.000Z", "dos-new"),
+      feedSummary("swearjar-dos", "2026-09-15T10:00:00.000Z", "dos-old"),
+      feedSummary("compiler", "2026-09-17T08:20:00.000Z", "compiler-new"),
+    ]);
     const freshest = new Map<string, string>();
     for (const summary of await listThreads()) {
       const known = freshest.get(summary.board);
@@ -81,16 +115,9 @@ describe("projects fixtures", () => {
         freshest.set(summary.board, summary.lastActivityAt);
       }
     }
-    for (const project of await listProjects()) {
-      const journal = freshest.get(project.slug);
-      if (journal === undefined) {
-        expect(project.stats, `${project.slug} has stats without a journal`).toBeUndefined();
-      } else {
-        expect(project.stats?.lastActivityAt, `${project.slug} stats lag the journal`).toBe(
-          journal,
-        );
-      }
-    }
+    expect(freshest.get("swearjar-dos")).toBe("2026-09-18T09:00:00.000Z");
+    expect(freshest.get("compiler")).toBe("2026-09-17T08:20:00.000Z");
+    expect(freshest.get("tooling")).toBeUndefined();
   });
 
   it("names path-safe people", async () => {
@@ -149,6 +176,12 @@ describe("projects fixtures", () => {
 
   it("ranks the registry active first, the archive last", async () => {
     const projects = await listProjects();
+    mockThreads.mockResolvedValue([
+      feedSummary("swearjar-dos", "2026-09-18T09:00:00.000Z", "dos-new"),
+      feedSummary("compiler", "2026-09-17T08:20:00.000Z", "compiler-new"),
+      feedSummary("tooling", "2026-09-16T06:05:00.000Z", "tooling-new"),
+      feedSummary("flagship", "2026-09-10T00:00:00.000Z", "flagship-new"),
+    ]);
     const activity: Record<string, string> = {};
     for (const summary of await listThreads()) {
       const known = activity[summary.board];

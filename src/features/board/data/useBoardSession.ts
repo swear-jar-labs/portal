@@ -2,13 +2,20 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import {
-  summarizeThread,
   type BoardMember,
   type Thread,
   type ThreadPost,
   type ThreadSummary,
 } from "../model/threads";
 import * as boardStore from "./board-store";
+import * as boardActions from "./board-actions";
+import {
+  commitReply,
+  syncPostDelete,
+  syncPostEdit,
+  syncPostVote,
+  syncThreadVote,
+} from "./thread-mutations";
 import { filterThreads, rankThreads, type FeedQuery } from "../model/feed";
 import { isBlankSearch, searchThreads, type ThreadSearchHit } from "../model/search";
 import {
@@ -35,12 +42,13 @@ export type BoardSessionOptions = {
   viewer?: SearchViewer;
 };
 
-/** The UI-first board's data layer: ranks the feed over the fixture summaries
- * and the session's composed threads, and binds the store's transitions to the
- * open thread. Under a query it searches the session-merged threads instead:
- * the same board/tag filters narrow the corpus first, the current sort still
- * orders the hit threads. Phase 5 replaces the store with server actions,
- * the components do not change. */
+/** The UI-first board's data layer: ranks the feed over the server summaries
+ * and binds the store's transitions to the open thread. Votes, edits and
+ * deletions apply locally first and sync to the server behind the action;
+ * replies and composed threads commit server-first (their ids are real, so
+ * the thread route resolves at once). Under a query it searches the
+ * session-merged threads instead: the same board/tag filters narrow the
+ * corpus first, the current sort still orders the hit threads. */
 export function useBoardSession({
   threads,
   now,
@@ -56,13 +64,20 @@ export function useBoardSession({
     boardStore.boardServerSnapshot,
   );
 
+  // The server's post ids per thread, from the same render's corpus: the
+  // local-activity merge drops confirmed replies the revalidated thread
+  // already includes, so a reply is never counted twice.
+  const serverPostIds = useMemo(() => {
+    const ids = new Map<string, ReadonlySet<string>>();
+    for (const thread of corpus) {
+      ids.set(thread.id, new Set(thread.posts.map((post) => post.id)));
+    }
+    return ids;
+  }, [corpus]);
+
   const summaries = useMemo(
-    () =>
-      boardStore.withLocalActivity(
-        [...state.addedThreads.map(summarizeThread), ...threads],
-        state.threads,
-      ),
-    [state.addedThreads, state.threads, threads],
+    () => boardStore.withLocalActivity(threads, state.threads, serverPostIds),
+    [serverPostIds, state.threads, threads],
   );
 
   // Admin pin/lock overrides land before the votes and the rank: a pinned
@@ -129,14 +144,19 @@ export function useBoardSession({
     );
   }, [hits, now, query, searchActive, withVotes]);
 
+  // Session deltas sync through the shared mutation helper (one
+  // implementation with the overlay provider): votes settle by dropping
+  // the local +1, deletes by dropping the tombstone, edits roll back on
+  // failure. The guest gate lives where the action is bound (the section
+  // stack prompts for logon); the server refuses guests all the same.
   const toggleThreadVote = useCallback((id: string) => {
-    boardStore.toggleThreadVote(id);
+    syncThreadVote(id);
   }, []);
 
   const togglePostVote = useCallback(
     (postId: string) => {
       if (threadId === undefined) return;
-      boardStore.togglePostVote(threadId, postId);
+      syncPostVote(threadId, postId);
     },
     [threadId],
   );
@@ -144,7 +164,7 @@ export function useBoardSession({
   const editPost = useCallback(
     (postId: string, body: string) => {
       if (threadId === undefined) return;
-      boardStore.editPost(threadId, postId, body);
+      syncPostEdit(threadId, postId, body);
     },
     [threadId],
   );
@@ -152,25 +172,29 @@ export function useBoardSession({
   const deletePost = useCallback(
     (postId: string) => {
       if (threadId === undefined) return;
-      boardStore.deletePost(threadId, postId);
+      syncPostDelete(threadId, postId);
     },
     [threadId],
   );
 
-  // Returns the saved post so the caller can notify its mentions: the id is
-  // the event's dedup key (a thread-level id would collapse every reply's
-  // tags into one).
+  // Server-first: the action commits the reply (the id is real) before the
+  // store renders it. Callers notify mentions under the returned id, so a
+  // failed write notifies nothing.
   const addReply = useCallback(
-    (body: string, author: BoardMember, replyTo?: string): ThreadPost | undefined => {
+    async (
+      body: string,
+      author: BoardMember,
+      replyTo?: string,
+    ): Promise<ThreadPost | undefined> => {
       if (threadId === undefined) return undefined;
-      return boardStore.addReply(threadId, body, author, replyTo);
+      return commitReply(threadId, author, body, replyTo);
     },
     [threadId],
   );
 
-  const addThread = useCallback((input: ComposeInput, author: BoardMember): string => {
-    return boardStore.addThread(input, author).id;
-  }, []);
+  // Composed threads commit server-side and return the action outcome: the
+  // caller navigates to the new thread's route from the returned id.
+  const composeThread = useCallback((input: ComposeInput) => boardActions.composeThread(input), []);
 
   // The open thread's pin/lock as the session sees them: the fixture flags
   // with the admin overrides merged in. The toggles flip the effective flag;
@@ -217,6 +241,6 @@ export function useBoardSession({
     togglePin,
     toggleLock,
     addReply,
-    addThread,
+    composeThread,
   };
 }

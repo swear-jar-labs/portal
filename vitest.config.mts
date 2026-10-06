@@ -12,5 +12,8 @@ export default defineConfig({
     environment: "node",
     css: { modules: { classNameStrategy: "non-scoped" } },
     include: ["tests/unit/**/*.test.{ts,tsx}", "src/packages/*/tests/**/*.test.{ts,tsx}"],
+    // Server modules validate env at import while Vitest never loads .env:
+    // the bootstrap provides hermetic fallbacks (real variables win).
+    setupFiles: ["./tests/unit/setup.ts"],
   },
 });

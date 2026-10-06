@@ -1,16 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as store from "@/features/board/data/board-store";
-import type { BoardMember, ThreadSummary } from "@/features/board/model/threads";
-import type { ComposeInput } from "@/features/board/model/schema";
+import type { BoardMember, ThreadPost, ThreadSummary } from "@/features/board/model/threads";
 
 const ada: BoardMember = { user: "ada", role: "maintainer" };
-const COMPOSE_INPUT: ComposeInput = {
-  board: "tooling",
-  tags: ["question"],
-  techs: ["ci"],
-  title: "CI cache",
-  body: "Key the cache by compiler.",
-};
+
+function confirmedPost(
+  id: string,
+  body: string,
+  createdAt = "2026-09-18T10:00:00.000Z",
+  replyTo?: string,
+): ThreadPost {
+  return {
+    id,
+    author: ada,
+    body,
+    ...(replyTo === undefined ? {} : { replyTo }),
+    createdAt,
+    votes: 0,
+  };
+}
 
 beforeEach(() => {
   store.resetBoardStore();
@@ -64,43 +72,26 @@ describe("board store", () => {
     expect(deleted.size).toBe(1);
   });
 
-  it("appends replies to their thread", () => {
-    const post = store.addReply("a", "Canaries first.", ada);
-    store.addReply("b", "And the compiler version.", ada);
+  it("appends server-confirmed posts to their thread", () => {
+    const post = confirmedPost("p-1", "Canaries first.");
+    store.addConfirmedPost("a", post);
+    store.addConfirmedPost("b", confirmedPost("p-2", "And the compiler version."));
     const state = store.boardSnapshot();
-    expect(post).toMatchObject({ author: ada, body: "Canaries first.", votes: 0 });
-    expect(store.threadStateOf(state, "a").addedPosts.map((entry) => entry.id)).toEqual([post.id]);
+    expect(store.threadStateOf(state, "a").addedPosts).toEqual([post]);
     expect(store.threadStateOf(state, "b").addedPosts).toHaveLength(1);
   });
 
-  it("keeps the parent of a reply and leaves it empty without one", () => {
-    const linked = store.addReply("a", "Same here.", ada, "a-1");
-    const root = store.addReply("a", "Standalone.", ada);
-    expect(linked.replyTo).toBe("a-1");
-    expect(root.replyTo).toBeUndefined();
+  it("keeps the confirmed post as given, parent included", () => {
+    const linked = confirmedPost("p-1", "Same here.", "2026-09-18T10:00:00.000Z", "a-1");
+    store.addConfirmedPost("a", linked);
+    expect(store.threadStateOf(store.boardSnapshot(), "a").addedPosts).toEqual([linked]);
   });
 
-  it("composes a thread with one root post", () => {
-    const thread = store.addThread(COMPOSE_INPUT, ada);
-    store.addThread(COMPOSE_INPUT, ada);
-    const state = store.boardSnapshot();
-
-    expect(thread).toMatchObject({
-      board: "tooling",
-      title: "CI cache",
-      pinned: false,
-      locked: false,
-      votes: 0,
-    });
-    expect(thread.posts).toHaveLength(1);
-    expect(thread.posts[0]).toMatchObject({
-      id: `${thread.id}-root`,
-      body: "Key the cache by compiler.",
-    });
-    expect(state.addedThreads).toHaveLength(2);
-    expect(state.addedThreads[0]?.id).toBe(thread.id);
-    // The server snapshot stays the initial one: SSR never sees session state.
-    expect(store.boardServerSnapshot().addedThreads).toEqual([]);
+  it("ignores a confirmed post with a known id", () => {
+    const post = confirmedPost("p-1", "Canaries first.");
+    store.addConfirmedPost("a", post);
+    store.addConfirmedPost("a", { ...post, body: "Changed." });
+    expect(store.threadStateOf(store.boardSnapshot(), "a").addedPosts).toEqual([post]);
   });
 
   it("notifies subscribers on a change and stops after unsubscribe", () => {
@@ -144,8 +135,9 @@ describe("withLocalActivity", () => {
       summary("a", 2, "2026-09-17T00:00:00.000Z"),
       summary("b", 0, "2026-09-16T00:00:00.000Z"),
     ];
-    store.addReply("a", "a-2", ada);
-    const latest = store.addReply("a", "a-3", ada);
+    store.addConfirmedPost("a", confirmedPost("a-2", "second", "2026-09-18T10:00:00.000Z"));
+    const latest = confirmedPost("a-3", "third", "2026-09-18T11:00:00.000Z");
+    store.addConfirmedPost("a", latest);
 
     const [first, second] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
     expect(first).toMatchObject({ replies: 4, lastActivityAt: latest.createdAt });
@@ -155,8 +147,10 @@ describe("withLocalActivity", () => {
 
   it("drops tombstoned fixture and session replies from the count", () => {
     const summaries = [summary("a", 2, "2026-09-17T00:00:00.000Z")];
-    const kept = store.addReply("a", "kept", ada);
-    const dropped = store.addReply("a", "dropped", ada);
+    const kept = confirmedPost("kept", "kept", "2026-09-18T10:00:00.000Z");
+    const dropped = confirmedPost("dropped", "dropped", "2026-09-18T11:00:00.000Z");
+    store.addConfirmedPost("a", kept);
+    store.addConfirmedPost("a", dropped);
     store.deletePost("a", dropped.id);
     store.deletePost("a", "a-1");
 
@@ -171,6 +165,57 @@ describe("withLocalActivity", () => {
 
     const [first] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
     expect(first).toMatchObject({ replies: 0 });
+  });
+
+  it("drops confirmed replies the server already echoes", () => {
+    const summaries = [summary("a", 3, "2026-09-18T12:00:00.000Z")];
+    store.addConfirmedPost("a", confirmedPost("echoed", "echoed", "2026-09-18T12:00:00.000Z"));
+    store.addConfirmedPost("a", confirmedPost("fresh", "fresh", "2026-09-18T13:00:00.000Z"));
+
+    const [echoed] = store.withLocalActivity(
+      summaries,
+      store.boardSnapshot().threads,
+      new Map([["a", new Set(["echoed"])]]),
+    );
+    // The echoed reply stays in the server count only; the fresh one adds.
+    expect(echoed).toMatchObject({ replies: 4, lastActivityAt: "2026-09-18T13:00:00.000Z" });
+
+    const [both] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
+    expect(both).toMatchObject({ replies: 5 });
+  });
+
+  it("keeps the exact summary when every session reply is echoed", () => {
+    const summaries = [summary("a", 3, "2026-09-18T12:00:00.000Z")];
+    store.addConfirmedPost("a", confirmedPost("echoed", "echoed", "2026-09-18T12:00:00.000Z"));
+
+    const [echoed] = store.withLocalActivity(
+      summaries,
+      store.boardSnapshot().threads,
+      store.echoedConfirmedPosts(store.boardSnapshot().threads),
+    );
+    // A fully echoed thread reads the server count untouched: the journal
+    // cards never double a confirmed reply after revalidation.
+    expect(echoed).toBe(summaries[0]);
+  });
+});
+
+describe("echoedConfirmedPosts", () => {
+  it("keys every session post id by thread", () => {
+    store.addConfirmedPost("a", confirmedPost("a-1", "first", "2026-09-18T10:00:00.000Z"));
+    store.addConfirmedPost("a", confirmedPost("a-2", "second", "2026-09-18T11:00:00.000Z"));
+    store.addConfirmedPost("b", confirmedPost("b-1", "other", "2026-09-18T12:00:00.000Z"));
+
+    expect(store.echoedConfirmedPosts(store.boardSnapshot().threads)).toEqual(
+      new Map([
+        ["a", new Set(["a-1", "a-2"])],
+        ["b", new Set(["b-1"])],
+      ]),
+    );
+  });
+
+  it("skips threads without session posts", () => {
+    expect(store.echoedConfirmedPosts(store.boardSnapshot().threads)).toEqual(new Map());
+    expect(store.echoedConfirmedPosts({})).toEqual(new Map());
   });
 });
 

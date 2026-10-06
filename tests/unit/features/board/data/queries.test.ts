@@ -1,134 +1,423 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import type { posts, threads } from "@/db/schema";
 import {
   countThreadsByBoard,
   getBoardMember,
   getThread,
   listRecentThreadSummariesByBoard,
   listThreadSummariesByAuthor,
+  listThreadDocuments,
   listThreads,
+  forumActivitySeed,
 } from "@/features/board/data/queries";
-import { boardIds, tagIds, threadTechIds } from "@/features/board/model/threads";
 
-describe("board fixtures", () => {
-  it("keeps thread ids unique and resolvable", async () => {
-    const threads = await listThreads();
-    const ids = threads.map((thread) => thread.id);
-    expect(new Set(ids).size).toBe(ids.length);
-    for (const id of ids) {
-      expect(await getThread(id), `${id} is not resolvable`).not.toBeNull();
-    }
-    expect(await getThread("no-such-thread")).toBeNull();
+// The database behind the board reads is stubbed: drizzle builders need a
+// live connection to construct, so the suite queues rows per query point and
+// asserts the mapping (uniqueness, counters, tombstones, roles) over them.
+// Real SQL shapes (joins, GROUP BY, DISTINCT ON) are covered by the seeded
+// e2e run instead.
+vi.mock("@/db", () => ({
+  db: {
+    query: {
+      sections: { findFirst: vi.fn() },
+      user: { findFirst: vi.fn() },
+      threads: { findMany: vi.fn() },
+      posts: { findMany: vi.fn(), findFirst: vi.fn() },
+    },
+    select: vi.fn(),
+    selectDistinctOn: vi.fn(),
+  },
+}));
+
+import { db } from "@/db";
+
+// Drizzle builders need a live connection to construct, so the suite drives
+// the queries through untyped stubs: one cast at the seam, while the
+// full-column rows below stay honest against $inferSelect.
+const mockDb = db as unknown as {
+  query: {
+    sections: { findFirst: Mock };
+    user: { findFirst: Mock };
+    threads: { findMany: Mock };
+    posts: { findMany: Mock; findFirst: Mock };
+  };
+  select: Mock;
+  selectDistinctOn: Mock;
+};
+
+type SectionId = { id: string };
+type UserId = { id: string };
+type AuthorRef = {
+  username: string | null;
+  image: string | null;
+  level: string;
+  admin: boolean;
+};
+type PostRow = typeof posts.$inferSelect & { author: AuthorRef };
+type ThreadRow = typeof threads.$inferSelect & {
+  section: { slug: string };
+  author: AuthorRef;
+  posts: PostRow[];
+  threadTags: { tag: { slug: string } }[];
+};
+
+const ADA_ID = "user-ada";
+const GRACE_ID = "user-grace";
+const KEN_ID = "user-ken";
+
+const ADA: AuthorRef = { username: "ada", image: null, level: "member", admin: true };
+const GRACE: AuthorRef = { username: "grace", image: null, level: "member", admin: false };
+const KEN: AuthorRef = {
+  username: "ken",
+  image: "/img/ken.png",
+  level: "participant",
+  admin: false,
+};
+
+const SEC_GENERAL = "sec-general";
+const SEC_ERRATA = "sec-errata";
+
+// Valid v4 uuids: getThread rejects anything else before touching the database.
+const T_PINNED = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+const T_HOT = "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22";
+const T_ERRATA = "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380c33";
+
+const T1_ROOT = "post-t1-root";
+const T1_REPLY_GRACE = "post-t1-reply-grace";
+const T1_REPLY_KEN = "post-t1-reply-ken";
+const T2_ROOT = "post-t2-root";
+const T2_TOMB = "post-t2-tomb";
+const T2_REPLY = "post-t2-reply";
+const T3_ROOT = "post-t3-root";
+
+function postRow(
+  id: string,
+  threadId: string,
+  authorId: string,
+  author: AuthorRef,
+  body: string,
+  createdAt: string,
+  overrides: Partial<typeof posts.$inferSelect> = {},
+): PostRow {
+  return {
+    id,
+    threadId,
+    authorId,
+    replyToId: null,
+    body,
+    createdAt: new Date(createdAt),
+    editedAt: null,
+    deletedAt: null,
+    ...overrides,
+    author,
+  };
+}
+
+function threadRow(
+  id: string,
+  slug: string,
+  authorId: string,
+  author: AuthorRef,
+  title: string,
+  createdAt: string,
+  overrides: {
+    tags?: string[];
+    techs?: string[];
+    pinned?: boolean;
+    locked?: boolean;
+    lastPostAt?: string | null;
+    posts?: PostRow[];
+  } = {},
+): ThreadRow {
+  return {
+    id,
+    sectionId: slug === "general" ? SEC_GENERAL : SEC_ERRATA,
+    projectId: null,
+    authorId,
+    title,
+    techs: overrides.techs ?? [],
+    pinned: overrides.pinned ?? false,
+    locked: overrides.locked ?? false,
+    lastPostAt:
+      overrides.lastPostAt === undefined
+        ? null
+        : overrides.lastPostAt === null
+          ? null
+          : new Date(overrides.lastPostAt),
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(createdAt),
+    deletedAt: null,
+    section: { slug },
+    author,
+    posts: overrides.posts ?? [],
+    threadTags: (overrides.tags ?? []).map((tag) => ({ tag: { slug: tag } })),
+  };
+}
+
+function threadFixtures(): ThreadRow[] {
+  return [
+    threadRow(T_PINNED, "general", ADA_ID, ADA, "Pinned thread", "2026-09-10T12:00:00.000Z", {
+      tags: ["proposal"],
+      techs: ["typescript"],
+      pinned: true,
+      lastPostAt: "2026-09-17T08:20:00.000Z",
+      posts: [
+        postRow(T1_ROOT, T_PINNED, ADA_ID, ADA, "Read this first.", "2026-09-10T12:00:00.000Z"),
+        postRow(
+          T1_REPLY_GRACE,
+          T_PINNED,
+          GRACE_ID,
+          GRACE,
+          "Pinned indeed.",
+          "2026-09-17T08:20:00.000Z",
+        ),
+        postRow(T1_REPLY_KEN, T_PINNED, KEN_ID, KEN, "Noted.", "2026-09-17T09:00:00.000Z"),
+      ],
+    }),
+    threadRow(T_HOT, "general", GRACE_ID, GRACE, "Hot thread", "2026-09-12T10:00:00.000Z", {
+      // Unknown slugs never reach the model: the board speaks its closed
+      // vocabularies, the seed owns the rows.
+      tags: ["question", "bogus"],
+      techs: ["c", "bogus-tech"],
+      lastPostAt: "2026-09-16T10:00:00.000Z",
+      posts: [
+        postRow(T2_ROOT, T_HOT, GRACE_ID, GRACE, "Hot take.", "2026-09-12T10:00:00.000Z"),
+        postRow(T2_TOMB, T_HOT, KEN_ID, KEN, "regret", "2026-09-13T10:00:00.000Z", {
+          deletedAt: new Date("2026-09-14T10:00:00.000Z"),
+        }),
+        postRow(T2_REPLY, T_HOT, ADA_ID, ADA, "Seconded.", "2026-09-16T10:00:00.000Z"),
+      ],
+    }),
+    threadRow(T_ERRATA, "errata", KEN_ID, KEN, "Errata note", "2026-09-14T10:00:00.000Z", {
+      lastPostAt: "2026-09-14T10:00:00.000Z",
+      posts: [
+        postRow(T3_ROOT, T_ERRATA, KEN_ID, KEN, "My mistake, fixed.", "2026-09-14T10:00:00.000Z", {
+          editedAt: new Date("2026-09-15T10:00:00.000Z"),
+        }),
+      ],
+    }),
+  ];
+}
+
+function voteRows(): { targetType: string; targetId: string; total: number }[] {
+  return [
+    { targetType: "thread", targetId: T_PINNED, total: 7 },
+    { targetType: "thread", targetId: T_HOT, total: 12 },
+    { targetType: "post", targetId: T1_ROOT, total: 7 },
+    { targetType: "post", targetId: T1_REPLY_GRACE, total: 3 },
+    { targetType: "post", targetId: T2_ROOT, total: 12 },
+    { targetType: "post", targetId: T2_TOMB, total: 5 },
+    { targetType: "post", targetId: T2_REPLY, total: 1 },
+    { targetType: "post", targetId: T3_ROOT, total: 4 },
+  ];
+}
+
+// Every select/selectDistinctOn link returns the chain; awaiting it resolves
+// the queued rows (the terminal the implementation awaits).
+function queueSelect(value: unknown): void {
+  const chain = {
+    from: () => chain,
+    where: () => chain,
+    orderBy: () => chain,
+    groupBy: () => chain,
+    then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) =>
+      Promise.resolve(value).then(resolve, reject),
+  };
+  mockDb.select.mockReturnValue(chain);
+}
+
+function queueDistinctOn(value: unknown): void {
+  const chain = {
+    from: () => chain,
+    where: () => chain,
+    orderBy: () => chain,
+    then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) =>
+      Promise.resolve(value).then(resolve, reject),
+  };
+  mockDb.selectDistinctOn.mockReturnValue(chain);
+}
+
+function queueThreadList(rows: ThreadRow[]): void {
+  mockDb.query.threads.findMany.mockResolvedValue(rows);
+  queueSelect(voteRows());
+}
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
+describe("board reads over postgres", () => {
+  it("maps summaries with vote counts, roles and avatars", async () => {
+    queueThreadList(threadFixtures());
+    const summaries = new Map((await listThreads()).map((thread) => [thread.id, thread]));
+    expect([...summaries.keys()].sort()).toEqual([T_ERRATA, T_HOT, T_PINNED].sort());
+
+    const pinned = summaries.get(T_PINNED);
+    expect(pinned?.board).toBe("general");
+    expect(pinned?.votes).toBe(7);
+    expect(pinned?.replies).toBe(2);
+    expect(pinned?.lastActivityAt).toBe("2026-09-17T09:00:00.000Z");
+    expect(pinned?.tags).toEqual(["proposal"]);
+    expect(pinned?.techs).toEqual(["typescript"]);
+    expect(pinned?.author).toEqual({ user: "ada", role: "maintainer", avatar: "/avatars/ada.png" });
+
+    // Admins maintain, members contribute, everyone else takes part; the
+    // account image wins over the bundled face (grace keeps her registry one).
+    expect(summaries.get(T_HOT)?.author).toEqual({
+      user: "grace",
+      role: "contributor",
+      avatar: "/avatars/grace.png",
+    });
+    expect(summaries.get(T_ERRATA)?.author).toEqual({
+      user: "ken",
+      role: "member",
+      avatar: "/img/ken.png",
+    });
   });
 
-  it("derives counters and activity from the posts", async () => {
+  it("drops unknown tag and tech slugs at the boundary", async () => {
+    queueThreadList(threadFixtures());
     const summaries = new Map((await listThreads()).map((thread) => [thread.id, thread]));
-    for (const id of summaries.keys()) {
-      const thread = await getThread(id);
-      if (!thread) throw new Error(`${id} disappeared`);
-      const summary = summaries.get(id);
-      if (!summary) throw new Error(`${id} has no summary`);
+    expect(summaries.get(T_HOT)?.tags).toEqual(["question"]);
+    expect(summaries.get(T_HOT)?.techs).toEqual(["c"]);
+  });
 
-      expect(summary.replies).toBe(Math.max(0, thread.posts.length - 1));
-      expect(summary.replies).toBeGreaterThanOrEqual(0);
-      expect(summary.lastActivityAt).toBe(thread.posts.at(-1)?.createdAt ?? thread.createdAt);
-      expect(summary.votes).toBe(thread.votes);
-    }
+  it("tombstones deleted posts without their text", async () => {
+    queueThreadList(threadFixtures().filter((thread) => thread.id === T_HOT));
+    const thread = await getThread(T_HOT);
+    expect(thread?.posts.map((post) => post.id)).toEqual([T2_ROOT, T2_TOMB, T2_REPLY]);
+    const tomb = thread?.posts.find((post) => post.id === T2_TOMB);
+    expect(tomb?.body).toBe("");
+    expect(tomb?.deletedAt).toBe("2026-09-14T10:00:00.000Z");
+    // The tombstone keeps its place but drops out of the reply count.
+    const summaries = new Map((await listThreads()).map((entry) => [entry.id, entry]));
+    expect(summaries.get(T_HOT)?.replies).toBe(1);
+  });
+
+  it("marks server-edited posts", async () => {
+    queueThreadList(threadFixtures().filter((thread) => thread.id === T_ERRATA));
+    const thread = await getThread(T_ERRATA);
+    expect(thread?.posts[0]?.editedAt).toBe("2026-09-15T10:00:00.000Z");
+    expect(thread?.posts[0]?.body).toBe("My mistake, fixed.");
   });
 
   it("keeps posts in chronological order", async () => {
-    for (const id of (await listThreads()).map((thread) => thread.id)) {
-      const thread = await getThread(id);
-      if (!thread) continue;
-      const times = thread.posts.map((post) => Date.parse(post.createdAt));
-      expect(times, `${id} posts are out of order`).toEqual([...times].sort((a, b) => a - b));
-      const created = Date.parse(thread.createdAt);
-      for (const time of times) {
-        expect(time, `${id} has a post before its creation`).toBeGreaterThanOrEqual(created);
-      }
+    queueThreadList(threadFixtures());
+    for (const document of await listThreadDocuments()) {
+      const times = document.posts.map((post) => Date.parse(post.createdAt));
+      expect(times, `${document.id} posts are out of order`).toEqual(
+        [...times].sort((a, b) => a - b),
+      );
     }
   });
 
-  it("keeps every thread on a known board with known tags", async () => {
-    for (const summary of await listThreads()) {
-      expect(boardIds, `${summary.id} has an unknown board`).toContain(summary.board);
-      for (const tag of summary.tags) {
-        expect(tagIds, `${summary.id} has an unknown tag`).toContain(tag);
-      }
-      for (const tech of summary.techs) {
-        expect(threadTechIds, `${summary.id} has an unknown tech`).toContain(tech);
-      }
-      expect(summary.votes).toBeGreaterThanOrEqual(0);
-    }
+  it("reads the whole feed without a limit for the global hot rank", async () => {
+    queueThreadList(threadFixtures());
+    await listThreads();
+    const calls: unknown[][] = mockDb.query.threads.findMany.mock.calls;
+    expect(calls[0]).not.toHaveProperty("limit");
   });
 
-  it("holds the states the feed and the thread page render", async () => {
-    const threads = await listThreads();
-    expect(threads.some((thread) => thread.pinned)).toBe(true);
-    expect(threads.some((thread) => thread.locked)).toBe(true);
+  it("returns null for non-uuid and unknown ids without querying", async () => {
+    queueThreadList(threadFixtures());
+    expect(await getThread("read-first")).toBeNull();
+    expect(mockDb.query.threads.findMany).not.toHaveBeenCalled();
+    mockDb.query.threads.findMany.mockResolvedValue([]);
+    queueSelect([]);
+    expect(await getThread(T_PINNED)).toBeNull();
+  });
+});
 
-    const empty = await getThread("withdrawn-call");
-    expect(empty?.posts).toHaveLength(0);
-
-    // ada (the Google demo user) authors threads: the profile section needs them.
-    expect(threads.some((thread) => thread.author.user === "ada")).toBe(true);
+describe("getBoardMember", () => {
+  it("resolves the member from their first post", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue({ id: ADA_ID } satisfies UserId);
+    const first = postRow(
+      T1_ROOT,
+      T_PINNED,
+      ADA_ID,
+      ADA,
+      "Read this first.",
+      "2026-09-10T12:00:00.000Z",
+    );
+    mockDb.query.posts.findFirst.mockResolvedValue(first);
+    expect(await getBoardMember("ada")).toEqual({
+      user: "ada",
+      role: "maintainer",
+      avatar: "/avatars/ada.png",
+    });
   });
 
-  it("keeps every bundled post image on disk", async () => {
-    for (const id of (await listThreads()).map((thread) => thread.id)) {
-      const thread = await getThread(id);
-      if (!thread) continue;
-      for (const post of thread.posts) {
-        for (const match of post.body.matchAll(/!\[[^\]]*\]\((\/[^)]+)\)/g)) {
-          const src = match[1];
-          if (!src) continue;
-          expect(existsSync(path.join(process.cwd(), "public", src)), `${post.id}: ${src}`).toBe(
-            true,
-          );
-        }
-      }
-    }
-  });
-
-  it("resolves public members from posts and keeps each author's role consistent", async () => {
-    const firstAuthors = new Map<string, { user: string; role: string; avatar?: string }>();
-
-    for (const summary of await listThreads()) {
-      const thread = await getThread(summary.id);
-      if (!thread) throw new Error(`${summary.id} disappeared`);
-      for (const post of thread.posts) {
-        const first = firstAuthors.get(post.author.user);
-        if (first) {
-          expect(post.author.role, `${post.id} changes ${post.author.user}'s role`).toBe(
-            first.role,
-          );
-        } else {
-          firstAuthors.set(post.author.user, post.author);
-        }
-      }
-    }
-
-    expect(await getBoardMember("ada")).toEqual(firstAuthors.get("ada"));
+  it("returns null for handles without rows or posts", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue(null);
     expect(await getBoardMember("nobody")).toBeNull();
+    mockDb.query.user.findFirst.mockResolvedValue({ id: "user-ghost" } satisfies UserId);
+    mockDb.query.posts.findFirst.mockResolvedValue(null);
+    expect(await getBoardMember("ghost")).toBeNull();
   });
 });
 
 describe("listThreadSummariesByAuthor", () => {
-  it("returns the author's threads with the freshest activity first", async () => {
-    const summaries = await listThreadSummariesByAuthor("ada");
-    expect(summaries.map((thread) => thread.id)).toEqual([
-      "ci-cache-poisoning",
-      "read-first",
-      "no-ai-commits",
-    ]);
-    for (const summary of summaries) {
-      expect(summary.author.user).toBe("ada");
-    }
+  it("returns the author's threads", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue({ id: GRACE_ID } satisfies UserId);
+    queueThreadList(threadFixtures().filter((thread) => thread.authorId === GRACE_ID));
+    const summaries = await listThreadSummariesByAuthor("grace");
+    expect(summaries.map((thread) => thread.id)).toEqual([T_HOT]);
   });
 
-  it("returns an empty list for a member without threads", async () => {
+  it("returns an empty list for unknown handles", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue(null);
     expect(await listThreadSummariesByAuthor("nobody")).toEqual([]);
+    expect(mockDb.query.threads.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("forumActivitySeed", () => {
+  it("counts threads and excludes roots and tombstones from replies", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue({ id: KEN_ID } satisfies UserId);
+    mockDb.select.mockReturnValueOnce(
+      ((): unknown => {
+        const chain = {
+          from: () => chain,
+          where: () => chain,
+          then: (resolve: (value: unknown) => void) => resolve([{ total: 1 }]),
+        };
+        return chain;
+      })(),
+    );
+    mockDb.query.posts.findMany.mockResolvedValue([
+      { id: T3_ROOT, threadId: T_ERRATA, createdAt: new Date("2026-09-14T10:00:00.000Z") },
+      { id: T1_REPLY_KEN, threadId: T_PINNED, createdAt: new Date("2026-09-17T09:00:00.000Z") },
+    ]);
+    queueDistinctOn([
+      { threadId: T_ERRATA, createdAt: new Date("2026-09-14T10:00:00.000Z"), id: T3_ROOT },
+      { threadId: T_PINNED, createdAt: new Date("2026-09-10T12:00:00.000Z"), id: T1_ROOT },
+    ]);
+    // T3_ROOT is the errata root (not a reply); the tombstone never surfaces
+    // among the live posts at all.
+    expect(await forumActivitySeed("ken")).toEqual({
+      posts: 1,
+      replies: [{ threadId: T_PINNED, postId: T1_REPLY_KEN }],
+    });
+  });
+
+  it("returns zeros for unknown handles without further queries", async () => {
+    mockDb.query.user.findFirst.mockResolvedValue(null);
+    expect(await forumActivitySeed("nobody")).toEqual({ posts: 0, replies: [] });
+    expect(mockDb.select).not.toHaveBeenCalled();
+  });
+});
+
+describe("countThreadsByBoard", () => {
+  it("counts the full journal independently of its preview", async () => {
+    mockDb.query.sections.findFirst.mockResolvedValue({ id: SEC_GENERAL } satisfies SectionId);
+    queueSelect([{ total: 2 }]);
+    expect(await countThreadsByBoard("swearjar-dos")).toBe(2);
+  });
+
+  it("counts zero boards without threads", async () => {
+    mockDb.query.sections.findFirst.mockResolvedValue(null);
+    expect(await countThreadsByBoard("flagship")).toBe(0);
+    expect(mockDb.select).not.toHaveBeenCalled();
   });
 });
 
@@ -136,28 +425,20 @@ describe("listRecentThreadSummariesByBoard", () => {
   const now = Date.parse("2026-09-20T00:00:00.000Z");
 
   it("returns pinned first, then the freshest, within the limit", async () => {
-    const summaries = await listRecentThreadSummariesByBoard("general", 3, now);
-    expect(summaries.map((thread) => thread.id)).toEqual([
-      "by-hand-ritual",
-      "read-first",
-      "heap-postmortem",
-    ]);
-  });
-
-  it("reads a project journal in freshness order", async () => {
-    const summaries = await listRecentThreadSummariesByBoard("swearjar-dos", 3, now);
-    expect(summaries.map((thread) => thread.id)).toEqual(["swearjar-boot", "swearjar-palette"]);
+    mockDb.query.sections.findFirst.mockResolvedValue({ id: SEC_GENERAL } satisfies SectionId);
+    const rows = threadFixtures().filter((thread) => thread.section.slug === "general");
+    queueThreadList(rows);
+    const summaries = await listRecentThreadSummariesByBoard("general", 2, now);
+    expect(summaries.map((thread) => thread.id)).toEqual([T_PINNED, T_HOT]);
   });
 
   it("returns an empty journal for a board without threads", async () => {
+    mockDb.query.sections.findFirst.mockResolvedValue(null);
     expect(await listRecentThreadSummariesByBoard("flagship", 3, now)).toEqual([]);
   });
-});
 
-describe("countThreadsByBoard", () => {
-  it("counts the full journal independently of its preview", async () => {
-    expect(await countThreadsByBoard("swearjar-dos")).toBe(2);
-    expect(await countThreadsByBoard("compiler")).toBe(1);
-    expect(await countThreadsByBoard("flagship")).toBe(0);
+  it("short-circuits a zero limit without querying", async () => {
+    expect(await listRecentThreadSummariesByBoard("general", 0, now)).toEqual([]);
+    expect(mockDb.query.sections.findFirst).not.toHaveBeenCalled();
   });
 });

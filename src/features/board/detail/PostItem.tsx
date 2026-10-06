@@ -23,7 +23,6 @@ import { useShellSession } from "@/features/shell";
 import { formatAge, tagTones, threadPath, type Thread, type ThreadPost } from "../model/threads";
 import { postElementId, postHash } from "../model/post-anchor";
 import { replySchema } from "../model/schema";
-import { isLocalThreadId } from "../data/board-store";
 import type { ReplyTarget } from "../data/thread-actions";
 import { VoteButton } from "../list/VoteButton";
 import styles from "../board.module.css";
@@ -108,7 +107,6 @@ export function PostItem({
     href: `${threadPath(thread.id)}${postHash(post.id)}`,
     ...(root ? { rootThreadId: thread.id } : {}),
     initialBody: editedBody ?? post.body,
-    ...(isLocalThreadId(thread.id) ? { localBody: editedBody ?? post.body } : {}),
   };
   const caseBody = moderation.reports.find(
     (report) => targetKey(report.target) === targetKey(target),
@@ -199,7 +197,12 @@ export function PostItem({
   }
 
   const meta = [messages.board.roles[post.author.role], formatAge(post.createdAt, now)];
-  if (!deleted && (editedBody !== undefined || (caseBody?.currentRevision ?? 1) > 1))
+  if (
+    !deleted &&
+    (editedBody !== undefined ||
+      post.editedAt !== undefined ||
+      (caseBody?.currentRevision ?? 1) > 1)
+  )
     meta.push(messages.board.post.edited);
 
   const content = deleted ? (

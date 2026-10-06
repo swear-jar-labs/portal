@@ -158,7 +158,7 @@ type ThreadListOptions = {
 // model. Soft-deleted threads never surface; their route id resolves to
 // null (the thread page answers notFound, as for unknown ids).
 async function loadThreads(options: ThreadListOptions = {}): Promise<Thread[]> {
-  const rows = (await db.query.threads.findMany({
+  const rows = await db.query.threads.findMany({
     where: and(isNull(threads.deletedAt), options.where),
     with: {
       section: { columns: { slug: true } },
@@ -173,7 +173,7 @@ async function loadThreads(options: ThreadListOptions = {}): Promise<Thread[]> {
     },
     ...(options.orderBy === undefined ? {} : { orderBy: options.orderBy }),
     ...(options.limit === undefined ? {} : { limit: options.limit }),
-  })) as ThreadRow[];
+  });
   if (rows.length === 0) return [];
   const counts = await loadVoteCounts([
     ...rows.map((row) => row.id),
@@ -215,8 +215,11 @@ function activityOrder() {
 }
 
 export async function listThreads(): Promise<ThreadSummary[]> {
-  // The feed ranks globally in memory (hot needs every thread), so the read
-  // stays unpaginated; journals and profiles below page in SQL instead.
+  // Deliberately unpaginated: the feed ranks globally in memory, and hot
+  // needs every thread — any SQL window would corrupt the rank. Journals
+  // and profiles (bounded surfaces) page in SQL instead. Revisit with a
+  // cursor feed when the corpus outgrows one fetch; the no-limit unit below
+  // pins the contract until then.
   const loaded = await loadThreads({ orderBy: [asc(threads.createdAt), asc(threads.id)] });
   return loaded.map(toSummary);
 }

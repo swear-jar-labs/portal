@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Stack } from "@swearjar/dos";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import * as boardStore from "../data/board-store";
+import { syncThreadVote } from "../data/thread-mutations";
 import {
   FEED_PATH,
   threadPath,
@@ -24,11 +25,10 @@ export type JournalRowsProps = {
 };
 
 /** One board's journal as the board's own cards: the same ThreadCard the feed
- * renders, over the session store directly (no feed query to fake) — votes and
- * session replies overlay the fixtures, so the journal reads what the board
- * reads. Threads composed in this session have no route yet, so the journal
- * skips them (the board opens them in place); tag filtering stays global, as
- * on the board. */
+ * renders, over the session store directly (no feed query to fake) — votes
+ * overlay the server summaries through the shared mutation sync, so the
+ * journal reads what the board reads. Tag filtering stays global, as on
+ * the board. */
 export function JournalRows({ board, threads, now }: JournalRowsProps) {
   const router = useRouter();
   const pushOverlay = useOverlayPush();
@@ -82,7 +82,7 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
             now={now}
             voted={state.votedThreads.has(thread.id)}
             onActivate={(event) => activateThread(thread.id, event)}
-            onVote={() => gate(() => boardStore.toggleThreadVote(thread.id))}
+            onVote={() => gate(() => syncThreadVote(thread.id))}
             onFilterTag={filterTag}
             onFilterTech={filterTech}
           />

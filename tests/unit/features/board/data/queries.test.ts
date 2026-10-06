@@ -311,6 +311,13 @@ describe("board reads over postgres", () => {
     }
   });
 
+  it("reads the whole feed without a limit for the global hot rank", async () => {
+    queueThreadList(threadFixtures());
+    await listThreads();
+    const calls: unknown[][] = mockDb.query.threads.findMany.mock.calls;
+    expect(calls[0]).not.toHaveProperty("limit");
+  });
+
   it("returns null for non-uuid and unknown ids without querying", async () => {
     queueThreadList(threadFixtures());
     expect(await getThread("read-first")).toBeNull();

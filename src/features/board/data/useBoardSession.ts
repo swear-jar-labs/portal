@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import {
-  summarizeThread,
   type BoardMember,
   type Thread,
   type ThreadPost,
@@ -10,6 +9,13 @@ import {
 } from "../model/threads";
 import * as boardStore from "./board-store";
 import * as boardActions from "./board-actions";
+import {
+  commitReply,
+  syncPostDelete,
+  syncPostEdit,
+  syncPostVote,
+  syncThreadVote,
+} from "./thread-mutations";
 import { filterThreads, rankThreads, type FeedQuery } from "../model/feed";
 import { isBlankSearch, searchThreads, type ThreadSearchHit } from "../model/search";
 import {
@@ -58,13 +64,20 @@ export function useBoardSession({
     boardStore.boardServerSnapshot,
   );
 
+  // The server's post ids per thread, from the same render's corpus: the
+  // local-activity merge drops confirmed replies the revalidated thread
+  // already includes, so a reply is never counted twice.
+  const serverPostIds = useMemo(() => {
+    const ids = new Map<string, ReadonlySet<string>>();
+    for (const thread of corpus) {
+      ids.set(thread.id, new Set(thread.posts.map((post) => post.id)));
+    }
+    return ids;
+  }, [corpus]);
+
   const summaries = useMemo(
-    () =>
-      boardStore.withLocalActivity(
-        [...state.addedThreads.map(summarizeThread), ...threads],
-        state.threads,
-      ),
-    [state.addedThreads, state.threads, threads],
+    () => boardStore.withLocalActivity(threads, state.threads, serverPostIds),
+    [serverPostIds, state.threads, threads],
   );
 
   // Admin pin/lock overrides land before the votes and the rank: a pinned
@@ -131,29 +144,19 @@ export function useBoardSession({
     );
   }, [hits, now, query, searchActive, withVotes]);
 
-  // Optimistic session deltas with a server sync behind them: the local
-  // toggle shows at once, a failed write rolls back and warns (the next
-  // refresh heals either way). The guest gate lives where the action is
-  // bound (the section stack prompts for logon); the server refuses guests
-  // all the same.
+  // Session deltas sync through the shared mutation helper (one
+  // implementation with the overlay provider): votes settle by dropping
+  // the local +1, deletes by dropping the tombstone, edits roll back on
+  // failure. The guest gate lives where the action is bound (the section
+  // stack prompts for logon); the server refuses guests all the same.
   const toggleThreadVote = useCallback((id: string) => {
-    boardStore.toggleThreadVote(id);
-    void boardActions.toggleThreadVote(id).then((result) => {
-      if (result.ok) return;
-      boardStore.toggleThreadVote(id);
-      console.warn("[board] thread vote not saved", result.error);
-    });
+    syncThreadVote(id);
   }, []);
 
   const togglePostVote = useCallback(
     (postId: string) => {
       if (threadId === undefined) return;
-      boardStore.togglePostVote(threadId, postId);
-      void boardActions.togglePostVote(postId).then((result) => {
-        if (result.ok) return;
-        boardStore.togglePostVote(threadId, postId);
-        console.warn("[board] post vote not saved", result.error);
-      });
+      syncPostVote(threadId, postId);
     },
     [threadId],
   );
@@ -161,10 +164,7 @@ export function useBoardSession({
   const editPost = useCallback(
     (postId: string, body: string) => {
       if (threadId === undefined) return;
-      boardStore.editPost(threadId, postId, body);
-      void boardActions.editPost(postId, { body }).then((result) => {
-        if (!result.ok) console.warn("[board] edit not saved", result.error);
-      });
+      syncPostEdit(threadId, postId, body);
     },
     [threadId],
   );
@@ -172,10 +172,7 @@ export function useBoardSession({
   const deletePost = useCallback(
     (postId: string) => {
       if (threadId === undefined) return;
-      boardStore.deletePost(threadId, postId);
-      void boardActions.deletePost(postId).then((result) => {
-        if (!result.ok) console.warn("[board] delete not saved", result.error);
-      });
+      syncPostDelete(threadId, postId);
     },
     [threadId],
   );
@@ -190,24 +187,7 @@ export function useBoardSession({
       replyTo?: string,
     ): Promise<ThreadPost | undefined> => {
       if (threadId === undefined) return undefined;
-      const result = await boardActions.replyToThread(threadId, {
-        body,
-        ...(replyTo === undefined ? {} : { replyTo }),
-      });
-      if (!result.ok) {
-        console.warn("[board] reply not saved", result.error);
-        return undefined;
-      }
-      const post: ThreadPost = {
-        id: result.id,
-        author,
-        body,
-        ...(replyTo === undefined ? {} : { replyTo }),
-        createdAt: result.createdAt ?? new Date().toISOString(),
-        votes: 0,
-      };
-      boardStore.addConfirmedPost(threadId, post);
-      return post;
+      return commitReply(threadId, author, body, replyTo);
     },
     [threadId],
   );

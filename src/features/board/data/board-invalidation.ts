@@ -1,15 +1,11 @@
 import { FEED_PATH, threadPath } from "../model/threads";
 
-// Slice-owned cache identity (backend-board; the epic's named-tag rule):
-// the feed tag covers every list read, the thread tag one open thread.
-// Queries stay plain async functions (no cacheTag — unit tests run outside
-// the Next runtime), so revalidation heals through tags and paths alike.
-export const BOARD_FEED_TAG = "board-feed";
-
-export const boardThreadTag = (threadId: string): string => `board-thread-${threadId}`;
-
-// Every board mutation kind, closed: the completeness test below pins that
-// each one declares its invalidation (no silent mutations).
+// Slice-owned invalidation identity (backend-board; the epic's named-tag
+// rule): one plan per mutation kind, as a Record (never a conditional).
+// Deliberately paths-only: tag invalidation (updateTag) is a no-op without
+// cacheTag subscribers, and the reads are plain async functions — they run
+// in unit tests outside the Next runtime, where cached reads cannot live.
+// Revisit with tag names when the reads become 'use cache' functions.
 export const BOARD_MUTATION_KINDS = [
   "compose",
   "reply",
@@ -39,7 +35,6 @@ export type BoardActionResult =
 export type BoardInvalidationTarget = { threadId: string };
 
 export type BoardInvalidationPlan = {
-  tags: string[];
   // Page paths revalidate their segment; the layout root heals the shell
   // chrome that reads the board (the jar counter in the root layout).
   // Separate lists, so the wrapper applies them without dispatch.
@@ -54,14 +49,13 @@ const LAYOUT_ROOT_PATH = "/";
 // route the same way — it resolves immediately after the action commits.
 function feedInvalidation(threadId: string): BoardInvalidationPlan {
   return {
-    tags: [BOARD_FEED_TAG, boardThreadTag(threadId)],
     paths: [FEED_PATH, threadPath(threadId)],
     layoutPaths: [LAYOUT_ROOT_PATH],
   };
 }
 
-// Entity → tags/paths, as a Record (never a conditional): adding a mutation
-// kind without an entry fails the typecheck, shipping one without tags
+// Entity → paths, as a Record (never a conditional): adding a mutation
+// kind without an entry fails the typecheck, shipping one without paths
 // fails the completeness test.
 export const BOARD_INVALIDATION: Record<
   BoardMutationKind,

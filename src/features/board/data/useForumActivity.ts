@@ -18,7 +18,7 @@ export function useForumActivity(
   const state = useSyncExternalStore(subscribeBoard, boardSnapshot, boardServerSnapshot);
   return {
     ...forumActivityCounts(user, seed, state),
-    localThreads: localForumThreads(user, state),
+    localThreads: localForumThreads(),
     threads: withLocalActivity(fixtureThreads, state.threads),
   };
 }

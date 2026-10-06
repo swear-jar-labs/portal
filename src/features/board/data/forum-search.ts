@@ -53,7 +53,6 @@ export function resolveSearchVisibility(
     for (const post of thread.posts) considerPost(post.id, post.author.user);
   };
   for (const thread of corpus) considerThread(thread);
-  for (const thread of board.addedThreads) considerThread(thread);
   for (const local of Object.values(board.threads)) {
     for (const post of local.addedPosts) considerPost(post.id, post.author.user);
   }
@@ -76,8 +75,12 @@ function livePosts(
   const kept = posts.filter(
     (post) => !deleted.has(post.id) && !visibility.hiddenPostIds.has(post.id),
   );
+  const keptIds = new Set(kept.map((post) => post.id));
   const added = (local?.addedPosts ?? []).filter(
-    (post) => !deleted.has(post.id) && !visibility.hiddenPostIds.has(post.id),
+    (post) =>
+      // A confirmed reply the server already echoes reads from the stored
+      // row, never twice.
+      !keptIds.has(post.id) && !deleted.has(post.id) && !visibility.hiddenPostIds.has(post.id),
   );
   return [...kept, ...added].map((post) => ({ ...post, body: liveBody(post, edits) }));
 }
@@ -95,11 +98,11 @@ export type ForumSearchDocument = {
   posts: { id: string; body: string; createdAt: string; author: string; role: BoardRoleId }[];
 };
 
-/** The search corpus for one render: fixture threads plus the session's
- * composed threads, replies, edits and deletions merged in; hidden threads
- * and posts (moderation) and tombstones removed before matching. Author
- * names stay live values read at render, so a future anonymization
- * (task 10) flows through without a snapshot to refresh. */
+/** The search corpus for one render: server threads with the session's
+ * replies, edits and deletions merged in; hidden threads and posts
+ * (moderation) and tombstones removed before matching. Author names stay
+ * live values read at render, so a future anonymization (task 10) flows
+ * through without a snapshot to refresh. */
 export function effectiveSearchThreads(
   corpus: readonly Thread[],
   state: BoardState,
@@ -123,8 +126,5 @@ export function effectiveSearchThreads(
   const fixture = corpus
     .filter((thread) => !visibility.hiddenThreadIds.has(thread.id))
     .map(toDocument);
-  const composed = state.addedThreads
-    .filter((thread) => !visibility.hiddenThreadIds.has(thread.id))
-    .map(toDocument);
-  return [...composed, ...fixture];
+  return fixture;
 }

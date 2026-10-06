@@ -75,10 +75,6 @@ export function BoardFallback() {
   return <ShellPanel title={fileTitle("FORUM")}>{null}</ShellPanel>;
 }
 
-// Composed threads commit server-side with a real route, so the feed holds
-// no session threads anymore; the panel prop stays (owned by the feed).
-const EMPTY_THREAD_IDS: ReadonlySet<string> = new Set();
-
 export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }: BoardStackProps) {
   const moderation = useModeration();
   const router = useRouter();
@@ -445,7 +441,6 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
             query={query}
             currentThreadId={activeThreadId}
             votedThreadIds={state.votedThreads}
-            localThreadIds={EMPTY_THREAD_IDS}
             searchHits={searchHits}
             onQueryChange={applyQuery}
             onActivateThread={activateThread}

@@ -26,9 +26,6 @@ export type ThreadCardProps = {
   now: string;
   current?: boolean;
   voted: boolean;
-  // A thread composed in this session has no route: its card activates in
-  // place instead of linking to a page that does not exist.
-  local?: boolean;
   onActivate: (event?: MouseEvent<HTMLElement>) => void;
   onVote: () => void;
   onFilterTag: (tag: TagId) => void;
@@ -40,7 +37,6 @@ export function ThreadCard({
   now,
   current = false,
   voted,
-  local = false,
   onActivate,
   onVote,
   onFilterTag,
@@ -52,9 +48,9 @@ export function ThreadCard({
     isThreadHidden(moderation, thread.id) &&
     !session?.admin &&
     session?.user !== thread.author.user;
-  // A composed thread has no route: the card activates in place (the title is a
-  // button, so a context menu or drag cannot open a page that does not exist).
-  const activation = local ? { onActivate } : { href: threadPath(thread.id), onActivate };
+  // Every thread has a route now that composed threads commit server-side:
+  // the title links, the card activates through it.
+  const activation = { href: threadPath(thread.id), onActivate };
 
   return (
     <Card

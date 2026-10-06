@@ -9,7 +9,13 @@ import {
 } from "@/features/inbox/contracts";
 import { avatarFor } from "@/shared/members";
 import * as boardStore from "../data/board-store";
-import * as boardActions from "../data/board-actions";
+import {
+  commitReply,
+  syncPostDelete,
+  syncPostEdit,
+  syncPostVote,
+  syncThreadVote,
+} from "../data/thread-mutations";
 import { boardTitle, threadPath, type BoardId } from "../model/threads";
 import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
 
@@ -91,37 +97,13 @@ export function ThreadOverlayActions({
       pinned: pinnedNow,
       locked: lockedNow,
       canModerate: admin,
-      onToggleThreadVote: () =>
-        gate(() => {
-          boardStore.toggleThreadVote(threadId);
-          void boardActions.toggleThreadVote(threadId).then((result) => {
-            if (result.ok) return;
-            boardStore.toggleThreadVote(threadId);
-            console.warn("[board] thread vote not saved", result.error);
-          });
-        }),
-      onTogglePostVote: (postId) =>
-        gate(() => {
-          boardStore.togglePostVote(threadId, postId);
-          void boardActions.togglePostVote(postId).then((result) => {
-            if (result.ok) return;
-            boardStore.togglePostVote(threadId, postId);
-            console.warn("[board] post vote not saved", result.error);
-          });
-        }),
+      onToggleThreadVote: () => gate(() => syncThreadVote(threadId)),
+      onTogglePostVote: (postId) => gate(() => syncPostVote(threadId, postId)),
       onEditPost: (postId, body) => {
-        boardStore.editPost(threadId, postId, body);
-        void boardActions.editPost(postId, { body }).then((result) => {
-          if (!result.ok) console.warn("[board] edit not saved", result.error);
-        });
+        syncPostEdit(threadId, postId, body);
         notify(postId, body);
       },
-      onDeletePost: (postId) => {
-        boardStore.deletePost(threadId, postId);
-        void boardActions.deletePost(postId).then((result) => {
-          if (!result.ok) console.warn("[board] delete not saved", result.error);
-        });
-      },
+      onDeletePost: (postId) => syncPostDelete(threadId, postId),
       onTogglePin: () => {
         if (!admin) return;
         boardStore.setThreadFlag(threadId, "pinned", !pinnedNow);
@@ -133,24 +115,8 @@ export function ThreadOverlayActions({
       onReply: (body, replyTo) => {
         if (author === null) return;
         const authorNow = author;
-        void (async () => {
-          const result = await boardActions.replyToThread(threadId, {
-            body,
-            ...(replyTo === undefined ? {} : { replyTo }),
-          });
-          if (!result.ok) {
-            console.warn("[board] reply not saved", result.error);
-            return;
-          }
-          const post = {
-            id: result.id,
-            author: authorNow,
-            body,
-            ...(replyTo === undefined ? {} : { replyTo }),
-            createdAt: result.createdAt ?? new Date().toISOString(),
-            votes: 0,
-          };
-          boardStore.addConfirmedPost(threadId, post);
+        void commitReply(threadId, authorNow, body, replyTo).then((post) => {
+          if (post === undefined) return;
           notify(post.id, body);
           const sessionParent = boardStore
             .boardSnapshot()
@@ -169,7 +135,7 @@ export function ThreadOverlayActions({
             at,
           }))
             enqueueInboxEvent(delivery.user, delivery.event);
-        })();
+        });
       },
     };
   }, [

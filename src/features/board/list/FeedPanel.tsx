@@ -48,8 +48,6 @@ export type FeedPanelProps = {
   query: FeedQuery;
   currentThreadId?: string;
   votedThreadIds: ReadonlySet<string>;
-  // Session-composed threads: their cards activate in place, without a link.
-  localThreadIds: ReadonlySet<string>;
   // Grouped matches by thread id under an active query, empty otherwise.
   searchHits: ReadonlyMap<string, ThreadSearchHit>;
   onQueryChange: (patch: Partial<FeedQuery>) => void;
@@ -70,7 +68,6 @@ export function FeedPanel({
   query,
   currentThreadId,
   votedThreadIds,
-  localThreadIds,
   searchHits,
   onQueryChange,
   onActivateThread,
@@ -281,7 +278,6 @@ export function FeedPanel({
           now={now}
           hits={searchHits}
           currentThreadId={currentThreadId}
-          localThreadIds={localThreadIds}
           onJumpToMatch={onJumpToMatch}
         />
       ) : (
@@ -293,7 +289,6 @@ export function FeedPanel({
                 now={now}
                 current={thread.id === currentThreadId}
                 voted={votedThreadIds.has(thread.id)}
-                local={localThreadIds.has(thread.id)}
                 onActivate={(event) => onActivateThread(thread.id, event)}
                 onVote={() => onVoteThread(thread.id)}
                 onFilterTag={toggleTag}

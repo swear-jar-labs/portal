@@ -37,7 +37,6 @@ function conversation(id: string, posts: ThreadPost[]): Thread {
 function boardState(overrides: Partial<BoardState> = {}): BoardState {
   return {
     votedThreads: new Set(),
-    addedThreads: [],
     threads: {},
     flags: {},
     ...overrides,
@@ -87,9 +86,8 @@ function moderationWith(options: {
 describe("effectiveSearchThreads", () => {
   const corpus = [conversation("t1", [post("p1", "heap corruption"), post("p2", "cache keys")])];
 
-  it("merges composed threads, replies, edits and deletions", () => {
+  it("merges session replies, edits and deletions", () => {
     const state = boardState({
-      addedThreads: [conversation("local-1", [post("local-1-root", "fresh heap notes", "grace")])],
       threads: {
         t1: {
           votedPosts: new Set(),
@@ -100,7 +98,7 @@ describe("effectiveSearchThreads", () => {
       },
     });
     const documents = effectiveSearchThreads(corpus, state);
-    expect(documents.map((entry) => entry.id)).toEqual(["local-1", "t1"]);
+    expect(documents.map((entry) => entry.id)).toEqual(["t1"]);
     const t1 = documents.find((entry) => entry.id === "t1");
     expect(t1?.posts.map((entry) => entry.id)).toEqual(["p1", "r1"]);
     expect(t1?.posts.find((entry) => entry.id === "p1")?.body).toBe("heap corruption, revised");

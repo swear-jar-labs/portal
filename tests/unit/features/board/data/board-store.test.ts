@@ -92,9 +92,6 @@ describe("board store", () => {
     store.addConfirmedPost("a", post);
     store.addConfirmedPost("a", { ...post, body: "Changed." });
     expect(store.threadStateOf(store.boardSnapshot(), "a").addedPosts).toEqual([post]);
-    // Composed threads live server-side now: the session holds no threads.
-    expect(store.boardSnapshot().addedThreads).toEqual([]);
-    expect(store.boardServerSnapshot().addedThreads).toEqual([]);
   });
 
   it("notifies subscribers on a change and stops after unsubscribe", () => {
@@ -168,6 +165,23 @@ describe("withLocalActivity", () => {
 
     const [first] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
     expect(first).toMatchObject({ replies: 0 });
+  });
+
+  it("drops confirmed replies the server already echoes", () => {
+    const summaries = [summary("a", 3, "2026-09-18T12:00:00.000Z")];
+    store.addConfirmedPost("a", confirmedPost("echoed", "echoed", "2026-09-18T12:00:00.000Z"));
+    store.addConfirmedPost("a", confirmedPost("fresh", "fresh", "2026-09-18T13:00:00.000Z"));
+
+    const [echoed] = store.withLocalActivity(
+      summaries,
+      store.boardSnapshot().threads,
+      new Map([["a", new Set(["echoed"])]]),
+    );
+    // The echoed reply stays in the server count only; the fresh one adds.
+    expect(echoed).toMatchObject({ replies: 4, lastActivityAt: "2026-09-18T13:00:00.000Z" });
+
+    const [both] = store.withLocalActivity(summaries, store.boardSnapshot().threads);
+    expect(both).toMatchObject({ replies: 5 });
   });
 });
 

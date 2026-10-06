@@ -34,9 +34,15 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   const { state } = actions;
   const [replyTargetId, setReplyTargetId] = useState<string | undefined>();
 
+  // Server posts first, session replies after — minus the confirmed ones
+  // the revalidated thread already echoes by id, so a reply never renders
+  // twice.
+  const serverIds = new Set(thread.posts.map((post) => post.id));
   const posts = [
     ...thread.posts.map((post) => ({ post, body: bodies[post.id] })),
-    ...state.addedPosts.map((post) => ({ post, body: undefined })),
+    ...state.addedPosts
+      .filter((post) => !serverIds.has(post.id))
+      .map((post) => ({ post, body: undefined })),
   ];
 
   // The marker and the chip quote the parent as it stands now: a session edit

@@ -7,11 +7,11 @@ export type ForumActivitySeed = {
 
 export type ForumActivityCounts = { posts: number; replies: number };
 
-export function localForumThreads(user: string, state: BoardState) {
-  return state.addedThreads
-    .filter((thread) => thread.author.user === user)
-    .map(({ id, title }) => ({ id, title }))
-    .reverse();
+export function localForumThreads(): { id: string; title: string }[] {
+  // Composed threads commit server-side now (their authors arrive through
+  // the seed), so the session tracks none. The shape stays for the
+  // profile's forum section, which reads it through useForumActivity.
+  return [];
 }
 
 /** Fixture contributions plus live session changes; a deleted reply drops from the count. */
@@ -20,8 +20,7 @@ export function forumActivityCounts(
   seed: ForumActivitySeed,
   state: BoardState,
 ): ForumActivityCounts {
-  const posts =
-    seed.posts + state.addedThreads.filter((thread) => thread.author.user === user).length;
+  const posts = seed.posts;
   const fixtureReplies = seed.replies.filter(
     ({ threadId, postId }) => !state.threads[threadId]?.deletedPosts.has(postId),
   ).length;

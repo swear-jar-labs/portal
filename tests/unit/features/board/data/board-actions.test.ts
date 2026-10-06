@@ -2,34 +2,34 @@ import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { posts, threads, threadTags } from "@/db/schema";
 import {
   composeRecord,
-  composeThread,
-  deletePost,
   deleteRecord,
-  editPost,
   editRecord,
   replyRecord,
+  voteRecord,
+  type BoardTx,
+} from "@/features/board/data/board-records";
+import {
+  composeThread,
+  deletePost,
+  editPost,
   replyToThread,
   togglePostVote,
   toggleThreadVote,
-  voteRecord,
-  type BoardTx,
 } from "@/features/board/data/board-actions";
-import { BOARD_FEED_TAG, boardThreadTag } from "@/features/board/data/board-invalidation";
 import type { ComposeInput } from "@/features/board/model/schema";
 
 // Actions run against stub transaction clients and mocked gates: no
 // database, no session. The stubs assert the gates (guest/author), the
 // tombstone write, and the vote toggle direction.
 vi.mock("@/db", () => ({ db: { transaction: vi.fn() } }));
-vi.mock("next/cache", () => ({ updateTag: vi.fn(), revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/features/account/contracts", () => ({ getActorSession: vi.fn() }));
 
 import { db } from "@/db";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { getActorSession } from "@/features/account/contracts";
 
 const mockTransaction = db.transaction as unknown as Mock;
-const mockTag = updateTag as unknown as Mock;
 const mockPath = revalidatePath as unknown as Mock;
 const mockSession = getActorSession as unknown as Mock;
 
@@ -288,7 +288,6 @@ describe("action gates", () => {
     ]);
     for (const result of results) expect(result).toEqual({ ok: false, error: "login-required" });
     expect(mockTransaction).not.toHaveBeenCalled();
-    expect(mockTag).not.toHaveBeenCalled();
     expect(mockPath).not.toHaveBeenCalled();
   });
 
@@ -305,12 +304,10 @@ describe("action gates", () => {
     expect(mockTransaction).not.toHaveBeenCalled();
   });
 
-  it("heals tags and paths after a successful compose", async () => {
+  it("heals paths after a successful compose", async () => {
     queueSuccess();
     const result = await composeThread(COMPOSE_INPUT);
     expect(result).toMatchObject({ ok: true, id: THREAD_ID });
-    expect(mockTag).toHaveBeenCalledWith(BOARD_FEED_TAG);
-    expect(mockTag).toHaveBeenCalledWith(boardThreadTag(THREAD_ID));
     expect(mockPath).toHaveBeenCalledWith("/forum");
     expect(mockPath).toHaveBeenCalledWith(`/forum/${THREAD_ID}`);
     expect(mockPath).toHaveBeenCalledWith("/", "layout");
@@ -325,7 +322,6 @@ describe("action gates", () => {
       ok: false,
       error: "missing",
     });
-    expect(mockTag).not.toHaveBeenCalled();
     expect(mockPath).not.toHaveBeenCalled();
   });
 });

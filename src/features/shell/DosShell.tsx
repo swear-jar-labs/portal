@@ -281,7 +281,13 @@ export function DosShell({
 
   const handleLogoff = useCallback(() => {
     setWelcomeEligible(false);
-    void logoff().then(() => router.push(HOME_PATH));
+    // The session cookie dies in the action; the push alone may serve the
+    // member shell from the router cache (the root layout holds the session
+    // prop), so refresh behind it like the logon forms do.
+    void logoff().then(() => {
+      router.push(HOME_PATH);
+      router.refresh();
+    });
   }, [logoff, router]);
 
   const run = useCommandRunner({

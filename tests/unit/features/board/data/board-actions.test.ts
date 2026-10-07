@@ -131,28 +131,42 @@ beforeEach(() => {
 
 describe("composeRecord", () => {
   it("commits the thread, its root post and its tags, and returns the id", async () => {
-    const { tx, calls } = stubTx({ tagRows: [tagRow("tag-proposal")] });
+    const { tx, calls } = stubTx({ tagRows: [tagRow("tag-proposal"), tagRow("tag-typescript")] });
     const outcome = await composeRecord(tx, "ada", COMPOSE_INPUT);
     expect(outcome).toEqual({ result: { ok: true, id: THREAD_ID }, threadId: THREAD_ID });
     const threadInsert = calls.find((call) => call.table === "threads");
-    expect(threadInsert?.values).toMatchObject({ title: "A new thread", techs: ["typescript"] });
+    expect(threadInsert?.values).toMatchObject({ title: "A new thread" });
+    expect(threadInsert?.values).not.toHaveProperty("techs");
     expect(calls.some((call) => call.table === "posts")).toBe(true);
-    expect(calls.some((call) => call.table === "thread_tags")).toBe(true);
+    // Statuses and techs share the join: one row per requested slug.
+    const tagInsert = calls.find((call) => call.table === "thread_tags");
+    expect(tagInsert?.values).toEqual([
+      { threadId: THREAD_ID, tagId: "tag-proposal" },
+      { threadId: THREAD_ID, tagId: "tag-typescript" },
+    ]);
   });
 
   it("refuses unknown boards, members and tag rows as unavailable", async () => {
-    const { tx } = stubTx({ section: null, tagRows: [tagRow("tag-proposal")] });
+    const fullTags = [tagRow("tag-proposal"), tagRow("tag-typescript")];
+    const { tx } = stubTx({ section: null, tagRows: fullTags });
     expect(await composeRecord(tx, "ada", COMPOSE_INPUT)).toEqual({
       result: { ok: false, error: "unavailable" },
       threadId: null,
     });
-    const noUser = stubTx({ user: null, tagRows: [tagRow("tag-proposal")] });
+    const noUser = stubTx({ user: null, tagRows: fullTags });
     expect(await composeRecord(noUser.tx, "ghost", COMPOSE_INPUT)).toEqual({
       result: { ok: false, error: "unavailable" },
       threadId: null,
     });
     const noTags = stubTx({ tagRows: [] });
     expect(await composeRecord(noTags.tx, "ada", COMPOSE_INPUT)).toEqual({
+      result: { ok: false, error: "unavailable" },
+      threadId: null,
+    });
+    // A missing tech row refuses like a missing status: every requested
+    // slug must resolve.
+    const noTech = stubTx({ tagRows: [tagRow("tag-proposal")] });
+    expect(await composeRecord(noTech.tx, "ada", COMPOSE_INPUT)).toEqual({
       result: { ok: false, error: "unavailable" },
       threadId: null,
     });
@@ -270,7 +284,7 @@ describe("action gates", () => {
       const { tx } = stubTx({
         thread: { id: THREAD_ID, locked: false },
         post: { id: POST_ID, authorId: AUTHOR_ID, threadId: THREAD_ID },
-        tagRows: [tagRow("tag-proposal")],
+        tagRows: [tagRow("tag-proposal"), tagRow("tag-typescript")],
       });
       return work(tx);
     });

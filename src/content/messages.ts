@@ -725,6 +725,7 @@ export const messages = {
       js: "JS",
       java: "Java",
       kotlin: "Kotlin",
+      csharp: "C#",
       dotnet: ".NET",
       php: "PHP",
       ruby: "Ruby",

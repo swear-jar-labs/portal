@@ -10,7 +10,14 @@ import { MemberLink } from "@/features/members/contracts";
 import { isThreadHidden, useModeration } from "@/features/moderation/contracts";
 import { useShellSession } from "@/features/shell";
 import { PROFILE_RECENT_COUNT } from "@/shared/profile";
-import { boardTitle, formatAge, tagTones, threadPath, type ThreadSummary } from "../model/threads";
+import {
+  boardTitle,
+  formatAge,
+  tagTones,
+  threadPath,
+  threadTagLabel,
+  type ThreadSummary,
+} from "../model/threads";
 import { threadCardId } from "./ThreadCard";
 import styles from "../board.module.css";
 
@@ -90,12 +97,12 @@ export function ThreadRows({ threads, now, limit = PROFILE_RECENT_COUNT }: Threa
               <Stack direction="row" gap={4} wrap>
                 {thread.tags.map((tag) => (
                   <Tag key={tag} tone={tagTones[tag]}>
-                    {messages.board.tags[tag]}
+                    {threadTagLabel(thread, tag)}
                   </Tag>
                 ))}
                 {thread.techs.map((tech) => (
                   <Tag key={tech} tone={techTagTone}>
-                    {messages.readroom.tags[tech]}
+                    {threadTagLabel(thread, tech)}
                   </Tag>
                 ))}
               </Stack>

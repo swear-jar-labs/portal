@@ -8,5 +8,6 @@ export {
   forumActivitySeed,
   getBoardMember,
   listRecentThreadSummariesByBoard,
+  listTagCatalog,
   listThreadSummariesByAuthor,
 } from "../data/queries";

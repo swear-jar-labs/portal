@@ -8,7 +8,7 @@ import { and, asc, count, desc, eq, inArray, isNull, sql, type SQL } from "drizz
 import { z } from "zod";
 
 import { db } from "@/db";
-import { posts, sections, threads, user as users, votes } from "@/db/schema";
+import { posts, sections, tags, threads, user as users, votes } from "@/db/schema";
 import { getActorSession } from "@/features/account/contracts";
 import { avatarFor } from "@/shared/members";
 import type { ForumActivitySeed } from "./forum-activity";
@@ -17,9 +17,13 @@ import {
   isTagId,
   isThreadTechId,
   summarizeThread,
+  techKind,
+  threadStatusKind,
   type BoardId,
   type BoardMember,
   type BoardRoleId,
+  type TagCatalog,
+  type TagCatalogEntry,
   type Thread,
   type ThreadPost,
   type ThreadSummary,
@@ -51,7 +55,9 @@ type ThreadRow = typeof threads.$inferSelect & {
   section: SectionRef;
   author: AuthorRef;
   posts: PostRow[];
-  threadTags: { tag: { slug: string } }[];
+  // Statuses and techs share the join: the kind tells them apart, the label
+  // paints the chips, the sort orders them inside their kind.
+  threadTags: { tag: { slug: string; kind: string; label: string; sort: number } }[];
 };
 
 // The with-shape stays inline at the single call site (not shared) so the
@@ -110,13 +116,25 @@ function mapThread(
     const mapped = mapThreadPost(post, counts);
     if (mapped !== null) mappedPosts.push(mapped);
   }
+  // One join, two vocabularies: the kind routes each slug to its list, both
+  // in catalog (`sort`) order; unknown slugs never reach the model.
+  const ordered = [...row.threadTags].sort((a, b) => a.tag.sort - b.tag.sort);
+  const tagLabels: Record<string, string> = {};
+  for (const entry of ordered) tagLabels[entry.tag.slug] = entry.tag.label;
   return {
     id: row.id,
     board: row.section.slug,
     title: row.title,
     author,
-    tags: row.threadTags.map((entry) => entry.tag.slug).filter(isTagId),
-    techs: (row.techs ?? []).filter(isThreadTechId),
+    tags: ordered
+      .filter((entry) => entry.tag.kind === threadStatusKind)
+      .map((entry) => entry.tag.slug)
+      .filter(isTagId),
+    techs: ordered
+      .filter((entry) => entry.tag.kind === techKind)
+      .map((entry) => entry.tag.slug)
+      .filter(isThreadTechId),
+    tagLabels,
     pinned: row.pinned,
     locked: row.locked,
     createdAt: row.createdAt.toISOString(),
@@ -197,7 +215,9 @@ async function loadThreads(options: ThreadListOptions = {}): Promise<Thread[]> {
         },
         orderBy: [asc(posts.createdAt), asc(posts.id)],
       },
-      threadTags: { with: { tag: { columns: { slug: true } } } },
+      threadTags: {
+        with: { tag: { columns: { slug: true, kind: true, label: true, sort: true } } },
+      },
     },
     ...(options.orderBy === undefined ? {} : { orderBy: options.orderBy }),
     ...(options.limit === undefined ? {} : { limit: options.limit }),
@@ -328,6 +348,28 @@ export async function forumActivitySeed(user: string): Promise<ForumActivitySeed
     })
     .map((post) => ({ threadId: post.threadId, postId: post.id }));
   return { posts: authored[0]?.total ?? 0, replies };
+}
+
+/** The picker catalog for the board's tag boxes: statuses first, each kind
+ * in `tags.sort` order. Server pages fetch it and hand it to the client
+ * leaves as props; slugs outside the validated vocabularies never reach the
+ * pickers (form validation stays on the code enums until admin editing
+ * opens `tech`). */
+export async function listTagCatalog(): Promise<TagCatalog> {
+  const rows = await db
+    .select({ slug: tags.slug, label: tags.label, kind: tags.kind, sort: tags.sort })
+    .from(tags)
+    .where(inArray(tags.kind, [threadStatusKind, techKind]));
+  const inKindOrder = (kind: string) =>
+    rows.filter((row) => row.kind === kind).sort((a, b) => a.sort - b.sort);
+  const catalog: TagCatalogEntry[] = [];
+  for (const row of inKindOrder(threadStatusKind)) {
+    if (isTagId(row.slug)) catalog.push({ id: row.slug, label: row.label });
+  }
+  for (const row of inKindOrder(techKind)) {
+    if (isThreadTechId(row.slug)) catalog.push({ id: row.slug, label: row.label });
+  }
+  return catalog;
 }
 
 /** The full size of one project journal, independent of its preview limit. */

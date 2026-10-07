@@ -15,6 +15,13 @@
       "when": 1791311853820,
       "tag": "20261006183733_board_thread_techs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791384042183,
+      "tag": "20261007144042_taxonomy_unify",
+      "breakpoints": true
     }
   ]
 }

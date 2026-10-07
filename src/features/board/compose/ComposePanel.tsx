@@ -20,11 +20,11 @@ import {
   boardTitle,
   composableBoardIds,
   isTagId,
-  tagIds,
+  tagCatalogLabel,
   tagTones,
-  threadTechIds,
   type BoardId,
   type BoardOption,
+  type TagCatalog,
   type TagId,
   type ThreadTechId,
 } from "../model/threads";
@@ -44,6 +44,9 @@ type ComposeErrors = {
 export type ComposePanelProps = {
   defaultBoard?: BoardId;
   projectBoards?: readonly BoardOption[];
+  // The server's tag catalog (statuses first): the search box and the picked
+  // chips read their labels from it, never from messages.
+  tagCatalog: TagCatalog;
   onSubmit: (input: ComposeInput) => void;
   onCancel: () => void;
 };
@@ -53,6 +56,7 @@ export type ComposePanelProps = {
 export function ComposePanel({
   defaultBoard,
   projectBoards = [],
+  tagCatalog,
   onSubmit,
   onCancel,
 }: ComposePanelProps) {
@@ -72,21 +76,19 @@ export function ComposePanel({
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  // The unified tag catalog behind the search box: statuses first, then the
-  // techs. Picks toggle their membership; the picked read back as removable
-  // chips below (statuses with their tone). At the shared cap the catalog
-  // closes and names the limit instead.
+  // The unified tag catalog behind the search box: the server's list
+  // (statuses first, each kind in sort order). Picks toggle their membership;
+  // the picked read back as removable chips below (statuses with their tone).
+  // At the shared cap the catalog closes and names the limit instead.
   const [tagQuery, setTagQuery] = useState("");
   const tagOptions = useMemo(
-    () => [
-      ...tagIds
-        .filter((tag) => !values.tags.includes(tag))
-        .map((tag) => ({ value: tag, label: messages.board.tags[tag] })),
-      ...threadTechIds
-        .filter((tech) => !values.techs.includes(tech))
-        .map((tech) => ({ value: tech, label: messages.readroom.tags[tech] })),
-    ],
-    [values.tags, values.techs],
+    () =>
+      tagCatalog
+        .filter((entry) =>
+          isTagId(entry.id) ? !values.tags.includes(entry.id) : !values.techs.includes(entry.id),
+        )
+        .map((entry) => ({ value: entry.id, label: entry.label })),
+    [tagCatalog, values.tags, values.techs],
   );
   const pickedCount = values.tags.length + values.techs.length;
   const atTagCap = pickedCount >= MAX_TAGS;
@@ -164,12 +166,12 @@ export function ComposePanel({
             <Stack direction="row" gap={4} wrap navRow>
               {values.tags.map((tag) => (
                 <Tag key={tag} tone={tagTones[tag]} active onClick={() => removeTag(tag)}>
-                  {messages.board.tags[tag]}
+                  {tagCatalogLabel(tagCatalog, tag)}
                 </Tag>
               ))}
               {values.techs.map((tech) => (
                 <Tag key={tech} active onClick={() => removeTag(tech)}>
-                  {messages.readroom.tags[tech]}
+                  {tagCatalogLabel(tagCatalog, tech)}
                 </Tag>
               ))}
             </Stack>

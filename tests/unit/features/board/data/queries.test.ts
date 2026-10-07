@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import type { posts, threads } from "@/db/schema";
+import { messages } from "@/content/messages";
+import type { TechId } from "@/content/techs";
+import type { TagId } from "@/features/board/model/threads";
 import {
   countThreadsByBoard,
   getBoardMember,
   getThread,
   listRecentThreadSummariesByBoard,
+  listTagCatalog,
   listThreadSummariesByAuthor,
   listThreadDocuments,
   listThreads,
@@ -65,7 +69,7 @@ type ThreadRow = typeof threads.$inferSelect & {
   section: { slug: string };
   author: AuthorRef;
   posts: PostRow[];
-  threadTags: { tag: { slug: string } }[];
+  threadTags: { tag: { slug: string; kind: string; label: string; sort: number } }[];
 };
 
 const ADA_ID = "user-ada";
@@ -128,21 +132,39 @@ function threadRow(
   title: string,
   createdAt: string,
   overrides: {
-    tags?: string[];
-    techs?: string[];
+    tags?: { slug: string; kind?: string; label?: string; sort?: number }[];
+    techs?: { slug: string; kind?: string; label?: string; sort?: number }[];
     pinned?: boolean;
     locked?: boolean;
     lastPostAt?: string | null;
     posts?: PostRow[];
   } = {},
 ): ThreadRow {
+  // Statuses and techs arrive as join rows (the kind tells them apart); the
+  // shorthand below keeps the fixtures readable — a bare slug takes its
+  // kind from the list it was given in and its label from messages.
+  const tagEntries = (overrides.tags ?? []).map((tag, index) => ({
+    tag: {
+      slug: tag.slug,
+      kind: tag.kind ?? "thread_status",
+      label: tag.label ?? messages.board.tags[tag.slug as TagId] ?? tag.slug,
+      sort: tag.sort ?? index,
+    },
+  }));
+  const techEntries = (overrides.techs ?? []).map((tech, index) => ({
+    tag: {
+      slug: tech.slug,
+      kind: tech.kind ?? "tech",
+      label: tech.label ?? messages.readroom.tags[tech.slug as TechId] ?? tech.slug,
+      sort: tech.sort ?? index,
+    },
+  }));
   return {
     id,
     sectionId: slug === "general" ? SEC_GENERAL : SEC_ERRATA,
     projectId: null,
     authorId,
     title,
-    techs: overrides.techs ?? [],
     pinned: overrides.pinned ?? false,
     locked: overrides.locked ?? false,
     lastPostAt:
@@ -157,15 +179,15 @@ function threadRow(
     section: { slug },
     author,
     posts: overrides.posts ?? [],
-    threadTags: (overrides.tags ?? []).map((tag) => ({ tag: { slug: tag } })),
+    threadTags: [...tagEntries, ...techEntries],
   };
 }
 
 function threadFixtures(): ThreadRow[] {
   return [
     threadRow(T_PINNED, "general", ADA_ID, ADA, "Pinned thread", "2026-09-10T12:00:00.000Z", {
-      tags: ["proposal"],
-      techs: ["typescript"],
+      tags: [{ slug: "proposal" }],
+      techs: [{ slug: "typescript" }],
       pinned: true,
       lastPostAt: "2026-09-17T08:20:00.000Z",
       posts: [
@@ -184,8 +206,8 @@ function threadFixtures(): ThreadRow[] {
     threadRow(T_HOT, "general", GRACE_ID, GRACE, "Hot thread", "2026-09-12T10:00:00.000Z", {
       // Unknown slugs never reach the model: the board speaks its closed
       // vocabularies, the seed owns the rows.
-      tags: ["question", "bogus"],
-      techs: ["c", "bogus-tech"],
+      tags: [{ slug: "question" }, { slug: "bogus" }],
+      techs: [{ slug: "c" }, { slug: "bogus-tech" }],
       lastPostAt: "2026-09-16T10:00:00.000Z",
       posts: [
         postRow(T2_ROOT, T_HOT, GRACE_ID, GRACE, "Hot take.", "2026-09-12T10:00:00.000Z"),
@@ -284,6 +306,7 @@ describe("board reads over postgres", () => {
     expect(pinned?.lastActivityAt).toBe("2026-09-17T09:00:00.000Z");
     expect(pinned?.tags).toEqual(["proposal"]);
     expect(pinned?.techs).toEqual(["typescript"]);
+    expect(pinned?.tagLabels).toEqual({ proposal: "PROPOSAL", typescript: "TypeScript" });
     expect(pinned?.author).toEqual({ user: "ada", role: "maintainer", avatar: "/avatars/ada.png" });
 
     // Admins maintain, members contribute, everyone else takes part; the
@@ -305,6 +328,36 @@ describe("board reads over postgres", () => {
     const summaries = new Map((await listThreads()).map((thread) => [thread.id, thread]));
     expect(summaries.get(T_HOT)?.tags).toEqual(["question"]);
     expect(summaries.get(T_HOT)?.techs).toEqual(["c"]);
+  });
+
+  it("routes join rows by kind and orders each list by sort", async () => {
+    const row = threadRow(
+      T_PINNED,
+      "general",
+      ADA_ID,
+      ADA,
+      "Pinned thread",
+      "2026-09-10T12:00:00.000Z",
+      {
+        tags: [
+          { slug: "question", sort: 1 },
+          { slug: "proposal", sort: 0 },
+        ],
+        techs: [
+          { slug: "typescript" },
+          // A status slug under the tech kind reaches neither list: the kind
+          // routes, the vocabulary filters.
+          { slug: "proposal", kind: "tech", label: "MISROUTED" },
+        ],
+        posts: [
+          postRow(T1_ROOT, T_PINNED, ADA_ID, ADA, "Read this first.", "2026-09-10T12:00:00.000Z"),
+        ],
+      },
+    );
+    queueThreadList([row]);
+    const summaries = new Map((await listThreads()).map((thread) => [thread.id, thread]));
+    expect(summaries.get(T_PINNED)?.tags).toEqual(["proposal", "question"]);
+    expect(summaries.get(T_PINNED)?.techs).toEqual(["typescript"]);
   });
 
   it("tombstones deleted posts without their text", async () => {
@@ -493,5 +546,22 @@ describe("listRecentThreadSummariesByBoard", () => {
   it("short-circuits a zero limit without querying", async () => {
     expect(await listRecentThreadSummariesByBoard("general", 0, now)).toEqual([]);
     expect(mockDb.query.sections.findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("listTagCatalog", () => {
+  it("lists statuses first, each kind in sort order, with the row labels", async () => {
+    queueSelect([
+      { slug: "rust", label: "Rust", kind: "tech", sort: 2 },
+      { slug: "proposal", label: "PROPOSAL", kind: "thread_status", sort: 0 },
+      { slug: "question", label: "QUESTION", kind: "thread_status", sort: 1 },
+      { slug: "c", label: "C", kind: "tech", sort: 0 },
+    ]);
+    await expect(listTagCatalog()).resolves.toEqual([
+      { id: "proposal", label: "PROPOSAL" },
+      { id: "question", label: "QUESTION" },
+      { id: "c", label: "C" },
+      { id: "rust", label: "Rust" },
+    ]);
   });
 });

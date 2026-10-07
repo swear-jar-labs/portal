@@ -1,8 +1,9 @@
 // The board seed: the deterministic board canon for seeded runs (e2e and
-// local demo). Sections, status tags, threads, posts and votes mirror the
-// fixture canon the UI-first board rendered, with fixed UUID identities the
-// specs address. Accounts are NOT seeded here — the e2e harness owns them
-// (tests/e2e/seed.ts) and the seed only references their mailboxes.
+// local demo). Sections, the taxonomy catalog, threads, posts and votes
+// mirror the fixture canon the UI-first board rendered, with fixed UUID
+// identities the specs address. Accounts are NOT seeded here — the e2e
+// harness owns them (tests/e2e/seed.ts) and the seed only references their
+// mailboxes.
 //
 // The `db:seed` script runs this file with tsx (hoisted from drizzle-kit, no
 // new dependency); the board spec imports it through the Playwright
@@ -16,6 +17,7 @@ import postgres from "postgres";
 
 import { posts, sections, tags, threadTags, threads, user, votes } from "../../src/db/schema";
 import { e2eMailboxFor } from "./e2e-accounts";
+import { seedTaxonomy } from "./seed-taxonomy";
 
 export type SeedSection = {
   slug: string;
@@ -716,14 +718,9 @@ export async function seedBoard(databaseUrl: string): Promise<SeedBoardReport> {
     const sectionRows = await db.select({ id: sections.id, slug: sections.slug }).from(sections);
     const sectionBySlug = new Map(sectionRows.map((row) => [row.slug, row.id] as const));
 
-    for (const slug of ["proposal", "question"]) {
-      const inserted = await db
-        .insert(tags)
-        .values({ slug, label: slug })
-        .onConflictDoNothing()
-        .returning({ id: tags.id });
-      report.tags += inserted.length;
-    }
+    // The taxonomy first: statuses and the shared tech set (labels and sort
+    // from the seed catalog); threads bind both through thread_tags below.
+    report.tags += (await seedTaxonomy(db)).tags;
     const tagRows = await db.select({ id: tags.id, slug: tags.slug }).from(tags);
     const tagBySlug = new Map(tagRows.map((row) => [row.slug, row.id] as const));
 
@@ -762,7 +759,6 @@ export async function seedBoard(databaseUrl: string): Promise<SeedBoardReport> {
           sectionId,
           authorId,
           title: thread.title,
-          techs: [...thread.techs],
           pinned: thread.pinned,
           locked: thread.locked,
           createdAt: new Date(thread.createdAt),
@@ -796,7 +792,10 @@ export async function seedBoard(databaseUrl: string): Promise<SeedBoardReport> {
         report.posts += insertedPost.length;
       }
 
-      for (const slug of thread.tags) {
+      // Statuses and techs alike bind through thread_tags (the kind tells
+      // them apart); the join rows are idempotent, so a reseed also heals
+      // the techs of an already-seeded thread.
+      for (const slug of [...thread.tags, ...thread.techs]) {
         const tagId = tagBySlug.get(slug);
         if (tagId === undefined) throw new Error(`board seed cannot resolve tag ${slug}`);
         const insertedTag = await db

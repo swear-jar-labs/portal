@@ -2,15 +2,16 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { messages } from "@/content/messages";
 import { listProjects } from "@/features/projects/contracts";
-import { listThreadDocuments, listThreads } from "../data/queries";
+import { listTagCatalog, listThreadDocuments, listThreads } from "../data/queries";
 import { BoardFallback, BoardStack } from "./BoardStack";
 
 export const discussionsMetadata: Metadata = messages.board.metadata;
 
 export async function DiscussionsPage() {
-  const [threads, corpus, projects] = await Promise.all([
+  const [threads, corpus, catalog, projects] = await Promise.all([
     listThreads(),
     listThreadDocuments(),
+    listTagCatalog(),
     listProjects(),
   ]);
   const now = new Date().toISOString();
@@ -22,6 +23,7 @@ export async function DiscussionsPage() {
       <BoardStack
         threads={threads}
         now={now}
+        tagCatalog={catalog}
         corpus={corpus}
         projectBoards={projects.map((project) => ({
           id: project.slug,

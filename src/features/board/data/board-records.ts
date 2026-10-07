@@ -24,9 +24,10 @@ async function findAuthorId(tx: BoardTx, username: string): Promise<string | nul
   return row?.id ?? null;
 }
 
-// A composed thread commits the thread, its opening post and its status
-// tags at once and returns the id: the card links its route immediately,
-// the mock's routeless local thread is gone.
+// A composed thread commits the thread, its opening post and its tags at
+// once and returns the id: the card links its route immediately, the mock's
+// routeless local thread is gone. Statuses and techs share thread_tags (the
+// kind tells them apart); every requested slug must resolve to a row.
 export async function composeRecord(
   tx: BoardTx,
   username: string,
@@ -39,14 +40,15 @@ export async function composeRecord(
     columns: { id: true },
   });
   if (section === undefined || section === null) return failure("unavailable");
+  const slugs = [...input.tags, ...input.techs];
   const tagRows =
-    input.tags.length === 0
+    slugs.length === 0
       ? []
       : await tx.query.tags.findMany({
-          where: inArray(tags.slug, [...input.tags]),
+          where: inArray(tags.slug, slugs),
           columns: { id: true },
         });
-  if (tagRows.length !== input.tags.length) return failure("unavailable");
+  if (tagRows.length !== slugs.length) return failure("unavailable");
   const now = new Date();
   const inserted = await tx
     .insert(threads)
@@ -54,7 +56,6 @@ export async function composeRecord(
       sectionId: section.id,
       authorId,
       title: input.title,
-      techs: [...input.techs],
       lastPostAt: now,
     })
     .returning({ id: threads.id });

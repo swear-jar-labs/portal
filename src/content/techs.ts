@@ -18,6 +18,7 @@ export const techIds = [
   "js",
   "java",
   "kotlin",
+  "csharp",
   "dotnet",
   "php",
   "ruby",

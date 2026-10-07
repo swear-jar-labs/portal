@@ -6,9 +6,13 @@ import type { BoardMember, ThreadPost } from "../model/threads";
 // overlay provider (one implementation, not two). Every mutation applies
 // its session delta first and syncs the server action behind it:
 //
-// - votes settle by dropping the local +1 either way: on success the
-//   revalidated server count already includes the vote (keeping the delta
-//   would count it twice), on failure nothing was written;
+// - thread votes stage their intent first (an up-vote stages +1, an unvote
+//   stages −1, read from the displayed pressed state) and roll back only on
+//   failure; on success the staged intent stays — the revalidated server
+//   tally and voted flag absorb it through the display formula, whichever
+//   lands first, the settle or the revalidation. The pressed state itself
+//   renders from the server truth plus the overlay, so a revalidation
+//   never forgets a confirmed vote;
 // - deletes settle by dropping the session tombstone either way (on
 //   success the revalidated thread carries the server tombstone, so keeping
 //   the delta would subtract the reply twice from the card count) and by
@@ -24,11 +28,17 @@ function warnNotSaved(what: string, error: string): void {
   console.warn(`[board] ${what} not saved`, error);
 }
 
-export function syncThreadVote(threadId: string): void {
-  boardStore.toggleThreadVote(threadId);
+export function syncThreadVote(threadId: string, serverVoted: boolean): void {
+  const snapshot = boardStore.boardSnapshot();
+  const pressed =
+    (serverVoted || snapshot.votedThreads.has(threadId)) && !snapshot.unvotedThreads.has(threadId);
+  if (pressed) boardStore.stageThreadUnvote(threadId);
+  else boardStore.stageThreadUpvote(threadId);
   void boardActions.toggleThreadVote(threadId).then((result) => {
-    boardStore.toggleThreadVote(threadId);
-    if (!result.ok) warnNotSaved("thread vote", result.error);
+    if (!result.ok) {
+      boardStore.rollbackThreadVote(threadId);
+      warnNotSaved("thread vote", result.error);
+    }
   });
 }
 

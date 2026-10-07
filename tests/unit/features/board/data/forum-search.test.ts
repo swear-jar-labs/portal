@@ -30,6 +30,7 @@ function conversation(id: string, posts: ThreadPost[]): Thread {
     locked: false,
     createdAt: "2026-09-10T12:00:00.000Z",
     votes: 0,
+    voted: false,
     posts,
   };
 }
@@ -37,6 +38,7 @@ function conversation(id: string, posts: ThreadPost[]): Thread {
 function boardState(overrides: Partial<BoardState> = {}): BoardState {
   return {
     votedThreads: new Set(),
+    unvotedThreads: new Set(),
     threads: {},
     flags: {},
     ...overrides,

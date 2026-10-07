@@ -87,14 +87,29 @@ export function useBoardSession({
     [state.flags, summaries],
   );
 
-  // Votes change the visible count and the hot rank at once — the fixtures are
-  // never touched, the local delta lives beside them.
+  // Votes change the visible count and the pressed state at once: the
+  // server truth plus the staged overlay (an unconfirmed up-vote or unvote),
+  // so a revalidation never forgets a confirmed vote. The summaries
+  // themselves are never touched, the display delta lives beside them.
   const withVotes = useMemo(
     () =>
-      withFlags.map((summary) =>
-        state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
+      withFlags.map((summary) => {
+        const display = boardStore.threadVoteDisplay(summary, state, summary.id);
+        return display.votes === summary.votes ? summary : { ...summary, votes: display.votes };
+      }),
+    [state, withFlags],
+  );
+
+  // The pressed set behind the feed's vote chips: server truth plus overlay,
+  // like the counts above.
+  const pressedThreadIds = useMemo(
+    () =>
+      new Set(
+        withFlags
+          .filter((summary) => boardStore.threadVoteDisplay(summary, state, summary.id).voted)
+          .map((summary) => summary.id),
       ),
-    [state.votedThreads, withFlags],
+    [state, withFlags],
   );
 
   const searchActive = !isBlankSearch(query.q);
@@ -145,13 +160,17 @@ export function useBoardSession({
   }, [hits, now, query, searchActive, withVotes]);
 
   // Session deltas sync through the shared mutation helper (one
-  // implementation with the overlay provider): votes settle by dropping
-  // the local +1, deletes by dropping the tombstone, edits roll back on
+  // implementation with the overlay provider): thread votes stage their
+  // intent from the displayed pressed state and settle against the server
+  // truth, deletes settle by dropping the tombstone, edits roll back on
   // failure. The guest gate lives where the action is bound (the section
   // stack prompts for logon); the server refuses guests all the same.
-  const toggleThreadVote = useCallback((id: string) => {
-    syncThreadVote(id);
-  }, []);
+  const toggleThreadVote = useCallback(
+    (id: string) => {
+      syncThreadVote(id, threads.find((entry) => entry.id === id)?.voted ?? false);
+    },
+    [threads],
+  );
 
   const togglePostVote = useCallback(
     (postId: string) => {
@@ -231,6 +250,8 @@ export function useBoardSession({
     // Grouped matches by thread id under an active query, empty otherwise.
     // The panel renders one post card per visible match from them.
     searchHits,
+    // The threads displaying as voted: server truth plus the staged overlay.
+    pressedThreadIds,
     threadState,
     pinned,
     locked,

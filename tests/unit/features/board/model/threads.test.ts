@@ -87,6 +87,7 @@ describe("board taxonomy", () => {
       locked: false,
       createdAt,
       votes: 0,
+      voted: false,
       replies: 0,
       lastActivityAt: createdAt,
     });

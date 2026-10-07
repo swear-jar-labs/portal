@@ -47,6 +47,7 @@ import { feedQueryParams, parseFeedQuery, sameFeedQuery, type FeedQuery } from "
 import { postElementId, postHash, postIdFromHash } from "../model/post-anchor";
 import type { ComposeInput } from "../model/schema";
 import { ThreadActionsProvider, type ThreadActions } from "../data/thread-actions";
+import { useStagedVoteActor } from "../data/useStagedVoteActor";
 import { threadCardId } from "./ThreadCard";
 import { useBoardSession } from "../data/useBoardSession";
 
@@ -82,6 +83,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const session = useShellSession();
+  useStagedVoteActor(session?.user ?? null);
   const requestLogin = useLoginPrompt();
   // The search's view of the actor: hidden material drops out for anyone but
   // admins and the material's own author.
@@ -123,6 +125,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     state,
     visible,
     searchHits,
+    pressedThreadIds,
     threadState,
     pinned,
     locked,
@@ -271,7 +274,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     const admin = session?.admin === true;
     return {
       state: threadState,
-      votedThread: state.votedThreads.has(activeThreadId),
+      votedThread: activeThreadId === undefined ? false : pressedThreadIds.has(activeThreadId),
       pinned,
       locked,
       canModerate: admin,
@@ -311,8 +314,8 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
     notifyThreadMentions,
     notifyThreadReply,
     pinned,
+    pressedThreadIds,
     session?.admin,
-    state.votedThreads,
     threadState,
     toggleLock,
     togglePin,
@@ -440,7 +443,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
             now={now}
             query={query}
             currentThreadId={activeThreadId}
-            votedThreadIds={state.votedThreads}
+            votedThreadIds={pressedThreadIds}
             searchHits={searchHits}
             onQueryChange={applyQuery}
             onActivateThread={activateThread}

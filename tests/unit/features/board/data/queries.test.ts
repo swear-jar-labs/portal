@@ -29,7 +29,14 @@ vi.mock("@/db", () => ({
   },
 }));
 
+// The actor behind the voted flag is stubbed: guests read every thread as
+// unvoted without touching the votes table.
+vi.mock("@/features/account/contracts", () => ({ getActorSession: vi.fn() }));
+
 import { db } from "@/db";
+import { getActorSession } from "@/features/account/contracts";
+
+const mockSession = getActorSession as unknown as Mock;
 
 // Drizzle builders need a live connection to construct, so the suite drives
 // the queries through untyped stubs: one cast at the seam, while the
@@ -242,6 +249,24 @@ function queueThreadList(rows: ThreadRow[]): void {
   queueSelect(voteRows());
 }
 
+// The two selects behind a thread list, in call order: the vote aggregate,
+// then the actor's own thread votes.
+function queueVoteQueries(countRows: unknown, votedRows: { targetId: string }[]): void {
+  const chainFor = (value: unknown): unknown => {
+    const chain = {
+      from: (): unknown => chain,
+      where: (): unknown => chain,
+      orderBy: (): unknown => chain,
+      groupBy: (): unknown => chain,
+      then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) =>
+        Promise.resolve(value).then(resolve, reject),
+    };
+    return chain;
+  };
+  mockDb.select.mockReturnValueOnce(chainFor(countRows));
+  mockDb.select.mockReturnValueOnce(chainFor(votedRows));
+}
+
 beforeEach(() => {
   vi.resetAllMocks();
 });
@@ -325,6 +350,34 @@ describe("board reads over postgres", () => {
     mockDb.query.threads.findMany.mockResolvedValue([]);
     queueSelect([]);
     expect(await getThread(T_PINNED)).toBeNull();
+  });
+
+  it("marks the actor's voted threads", async () => {
+    mockSession.mockResolvedValue({ user: "ada" });
+    mockDb.query.user.findFirst.mockResolvedValue({ id: ADA_ID } satisfies UserId);
+    mockDb.query.threads.findMany.mockResolvedValue(threadFixtures());
+    queueVoteQueries(voteRows(), [{ targetId: T_HOT }]);
+    const summaries = new Map((await listThreads()).map((thread) => [thread.id, thread]));
+    expect(summaries.get(T_HOT)?.voted).toBe(true);
+    expect(summaries.get(T_PINNED)?.voted).toBe(false);
+    expect(summaries.get(T_ERRATA)?.voted).toBe(false);
+  });
+
+  it("reads every thread as unvoted for guests", async () => {
+    mockSession.mockResolvedValue(null);
+    queueThreadList(threadFixtures());
+    const summaries = await listThreads();
+    expect(summaries.length).toBeGreaterThan(0);
+    expect(summaries.every((thread) => thread.voted === false)).toBe(true);
+  });
+
+  it("reads every thread as unvoted when the actor has no user row", async () => {
+    mockSession.mockResolvedValue({ user: "ghost" });
+    mockDb.query.user.findFirst.mockResolvedValue(null);
+    queueThreadList(threadFixtures());
+    const summaries = await listThreads();
+    expect(summaries.length).toBeGreaterThan(0);
+    expect(summaries.every((thread) => thread.voted === false)).toBe(true);
   });
 });
 

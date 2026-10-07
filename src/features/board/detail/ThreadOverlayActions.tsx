@@ -9,6 +9,7 @@ import {
 } from "@/features/inbox/contracts";
 import { avatarFor } from "@/shared/members";
 import * as boardStore from "../data/board-store";
+import { useStagedVoteActor } from "../data/useStagedVoteActor";
 import {
   commitReply,
   syncPostDelete,
@@ -32,6 +33,10 @@ export type ThreadOverlayActionsProps = {
   // admin overrides over them, like the section stack does for its summaries.
   pinned: boolean;
   locked: boolean;
+  // The actor's vote behind the layer, read with the thread: the pressed
+  // state renders from this server truth plus the staged overlay, so the
+  // layer survives the revalidation that follows a vote.
+  voted: boolean;
   // The RSC-rendered thread panel: it renders here, so the provider's context
   // reaches its client leaves under any host stack.
   children: ReactNode;
@@ -51,11 +56,13 @@ export function ThreadOverlayActions({
   postAuthors,
   pinned,
   locked,
+  voted,
   children,
 }: ThreadOverlayActionsProps) {
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
   const notifyMentions = useMentionNotifier();
+  useStagedVoteActor(session?.user ?? null);
   const state = useSyncExternalStore(
     boardStore.subscribeBoard,
     boardStore.boardSnapshot,
@@ -93,11 +100,11 @@ export function ThreadOverlayActions({
     };
     return {
       state: boardStore.threadStateOf(state, threadId),
-      votedThread: state.votedThreads.has(threadId),
+      votedThread: boardStore.threadVoteDisplay({ votes: 0, voted }, state, threadId).voted,
       pinned: pinnedNow,
       locked: lockedNow,
       canModerate: admin,
-      onToggleThreadVote: () => gate(() => syncThreadVote(threadId)),
+      onToggleThreadVote: () => gate(() => syncThreadVote(threadId, voted)),
       onTogglePostVote: (postId) => gate(() => syncPostVote(threadId, postId)),
       onEditPost: (postId, body) => {
         syncPostEdit(threadId, postId, body);
@@ -150,6 +157,7 @@ export function ThreadOverlayActions({
     threadAuthor,
     threadId,
     title,
+    voted,
   ]);
 
   return <ThreadActionsProvider actions={actions}>{children}</ThreadActionsProvider>;

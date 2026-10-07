@@ -32,6 +32,7 @@ export async function loadThreadLayer(id: string, now: string): Promise<ThreadLa
         postAuthors={Object.fromEntries(thread.posts.map((post) => [post.id, post.author.user]))}
         pinned={thread.pinned}
         locked={thread.locked}
+        voted={thread.voted}
       >
         <ThreadPanel thread={thread} now={now} />
       </ThreadOverlayActions>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Stack } from "@swearjar/dos";
 import { useLoginPrompt, useOverlayPush, useShellSession } from "@/features/shell";
 import * as boardStore from "../data/board-store";
+import { useStagedVoteActor } from "../data/useStagedVoteActor";
 import { syncThreadVote } from "../data/thread-mutations";
 import {
   FEED_PATH,
@@ -34,6 +35,7 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
   const pushOverlay = useOverlayPush();
   const session = useShellSession();
   const requestLogin = useLoginPrompt();
+  useStagedVoteActor(session?.user ?? null);
   const state = useSyncExternalStore(
     boardStore.subscribeBoard,
     boardStore.boardSnapshot,
@@ -59,10 +61,14 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
         boardStore.withLocalActivity([...threads], state.threads, echoed),
         state.flags,
       )
-      .map((summary) =>
-        state.votedThreads.has(summary.id) ? { ...summary, votes: summary.votes + 1 } : summary,
-      );
-  }, [threads, state.flags, state.threads, state.votedThreads]);
+      .map((summary) => {
+        const display = boardStore.threadVoteDisplay(summary, state, summary.id);
+        return {
+          summary: display.votes === summary.votes ? summary : { ...summary, votes: display.votes },
+          voted: display.voted,
+        };
+      });
+  }, [threads, state]);
 
   const activateThread = (threadId: string, event?: MouseEvent<HTMLElement>) => {
     // The root slot intercepts the thread above the current stack: the
@@ -81,14 +87,14 @@ export function JournalRows({ board, threads, now }: JournalRowsProps) {
 
   return (
     <Stack gap={8}>
-      {rows.map((thread) => (
+      {rows.map(({ summary: thread, voted }) => (
         <Stack key={thread.id} navRow>
           <ThreadCard
             thread={thread}
             now={now}
-            voted={state.votedThreads.has(thread.id)}
+            voted={voted}
             onActivate={(event) => activateThread(thread.id, event)}
-            onVote={() => gate(() => syncThreadVote(thread.id))}
+            onVote={() => gate(() => syncThreadVote(thread.id, thread.voted))}
             onFilterTag={filterTag}
             onFilterTech={filterTech}
           />

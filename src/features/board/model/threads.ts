@@ -123,6 +123,10 @@ export type Thread = {
   locked: boolean;
   createdAt: string;
   votes: number;
+  // The actor's own vote, read with the thread (backend-board iteration 4):
+  // the pressed state renders from this server truth, never from a session
+  // delta that a revalidation would drop.
+  voted: boolean;
   posts: readonly ThreadPost[];
 };
 

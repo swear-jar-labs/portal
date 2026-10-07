@@ -24,7 +24,12 @@ beforeEach(() => {
   store.resetBoardStore();
 });
 
-function summary(id: string, replies: number, lastActivityAt: string): ThreadSummary {
+function summary(
+  id: string,
+  replies: number,
+  lastActivityAt: string,
+  voted = false,
+): ThreadSummary {
   return {
     id,
     board: "general",
@@ -36,17 +41,38 @@ function summary(id: string, replies: number, lastActivityAt: string): ThreadSum
     locked: false,
     createdAt: "2026-09-15T12:00:00.000Z",
     votes: 0,
+    voted,
     replies,
     lastActivityAt,
   };
 }
 
 describe("board store", () => {
-  it("toggles a thread vote on and off", () => {
-    store.toggleThreadVote("tabs");
+  it("stages an up-vote", () => {
+    store.stageThreadUpvote("tabs");
     expect(store.boardSnapshot().votedThreads.has("tabs")).toBe(true);
-    store.toggleThreadVote("tabs");
-    expect(store.boardSnapshot().votedThreads.has("tabs")).toBe(false);
+  });
+
+  it("stages an unvote exclusively and rolls it back", () => {
+    store.stageThreadUpvote("tabs");
+    store.stageThreadUnvote("tabs");
+    const state = store.boardSnapshot();
+    expect(state.votedThreads.has("tabs")).toBe(false);
+    expect(state.unvotedThreads.has("tabs")).toBe(true);
+    store.rollbackThreadVote("tabs");
+    expect(store.boardSnapshot().unvotedThreads.has("tabs")).toBe(false);
+  });
+
+  it("drops staged intents without touching anything else on actor change", () => {
+    store.clearStagedThreadVotes();
+    store.stageThreadUpvote("up");
+    store.stageThreadUnvote("down");
+    store.setThreadFlag("up", "pinned", true);
+    store.clearStagedThreadVotes();
+    const state = store.boardSnapshot();
+    expect(state.votedThreads.has("up")).toBe(false);
+    expect(state.unvotedThreads.has("down")).toBe(false);
+    expect(store.threadFlagOf(state, "up", "pinned")).toBe(true);
   });
 
   it("keeps post votes per thread and toggles them", () => {
@@ -98,11 +124,11 @@ describe("board store", () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribeBoard(listener);
 
-    store.toggleThreadVote("tabs");
+    store.stageThreadUpvote("tabs");
     expect(listener).toHaveBeenCalledTimes(1);
 
     unsubscribe();
-    store.toggleThreadVote("tabs");
+    store.stageThreadUpvote("tabs");
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
@@ -126,6 +152,45 @@ describe("board store", () => {
     const state = store.boardSnapshot();
     expect(store.threadFlagOf(state, "nope", "pinned")).toBeUndefined();
     expect(store.threadFlagOf(state, "nope", "locked")).toBeUndefined();
+  });
+});
+
+describe("threadVoteDisplay", () => {
+  it("renders the server truth when nothing is staged", () => {
+    const state = store.boardSnapshot();
+    expect(store.threadVoteDisplay({ votes: 5, voted: true }, state, "a")).toEqual({
+      votes: 5,
+      voted: true,
+    });
+    expect(store.threadVoteDisplay({ votes: 5, voted: false }, state, "a")).toEqual({
+      votes: 5,
+      voted: false,
+    });
+  });
+
+  it("counts a staged intent exactly once against either server state", () => {
+    store.stageThreadUpvote("up");
+    store.stageThreadUnvote("down");
+    const state = store.boardSnapshot();
+    // Staged over a matching server truth: no delta, no flicker whichever
+    // lands first, the revalidation or the settle.
+    expect(store.threadVoteDisplay({ votes: 6, voted: true }, state, "up")).toEqual({
+      votes: 6,
+      voted: true,
+    });
+    expect(store.threadVoteDisplay({ votes: 5, voted: false }, state, "down")).toEqual({
+      votes: 5,
+      voted: false,
+    });
+    // Staged ahead of the server: one optimistic vote either way.
+    expect(store.threadVoteDisplay({ votes: 5, voted: false }, state, "up")).toEqual({
+      votes: 6,
+      voted: true,
+    });
+    expect(store.threadVoteDisplay({ votes: 6, voted: true }, state, "down")).toEqual({
+      votes: 5,
+      voted: false,
+    });
   });
 });
 

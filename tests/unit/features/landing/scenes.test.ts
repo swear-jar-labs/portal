@@ -4,10 +4,10 @@ import { SCENE_GRIDS } from "@/features/landing/scenes";
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 describe("landing pixel scenes", () => {
-  it("keeps the hero scene at 64x40 and the box 16 wide", () => {
+  it("keeps the hero scene at 64x40 and the floppy 16 wide", () => {
     expect(SCENE_GRIDS.hero).toHaveLength(40);
     expect(SCENE_GRIDS.hero[0]).toHaveLength(64);
-    expect(SCENE_GRIDS.box[0]).toHaveLength(16);
+    expect(SCENE_GRIDS.floppyDisk[0]).toHaveLength(16);
     for (const grid of Object.values(SCENE_GRIDS)) {
       const width = grid[0]?.length ?? 0;
       expect(width).toBeGreaterThan(0);

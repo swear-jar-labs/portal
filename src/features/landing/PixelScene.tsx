@@ -10,8 +10,8 @@ export type PixelSceneProps = {
   className?: string;
 };
 
-// A canvas placeholder for the AI-generated pixel art (first wave): paints
-// the scene grid 1:1 with smoothing off, so pixels stay square at any scale.
+// Paints the scene grid 1:1 with smoothing off, so pixels stay square at any
+// scale (the CSS sizes the canvas up).
 export function PixelScene({ scene, label, className }: PixelSceneProps) {
   const ref = useRef<HTMLCanvasElement>(null);
 

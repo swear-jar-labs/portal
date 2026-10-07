@@ -41,14 +41,14 @@ export function HeroSection({
           <div className={styles.heroArt}>
             <PixelScene
               scene="hero"
-              label="Pixel-art scene: a CRT terminal with code on the screen, a swear jar with coins, and 3.5-inch diskettes"
+              label="Pixel-art scene: a CRT terminal with code on the screen, the swear jar with coins, a keyboard and a low mouse, a coffee mug, and a rubber duck"
               className={styles.sceneHero}
             />
             <div className={styles.diskBox}>
               <PixelScene
-                scene="box"
-                label={`Pixel-art software box: SWEARJAR.DOS ${messages.shell.brand.version}`}
-                className={styles.sceneBox}
+                scene="floppyDisk"
+                label={`Pixel-art floppy disk: SWEARJAR.DOS ${messages.shell.brand.version}`}
+                className={styles.sceneFloppy}
               />
               <div className={styles.boxCaption}>
                 <p className={styles.boxTitle}>

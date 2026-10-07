@@ -19,6 +19,10 @@ import { ChildrenPathProvider, JAR_WINDOW_MS, type ShellAddon } from "@/features
 import { BugJarRow, listTickets } from "@/features/tickets";
 import { messages } from "@/content/messages";
 
+// Canonical origin for absolute metadata URLs (metadataBase → og:image). The
+// card always points at the public domain, wherever the app runs.
+const SITE_ORIGIN = "https://swearjar.team";
+
 const greybeard18 = localFont({
   src: [
     { path: "./fonts/Greybeard-18px.woff2", weight: "400", style: "normal" },
@@ -38,6 +42,7 @@ const greybeard16 = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_ORIGIN),
   title: messages.metadata.title,
   description: messages.metadata.description,
 };

@@ -84,7 +84,7 @@ test(`NEW TASK picks tags from the search box and caps at ${MAX_TAGS}`, async ({
   const box = form.getByRole("combobox", { name: "TAGS" });
   const pickedChip = (name: string) => form.getByRole("button", { name, exact: true });
 
-  // The search narrows the 22-tech catalog to the match (the box hydrates
+  // The search narrows the shared tech catalog to the match (the box hydrates
   // behind Suspense after the shell clock: retry the fill until it answers).
   await expect(async () => {
     await box.fill("Rust");

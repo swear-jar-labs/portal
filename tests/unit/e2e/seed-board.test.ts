@@ -3,7 +3,13 @@ import { describe, expect, test } from "vitest";
 
 import { tagIds, threadTechIds } from "@/features/board/model/threads";
 import { E2E_FIXTURE_HANDLES } from "../../e2e/e2e-accounts";
-import { SEED_SECTIONS, SEED_THREADS, seedPostId, seedThreadId } from "../../e2e/seed-board";
+import {
+  SEED_SECTIONS,
+  SEED_THREADS,
+  SEED_VOTE_HANDLES,
+  seedPostId,
+  seedThreadId,
+} from "../../e2e/seed-board";
 
 const uuidSchema = z.string().uuid();
 
@@ -75,11 +81,14 @@ describe("board seed canon", () => {
   });
 
   test("vote tallies fit the harness roster", () => {
-    const pool = E2E_FIXTURE_HANDLES.length;
+    const pool = new Set<string>(E2E_FIXTURE_HANDLES);
+    for (const handle of SEED_VOTE_HANDLES) {
+      expect(pool.has(handle), `vote handle ${handle}`).toBe(true);
+    }
     for (const thread of SEED_THREADS) {
-      expect(thread.votes, thread.key).toBeLessThanOrEqual(pool);
+      expect(thread.votes, thread.key).toBeLessThanOrEqual(SEED_VOTE_HANDLES.length);
       for (const post of thread.posts) {
-        expect(post.votes, post.key).toBeLessThanOrEqual(pool);
+        expect(post.votes, post.key).toBeLessThanOrEqual(SEED_VOTE_HANDLES.length);
       }
     }
   });

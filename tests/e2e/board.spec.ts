@@ -35,6 +35,11 @@ import { SEED_THREADS, seedBoard, seedPostId, seedThreadId } from "./seed-board"
 // survive it. Exact feed counts assume the architect's address run (the global
 // setup recreates the schema per run, so no foreign threads exist); mutations
 // inside the tests use unique data, so reruns never collide with themselves.
+// In the full suite other files' writers (editor/tag-limit/moderation
+// composes) may shift the global counters — tightening those is their specs'
+// migration. Root posts are addressed by .first() (the chronological
+// invariant: concurrent appends never displace the root); replies under test
+// are pinned by their anchor id, never by a bare .last().
 test.beforeAll(async () => {
   await seedBoard(resolveE2eDatabaseUrl());
 });
@@ -738,8 +743,11 @@ test("votes a thread once and keeps the delta across panels", async ({ page }) =
   const openingVote = opening.getByRole("button", { name: voteName(base + 1) });
   await expect(openingVote).toHaveAttribute("aria-pressed", "true");
 
-  // A reply keeps its own vote; the thread counter stays put.
-  const reply = thread.getByRole("article").nth(1);
+  // A reply keeps its own vote; the thread counter stays put. The seeded
+  // reply is addressed by its text, never by position — concurrent appends
+  // shift indices, never bodies.
+  const reply = thread.getByRole("article").filter({ hasText: "Hash the compiler version" });
+  await expect(reply).toHaveCount(1);
   const replyVote = reply.getByRole("button", { name: /▲ \d+ VOTES?/ });
   const replyBase = await voteCount(replyVote);
   await replyVote.click();
@@ -819,9 +827,16 @@ test("composes a thread with a route at once", async ({ page }) => {
     .first()
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
-  await thread.getByRole("textbox", { name: "REPLY" }).fill("Answering the opening post.");
+  // A jump inside the new thread writes the hash. The confirmed reply is
+  // pinned by its anchor, never by a bare .last().
+  const replyBody = `Answering the opening post ${Date.now()}`;
+  await thread.getByRole("textbox", { name: "REPLY" }).fill(replyBody);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  await thread.getByRole("article").last().getByRole("button", { name: "In reply to ada" }).click();
+  const own = thread.getByRole("article").filter({ hasText: replyBody });
+  await expect(own).toHaveCount(1);
+  const replyAnchor = await own.getAttribute("id");
+  if (replyAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  await page.locator(`#${replyAnchor}`).getByRole("button", { name: "In reply to ada" }).click();
   await expect(page).toHaveURL(/#board-post-[0-9a-f-]{36}$/);
 
   // Closing drops the overlay, so the feed URL never points at a layer that
@@ -852,19 +867,28 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   await expect(gracePost.getByRole("button", { name: "EDIT" })).toHaveCount(0);
 
   const reply = thread.getByRole("textbox", { name: "REPLY" });
-  await reply.fill("Updated rules: the jar takes IOUs now.");
+  // Unique per run, pinned by anchor: after a revalidation a concurrent
+  // writer's post could land below ours, so a bare .last() might hand the
+  // edit and the delete to a foreign post.
+  const body = `Updated rules: the jar takes IOUs now ${Date.now()}`;
+  const editedBody = `Updated rules: the jar takes IOUs, by hand ${Date.now()}`;
+  await reply.fill(body);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
   await expect(reply).toHaveValue("");
-  const added = thread.getByRole("article").last();
-  await expect(added).toContainText("Updated rules: the jar takes IOUs now.");
+  const own = thread.getByRole("article").filter({ hasText: body });
+  await expect(own).toHaveCount(1);
+  const addedAnchor = await own.getAttribute("id");
+  if (addedAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const added = page.locator(`#${addedAnchor}`);
+  await expect(added).toContainText(body);
 
   // The edit opens with the caret in the text and saves on Shift+Enter.
   await added.getByRole("button", { name: "EDIT" }).click();
   const editor = thread.getByRole("textbox", { name: "EDIT POST" });
   await expect(editor).toBeFocused();
-  await editor.fill("Updated rules: the jar takes IOUs, by hand.");
+  await editor.fill(editedBody);
   await page.keyboard.press("Shift+Enter");
-  await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
+  await expect(added).toContainText(editedBody);
   await expect(added).toContainText("[EDITED]");
   // The editor is gone: the keyboard stays on the post, not on the body.
   await expect(added).toBeFocused();
@@ -874,7 +898,7 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   await thread.getByRole("textbox", { name: "EDIT POST" }).fill("Discarded text.");
   await added.getByRole("button", { name: "CANCEL" }).click();
   await expect(added).toBeFocused();
-  await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
+  await expect(added).toContainText(editedBody);
   await expect(added).not.toContainText("Discarded text.");
 
   // Delete asks first; cancelling keeps the post, confirming leaves a tombstone.
@@ -934,11 +958,17 @@ test("targets a post from the composer and posts the marker", async ({ page }) =
       .locator('img[src="/avatars/grace.png"]'),
   ).toBeVisible();
 
-  await reply.fill("Carrying on, with the jar watching.");
+  const body = `Carrying on, with the jar watching ${Date.now()}`;
+  await reply.fill(body);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
 
-  const added = thread.getByRole("article").last();
-  await expect(added).toContainText("Carrying on, with the jar watching.");
+  // The confirmed post is pinned by its anchor, never by a bare .last().
+  const own = thread.getByRole("article").filter({ hasText: body });
+  await expect(own).toHaveCount(1);
+  const addedAnchor = await own.getAttribute("id");
+  if (addedAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const added = page.locator(`#${addedAnchor}`);
+  await expect(added).toContainText(body);
   await expect(added.getByRole("button", { name: "In reply to grace" })).toContainText(
     "Pinned. If a thread drifts",
   );
@@ -955,16 +985,22 @@ test("cancels the reply target and keeps the draft", async ({ page }) => {
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
-  await reply.fill("Draft stays.");
+  const body = `Draft stays ${Date.now()}`;
+  await reply.fill(body);
   await thread.getByRole("button", { name: "Cancel reply target" }).click();
   await expect(reply).toBeFocused();
-  await expect(reply).toHaveValue("Draft stays.");
+  await expect(reply).toHaveValue(body);
   await expect(thread.getByText("REPLYING TO")).toHaveCount(0);
 
-  // Posted without a target, the reply carries no marker.
+  // Posted without a target, the reply carries no marker. The confirmed post
+  // is pinned by its anchor, never by a bare .last().
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  const added = thread.getByRole("article").last();
-  await expect(added).toContainText("Draft stays.");
+  const own = thread.getByRole("article").filter({ hasText: body });
+  await expect(own).toHaveCount(1);
+  const addedAnchor = await own.getAttribute("id");
+  if (addedAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const added = page.locator(`#${addedAnchor}`);
+  await expect(added).toContainText(body);
   await expect(added.getByRole("button", { name: "In reply to" })).toHaveCount(0);
 });
 
@@ -1038,20 +1074,28 @@ test("quotes a tombstoned parent by name only", async ({ page }) => {
   const thread = page.getByRole("region", { name: READ_FIRST });
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
-  await reply.fill("Parent to be buried.");
+  const parentBody = `Parent to be buried ${Date.now()}`;
+  const childBody = `The child keeps the name ${Date.now()}`;
+  await reply.fill(parentBody);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  const parentAnchor = await thread.getByRole("article").last().getAttribute("id");
+  const ownParent = thread.getByRole("article").filter({ hasText: parentBody });
+  await expect(ownParent).toHaveCount(1);
+  const parentAnchor = await ownParent.getAttribute("id");
   if (parentAnchor === null) throw new Error("the confirmed post carries no anchor");
   // The article locator is live; the anchor keeps naming the same post after
   // the next reply lands below it.
   const parent = page.locator(`#${parentAnchor}`);
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
-  await reply.fill("The child keeps the name.");
+  await reply.fill(childBody);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  const child = thread.getByRole("article").last();
+  const ownChild = thread.getByRole("article").filter({ hasText: childBody });
+  await expect(ownChild).toHaveCount(1);
+  const childAnchor = await ownChild.getAttribute("id");
+  if (childAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const child = page.locator(`#${childAnchor}`);
   const marker = child.getByRole("button", { name: "In reply to ada" });
-  await expect(marker).toContainText("Parent to be buried.");
+  await expect(marker).toContainText(parentBody);
 
   await parent.getByRole("button", { name: "DELETE" }).click();
   await page

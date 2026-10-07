@@ -53,9 +53,10 @@ export type SeedThread = {
 };
 
 // The handles whose votes materialize the tallies, in assignment order: the
-// first N handles vote on a target with a tally of N. The pool is the
-// harness roster, so tallies stay within one vote per (user, target).
-const SEED_VOTE_HANDLES = [
+// first N handles vote on a target with a tally of N. The pool is a subset of
+// the harness roster (pinned by the seed unit test), so tallies stay within
+// one vote per (user, target).
+export const SEED_VOTE_HANDLES = [
   "ada",
   "grace",
   "ken",
@@ -848,7 +849,7 @@ function formatReport(report: SeedBoardReport): string {
   );
 }
 
-// `npm run db:seed` lands here: plain node executes this file directly, the
+// `npm run db:seed` lands here: tsx executes this file directly, the
 // Playwright and Vitest transforms only import it. Direct execution is
 // detected by the invoked path, so importing never seeds as a side effect.
 const invokedAsScript = (process.argv[1] ?? "").endsWith("seed-board.ts");

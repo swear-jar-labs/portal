@@ -29,9 +29,7 @@ function warnNotSaved(what: string, error: string): void {
 }
 
 export function syncThreadVote(threadId: string, serverVoted: boolean): void {
-  const snapshot = boardStore.boardSnapshot();
-  const pressed =
-    (serverVoted || snapshot.votedThreads.has(threadId)) && !snapshot.unvotedThreads.has(threadId);
+  const pressed = boardStore.threadVotePressed(serverVoted, boardStore.boardSnapshot(), threadId);
   if (pressed) boardStore.stageThreadUnvote(threadId);
   else boardStore.stageThreadUpvote(threadId);
   void boardActions.toggleThreadVote(threadId).then((result) => {

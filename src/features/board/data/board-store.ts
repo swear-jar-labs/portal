@@ -21,11 +21,13 @@ export type ThreadFlagOverrides = Readonly<Record<string, Partial<Record<ThreadF
 export type BoardState = {
   // The thread vote overlay: unconfirmed intents over the server truth.
   // votedThreads stages an up-vote (optimistic +1), unvotedThreads a removal
-  // (optimistic −1); both read instantly, both reconcile to the server on
-  // settle (success or failure drops them — on success the revalidated
-  // thread already carries the outcome). The pressed state is server truth
-  // plus this overlay (see threadVoteDisplay), so a revalidation never
-  // forgets a confirmed vote the way a session-only delta did.
+  // (optimistic −1); both read instantly. A failed write rolls its intent
+  // back, a successful one keeps it until a counter-stage or a reload — the
+  // display formula neutralizes a staged intent once the server truth
+  // catches up, so no ordering of the settle and the revalidation flickers
+  // or double-counts. The pressed state is server truth plus this overlay
+  // (see threadVoteDisplay), so a revalidation never forgets a confirmed
+  // vote the way a session-only delta did.
   votedThreads: ReadonlySet<string>;
   unvotedThreads: ReadonlySet<string>;
   threads: Readonly<Record<string, ThreadState>>;
@@ -236,6 +238,13 @@ export function threadStateOf(snapshot: BoardState, threadId: string): ThreadSta
   return snapshot.threads[threadId] ?? EMPTY_THREAD_STATE;
 }
 
+/** The thread vote's pressed state: server truth plus the staged overlay,
+ * without the counter. Layers that render their own tally (the thread panel
+ * reads the count from its RSC props) take the pressed flag from here. */
+export function threadVotePressed(voted: boolean, snapshot: BoardState, threadId: string): boolean {
+  return (voted || snapshot.votedThreads.has(threadId)) && !snapshot.unvotedThreads.has(threadId);
+}
+
 /** The thread vote as rendered: server truth plus the staged overlay. The
  * overlay counts exactly once — a staged up-vote adds one only while the
  * server has not counted it yet, a staged unvote subtracts one only while
@@ -251,7 +260,7 @@ export function threadVoteDisplay(
   const unvoted = snapshot.unvotedThreads.has(threadId);
   return {
     votes: summary.votes + (upvoted && !summary.voted ? 1 : 0) - (unvoted && summary.voted ? 1 : 0),
-    voted: (summary.voted || upvoted) && !unvoted,
+    voted: threadVotePressed(summary.voted, snapshot, threadId),
   };
 }
 

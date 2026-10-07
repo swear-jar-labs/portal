@@ -100,7 +100,7 @@ export function ThreadOverlayActions({
     };
     return {
       state: boardStore.threadStateOf(state, threadId),
-      votedThread: boardStore.threadVoteDisplay({ votes: 0, voted }, state, threadId).voted,
+      votedThread: boardStore.threadVotePressed(voted, state, threadId),
       pinned: pinnedNow,
       locked: lockedNow,
       canModerate: admin,

@@ -279,7 +279,14 @@ export function PostItem({
         {!deleted && !editing && (!hidden || canSeeHidden) ? (
           <>
             {!hidden ? (
-              <VoteButton votes={votes + (voted ? 1 : 0)} voted={voted} onToggle={onToggleVote} />
+              // Replies optimistically count the session vote here (their
+              // pressed state is session-only); the root post arrives with
+              // its display count already resolved by the thread view.
+              <VoteButton
+                votes={votes + (!root && voted ? 1 : 0)}
+                voted={voted}
+                onToggle={onToggleVote}
+              />
             ) : null}
             {canReply ? (
               <TextAction bracketed onClick={onReply}>

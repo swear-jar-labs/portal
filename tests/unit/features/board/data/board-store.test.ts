@@ -168,6 +168,23 @@ describe("threadVoteDisplay", () => {
     });
   });
 
+  it("reads the root post count from the server total without adding one", () => {
+    // The thread view shows the server tally on the root post: with the
+    // actor's vote already inside the total, a persistent pressed state
+    // must not add again.
+    const state = store.boardSnapshot();
+    expect(store.threadVoteDisplay({ votes: 6, voted: true }, state, "a")).toEqual({
+      votes: 6,
+      voted: true,
+    });
+    store.stageThreadUpvote("b");
+    const staged = store.boardSnapshot();
+    expect(store.threadVoteDisplay({ votes: 5, voted: false }, staged, "b")).toEqual({
+      votes: 6,
+      voted: true,
+    });
+  });
+
   it("counts a staged intent exactly once against either server state", () => {
     store.stageThreadUpvote("up");
     store.stageThreadUnvote("down");
@@ -191,6 +208,16 @@ describe("threadVoteDisplay", () => {
       votes: 5,
       voted: false,
     });
+  });
+
+  it("reads the pressed flag without the counter", () => {
+    store.stageThreadUpvote("up");
+    store.stageThreadUnvote("down");
+    const state = store.boardSnapshot();
+    expect(store.threadVotePressed(true, state, "a")).toBe(true);
+    expect(store.threadVotePressed(false, state, "a")).toBe(false);
+    expect(store.threadVotePressed(false, state, "up")).toBe(true);
+    expect(store.threadVotePressed(true, state, "down")).toBe(false);
   });
 });
 

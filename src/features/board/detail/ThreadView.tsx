@@ -8,6 +8,7 @@ import { targetKey, useModeration } from "@/features/moderation/contracts";
 import { TextAction } from "@/shared/TextAction/TextAction";
 import type { Thread } from "../model/threads";
 import { excerpt } from "../model/excerpt";
+import * as boardStore from "../data/board-store";
 import { PostItem } from "./PostItem";
 import { ReplyForm } from "./ReplyForm";
 import { useThreadActions, type ReplyTarget } from "../data/thread-actions";
@@ -77,6 +78,11 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
   // and the locked notice all read it.
   const view: Thread = { ...thread, pinned: actions.pinned, locked: actions.locked };
 
+  // The store snapshot behind the root vote display below. The view
+  // re-renders with its actions provider on every store transition, so the
+  // read stays fresh without subscribing twice.
+  const snapshot = boardStore.boardSnapshot();
+
   return (
     <Stack gap={12}>
       {actions.canModerate ? (
@@ -94,6 +100,17 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
       ) : (
         posts.map(({ post, body }) => {
           const root = post.id === thread.posts[0]?.id;
+          // The root post carries the thread tally, resolved through the
+          // same display the feed cards use: the server total already
+          // includes the actor's vote, so the persistent pressed state
+          // must not add one again. Replies keep their own tallies.
+          const rootVotes = root
+            ? boardStore.threadVoteDisplay(
+                { votes: thread.votes, voted: thread.voted },
+                snapshot,
+                thread.id,
+              ).votes
+            : post.votes;
           return (
             <PostItem
               key={post.id}
@@ -101,7 +118,7 @@ export function ThreadView({ thread, now, bodies = {} }: ThreadViewProps) {
               thread={view}
               now={now}
               body={body}
-              votes={root ? thread.votes : post.votes}
+              votes={rootVotes}
               voted={root ? actions.votedThread : state.votedPosts.has(post.id)}
               editedBody={state.edits.get(post.id)}
               deleted={state.deletedPosts.has(post.id) || post.deletedAt !== undefined}

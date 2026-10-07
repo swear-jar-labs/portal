@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { posts, sections, threads, user as users, votes } from "@/db/schema";
+import { getActorSession } from "@/features/account/contracts";
 import { avatarFor } from "@/shared/members";
 import type { ForumActivitySeed } from "./forum-activity";
 import { filterThreads, rankThreads } from "../model/feed";
@@ -97,7 +98,11 @@ function mapThreadPost(row: PostRow, counts: ReadonlyMap<string, number>): Threa
   };
 }
 
-function mapThread(row: ThreadRow, counts: ReadonlyMap<string, number>): Thread | null {
+function mapThread(
+  row: ThreadRow,
+  counts: ReadonlyMap<string, number>,
+  votedThreads: ReadonlySet<string>,
+): Thread | null {
   const author = mapBoardAuthor(row.author);
   if (author === null) return null;
   const mappedPosts: ThreadPost[] = [];
@@ -116,6 +121,7 @@ function mapThread(row: ThreadRow, counts: ReadonlyMap<string, number>): Thread 
     locked: row.locked,
     createdAt: row.createdAt.toISOString(),
     votes: counts.get(voteKey(THREAD_VOTE_TARGET, row.id)) ?? 0,
+    voted: votedThreads.has(row.id),
     posts: mappedPosts,
   };
 }
@@ -126,6 +132,27 @@ function mapThread(row: ThreadRow, counts: ReadonlyMap<string, number>): Thread 
 function toSummary(thread: Thread): ThreadSummary {
   const live = thread.posts.filter((post) => post.deletedAt === undefined).length;
   return { ...summarizeThread(thread), replies: Math.max(0, live - 1) };
+}
+
+// The actor's own thread votes for a batch of thread ids: one query over
+// the votes rows, so the pressed state renders from the server instead of a
+// session delta. Guests (and unknown actors) voted nothing.
+async function loadVotedThreadIds(ids: readonly string[]): Promise<Set<string>> {
+  const actor = await getActorSession();
+  if (!actor) return new Set();
+  const userId = await findUserId(actor.user);
+  if (userId === null || ids.length === 0) return new Set();
+  const rows = await db
+    .select({ targetId: votes.targetId })
+    .from(votes)
+    .where(
+      and(
+        eq(votes.userId, userId),
+        eq(votes.targetType, THREAD_VOTE_TARGET),
+        inArray(votes.targetId, [...ids]),
+      ),
+    );
+  return new Set(rows.map((row) => row.targetId));
 }
 
 // Vote totals for a batch of thread and post ids: one GROUP BY query counts
@@ -154,9 +181,10 @@ type ThreadListOptions = {
 };
 
 // Every list read funnels through here: one relational fetch (section,
-// author, posts, status tags) plus one vote aggregate, mapped to the board
-// model. Soft-deleted threads never surface; their route id resolves to
-// null (the thread page answers notFound, as for unknown ids).
+// author, posts, status tags) plus one vote aggregate and the actor's own
+// thread votes, mapped to the board model. Soft-deleted threads never
+// surface; their route id resolves to null (the thread page answers
+// notFound, as for unknown ids).
 async function loadThreads(options: ThreadListOptions = {}): Promise<Thread[]> {
   const rows = await db.query.threads.findMany({
     where: and(isNull(threads.deletedAt), options.where),
@@ -175,13 +203,14 @@ async function loadThreads(options: ThreadListOptions = {}): Promise<Thread[]> {
     ...(options.limit === undefined ? {} : { limit: options.limit }),
   });
   if (rows.length === 0) return [];
-  const counts = await loadVoteCounts([
-    ...rows.map((row) => row.id),
-    ...rows.flatMap((row) => row.posts.map((post) => post.id)),
+  const threadIds = rows.map((row) => row.id);
+  const [counts, voted] = await Promise.all([
+    loadVoteCounts([...threadIds, ...rows.flatMap((row) => row.posts.map((post) => post.id))]),
+    loadVotedThreadIds(threadIds),
   ]);
   const threadsList: Thread[] = [];
   for (const row of rows) {
-    const thread = mapThread(row, counts);
+    const thread = mapThread(row, counts, voted);
     if (thread !== null) threadsList.push(thread);
   }
   return threadsList;

@@ -6,7 +6,14 @@ import {
   FOCUSABLE_SELECTOR,
 } from "@swearjar/dos/contracts";
 import { DOC_LAYER_ATTR, DOC_TOP_ATTR } from "../../src/features/shell/attributes";
-import { FEED_PATH, threadPath } from "../../src/features/board/model/threads";
+import {
+  FEED_PATH,
+  isTagId,
+  isThreadTechId,
+  threadPath,
+} from "../../src/features/board/model/threads";
+import { rankThreads } from "../../src/features/board/model/feed";
+import { postElementId } from "../../src/features/board/model/post-anchor";
 import {
   ensureE2eAccount,
   enterShell,
@@ -18,20 +25,86 @@ import {
   repeatKey,
   waitForHydration,
 } from "./helpers";
+import { resolveE2eDatabaseUrl } from "./e2e-accounts";
+import { SEED_THREADS, seedBoard, seedPostId, seedThreadId } from "./seed-board";
+
+// The board spec runs on the seeded database, not on mocks: the beforeAll
+// lands the deterministic canon (fixed UUID threads) once per run, idempotent
+// (a rerun inserts nothing). Board-scoped on purpose — the global setup keeps
+// seeding accounts only, and the seed deletes nothing, so other specs' rows
+// survive it. Exact feed counts assume the architect's address run (the global
+// setup recreates the schema per run, so no foreign threads exist); mutations
+// inside the tests use unique data, so reruns never collide with themselves.
+// Serial mode below holds the declaration order inside this file, so the
+// counters (#1-#4) run before this file's own composer (#19). In the full
+// suite other files' writers (editor/tag-limit/moderation composes) may still
+// shift the global counters — tightening those is their specs' migration.
+// Root posts are addressed by .first() (the chronological invariant:
+// concurrent appends never displace the root); replies under test are pinned
+// by their anchor id, never by a bare .last().
+test.describe.configure({ mode: "serial" });
+test.beforeAll(async () => {
+  await seedBoard(resolveE2eDatabaseUrl());
+});
 
 const FEED_REGION = "FORUM.EXE";
 const FILES_REGION = "C:\\SWEARJAR";
 const READ_FIRST = "READ FIRST: how this board works";
+const RITUAL = "Weekly ritual: what did you build, and what did it teach you?";
 const CI_CACHE = "CI cache poisoning: how we lost a day";
 const HEAP_POSTMORTEM = "Postmortem: heap corruption at 3am";
 const TABS_CLOSED = "Bikeshed closed: tabs, and here is why";
 const NEW_THREAD = "NEW THREAD";
 const LOGON_PROMPT = "LOGON REQUIRED";
+const READ_FIRST_ID = seedThreadId("read-first");
+const RITUAL_ID = seedThreadId("by-hand-ritual");
+const PARSERS_ID = seedThreadId("handwritten-parsers");
+const BOOT_ID = seedThreadId("swearjar-boot");
+const HEAP_ID = seedThreadId("heap-postmortem");
+const TABS_ID = seedThreadId("tabs-vs-spaces");
+const CI_CACHE_ID = seedThreadId("ci-cache-poisoning");
+const WITHDRAWN_ID = seedThreadId("withdrawn-call");
+// Grace's seeded post, pinned by anchor wherever a test targets it: a
+// hasText filter on its body also catches every reply quoting it back
+// through the marker, which trips the strict mode.
+const GRACE_POST_ANCHOR = postElementId(seedPostId("read-first-2"));
+// A well-formed UUID the seed never uses: the thread route 404s on it.
+const UNKNOWN_THREAD_ID = "12345678-1234-4abc-8def-1234567890ab";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
 // The PanelStack effect focuses the top layer's body and attaches the Esc
 // listener; the focus is the sync point for keyboard tests, as the island
 // hydrates behind a Suspense boundary after the shell clock already ticks.
 const focusedBody = (page: Page) => page.locator(`[${DOC_TOP_ATTR}] [${DOS_SCROLL_ATTR}]`);
+
+// The vote chip reads "▲ N VOTE/VOTES": counts after a toggle are computed
+// from the painted label, so the assertions never pin a tally another run (or
+// another spec's vote) may have moved.
+const voteName = (count: number) => `▲ ${count} ${count === 1 ? "VOTE" : "VOTES"}`;
+
+async function voteCount(button: ReturnType<Page["getByRole"]>): Promise<number> {
+  const text = (await button.textContent()) ?? "";
+  return Number(text.replaceAll(/[^0-9]/g, ""));
+}
+
+// The feed's expected hot order, computed from the seed canon with the same
+// pure rank the client renders: pinned threads lead, the rest follows the hot
+// score over the seeded tallies and activity. `now` is the assertion time,
+// like the render's own base.
+function expectedHotTitles(now: number): string[] {
+  const summaries = SEED_THREADS.map((thread) => ({
+    id: thread.id,
+    board: thread.board,
+    tags: thread.tags.filter(isTagId),
+    techs: thread.techs.filter(isThreadTechId),
+    pinned: thread.pinned,
+    votes: thread.votes,
+    replies: Math.max(0, thread.posts.length - 1),
+    createdAt: thread.createdAt,
+    lastActivityAt: thread.posts.at(-1)?.createdAt ?? thread.createdAt,
+  }));
+  const titles = new Map(SEED_THREADS.map((thread) => [thread.id, thread.title] as const));
+  return rankThreads(summaries, "hot", now).map((summary) => titles.get(summary.id) ?? summary.id);
+}
 
 test("renders the hot feed and re-sorts by new", async ({ page }) => {
   await page.goto(FEED_PATH);
@@ -39,8 +112,14 @@ test("renders the hot feed and re-sorts by new", async ({ page }) => {
   const feed = page.getByRole("region", { name: FEED_REGION });
   const cards = feed.getByRole("article");
 
-  await expect(cards).toHaveCount(14);
-  await expect(feed.getByText("14 THREADS")).toBeVisible();
+  await expect(cards).toHaveCount(SEED_THREADS.length);
+  await expect(feed.getByText(`${SEED_THREADS.length} THREADS`)).toBeVisible();
+  // The hot order is seeded, not incidental: pinned threads lead, the rest
+  // follows the seeded tallies and activity, like the client ranks them.
+  const expected = expectedHotTitles(Date.now());
+  for (const [index, title] of expected.entries()) {
+    await expect(cards.nth(index)).toContainText(title);
+  }
   await expect(cards.first()).toContainText("[PINNED]");
   // Every feed card carries its section icon in the title row.
   await expect(cards.first().locator('[data-file-icon="speech"]')).toBeVisible();
@@ -171,7 +250,7 @@ test("filters by tech and keeps the state in the URL", async ({ page }) => {
   await expect(page).toHaveURL(`${FEED_PATH}?tech=c&tech=go`);
   await feed.getByRole("button", { name: "CLEAR TAGS" }).click();
   await expect(page).toHaveURL(FEED_PATH);
-  await expect(feed.getByText("14 THREADS")).toBeVisible();
+  await expect(feed.getByText(`${SEED_THREADS.length} THREADS`)).toBeVisible();
   await expect(feed.getByRole("button", { name: "CLEAR TAGS" })).toHaveCount(0);
   // A card tech chip filters the feed instead of opening the thread.
   const cache = feed.getByRole("article").filter({ hasText: "Eviction policy" });
@@ -213,7 +292,7 @@ test("the gap between card tags belongs to the stretched link", async ({ page })
   // children, so the exact middle between them hits the link stretched under
   // it, not a wrapper raised over it.
   await page.mouse.click((first.x + first.width + second.x) / 2, first.y + first.height / 2);
-  await expect(page).toHaveURL(threadPath("handwritten-parsers"));
+  await expect(page).toHaveURL(threadPath(PARSERS_ID));
 });
 
 test("walks the feed by rows and remembers the control inside one", async ({ page }) => {
@@ -374,15 +453,16 @@ test("enters the scrolled feed from its visible edge", async ({ page }) => {
 });
 
 test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(RITUAL_ID));
   await waitForHydration(page);
-  const thread = page.getByRole("region", { name: READ_FIRST });
+  const thread = page.getByRole("region", { name: RITUAL });
   await expect(focusedBody(page)).toBeFocused();
 
-  // Three posts, the reply composer as four rows (tabs, toolbar, field,
-  // submit); the opening post carries the thread's meta line itself.
+  // Four seeded posts, the reply composer as four rows (tabs, toolbar, field,
+  // submit); the opening post carries the thread's meta line itself. The
+  // ritual thread stays read-only across tests, so the row count is stable.
   const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
-  await expect(rows).toHaveCount(7);
+  await expect(rows).toHaveCount(8);
 
   await page.keyboard.press("ArrowDown");
   await expect(rows.nth(0)).toBeFocused();
@@ -390,6 +470,8 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
   await expect(rows.nth(1)).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(rows.nth(2)).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(rows.nth(3)).toBeFocused();
   // The composer walks top-down like the eyes: tabs, toolbar, field, submit.
   await page.keyboard.press("ArrowDown");
   await expect(thread.getByRole("button", { name: "WRITE" })).toBeFocused();
@@ -408,7 +490,7 @@ test("walks the thread posts with ▲/▼ and wraps", async ({ page }) => {
 
 test("opens a thread at the top and scrolls to the composer on reply", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("heap-postmortem"));
+  await page.goto(threadPath(HEAP_ID));
   await waitForHydration(page);
   const surface = focusedBody(page);
   await expect(surface).toBeFocused();
@@ -433,7 +515,7 @@ test("opens a thread over the feed and pops back to the focused card", async ({ 
   await feed.getByRole("link", { name: CI_CACHE }).click();
 
   const thread = page.getByRole("region", { name: CI_CACHE });
-  await expect(page).toHaveURL(threadPath("ci-cache-poisoning"));
+  await expect(page).toHaveURL(threadPath(CI_CACHE_ID));
   await expect(thread).toBeVisible();
   // The thread opens as a light window over the feed (the titleTone prop is gone;
   // the surface contract is what the kit guarantees now).
@@ -451,13 +533,13 @@ test("opens a thread over the feed and pops back to the focused card", async ({ 
 
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(FEED_PATH);
-  await expect(page.locator("#thread-card-ci-cache-poisoning")).toBeFocused();
+  await expect(page.locator(`#thread-card-${CI_CACHE_ID}`)).toBeFocused();
 });
 
 test("a thread reached by browser back closes with the feed", async ({ page }) => {
   // Deep link: the thread is the first history entry, so its close pushes the
   // feed instead of going back off the page.
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   await expect(focusedBody(page)).toBeFocused();
   await page.keyboard.press("Escape");
@@ -469,12 +551,13 @@ test("a thread reached by browser back closes with the feed", async ({ page }) =
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: CI_CACHE })
     .click();
-  await expect(page).toHaveURL(threadPath("ci-cache-poisoning"));
+  await expect(page).toHaveURL(threadPath(CI_CACHE_ID));
+  await waitForHydration(page);
 
   await page.goBack();
   await expect(page).toHaveURL(FEED_PATH);
   await page.goBack();
-  await expect(page).toHaveURL(threadPath("read-first"));
+  await expect(page).toHaveURL(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   await expect(page.getByRole("region", { name: READ_FIRST })).toBeVisible();
   await expect(focusedBody(page)).toBeFocused();
@@ -487,7 +570,7 @@ test("a thread reached by browser back closes with the feed", async ({ page }) =
 test("a second Esc does not pop another layer while the close is in flight", async ({ page }) => {
   // A history entry behind the feed gives a runaway second close somewhere to
   // go back to — and keeps the bug visible.
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   await expect(focusedBody(page)).toBeFocused();
   await page.keyboard.press("Escape");
@@ -497,7 +580,7 @@ test("a second Esc does not pop another layer while the close is in flight", asy
     .getByRole("region", { name: FEED_REGION })
     .getByRole("link", { name: CI_CACHE })
     .click();
-  await expect(page).toHaveURL(threadPath("ci-cache-poisoning"));
+  await expect(page).toHaveURL(threadPath(CI_CACHE_ID));
   await expect(focusedBody(page)).toBeFocused();
 
   // Both presses go out back to back: one close owns the pop.
@@ -523,7 +606,7 @@ test("the thread [X] closes back to the feed", async ({ page }) => {
 test("a deep link opens the stack and Tab from the file list reaches the top layer", async ({
   page,
 }) => {
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   await expect(page).toHaveTitle(`${READ_FIRST} — Swear Jar Labs`);
   await expect(page.getByRole("region", { name: READ_FIRST })).toBeVisible();
@@ -555,23 +638,25 @@ test("a deep link opens the stack and Tab from the file list reaches the top lay
 });
 
 test("renders posts, the empty thread and the locked thread", async ({ page }) => {
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   const thread = page.getByRole("region", { name: READ_FIRST });
   // The reply marker quotes the same opening line: read the root post's body.
   await expect(
     thread.getByRole("article").first().getByText("BRING QUESTIONS, SHOW YOUR REASONING"),
   ).toBeVisible();
+  // The opening body carries a three-item list; replies add none, so the
+  // count holds however many session replies landed below.
   await expect(thread.getByRole("listitem")).toHaveCount(3);
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
 
-  await page.goto(threadPath("withdrawn-call"));
+  await page.goto(threadPath(WITHDRAWN_ID));
   await expect(
     page
       .getByRole("region", { name: "Withdrawn: the weekly call" })
       .getByText("NO POSTS HERE YET."),
   ).toBeVisible();
 
-  await page.goto(threadPath("tabs-vs-spaces"));
+  await page.goto(threadPath(TABS_ID));
   const locked = page.getByRole("region", { name: TABS_CLOSED });
   await expect(locked.getByText("[LOCKED]").first()).toBeVisible();
   await expect(locked.getByText("THIS THREAD IS LOCKED.")).toBeVisible();
@@ -580,7 +665,7 @@ test("renders posts, the empty thread and the locked thread", async ({ page }) =
 
   // The opening post is the thread's face: it carries the thread tags (and
   // techs); a reply carries none.
-  await page.goto(threadPath("swearjar-boot"));
+  await page.goto(threadPath(BOOT_ID));
   const tagged = page.getByRole("region", { name: /Boot sequence/ });
   const opening = tagged.getByRole("article").first();
   await expect(opening).toContainText("PROPOSAL");
@@ -604,12 +689,14 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   const vote = feed
     .getByRole("article")
     .filter({ hasText: CI_CACHE })
-    .getByRole("button", { name: "▲ 14 VOTES" });
+    .getByRole("button", { name: /▲ \d+ VOTES?/ });
   await expect(vote).toHaveAttribute("aria-pressed", "false");
+  const label = await vote.textContent();
   await vote.click();
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "CANCEL" }).click();
   await expect(vote).toHaveAttribute("aria-pressed", "false");
+  await expect(vote).toHaveText(label ?? "");
 
   // A reply attempt keeps the draft for after the logon.
   await page.getByRole("link", { name: CI_CACHE }).click();
@@ -626,7 +713,7 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "LOG ON" }).click();
   // The logon started on the thread, so it carries the way back (?next=).
-  await expect(page).toHaveURL("/login?next=%2Fforum%2Fci-cache-poisoning");
+  await expect(page).toHaveURL(`/login?next=%2Fforum%2F${CI_CACHE_ID}`);
 
   await ensureE2eAccount("ada", E2E_PASSWORD);
   await page.getByLabel("Username or email").fill("ada");
@@ -635,18 +722,23 @@ test("a guest action asks for logon and keeps the reply draft", async ({ page })
   // The logon lands back on the thread. The typed draft does not survive the
   // page change (it lives in the thread panel, not the session store); the
   // cancel path above is what keeps it.
-  await expect(page).toHaveURL("/forum/ci-cache-poisoning");
+  await expect(page).toHaveURL(`/forum/${CI_CACHE_ID}`);
 });
 
 test("votes a thread once and keeps the delta across panels", async ({ page }) => {
-  await logon(page);
+  // A fresh handle per run: the first vote is always a vote, never a toggle
+  // off a previous run's row.
+  const voter = `voter-${Date.now()}`;
+  await logon(page, voter);
   await page.goto(FEED_PATH);
   await waitForHydration(page);
   const feed = page.getByRole("region", { name: FEED_REGION });
   const card = feed.getByRole("article").filter({ hasText: CI_CACHE });
+  const cardVote = card.getByRole("button", { name: /▲ \d+ VOTES?/ });
+  const base = await voteCount(cardVote);
 
-  await card.getByRole("button", { name: "▲ 14 VOTES" }).click();
-  await expect(card.getByRole("button", { name: "▲ 15 VOTES" })).toHaveAttribute(
+  await cardVote.click();
+  await expect(card.getByRole("button", { name: voteName(base + 1) })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -655,13 +747,18 @@ test("votes a thread once and keeps the delta across panels", async ({ page }) =
   await card.getByRole("link", { name: CI_CACHE }).click();
   const thread = page.getByRole("region", { name: CI_CACHE });
   const opening = thread.getByRole("article").first();
-  const openingVote = opening.getByRole("button", { name: "▲ 15 VOTES" });
+  const openingVote = opening.getByRole("button", { name: voteName(base + 1) });
   await expect(openingVote).toHaveAttribute("aria-pressed", "true");
 
-  // A reply keeps its own vote; the thread counter stays put.
-  const reply = thread.getByRole("article").nth(1);
-  await reply.getByRole("button", { name: "▲ 6 VOTES" }).click();
-  await expect(reply.getByRole("button", { name: "▲ 7 VOTES" })).toHaveAttribute(
+  // A reply keeps its own vote; the thread counter stays put. The seeded
+  // reply is addressed by its text, never by position — concurrent appends
+  // shift indices, never bodies.
+  const reply = thread.getByRole("article").filter({ hasText: "Hash the compiler version" });
+  await expect(reply).toHaveCount(1);
+  const replyVote = reply.getByRole("button", { name: /▲ \d+ VOTES?/ });
+  const replyBase = await voteCount(replyVote);
+  await replyVote.click();
+  await expect(reply.getByRole("button", { name: voteName(replyBase + 1) })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -669,7 +766,7 @@ test("votes a thread once and keeps the delta across panels", async ({ page }) =
 
   // Unvoting from the opening post unvotes the thread everywhere.
   await openingVote.click();
-  await expect(opening.getByRole("button", { name: "▲ 14 VOTES" })).toHaveAttribute(
+  await expect(opening.getByRole("button", { name: voteName(base) })).toHaveAttribute(
     "aria-pressed",
     "false",
   );
@@ -678,12 +775,14 @@ test("votes a thread once and keeps the delta across panels", async ({ page }) =
     feed
       .getByRole("article")
       .filter({ hasText: CI_CACHE })
-      .getByRole("button", { name: "▲ 14 VOTES" }),
+      .getByRole("button", { name: voteName(base) }),
   ).toHaveAttribute("aria-pressed", "false");
 });
 
-test("composes a thread that lives in the session", async ({ page }) => {
-  const title = "Cache keys must hash the toolchain";
+test("composes a thread with a route at once", async ({ page }) => {
+  // A fresh title per run: composed threads persist in the database, so a
+  // fixed title would stack a twin on every rerun.
+  const title = `Cache keys must hash the toolchain ${Date.now()}`;
   await logon(page);
   await page.goto(FEED_PATH);
   await waitForHydration(page);
@@ -719,68 +818,83 @@ test("composes a thread that lives in the session", async ({ page }) => {
   await form.getByLabel("BODY").fill("A header edit slipped past the cache again.");
   await form.getByRole("button", { name: "POST THREAD" }).click();
 
-  const card = feed.getByRole("article").filter({ hasText: title });
-  await expect(card).toBeVisible();
-  await expect(card).toContainText("QUESTION");
-  await expect(card).toContainText("Rust");
-  // The submit switched the feed to the composed thread's board: the count is
-  // the board's own (one fixture thread plus the new one).
-  await expect(feed.getByText("2 THREADS")).toBeVisible();
-  // The layer closes and focus lands on the card it just created.
-  await expect(form).toHaveCount(0);
-  const cardTitle = card.getByRole("button", { name: title });
-  await expect(cardTitle).toBeFocused();
-  // A composed thread has no route: its title must not pretend to be a link.
-  // Its author is still a real public-profile link.
-  await expect(card.getByRole("link", { name: title })).toHaveCount(0);
-
-  // The composed thread opens in place and survives the return to the feed.
-  await cardTitle.click();
+  // The submit commits server-side and opens the thread at its fresh route:
+  // no routeless session thread, the card links the same address.
+  await expect(page).toHaveURL(/\/forum\/[0-9a-f-]{36}$/);
+  const threadId = page.url().split("/").pop() ?? "";
+  expect(threadId).toMatch(/^[0-9a-f-]{36}$/);
   const thread = page.getByRole("region", { name: title });
   await expect(thread.getByText("A header edit slipped past the cache again.")).toBeVisible();
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
+  await expect(form).toHaveCount(0);
 
-  // A jump inside the local thread writes the hash; closing drops it, so the
-  // feed URL never points at a layer that is gone.
   await thread
     .getByRole("article")
     .first()
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
-  await thread.getByRole("textbox", { name: "REPLY" }).fill("Answering the opening post.");
+  // A jump inside the new thread writes the hash. The confirmed reply is
+  // pinned by its anchor, never by a bare .last().
+  const replyBody = `Answering the opening post ${Date.now()}`;
+  await thread.getByRole("textbox", { name: "REPLY" }).fill(replyBody);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  await thread.getByRole("article").last().getByRole("button", { name: "In reply to ada" }).click();
-  await expect(page).toHaveURL(/#board-post-/);
+  const own = thread.getByRole("article").filter({ hasText: replyBody });
+  await expect(own).toHaveCount(1);
+  const replyAnchor = await own.getAttribute("id");
+  if (replyAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  await page.locator(`#${replyAnchor}`).getByRole("button", { name: "In reply to ada" }).click();
+  await expect(page).toHaveURL(/#board-post-[0-9a-f-]{36}$/);
 
+  // Closing drops the overlay, so the feed URL never points at a layer that
+  // is gone; the composed thread persists server-side, so a fresh load reads
+  // its card with the route link.
   await page.keyboard.press("Escape");
-  await expect(feed.getByRole("article").filter({ hasText: title })).toBeVisible();
   await expect(page).toHaveURL(`${FEED_PATH}?board=tooling&sort=new`);
+  await page.reload();
+  await waitForHydration(page);
+  const card = feed.getByRole("article").filter({ hasText: title });
+  await expect(card).toBeVisible();
+  await expect(card).toContainText("QUESTION");
+  await expect(card).toContainText("Rust");
+  await expect(card.getByRole("link", { name: title })).toHaveAttribute(
+    "href",
+    `/forum/${threadId}`,
+  );
 });
 
 test("replies, edits and tombstones a post", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
 
   // A post by another author offers no edit controls.
-  const gracePost = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const gracePost = thread.locator(`#${GRACE_POST_ANCHOR}`);
   await expect(gracePost.getByRole("button", { name: "EDIT" })).toHaveCount(0);
 
   const reply = thread.getByRole("textbox", { name: "REPLY" });
-  await reply.fill("Updated rules: the jar takes IOUs now.");
+  // Unique per run, pinned by anchor: after a revalidation a concurrent
+  // writer's post could land below ours, so a bare .last() might hand the
+  // edit and the delete to a foreign post.
+  const body = `Updated rules: the jar takes IOUs now ${Date.now()}`;
+  const editedBody = `Updated rules: the jar takes IOUs, by hand ${Date.now()}`;
+  await reply.fill(body);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
   await expect(reply).toHaveValue("");
-  const added = thread.getByRole("article").last();
-  await expect(added).toContainText("Updated rules: the jar takes IOUs now.");
+  const own = thread.getByRole("article").filter({ hasText: body });
+  await expect(own).toHaveCount(1);
+  const addedAnchor = await own.getAttribute("id");
+  if (addedAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const added = page.locator(`#${addedAnchor}`);
+  await expect(added).toContainText(body);
 
   // The edit opens with the caret in the text and saves on Shift+Enter.
   await added.getByRole("button", { name: "EDIT" }).click();
   const editor = thread.getByRole("textbox", { name: "EDIT POST" });
   await expect(editor).toBeFocused();
-  await editor.fill("Updated rules: the jar takes IOUs, by hand.");
+  await editor.fill(editedBody);
   await page.keyboard.press("Shift+Enter");
-  await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
+  await expect(added).toContainText(editedBody);
   await expect(added).toContainText("[EDITED]");
   // The editor is gone: the keyboard stays on the post, not on the body.
   await expect(added).toBeFocused();
@@ -790,7 +904,7 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   await thread.getByRole("textbox", { name: "EDIT POST" }).fill("Discarded text.");
   await added.getByRole("button", { name: "CANCEL" }).click();
   await expect(added).toBeFocused();
-  await expect(added).toContainText("Updated rules: the jar takes IOUs, by hand.");
+  await expect(added).toContainText(editedBody);
   await expect(added).not.toContainText("Discarded text.");
 
   // Delete asks first; cancelling keeps the post, confirming leaves a tombstone.
@@ -803,16 +917,19 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   await expect(added).toContainText("This post was deleted.");
   await expect(added).not.toContainText("by hand");
   await expect(added).toContainText("ada");
-  await expect(added.getByRole("button", { name: "VOTES" })).toHaveCount(0);
+  // The tombstone carries no vote control.
+  await expect(added.getByRole("button", { name: /▲ \d+ VOTES?/ })).toHaveCount(0);
 });
 
 test("shows the parent of a published reply and jumps to it", async ({ page }) => {
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
   // The quoted line also lives in the marker: target the root post by anchor.
-  const parent = page.locator("#board-post-read-first-1");
-  const marker = thread.getByRole("button", { name: "In reply to ada" });
+  // The first marker is the seeded one (session replies append below), so the
+  // quote stays stable across runs.
+  const parent = page.locator(`#${postElementId(seedPostId("read-first-1"))}`);
+  const marker = thread.getByRole("button", { name: "In reply to ada" }).first();
 
   await expect(marker).toContainText("↪");
   await expect(marker).toContainText('ada: "Bring questions, show your reasoning');
@@ -822,16 +939,18 @@ test("shows the parent of a published reply and jumps to it", async ({ page }) =
   // The jump rewrites the address without a history entry: Back still closes
   // the thread, and the anchor is shareable.
   await marker.click();
-  await expect(page).toHaveURL(`${threadPath("read-first")}#board-post-read-first-1`);
+  await expect(page).toHaveURL(
+    `${threadPath(READ_FIRST_ID)}#${postElementId(seedPostId("read-first-1"))}`,
+  );
   await expect(parent).toBeFocused();
 });
 
 test("targets a post from the composer and posts the marker", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
-  const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const parent = thread.locator(`#${GRACE_POST_ANCHOR}`);
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
@@ -845,11 +964,17 @@ test("targets a post from the composer and posts the marker", async ({ page }) =
       .locator('img[src="/avatars/grace.png"]'),
   ).toBeVisible();
 
-  await reply.fill("Carrying on, with the jar watching.");
+  const body = `Carrying on, with the jar watching ${Date.now()}`;
+  await reply.fill(body);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
 
-  const added = thread.getByRole("article").last();
-  await expect(added).toContainText("Carrying on, with the jar watching.");
+  // The confirmed post is pinned by its anchor, never by a bare .last().
+  const own = thread.getByRole("article").filter({ hasText: body });
+  await expect(own).toHaveCount(1);
+  const addedAnchor = await own.getAttribute("id");
+  if (addedAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const added = page.locator(`#${addedAnchor}`);
+  await expect(added).toContainText(body);
   await expect(added.getByRole("button", { name: "In reply to grace" })).toContainText(
     "Pinned. If a thread drifts",
   );
@@ -859,36 +984,41 @@ test("targets a post from the composer and posts the marker", async ({ page }) =
 
 test("cancels the reply target and keeps the draft", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
-  const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const parent = thread.locator(`#${GRACE_POST_ANCHOR}`);
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
-  await reply.fill("Draft stays.");
+  const body = `Draft stays ${Date.now()}`;
+  await reply.fill(body);
   await thread.getByRole("button", { name: "Cancel reply target" }).click();
   await expect(reply).toBeFocused();
-  await expect(reply).toHaveValue("Draft stays.");
+  await expect(reply).toHaveValue(body);
   await expect(thread.getByText("REPLYING TO")).toHaveCount(0);
 
-  // Posted without a target, the reply carries no marker.
+  // Posted without a target, the reply carries no marker. The confirmed post
+  // is pinned by its anchor, never by a bare .last().
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  const added = thread.getByRole("article").last();
-  await expect(added).toContainText("Draft stays.");
+  const own = thread.getByRole("article").filter({ hasText: body });
+  await expect(own).toHaveCount(1);
+  const addedAnchor = await own.getAttribute("id");
+  if (addedAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const added = page.locator(`#${addedAnchor}`);
+  await expect(added).toContainText(body);
   await expect(added.getByRole("button", { name: "In reply to" })).toHaveCount(0);
 });
 
 test("reaches the reply target clear control with the arrows", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await thread
-    .getByRole("article")
-    .filter({ hasText: "Pinned. If a thread drifts" })
+    .locator(`#${GRACE_POST_ANCHOR}`)
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect(reply).toBeFocused();
@@ -910,14 +1040,13 @@ test("reaches the reply target clear control with the arrows", async ({ page }) 
 });
 
 test("a guest reply keeps its target through the logon prompt", async ({ page }) => {
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
   const dialog = page.getByRole("dialog", { name: LOGON_PROMPT });
 
   await thread
-    .getByRole("article")
-    .filter({ hasText: "Pinned. If a thread drifts" })
+    .locator(`#${GRACE_POST_ANCHOR}`)
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
   const reply = thread.getByRole("textbox", { name: "REPLY" });
@@ -932,7 +1061,7 @@ test("a guest reply keeps its target through the logon prompt", async ({ page })
 
 test("a locked thread takes no reply targets", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("tabs-vs-spaces"));
+  await page.goto(threadPath(TABS_ID));
   await waitForHydration(page);
   const locked = page.getByRole("region", { name: TABS_CLOSED });
 
@@ -944,25 +1073,33 @@ test("a locked thread takes no reply targets", async ({ page }) => {
 
 test("quotes a tombstoned parent by name only", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
-  await reply.fill("Parent to be buried.");
+  const parentBody = `Parent to be buried ${Date.now()}`;
+  const childBody = `The child keeps the name ${Date.now()}`;
+  await reply.fill(parentBody);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  const parentAnchor = await thread.getByRole("article").last().getAttribute("id");
-  if (parentAnchor === null) throw new Error("the session post carries no anchor");
+  const ownParent = thread.getByRole("article").filter({ hasText: parentBody });
+  await expect(ownParent).toHaveCount(1);
+  const parentAnchor = await ownParent.getAttribute("id");
+  if (parentAnchor === null) throw new Error("the confirmed post carries no anchor");
   // The article locator is live; the anchor keeps naming the same post after
   // the next reply lands below it.
   const parent = page.locator(`#${parentAnchor}`);
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
-  await reply.fill("The child keeps the name.");
+  await reply.fill(childBody);
   await thread.getByRole("button", { name: "POST REPLY" }).click();
-  const child = thread.getByRole("article").last();
+  const ownChild = thread.getByRole("article").filter({ hasText: childBody });
+  await expect(ownChild).toHaveCount(1);
+  const childAnchor = await ownChild.getAttribute("id");
+  if (childAnchor === null) throw new Error("the confirmed reply carries no anchor");
+  const child = page.locator(`#${childAnchor}`);
   const marker = child.getByRole("button", { name: "In reply to ada" });
-  await expect(marker).toContainText("Parent to be buried.");
+  await expect(marker).toContainText(parentBody);
 
   await parent.getByRole("button", { name: "DELETE" }).click();
   await page
@@ -978,13 +1115,14 @@ test("quotes a tombstoned parent by name only", async ({ page }) => {
 });
 
 test("a post hash deep link focuses the post", async ({ page }) => {
-  await page.goto(`${threadPath("read-first")}#board-post-read-first-3`);
+  const anchor = postElementId(seedPostId("read-first-3"));
+  await page.goto(`${threadPath(READ_FIRST_ID)}#${anchor}`);
   await waitForHydration(page);
-  await expect(page.locator("#board-post-read-first-3")).toBeFocused();
+  await expect(page.locator(`#${anchor}`)).toBeFocused();
 });
 
 test("an unknown post hash leaves the keyboard on the panel body", async ({ page }) => {
-  await page.goto(`${threadPath("read-first")}#board-post-no-such-post`);
+  await page.goto(`${threadPath(READ_FIRST_ID)}#board-post-no-such-post`);
   await waitForHydration(page);
   await expect(focusedBody(page)).toBeFocused();
 });
@@ -1024,7 +1162,7 @@ test("walks the compose layer and returns focus to its button", async ({ page })
 
 test("keeps the caret in the reply textarea inside its row", async ({ page }) => {
   await logon(page);
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(RITUAL_ID));
   await waitForHydration(page);
   const reply = page.getByRole("textbox", { name: "REPLY" });
   await reply.fill("first");
@@ -1042,8 +1180,10 @@ test("keeps the caret in the reply textarea inside its row", async ({ page }) =>
   await page.keyboard.press("ArrowUp");
   await expect(page.getByRole("button", { name: "WRITE" })).toBeFocused();
   await page.keyboard.press("ArrowUp");
+  // The ritual thread stays read-only across tests: its four posts keep the
+  // last-post row at this index on every run.
   const rows = page.locator(`[${DOC_TOP_ATTR}] [${DOS_ROW_ATTR}]`);
-  await expect(rows.nth(2)).toBeFocused();
+  await expect(rows.nth(3)).toBeFocused();
 });
 
 test("lays a lone panel flush and steps the stacked thread down", async ({ page }) => {
@@ -1076,7 +1216,7 @@ test("lays a lone panel flush and steps the stacked thread down", async ({ page 
 
 test("stacks the layers flush on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 700 });
-  await page.goto(threadPath("read-first"));
+  await page.goto(threadPath(READ_FIRST_ID));
   await expect(page.getByRole("region", { name: READ_FIRST })).toBeVisible();
 
   const margin = await page
@@ -1086,7 +1226,7 @@ test("stacks the layers flush on mobile", async ({ page }) => {
 });
 
 test("renders post code blocks and bundled images", async ({ page }) => {
-  await page.goto(threadPath("heap-postmortem"));
+  await page.goto(threadPath(HEAP_ID));
 
   const thread = page.getByRole("region", { name: HEAP_POSTMORTEM });
   await expect(thread.locator("code.language-c")).toBeVisible();
@@ -1097,7 +1237,9 @@ test("renders post code blocks and bundled images", async ({ page }) => {
 });
 
 test("answers an unknown thread with the shell 404", async ({ page }) => {
-  await page.goto(threadPath("no-such-thread"));
+  // A well-formed UUID with no thread behind it: the route 404s like any
+  // unknown id, slug or UUID.
+  await page.goto(threadPath(UNKNOWN_THREAD_ID));
 
   await expect(page.getByRole("heading", { level: 1, name: "PATH NOT FOUND" })).toBeVisible();
   await expect(page.getByRole("menubar")).toBeVisible();
@@ -1123,7 +1265,7 @@ test("has no accessibility violations", async ({ page }) => {
   await expectNoViolations(page, "thread");
 
   // The media post: code well and a content image with alt text.
-  await page.goto(threadPath("heap-postmortem"));
+  await page.goto(threadPath(HEAP_ID));
   await expect(page.getByRole("region", { name: HEAP_POSTMORTEM })).toBeVisible();
   await expectNoViolations(page, "thread with code and image");
 });
@@ -1150,8 +1292,7 @@ test("has no accessibility violations as a member", async ({ page }) => {
 
   // The reply target chip is part of the composer row.
   await thread
-    .getByRole("article")
-    .filter({ hasText: "Pinned. If a thread drifts" })
+    .locator(`#${GRACE_POST_ANCHOR}`)
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect(page.getByText("REPLYING TO")).toBeVisible();
@@ -1247,8 +1388,8 @@ test.describe("forum and errata entries", () => {
   });
 
   test("redirects the legacy discussions path to the forum", async ({ page }) => {
-    await page.goto("/discussions/read-first");
-    await expect(page).toHaveURL("/forum/read-first");
+    await page.goto(`/discussions/${READ_FIRST_ID}`);
+    await expect(page).toHaveURL(`/forum/${READ_FIRST_ID}`);
     await expect(
       page.getByRole("region", { name: "READ FIRST: how this board works" }),
     ).toBeVisible();
@@ -1257,7 +1398,7 @@ test.describe("forum and errata entries", () => {
 
 test("pins and locks a thread as admin, and hides the controls from members", async ({ page }) => {
   await logon(page, "admin");
-  await page.goto(threadPath("heap-postmortem"));
+  await page.goto(threadPath(HEAP_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: HEAP_POSTMORTEM });
 
@@ -1272,8 +1413,8 @@ test("pins and locks a thread as admin, and hides the controls from members", as
   await expect(thread.getByRole("button", { name: "LOCK", exact: true })).toBeVisible();
 
   // Pinning marks the opening post and follows the thread back to the feed.
-  // The return is an Escape, not a reload: the mock store lives one SPA
-  // session, a full load forgets the pin like every other session edit.
+  // The return is an Escape, not a reload: pin and lock are session flags,
+  // so a full load forgets them like every other session edit.
   await thread.getByRole("button", { name: "PIN", exact: true }).click();
   await expect(thread.getByRole("button", { name: "UNPIN", exact: true })).toBeVisible();
   await expect(thread.getByRole("article").first()).toContainText("[PINNED]");
@@ -1291,12 +1432,17 @@ test("pins and locks a thread as admin, and hides the controls from members", as
   await expect(thread.getByRole("button", { name: "PIN", exact: true })).toBeVisible();
   await expect(thread.getByRole("article").first()).not.toContainText("[PINNED]");
 
-  // Locking takes the reply box and keeps the votes.
+  // Locking takes the reply box and keeps the votes: the count reads back
+  // from the painted label, not from a pinned tally.
   await thread.getByRole("button", { name: "LOCK", exact: true }).click();
   await expect(thread.getByRole("button", { name: "UNLOCK", exact: true })).toBeVisible();
   await expect(thread.getByText("THIS THREAD IS LOCKED.")).toBeVisible();
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toHaveCount(0);
-  await expect(thread.getByRole("button", { name: "▲ 12 VOTES" })).toBeVisible();
+  const lockedVotes = thread
+    .getByRole("article")
+    .first()
+    .getByRole("button", { name: /▲ \d+ VOTES?/ });
+  await expect(lockedVotes).toBeVisible();
   await thread.getByRole("button", { name: "UNLOCK", exact: true }).click();
   await expect(thread.getByRole("button", { name: "LOCK", exact: true })).toBeVisible();
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
@@ -1307,7 +1453,7 @@ test("pins and locks a thread as admin, and hides the controls from members", as
   await page.getByRole("button", { name: "LOG OFF" }).click();
   await expect(page).toHaveURL("/");
   await logon(page);
-  await page.goto(threadPath("heap-postmortem"));
+  await page.goto(threadPath(HEAP_ID));
   await waitForHydration(page);
   const memberThread = page.getByRole("region", { name: HEAP_POSTMORTEM });
   await expect(memberThread.getByRole("button", { name: "PIN", exact: true })).toHaveCount(0);

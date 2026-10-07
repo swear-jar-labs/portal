@@ -61,21 +61,39 @@ afterEach(() => {
 });
 
 describe("syncThreadVote", () => {
-  it("toggles optimistically and settles the delta on success", async () => {
+  it("stages an up-vote and keeps it once the server confirms", async () => {
     mockToggleThreadVote.mockResolvedValue(ok());
-    syncThreadVote("thread-1");
+    syncThreadVote("thread-1", false);
     expect(boardSnapshot().votedThreads.has("thread-1")).toBe(true);
+    expect(boardSnapshot().unvotedThreads.has("thread-1")).toBe(false);
     await Promise.resolve();
-    // The revalidated server count already includes the vote.
+    // The staged intent stays: the revalidated server tally and voted flag
+    // absorb it through the display formula, whichever lands first.
+    expect(boardSnapshot().votedThreads.has("thread-1")).toBe(true);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it("stages an unvote when the thread displays as voted and keeps it", async () => {
+    mockToggleThreadVote.mockResolvedValue(ok());
+    syncThreadVote("thread-1", true);
     expect(boardSnapshot().votedThreads.has("thread-1")).toBe(false);
+    expect(boardSnapshot().unvotedThreads.has("thread-1")).toBe(true);
+    await Promise.resolve();
+    expect(boardSnapshot().unvotedThreads.has("thread-1")).toBe(true);
     expect(console.warn).not.toHaveBeenCalled();
   });
 
   it("rolls back and warns on failure", async () => {
     mockToggleThreadVote.mockResolvedValue(denied());
-    syncThreadVote("thread-1");
+    syncThreadVote("thread-1", false);
     await Promise.resolve();
     expect(boardSnapshot().votedThreads.has("thread-1")).toBe(false);
+    expect(console.warn).toHaveBeenCalledWith("[board] thread vote not saved", "forbidden");
+
+    mockToggleThreadVote.mockResolvedValue(denied());
+    syncThreadVote("thread-1", true);
+    await Promise.resolve();
+    expect(boardSnapshot().unvotedThreads.has("thread-1")).toBe(false);
     expect(console.warn).toHaveBeenCalledWith("[board] thread vote not saved", "forbidden");
   });
 });

@@ -19,7 +19,17 @@ export type ThreadFlag = "pinned" | "locked";
 export type ThreadFlagOverrides = Readonly<Record<string, Partial<Record<ThreadFlag, boolean>>>>;
 
 export type BoardState = {
+  // The thread vote overlay: unconfirmed intents over the server truth.
+  // votedThreads stages an up-vote (optimistic +1), unvotedThreads a removal
+  // (optimistic −1); both read instantly. A failed write rolls its intent
+  // back, a successful one keeps it until a counter-stage or a reload — the
+  // display formula neutralizes a staged intent once the server truth
+  // catches up, so no ordering of the settle and the revalidation flickers
+  // or double-counts. The pressed state is server truth plus this overlay
+  // (see threadVoteDisplay), so a revalidation never forgets a confirmed
+  // vote the way a session-only delta did.
   votedThreads: ReadonlySet<string>;
+  unvotedThreads: ReadonlySet<string>;
   threads: Readonly<Record<string, ThreadState>>;
   // Admin pin/lock overrides over the fixture flags: set in this session, die
   // with the reload. Absent means the fixture flag stands.
@@ -35,6 +45,7 @@ export const EMPTY_THREAD_STATE: ThreadState = {
 
 const INITIAL_BOARD_STATE: BoardState = {
   votedThreads: new Set(),
+  unvotedThreads: new Set(),
   threads: {},
   flags: {},
 };
@@ -58,8 +69,55 @@ function updateThread(threadId: string, patch: (current: ThreadState) => ThreadS
   setState({ ...state, threads: { ...state.threads, [threadId]: patch(current) } });
 }
 
-export function toggleThreadVote(threadId: string): void {
-  setState({ ...state, votedThreads: toggled(state.votedThreads, threadId) });
+function staged(set: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  if (set.has(id)) return set;
+  const next = new Set(set);
+  next.add(id);
+  return next;
+}
+
+function unstaged(set: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  if (!set.has(id)) return set;
+  const next = new Set(set);
+  next.delete(id);
+  return next;
+}
+
+/** Stage an up-vote: the pressed state and the counter answer at once, the
+ * server confirms behind the action. Staging is exclusive — an up-vote
+ * replaces a staged unvote (a re-vote before the first settle), so the
+ * display always reads the latest intent. */
+export function stageThreadUpvote(threadId: string): void {
+  setState({
+    ...state,
+    votedThreads: staged(state.votedThreads, threadId),
+    unvotedThreads: unstaged(state.unvotedThreads, threadId),
+  });
+}
+
+/** Stage an unvote: the pressed state and the counter release at once, the
+ * server confirms behind the action. Exclusive with a staged up-vote, like
+ * above. */
+export function stageThreadUnvote(threadId: string): void {
+  setState({
+    ...state,
+    votedThreads: unstaged(state.votedThreads, threadId),
+    unvotedThreads: staged(state.unvotedThreads, threadId),
+  });
+}
+
+/** Roll back a failed thread vote: a write that never reached the server
+ * leaves no staged intent behind. Success needs no transition — the staged
+ * intent stays until a counter-stage or a reload, and the display formula
+ * neutralizes it once the server truth catches up, so no ordering of the
+ * settle and the revalidation flickers or double-counts. */
+export function rollbackThreadVote(threadId: string): void {
+  if (!state.votedThreads.has(threadId) && !state.unvotedThreads.has(threadId)) return;
+  setState({
+    ...state,
+    votedThreads: unstaged(state.votedThreads, threadId),
+    unvotedThreads: unstaged(state.unvotedThreads, threadId),
+  });
 }
 
 export function togglePostVote(threadId: string, postId: string): void {
@@ -180,6 +238,32 @@ export function threadStateOf(snapshot: BoardState, threadId: string): ThreadSta
   return snapshot.threads[threadId] ?? EMPTY_THREAD_STATE;
 }
 
+/** The thread vote's pressed state: server truth plus the staged overlay,
+ * without the counter. Layers that render their own tally (the thread panel
+ * reads the count from its RSC props) take the pressed flag from here. */
+export function threadVotePressed(voted: boolean, snapshot: BoardState, threadId: string): boolean {
+  return (voted || snapshot.votedThreads.has(threadId)) && !snapshot.unvotedThreads.has(threadId);
+}
+
+/** The thread vote as rendered: server truth plus the staged overlay. The
+ * overlay counts exactly once — a staged up-vote adds one only while the
+ * server has not counted it yet, a staged unvote subtracts one only while
+ * the server still counts it — so the display stays exact however the
+ * action settle and the revalidation interleave: no double count, no
+ * flicker back to a stale server state. */
+export function threadVoteDisplay(
+  summary: Pick<ThreadSummary, "votes" | "voted">,
+  snapshot: BoardState,
+  threadId: string,
+): { votes: number; voted: boolean } {
+  const upvoted = snapshot.votedThreads.has(threadId);
+  const unvoted = snapshot.unvotedThreads.has(threadId);
+  return {
+    votes: summary.votes + (upvoted && !summary.voted ? 1 : 0) - (unvoted && summary.voted ? 1 : 0),
+    voted: threadVotePressed(summary.voted, snapshot, threadId),
+  };
+}
+
 /** The feed's view of session replies: their count and the freshest activity
  * reach the card, so the list reads the same as the open thread. Tombstones
  * drop out of the count — a deleted fixture reply and a deleted session
@@ -242,6 +326,15 @@ export function withSessionFlags(
     if (pinned === summary.pinned && locked === summary.locked) return summary;
     return { ...summary, pinned, locked };
   });
+}
+
+/** Drop staged vote intents without touching anything else: the actor
+ * changed (logoff/logon inside one SPA session), so another member's
+ * unconfirmed intents must not leak into the new actor's pressed state.
+ * Server-confirmed votes are unaffected — they render from the queries. */
+export function clearStagedThreadVotes(): void {
+  if (state.votedThreads.size === 0 && state.unvotedThreads.size === 0) return;
+  setState({ ...state, votedThreads: new Set(), unvotedThreads: new Set() });
 }
 
 /** Tests only: drop the session memory back to its initial snapshot. */

@@ -9,9 +9,12 @@ import type { BoardMember, ThreadPost } from "../model/threads";
 // - votes settle by dropping the local +1 either way: on success the
 //   revalidated server count already includes the vote (keeping the delta
 //   would count it twice), on failure nothing was written;
-// - deletes settle by dropping the session tombstone either way: on
-//   success the revalidated thread carries the server tombstone (keeping
-//   the delta would subtract the reply twice from the card count);
+// - deletes settle by dropping the session tombstone either way (on
+//   success the revalidated thread carries the server tombstone, so keeping
+//   the delta would subtract the reply twice from the card count) and by
+//   forgetting the confirmed post (otherwise a reply deleted after its
+//   revalidation echoed it would count as a fresh session reply for the rest
+//   of the SPA session);
 // - edits keep their override on success (it matches the stored body) and
 //   roll back to the previous override on failure;
 // - replies commit server-first (their ids are real), and the merges drop
@@ -51,8 +54,12 @@ export function syncPostEdit(threadId: string, postId: string, body: string): vo
 export function syncPostDelete(threadId: string, postId: string): void {
   boardStore.deletePost(threadId, postId);
   void boardActions.deletePost(postId).then((result) => {
+    if (result.ok) {
+      boardStore.settlePostDelete(threadId, postId);
+      return;
+    }
     boardStore.restorePost(threadId, postId);
-    if (!result.ok) warnNotSaved("delete", result.error);
+    warnNotSaved("delete", result.error);
   });
 }
 

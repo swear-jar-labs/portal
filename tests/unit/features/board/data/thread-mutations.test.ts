@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
-import { boardSnapshot, resetBoardStore, threadStateOf } from "@/features/board/data/board-store";
+import {
+  boardSnapshot,
+  addConfirmedPost,
+  resetBoardStore,
+  threadStateOf,
+} from "@/features/board/data/board-store";
 import {
   commitReply,
   syncPostDelete,
@@ -132,6 +137,30 @@ describe("syncPostDelete", () => {
     await Promise.resolve();
     expect(threadStateOf(boardSnapshot(), "thread-1").deletedPosts.has("post-2")).toBe(false);
     expect(console.warn).toHaveBeenCalledWith("[board] delete not saved", "forbidden");
+  });
+
+  it("forgets the confirmed post on success and keeps it on failure", async () => {
+    const reply = {
+      id: "reply-ada",
+      author: ada,
+      body: "A reply.",
+      createdAt: "2026-09-18T10:00:00.000Z",
+      votes: 0,
+    };
+    addConfirmedPost("thread-1", reply);
+    mockDeletePost.mockResolvedValue(ok());
+    syncPostDelete("thread-1", "reply-ada");
+    await Promise.resolve();
+    // The revalidated seed no longer echoes the reply, so the store forgets
+    // the confirmed post instead of counting it as a fresh session reply.
+    expect(threadStateOf(boardSnapshot(), "thread-1").addedPosts).toEqual([]);
+
+    addConfirmedPost("thread-1", reply);
+    mockDeletePost.mockResolvedValue(denied());
+    syncPostDelete("thread-1", "reply-ada");
+    await Promise.resolve();
+    // A failed delete rolls the tombstone back and keeps the reply.
+    expect(threadStateOf(boardSnapshot(), "thread-1").addedPosts).toEqual([reply]);
   });
 });
 

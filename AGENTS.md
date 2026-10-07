@@ -31,7 +31,14 @@ A workshop for engineers: FORUM, ERRATA, READROOM and project work in
 src/app/**            routing only: Next files and thin re-exports of feature facades
 src/features/<name>/  vertical slice of one section (shell, account, board, tickets, ...)
   index.ts            facade for src/app (pages, pages' metadata)
-  contracts/          what other features may see: explicit re-exports, no logic
+  contracts/          what other features may see: one entry per runtime limit,
+                      each an explicit re-export of its own internals, no logic
+    index.ts          client-safe entry: types, getters, client leaves (leaves
+                      declare "use client" themselves; no @/db, no node
+                      builtins in its graph)
+    server.ts         server entry: reads through @/db, imported by server
+                      modules only (precedent for a second entry:
+                      contracts/ui.ts carries kit CSS)
   model/              pure: types, zod schemas, rules (no IO)
   data/               access layer: queries, stores, server actions, fixtures
 src/shared/**         primitives used by several features (Markdown, members, mock switch)
@@ -47,9 +54,10 @@ contracts, never another feature's internals; `features/* → features/shell` is
 one exception (the frame). ESLint enforces the boundaries and rejects cycles — if
 you add a cross-feature import, check the whole loop, not one edge.
 
-A contract barrel publishes leaves only: a module that itself reads another
-feature's contract must not be re-exported from a barrel, or the graph closes a
-cycle (`board → members → board`).
+A contract entry publishes leaves only: a module that itself reads another
+feature's contract must not be re-exported from an entry, or the graph closes
+a cycle (`board → members → board`). No logic, no nested barrels, never
+another feature's modules.
 
 ## Conventions (reviewed, not suggestions)
 

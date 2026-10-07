@@ -197,6 +197,27 @@ describe("withLocalActivity", () => {
     // cards never double a confirmed reply after revalidation.
     expect(echoed).toBe(summaries[0]);
   });
+
+  it("drops a confirmed reply deleted after revalidation echoed it", () => {
+    // Reply → revalidation echoes R in the summary and the corpus → delete R
+    // succeeds: the revalidated card already excludes R, and the settle
+    // forgot the confirmed post, so the card reads the server count
+    // untouched instead of resurrecting the reply.
+    const summaries = [summary("a", 3, "2026-09-18T12:00:00.000Z")];
+    store.addConfirmedPost("a", confirmedPost("reply-ada", "Reply", "2026-09-18T12:00:00.000Z"));
+    const [before] = store.withLocalActivity(
+      summaries,
+      store.boardSnapshot().threads,
+      new Map([["a", new Set(["reply-ada"])]]),
+    );
+    expect(before).toBe(summaries[0]);
+
+    store.deletePost("a", "reply-ada");
+    store.settlePostDelete("a", "reply-ada");
+    const revalidated = [summary("a", 2, "2026-09-18T12:00:00.000Z")];
+    const [after] = store.withLocalActivity(revalidated, store.boardSnapshot().threads, new Map());
+    expect(after).toBe(revalidated[0]);
+  });
 });
 
 describe("echoedConfirmedPosts", () => {

@@ -35,11 +35,14 @@ import { SEED_THREADS, seedBoard, seedPostId, seedThreadId } from "./seed-board"
 // survive it. Exact feed counts assume the architect's address run (the global
 // setup recreates the schema per run, so no foreign threads exist); mutations
 // inside the tests use unique data, so reruns never collide with themselves.
-// In the full suite other files' writers (editor/tag-limit/moderation
-// composes) may shift the global counters — tightening those is their specs'
-// migration. Root posts are addressed by .first() (the chronological
-// invariant: concurrent appends never displace the root); replies under test
-// are pinned by their anchor id, never by a bare .last().
+// Serial mode below holds the declaration order inside this file, so the
+// counters (#1-#4) run before this file's own composer (#19). In the full
+// suite other files' writers (editor/tag-limit/moderation composes) may still
+// shift the global counters — tightening those is their specs' migration.
+// Root posts are addressed by .first() (the chronological invariant:
+// concurrent appends never displace the root); replies under test are pinned
+// by their anchor id, never by a bare .last().
+test.describe.configure({ mode: "serial" });
 test.beforeAll(async () => {
   await seedBoard(resolveE2eDatabaseUrl());
 });
@@ -821,7 +824,6 @@ test("composes a thread with a route at once", async ({ page }) => {
   await expect(thread.getByRole("textbox", { name: "REPLY" })).toBeVisible();
   await expect(form).toHaveCount(0);
 
-  // A jump inside the new thread writes the hash.
   await thread
     .getByRole("article")
     .first()

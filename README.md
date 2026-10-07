@@ -35,22 +35,25 @@ Members can propose projects from PROJECTS, choosing technologies from the share
 
 `npm run db:migrate` applies the versioned SQL in `drizzle/`. UUID keys use `gen_random_uuid()`, which has been in PostgreSQL core since version 13 — no extension to install. Migrations are generated with a name that says what changed: `npm run db:generate -- --name=sync_community_levels` writes `drizzle/20261003204512_sync_community_levels.sql` — the timestamp prefix (`migrations.prefix` in `drizzle.config.ts`) orders the history, the name describes the change. Without `--name` drizzle-kit invents a random three-word name. Values in `.env.example` are local placeholders, not production secrets.
 
+`npm run db:seed` writes the board canon (sections, status tags, threads, posts, votes with fixed UUIDs from `tests/e2e/seed-board.ts`) into `DATABASE_URL`. It never creates accounts: thread authors and voters resolve against existing rows, so register the roster handles first (the e2e harness seeds them itself). Reruns insert nothing — fixed identities conflict-skip, composed content survives.
+
 ## Scripts
 
-| Command                | What it does                                         |
-| ---------------------- | ---------------------------------------------------- |
-| `npm run dev`          | Start the dev server                                 |
-| `npm run build`        | Production build                                     |
-| `npm run typecheck`    | Generate Next route types, then TypeScript (no emit) |
-| `npm run lint`         | ESLint                                               |
-| `npm run format`       | Format with Prettier                                 |
-| `npm run format:check` | Check formatting                                     |
-| `npm run db:generate`  | Generate SQL migrations (pass `--name=<change>`)     |
-| `npm run db:migrate`   | Apply migrations                                     |
-| `npm run db:push`      | Push the schema directly (local dev)                 |
-| `npm run db:studio`    | Open Drizzle Studio                                  |
-| `npm test`             | Unit tests (Vitest)                                  |
-| `npm run test:e2e`     | End-to-end tests (Playwright, isolated dev server)   |
+| Command                | What it does                                           |
+| ---------------------- | ------------------------------------------------------ |
+| `npm run dev`          | Start the dev server                                   |
+| `npm run build`        | Production build                                       |
+| `npm run typecheck`    | Generate Next route types, then TypeScript (no emit)   |
+| `npm run lint`         | ESLint                                                 |
+| `npm run format`       | Format with Prettier                                   |
+| `npm run format:check` | Check formatting                                       |
+| `npm run db:generate`  | Generate SQL migrations (pass `--name=<change>`)       |
+| `npm run db:migrate`   | Apply migrations                                       |
+| `npm run db:seed`      | Seed the board canon (sections, threads, posts, votes) |
+| `npm run db:push`      | Push the schema directly (local dev)                   |
+| `npm run db:studio`    | Open Drizzle Studio                                    |
+| `npm test`             | Unit tests (Vitest)                                    |
+| `npm run test:e2e`     | End-to-end tests (Playwright, isolated dev server)     |
 
 ## Contributing
 

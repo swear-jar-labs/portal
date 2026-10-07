@@ -64,6 +64,10 @@ const HEAP_ID = seedThreadId("heap-postmortem");
 const TABS_ID = seedThreadId("tabs-vs-spaces");
 const CI_CACHE_ID = seedThreadId("ci-cache-poisoning");
 const WITHDRAWN_ID = seedThreadId("withdrawn-call");
+// Grace's seeded post, pinned by anchor wherever a test targets it: a
+// hasText filter on its body also catches every reply quoting it back
+// through the marker, which trips the strict mode.
+const GRACE_POST_ANCHOR = postElementId(seedPostId("read-first-2"));
 // A well-formed UUID the seed never uses: the thread route 404s on it.
 const UNKNOWN_THREAD_ID = "12345678-1234-4abc-8def-1234567890ab";
 const layers = (page: Page) => page.locator(`[${DOC_LAYER_ATTR}]`);
@@ -865,7 +869,7 @@ test("replies, edits and tombstones a post", async ({ page }) => {
   const thread = page.getByRole("region", { name: READ_FIRST });
 
   // A post by another author offers no edit controls.
-  const gracePost = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const gracePost = thread.locator(`#${GRACE_POST_ANCHOR}`);
   await expect(gracePost.getByRole("button", { name: "EDIT" })).toHaveCount(0);
 
   const reply = thread.getByRole("textbox", { name: "REPLY" });
@@ -946,7 +950,7 @@ test("targets a post from the composer and posts the marker", async ({ page }) =
   await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
-  const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const parent = thread.locator(`#${GRACE_POST_ANCHOR}`);
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
@@ -983,7 +987,7 @@ test("cancels the reply target and keeps the draft", async ({ page }) => {
   await page.goto(threadPath(READ_FIRST_ID));
   await waitForHydration(page);
   const thread = page.getByRole("region", { name: READ_FIRST });
-  const parent = thread.getByRole("article").filter({ hasText: "Pinned. If a thread drifts" });
+  const parent = thread.locator(`#${GRACE_POST_ANCHOR}`);
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await parent.getByRole("button", { name: "REPLY", exact: true }).click();
@@ -1014,8 +1018,7 @@ test("reaches the reply target clear control with the arrows", async ({ page }) 
   const reply = thread.getByRole("textbox", { name: "REPLY" });
 
   await thread
-    .getByRole("article")
-    .filter({ hasText: "Pinned. If a thread drifts" })
+    .locator(`#${GRACE_POST_ANCHOR}`)
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect(reply).toBeFocused();
@@ -1043,8 +1046,7 @@ test("a guest reply keeps its target through the logon prompt", async ({ page })
   const dialog = page.getByRole("dialog", { name: LOGON_PROMPT });
 
   await thread
-    .getByRole("article")
-    .filter({ hasText: "Pinned. If a thread drifts" })
+    .locator(`#${GRACE_POST_ANCHOR}`)
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
   const reply = thread.getByRole("textbox", { name: "REPLY" });
@@ -1290,8 +1292,7 @@ test("has no accessibility violations as a member", async ({ page }) => {
 
   // The reply target chip is part of the composer row.
   await thread
-    .getByRole("article")
-    .filter({ hasText: "Pinned. If a thread drifts" })
+    .locator(`#${GRACE_POST_ANCHOR}`)
     .getByRole("button", { name: "REPLY", exact: true })
     .click();
   await expect(page.getByText("REPLYING TO")).toBeVisible();

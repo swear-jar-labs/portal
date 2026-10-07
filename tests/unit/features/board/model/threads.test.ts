@@ -83,6 +83,7 @@ describe("board taxonomy", () => {
       author: { user: "ada", role: "member" },
       tags: [],
       techs: [],
+      tagLabels: {},
       pinned: false,
       locked: false,
       createdAt,

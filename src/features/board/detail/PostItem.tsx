@@ -20,7 +20,14 @@ import {
   type ModerationTarget,
 } from "@/features/moderation/contracts";
 import { useShellSession } from "@/features/shell";
-import { formatAge, tagTones, threadPath, type Thread, type ThreadPost } from "../model/threads";
+import {
+  formatAge,
+  tagTones,
+  threadPath,
+  threadTagLabel,
+  type Thread,
+  type ThreadPost,
+} from "../model/threads";
 import { postElementId, postHash } from "../model/post-anchor";
 import { replySchema } from "../model/schema";
 import type { ReplyTarget } from "../data/thread-actions";
@@ -314,12 +321,12 @@ export function PostItem({
         <Stack direction="row" gap={4} wrap>
           {thread.tags.map((tag) => (
             <Tag key={tag} tone={tagTones[tag]}>
-              {messages.board.tags[tag]}
+              {threadTagLabel(thread, tag)}
             </Tag>
           ))}
           {thread.techs.map((tech) => (
             <Tag key={tech} tone={techTagTone}>
-              {messages.readroom.tags[tech]}
+              {threadTagLabel(thread, tech)}
             </Tag>
           ))}
         </Stack>

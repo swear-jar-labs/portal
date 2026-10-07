@@ -50,6 +50,13 @@ function isStaticBoardId(value: string): value is StaticBoardId {
 // 2026-09-27: the board speaks in thread kinds, topics live in titles and
 // bodies (and the search finds them there). Technologies ride the readroom's
 // shared vocabulary instead (ThreadTechId below).
+//
+// In the database both vocabularies share the `tags` table: `tags.kind`
+// tells them apart (`thread_status` here, `tech` for the stack; `ticket_label`
+// belongs to the tickets card). The literals below mirror the `tag_kind`
+// enum — the taxonomy invariant test pins them to the schema.
+export const threadStatusKind = "thread_status" as const;
+export const techKind = "tech" as const;
 export const tagIds = ["proposal", "question"] as const;
 export type TagId = (typeof tagIds)[number];
 
@@ -57,6 +64,22 @@ export const tagTones: Partial<Record<TagId, Tone>> = {
   proposal: "cyan",
   question: "brown",
 };
+
+// The picker catalog: every selectable tag with its painted label, statuses
+// first, each kind in `tags.sort` order. Server pages fetch it through
+// contracts/server.ts and hand it down as props; client leaves never query
+// it themselves (the client graph stays free of @/db).
+export type TagCatalogEntry = {
+  id: TagId | ThreadTechId;
+  label: string;
+};
+export type TagCatalog = readonly TagCatalogEntry[];
+
+/** The catalog label for a picked tag or tech: the raw id only when the
+ * catalog missed a validated id (unreachable while the seed owns all rows). */
+export function tagCatalogLabel(catalog: TagCatalog, id: TagId | ThreadTechId): string {
+  return catalog.find((entry) => entry.id === id)?.label ?? id;
+}
 
 export function isBoardId(value: string): value is BoardId {
   return boardIds.some((id) => id === value);
@@ -119,6 +142,10 @@ export type Thread = {
   author: BoardMember;
   tags: readonly TagId[];
   techs: readonly ThreadTechId[];
+  // The painted labels for the thread's own tags and techs, keyed by slug:
+  // chips read them from the data, never from messages (taxonomy-unify).
+  // The read fills every slug in `tags`/`techs` from the same join rows.
+  tagLabels: Readonly<Record<string, string>>;
   pinned: boolean;
   locked: boolean;
   createdAt: string;
@@ -136,6 +163,16 @@ export type ThreadSummary = Omit<Thread, "posts"> & {
   replies: number;
   lastActivityAt: string;
 };
+
+/** The painted chip label for one of the thread's own tags or techs: the
+ * read fills `tagLabels` for every slug the thread carries, so the raw id
+ * below never paints. */
+export function threadTagLabel(
+  thread: Pick<Thread, "tagLabels">,
+  id: TagId | ThreadTechId,
+): string {
+  return thread.tagLabels[id] ?? id;
+}
 
 /** The thread without its posts: what lists render. The UI-first board also
  * derives its locally composed threads through it. */

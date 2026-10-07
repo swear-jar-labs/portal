@@ -26,6 +26,7 @@ function conversation(id: string, posts: ThreadPost[]): Thread {
     author: { user: "ada", role: "member" },
     tags: ["question"],
     techs: ["c"],
+    tagLabels: { question: "QUESTION", c: "C" },
     pinned: false,
     locked: false,
     createdAt: "2026-09-10T12:00:00.000Z",

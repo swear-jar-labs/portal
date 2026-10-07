@@ -49,9 +49,14 @@ export const submissionEventKind = pgEnum("submission_event_kind", [
   "approved",
   "rejected",
 ]);
-// Taxonomies (`tags`, `thread_tags`, `ticket_tags`) keep their current shape:
-// the board, tickets and readroom cards rework them against their consumers.
-export const tagKind = pgEnum("tag_kind", ["topic", "skill"]);
+// Taxonomies (`tags`, `thread_tags`, `project_tags`, `ticket_tags`) share one
+// table: `tags.kind` names the vocabulary (`thread_status` for the board's
+// proposal/question chips, `tech` for the shared stack, `ticket_label` for
+// the tickets card), every binding is a join row, labels and the order
+// inside a kind (`sort`) read from the rows. `readroom_tags` and ticket
+// label rows arrive with their cards (`backend-readroom`/`backend-tickets`);
+// empty tables are not created ahead of them.
+export const tagKind = pgEnum("tag_kind", ["thread_status", "tech", "ticket_label"]);
 export const voteTarget = pgEnum("vote_target", [
   "post",
   "thread",
@@ -171,12 +176,8 @@ export const projects = pgTable("projects", {
   repoHost: text("repo_host"),
   repoPath: text("repo_path"),
   siteUrl: text("site_url"),
-  // The stack as shared tech ids (the board/readroom vocabulary): the list is
-  // small and ordered, so a text array instead of a join table.
-  techs: text("techs")
-    .array()
-    .notNull()
-    .default(sql`'{}'::text[]`),
+  // The stack lives in project_tags (the shared tech vocabulary): join rows,
+  // ordered by tags.sort, never a column array.
   contributors: text("contributors"),
   status: projectStatus("status").notNull().default("planned"),
   // The claim ladder (RULES §15): done S tickets open M, done M open L;
@@ -237,13 +238,8 @@ export const threads = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
-    // The shared tech vocabulary (content/techs), like projects.techs: a small
-    // ordered list, so a text array instead of join rows. Status tags
-    // (proposal/question) stay in thread_tags.
-    techs: text("techs")
-      .array()
-      .notNull()
-      .default(sql`'{}'::text[]`),
+    // Statuses and techs alike bind through thread_tags (tags.kind tells
+    // them apart); the column array is gone.
     pinned: boolean("pinned").notNull().default(false),
     locked: boolean("locked").notNull().default(false),
     lastPostAt: timestamp("last_post_at", { withTimezone: true }),
@@ -432,7 +428,10 @@ export const tags = pgTable("tags", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   label: text("label").notNull(),
-  kind: tagKind("kind").notNull().default("topic"),
+  kind: tagKind("kind").notNull(),
+  // The order inside one kind: status chips, tech pickers and stack rows all
+  // sort by it; user-defined order is not supported.
+  sort: integer("sort").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -465,6 +464,22 @@ export const ticketTags = pgTable(
   (table) => [
     primaryKey({ columns: [table.ticketId, table.tagId] }),
     index("ticket_tags_tag_id_idx").on(table.tagId),
+  ],
+);
+
+export const projectTags = pgTable(
+  "project_tags",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.tagId] }),
+    index("project_tags_tag_id_idx").on(table.tagId),
   ],
 );
 
@@ -622,6 +637,7 @@ export const projectRelations = relations(projects, ({ many, one }) => ({
   tickets: many(tickets),
   members: many(projectMembers),
   forgeStats: one(projectForgeStats),
+  projectTags: many(projectTags),
 }));
 
 export const projectMemberRelations = relations(projectMembers, ({ one }) => ({
@@ -713,6 +729,7 @@ export const ticketBlockRelations = relations(ticketBlocks, ({ one }) => ({
 export const tagRelations = relations(tags, ({ many }) => ({
   threadTags: many(threadTags),
   ticketTags: many(ticketTags),
+  projectTags: many(projectTags),
 }));
 
 export const threadTagRelations = relations(threadTags, ({ one }) => ({
@@ -723,6 +740,11 @@ export const threadTagRelations = relations(threadTags, ({ one }) => ({
 export const ticketTagRelations = relations(ticketTags, ({ one }) => ({
   ticket: one(tickets, { fields: [ticketTags.ticketId], references: [tickets.id] }),
   tag: one(tags, { fields: [ticketTags.tagId], references: [tags.id] }),
+}));
+
+export const projectTagRelations = relations(projectTags, ({ one }) => ({
+  project: one(projects, { fields: [projectTags.projectId], references: [projects.id] }),
+  tag: one(tags, { fields: [projectTags.tagId], references: [tags.id] }),
 }));
 
 export const voteRelations = relations(votes, ({ one }) => ({

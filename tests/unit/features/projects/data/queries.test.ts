@@ -32,6 +32,7 @@ function feedSummary(board: string, lastActivityAt: string, id: string): ThreadS
     author: { user: "ada", role: "maintainer" },
     tags: [],
     techs: [],
+    tagLabels: {},
     pinned: false,
     locked: false,
     createdAt: "2026-09-10T00:00:00.000Z",

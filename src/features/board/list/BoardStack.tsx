@@ -32,6 +32,7 @@ import {
   type BoardId,
   type BoardMember,
   type BoardOption,
+  type TagCatalog,
   type Thread,
   type ThreadSummary,
 } from "../model/threads";
@@ -64,6 +65,9 @@ export type BoardStackProps = {
   // The ranking base captured by the RSC render: server and client sort
   // identically at hydration.
   now: string;
+  // The server's tag catalog for the filter box and the composer: both read
+  // their labels from it, never from messages.
+  tagCatalog: TagCatalog;
   // Full fixture threads for the mock search: the session merges its
   // composed threads, replies, edits and deletions over them.
   corpus: readonly Thread[];
@@ -76,7 +80,14 @@ export function BoardFallback() {
   return <ShellPanel title={fileTitle("FORUM")}>{null}</ShellPanel>;
 }
 
-export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }: BoardStackProps) {
+export function BoardStack({
+  threads,
+  now,
+  tagCatalog,
+  corpus,
+  thread,
+  projectBoards = [],
+}: BoardStackProps) {
   const moderation = useModeration();
   const router = useRouter();
   const pushOverlay = useOverlayPush();
@@ -444,6 +455,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
             query={query}
             currentThreadId={activeThreadId}
             votedThreadIds={pressedThreadIds}
+            tagCatalog={tagCatalog}
             searchHits={searchHits}
             onQueryChange={applyQuery}
             onActivateThread={activateThread}
@@ -481,6 +493,7 @@ export function BoardStack({ threads, now, corpus, thread, projectBoards = [] }:
             <ComposePanel
               defaultBoard={query.board}
               projectBoards={projectBoards}
+              tagCatalog={tagCatalog}
               onSubmit={submitCompose}
               onCancel={() => closeCompose()}
             />

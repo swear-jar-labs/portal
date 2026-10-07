@@ -22,10 +22,10 @@ import {
   boardIds,
   boardTitle,
   isTagId,
-  tagIds,
+  tagCatalogLabel,
   tagTones,
-  threadTechIds,
   type BoardOption,
+  type TagCatalog,
   type TagId,
   type ThreadSummary,
   type ThreadTechId,
@@ -48,6 +48,9 @@ export type FeedPanelProps = {
   query: FeedQuery;
   currentThreadId?: string;
   votedThreadIds: ReadonlySet<string>;
+  // The server's tag catalog (statuses first): the filter box and the picked
+  // chips read their labels from it, never from messages.
+  tagCatalog: TagCatalog;
   // Grouped matches by thread id under an active query, empty otherwise.
   searchHits: ReadonlyMap<string, ThreadSearchHit>;
   onQueryChange: (patch: Partial<FeedQuery>) => void;
@@ -68,6 +71,7 @@ export function FeedPanel({
   query,
   currentThreadId,
   votedThreadIds,
+  tagCatalog,
   searchHits,
   onQueryChange,
   onActivateThread,
@@ -87,23 +91,22 @@ export function FeedPanel({
       .map((board) => ({ value: board.id, label: board.name })),
   ];
 
-  // The unified tag catalog behind the filter box: statuses first, then the
-  // techs. Picks toggle their membership (multi-select AND for both, like the
-  // readroom filter); card chips toggle through the same membership.
+  // The unified tag catalog behind the filter box: the server's list
+  // (statuses first, each kind in sort order). Picks toggle their membership
+  // (multi-select AND for both, like the readroom filter); card chips toggle
+  // through the same membership.
   // The selections keep a render-stable identity for the memo below.
   const tags = useMemo(() => query.tags ?? [], [query.tags]);
   const techs = useMemo(() => query.techs ?? [], [query.techs]);
   const [tagQuery, setTagQuery] = useState("");
   const tagOptions = useMemo(
-    () => [
-      ...tagIds
-        .filter((tag) => !tags.includes(tag))
-        .map((tag) => ({ value: tag, label: messages.board.tags[tag] })),
-      ...threadTechIds
-        .filter((tech) => !techs.includes(tech))
-        .map((tech) => ({ value: tech, label: messages.readroom.tags[tech] })),
-    ],
-    [tags, techs],
+    () =>
+      tagCatalog
+        .filter((entry) =>
+          isTagId(entry.id) ? !tags.includes(entry.id) : !techs.includes(entry.id),
+        )
+        .map((entry) => ({ value: entry.id, label: entry.label })),
+    [tagCatalog, tags, techs],
   );
 
   function pickTagFilter(value: TagId | ThreadTechId) {
@@ -219,12 +222,12 @@ export function FeedPanel({
           <Stack direction="row" gap={4} align="center" wrap navRow>
             {tags.map((tag) => (
               <Tag key={tag} tone={tagTones[tag]} active onClick={() => removeTagFilter(tag)}>
-                {messages.board.tags[tag]}
+                {tagCatalogLabel(tagCatalog, tag)}
               </Tag>
             ))}
             {techs.map((tech) => (
               <Tag key={tech} active onClick={() => removeTagFilter(tech)}>
-                {messages.readroom.tags[tech]}
+                {tagCatalogLabel(tagCatalog, tech)}
               </Tag>
             ))}
             <Button

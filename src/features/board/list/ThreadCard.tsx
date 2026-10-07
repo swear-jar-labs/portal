@@ -12,6 +12,7 @@ import {
   formatAge,
   tagTones,
   threadPath,
+  threadTagLabel,
   type TagId,
   type ThreadSummary,
   type ThreadTechId,
@@ -95,12 +96,12 @@ export function ThreadCard({
           {!masked ? <VoteButton votes={thread.votes} voted={voted} onToggle={onVote} /> : null}
           {thread.tags.map((tag) => (
             <Tag key={tag} tone={tagTones[tag]} onClick={() => onFilterTag(tag)}>
-              {messages.board.tags[tag]}
+              {threadTagLabel(thread, tag)}
             </Tag>
           ))}
           {thread.techs.map((tech) => (
             <Tag key={tech} tone={techTagTone} onClick={() => onFilterTech(tech)}>
-              {messages.readroom.tags[tech]}
+              {threadTagLabel(thread, tech)}
             </Tag>
           ))}
         </>

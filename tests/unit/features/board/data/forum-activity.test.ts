@@ -4,6 +4,7 @@ import {
   boardSnapshot,
   deletePost,
   resetBoardStore,
+  settlePostDelete,
 } from "@/features/board/data/board-store";
 import { forumActivitySeed } from "@/features/board/data/queries";
 import { forumActivityCounts } from "@/features/board/data/forum-activity";
@@ -108,5 +109,31 @@ describe("forum activity", () => {
       votes: 0,
     });
     expect(forumActivityCounts("ada", seed, boardSnapshot())).toEqual({ posts: 1, replies: 1 });
+  });
+
+  it("drops a confirmed reply deleted after revalidation echoed it", () => {
+    // Reply → revalidation echoes R → delete R succeeds: the revalidated
+    // seed no longer echoes R, and the settle forgot the confirmed post, so
+    // the reply counts nowhere instead of haunting the profile for the rest
+    // of the SPA session.
+    addConfirmedPost("thread-1", {
+      id: "reply-ada",
+      author: ada,
+      body: "Reply",
+      createdAt: "2026-09-18T10:00:00.000Z",
+      votes: 0,
+    });
+    const echoed = {
+      posts: 1,
+      replies: [{ threadId: "thread-1", postId: "reply-ada" }],
+    };
+    expect(forumActivityCounts("ada", echoed, boardSnapshot())).toEqual({ posts: 1, replies: 1 });
+
+    deletePost("thread-1", "reply-ada");
+    settlePostDelete("thread-1", "reply-ada");
+    expect(forumActivityCounts("ada", { posts: 1, replies: [] }, boardSnapshot())).toEqual({
+      posts: 1,
+      replies: 0,
+    });
   });
 });

@@ -115,15 +115,37 @@ export function clearPostEdit(threadId: string, postId: string): void {
 }
 
 /** Drop a session tombstone: the render falls back to the stored row.
- * Rollback for a failed delete — and settle for a successful one, whose
- * server tombstone arrives with the revalidation (keeping the delta would
- * subtract the reply twice from the card count). */
+ * Rollback for a failed delete, which never reached the server. A successful
+ * delete settles through settlePostDelete instead (it forgets the confirmed
+ * post as well, so the counts cannot resurrect it). */
 export function restorePost(threadId: string, postId: string): void {
   updateThread(threadId, (current) => {
     if (!current.deletedPosts.has(postId)) return current;
     const deletedPosts = new Set(current.deletedPosts);
     deletedPosts.delete(postId);
     return { ...current, deletedPosts };
+  });
+}
+
+/** Settle a successful delete: drop the session tombstone (the revalidated
+ * server state carries the deletion) and forget the confirmed post. Without
+ * the second half a reply deleted after its revalidation echoed it would haunt
+ * the counts for the rest of the SPA session: the seed no longer echoes it,
+ * but addedPosts still holds it, so it counts as a fresh session reply. */
+export function settlePostDelete(threadId: string, postId: string): void {
+  updateThread(threadId, (current) => {
+    if (
+      !current.deletedPosts.has(postId) &&
+      !current.addedPosts.some((entry) => entry.id === postId)
+    )
+      return current;
+    const deletedPosts = new Set(current.deletedPosts);
+    deletedPosts.delete(postId);
+    return {
+      ...current,
+      deletedPosts,
+      addedPosts: current.addedPosts.filter((entry) => entry.id !== postId),
+    };
   });
 }
 
